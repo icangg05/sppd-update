@@ -1,0 +1,203 @@
+/* Set the size of the div element that contains the map */
+#map {
+  height: 400px;
+  /* The height is 400 pixels */
+  width: 100%;
+  /* The width is the width of the web page */
+}
+
+
+.img-cover {
+  object-fit: cover;
+  object-position: center;
+  aspect-ratio: 1/1;
+}
+
+.shadcn-scroll {
+  /* max-height: 520px; */
+  overflow: auto;
+}
+
+/* Chrome, Edge, Safari */
+.shadcn-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.shadcn-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shadcn-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 116, 139, 0.35);
+  /* slate-500 */
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.shadcn-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.55);
+}
+
+/* Firefox */
+.shadcn-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
+
+/* Header STyle */
+.main-header {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1030;
+}
+
+.content-wrapper {
+  margin-top: 50px;
+}
+
+.navbar {
+  background-color: rgba(60, 141, 188, 0.7) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.logo {
+  background-color: rgba(54, 127, 169, 0.8) !important;
+}
+
+
+/* Sidebar Style */
+.user-panel>.info.username {
+  position: relative !important;
+  left: -10px !important;
+  top: 7px !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  overflow: visible !important;
+  max-width: 165px;
+}
+
+.user-panel>.info.username>p {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 0;
+  margin-bottom: 15px;
+}
+
+
+/* SIDEBAR MENU FLEX ALIGN */
+.sidebar-menu li a {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 4px;
+
+  white-space: normal !important;
+  overflow: visible !important;
+  line-height: 1.4;
+}
+
+.sidebar-menu li a i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sidebar-menu li a span {
+  display: block;
+}
+
+/* Modern Sidebar Styles */
+.main-sidebar {
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.user-panel {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+}
+
+.sidebar-menu>li.header {
+  background-color: transparent;
+  color: #b8c7ce;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 15px 25px 10px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.sidebar-menu>li>a {
+  border-radius: 0 30px 30px 0;
+  margin-right: 10px;
+  padding: 12px 20px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-menu>li:hover>a {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.sidebar-menu>li.active>a {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 600;
+  border-left-color: #3c8dbc;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu>li>.treeview-menu {
+  margin: 5px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 10px 0;
+}
+
+.sidebar-menu .treeview-menu>li>a {
+  padding: 8px 15px 8px 25px;
+  font-size: 13px;
+  border-radius: 8px;
+  margin: 2px 8px;
+  transition: all 0.2s;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.sidebar-menu .treeview-menu>li>a:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #3c8dbc;
+  padding-left: 30px;
+}
+
+.sidebar-menu .treeview-menu>li.active>a {
+  color: #fff;
+  font-weight: 600;
+  background-color: #3c8dbc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-menu li>a>.fa,
+.sidebar-menu li>a>.glyphicon,
+.sidebar-menu li>a>.ion {
+  width: 25px;
+  font-size: 16px;
+  margin-right: 5px;
+  text-align: center;
+  vertical-align: middle;
+  transition: transform 0.3s;
+}
+
+.sidebar-menu li:hover>a>.fa {
+  transform: scale(1.15);
+}

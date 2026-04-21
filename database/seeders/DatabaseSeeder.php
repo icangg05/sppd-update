@@ -5,21 +5,35 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+  use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-        // User::factory(10)->create();
+  public function run(): void
+  {
+    $this->call([
+      RoleAndPermissionSeeder::class,
+      ProvinceAndRegencySeeder::class,
+      PositionAndRankSeeder::class,
+      SppdCategorySeeder::class,
+      DepartmentSeeder::class,
+      BudgetSeeder::class,
+    ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-    }
+    // Create default super admin
+    $admin = User::factory()->create([
+      'name'          => 'Super Admin',
+      'username'      => 'super_admin',
+      'email'         => 'admin@sppd.test',
+      'password'      => Hash::make('password'),
+      'employee_type' => 'pns',
+      'is_active'     => true,
+    ]);
+    $admin->assignRole('super_admin');
+
+    // Create dummy users with various roles
+    $this->call(DummyUserSeeder::class);
+  }
 }

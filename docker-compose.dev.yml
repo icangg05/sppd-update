@@ -1,0 +1,66 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: php_dev
+    container_name: sppd_update_app
+    volumes:
+      - .:/app
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
+    ports:
+      - "8004:8000"
+    depends_on:
+      - db
+    command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
+    networks:
+      - app_net
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: node_dev
+    container_name: sppd_update_node
+    volumes:
+      - .:/app
+    ports:
+      - "5176:5173"
+    command: sh -c "pnpm install && pnpm run dev --host 0.0.0.0"
+    networks:
+      - app_net
+
+  db:
+    image: mysql:8.0
+    container_name: sppd_update_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: db_sppd_update
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app_net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: sppd_update_phpmyadmin
+    ports:
+      - "8084:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    depends_on:
+      - db
+    networks:
+      - app_net
+
+networks:
+  app_net:
+
+
+volumes:
+  dbdata:
