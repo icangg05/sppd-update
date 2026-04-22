@@ -33,7 +33,7 @@ class SppdWorkflowService
                 $q->whereNull('applicant_role')->orWhere('applicant_role', $role);
             })
             ->where(function ($q) use ($destination) {
-                $q->whereNull('destination')->orWhere('destination', $destination);
+                $q->whereNull('destination')->orWhereJsonContains('destination', $destination);
             })
             ->orderByRaw('
                 (department_type IS NOT NULL) + 
@@ -51,13 +51,13 @@ class SppdWorkflowService
         $approvals = [];
 
         foreach ($workflow->steps as $stepRole) {
-            $approverId = $this->resolveApproverId($stepRole, $pelaksana);
+            $approver = $this->resolveApprover($stepRole, $pelaksana);
 
-            if ($approverId) {
+            if ($approver) {
                 $approvals[] = [
                     'sppd_request_id' => $sppd->id,
-                    'approver_id'     => $approverId,
-                    'role_label'      => ucwords(str_replace('_', ' ', $stepRole)),
+                    'approver_id'     => $approver->id,
+                    'role_label'      => $this->getApproverLabel($approver, $stepRole),
                     'step_order'      => $stepOrder++,
                     'status'          => 'pending',
                     'created_at'      => now(),
@@ -81,39 +81,63 @@ class SppdWorkflowService
     }
 
     /**
-     * Resolves a role string into a specific User ID based on the applicant's context.
+     * Resolves a role string into a specific User based on the applicant's context.
      */
-    private function resolveApproverId(string $roleName, User $applicant): ?int
+    private function resolveApprover(string $roleName, User $applicant): ?User
     {
+        $searchRoles = $this->getRoleSynonyms($roleName);
+
         // 1. Try to find the role within the exact same department
-        $user = User::role($roleName)
+        $user = User::role($searchRoles)
             ->where('department_id', $applicant->department_id)
             ->where('is_active', true)
             ->first();
 
         if ($user) {
-            return $user->id;
+            return $user;
         }
 
         // 2. If applicant has a parent department (e.g. Kelurahan -> Kecamatan), try parent department
         if ($applicant->department && $applicant->department->parent_id) {
-            $user = User::role($roleName)
+            $user = User::role($searchRoles)
                 ->where('department_id', $applicant->department->parent_id)
                 ->where('is_active', true)
                 ->first();
 
             if ($user) {
-                return $user->id;
+                return $user;
             }
         }
 
         // 3. Global lookup (e.g. Sekda, Walikota)
         $globalRoles = ['sekda', 'walikota', 'asisten', 'kepala_daerah'];
         if (in_array($roleName, $globalRoles)) {
-            $user = User::role($roleName)->where('is_active', true)->first();
-            return $user ? $user->id : null;
+            return User::role($roleName)->where('is_active', true)->first();
         }
 
         return null;
+    }
+
+    private function getRoleSynonyms(string $role): array
+    {
+        $synonyms = [
+            'kabid' => ['kabid', 'irban', 'kabag'],
+            'kasubag' => ['kasubag', 'kasi', 'kepala_uptd'],
+        ];
+
+        return $synonyms[$role] ?? [$role];
+    }
+
+    private function getApproverLabel(User $approver, string $requestedRole): string
+    {
+        // Try to get the actual role name from the user that matched the synonym
+        $synonyms = $this->getRoleSynonyms($requestedRole);
+        $actualRole = $approver->roles->whereIn('name', $synonyms)->first();
+
+        if ($actualRole) {
+            return ucwords(str_replace('_', ' ', $actualRole->name));
+        }
+
+        return ucwords(str_replace('_', ' ', $requestedRole));
     }
 }

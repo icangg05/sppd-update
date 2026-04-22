@@ -5,15 +5,15 @@ namespace App\Enums;
 enum SppdDomain: string
 {
     case DALAM_DAERAH = 'dalam_daerah';
-    case LUAR_DAERAH = 'luar_daerah';
-    case BIMTEK = 'bimtek';
+    case LDDP = 'lddp';
+    case LDLP = 'ldlp';
 
     public function label(): string
     {
         return match ($this) {
             self::DALAM_DAERAH => 'Dalam Daerah',
-            self::LUAR_DAERAH => 'Luar Daerah',
-            self::BIMTEK => 'Bimtek',
+            self::LDDP => 'Luar Daerah Dalam Provinsi (LDDP)',
+            self::LDLP => 'Luar Daerah Luar Provinsi (LDLP)',
         };
     }
 }

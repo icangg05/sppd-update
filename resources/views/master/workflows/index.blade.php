@@ -41,7 +41,17 @@
             <span class="block text-slate-500">Pemohon: {{ $w->applicant_role ?? 'Semua' }}</span>
           </td>
           <td>
-            <span class="badge bg-blue-100 text-blue-800">{{ $w->destination?->label() ?? 'Semua' }}</span>
+            @if(is_array($w->destination) && count($w->destination) > 0)
+              <div class="flex flex-wrap gap-1">
+                @foreach($w->destination as $d)
+                  <span class="badge bg-blue-50 text-blue-700 border border-blue-100 text-[10px]">
+                    {{ \App\Enums\SppdDomain::tryFrom($d)?->label() ?? $d }}
+                  </span>
+                @endforeach
+              </div>
+            @else
+              <span class="badge bg-slate-100 text-slate-500">Semua</span>
+            @endif
           </td>
           <td>
             <div class="flex flex-wrap gap-1.5 items-center">

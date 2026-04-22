@@ -34,9 +34,14 @@ class SppdWorkflowController extends Controller
             
             foreach ($users as $u) {
                 foreach ($u->roles as $r) {
-                    // Store the first one found for each role
-                    if (!isset($roleMapping[$r->name])) {
-                        $roleMapping[$r->name] = $u->name;
+                    $roleMapping[$r->name] = $u->name;
+                    
+                    // Also map to generic roles if this is a synonym
+                    if (in_array($r->name, ['kabid', 'irban', 'kabag'])) {
+                        $roleMapping['kabid'] = $u->name;
+                    }
+                    if (in_array($r->name, ['kasubag', 'kasi', 'kepala_uptd'])) {
+                        $roleMapping['kasubag'] = $u->name;
                     }
                 }
             }
@@ -60,7 +65,8 @@ class SppdWorkflowController extends Controller
             'name'            => 'required|string|max:255',
             'department_type' => 'nullable|string',
             'applicant_role'  => 'nullable|string',
-            'destination'     => 'nullable|string',
+            'destination'     => 'nullable|array',
+            'destination.*'   => 'required|string',
             'steps'           => 'required|array|min:1',
             'steps.*'         => 'required|string',
             'is_active'       => 'nullable',
@@ -89,7 +95,8 @@ class SppdWorkflowController extends Controller
             'name'            => 'required|string|max:255',
             'department_type' => 'nullable|string',
             'applicant_role'  => 'nullable|string',
-            'destination'     => 'nullable|string',
+            'destination'     => 'nullable|array',
+            'destination.*'   => 'required|string',
             'steps'           => 'required|array|min:1',
             'steps.*'         => 'required|string',
             'is_active'       => 'nullable',

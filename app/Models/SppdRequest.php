@@ -21,7 +21,6 @@ class SppdRequest extends Model
     'pptk_id',
     'budget_id',
     'category_id',
-    'recipient',
     'purpose',
     'problem',
     'facts',

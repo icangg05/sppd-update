@@ -23,7 +23,7 @@ class SppdWorkflow extends Model
     protected $casts = [
         'steps' => 'array',
         'department_type' => DepartmentType::class,
-        'destination' => SppdDomain::class,
+        'destination' => 'array',
         'is_active' => 'boolean',
     ];
 }

@@ -41,15 +41,19 @@
         </select>
         <p class="text-xs text-slate-500 mt-1">Kosongkan jika berlaku untuk semua peran pemohon.</p>
       </div>
-      <div>
-        <label class="form-label">Berlaku Untuk Tujuan (Opsional)</label>
-        <select name="destination" class="form-select">
-          <option value="">-- Semua Tujuan --</option>
+      <div class="md:col-span-2">
+        <label class="form-label mb-2 block">Berlaku Untuk Tujuan (Opsional)</label>
+        <div class="flex flex-wrap gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
           @foreach($domains as $domain)
-            <option value="{{ $domain->value }}" {{ old('destination') === $domain->value ? 'selected' : '' }}>{{ $domain->label() }}</option>
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" name="destination[]" value="{{ $domain->value }}" 
+                {{ is_array(old('destination')) && in_array($domain->value, old('destination')) ? 'checked' : '' }}
+                class="form-checkbox text-primary-600 rounded">
+              <span class="ml-2 text-sm text-slate-700">{{ $domain->label() }}</span>
+            </label>
           @endforeach
-        </select>
-        <p class="text-xs text-slate-500 mt-1">Dalam Daerah atau Luar Daerah.</p>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">Pilih satu atau lebih. Kosongkan jika berlaku untuk semua tujuan.</p>
       </div>
       <div class="flex items-center mt-6">
         <label class="flex items-center cursor-pointer">

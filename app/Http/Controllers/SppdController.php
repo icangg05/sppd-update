@@ -63,9 +63,9 @@ class SppdController extends Controller
   public function create()
   {
     $categories = SppdCategory::all();
-    $budgets = Budget::with('department')->get();
-    $provinces = Province::orderBy('name')->get();
-    $users = User::where('is_active', true)->orderBy('name')->get();
+    $budgets    = Budget::with('department')->get();
+    $provinces  = Province::orderBy('name')->get();
+    $users      = User::where('is_active', true)->orderBy('name')->get();
 
     return view('sppd.create', compact('categories', 'budgets', 'provinces', 'users'));
   }
@@ -76,7 +76,6 @@ class SppdController extends Controller
       'user_id'         => 'required|exists:users,id',
       'budget_id'       => 'required|exists:budgets,id',
       'category_id'     => 'required|exists:sppd_categories,id',
-      'recipient'       => 'nullable|string|max:255',
       'purpose'         => 'required|string|max:1000',
       'problem'         => 'nullable|string',
       'facts'           => 'nullable|string',
@@ -86,16 +85,17 @@ class SppdController extends Controller
       'transport_type'  => 'nullable|string|max:255',
       'transport_name'  => 'nullable|string|max:255',
       'departure_place' => 'nullable|string|max:255',
-      'domain'          => 'required|in:dalam_daerah,luar_daerah,bimtek',
+      'domain'          => 'required|in:dalam_daerah,lddp,ldlp',
       'urgency'         => 'nullable|string|max:255',
       'sppd_date'       => 'nullable|date',
       'spt_date'        => 'nullable|date',
       'notes'           => 'nullable|string|max:1000',
       // Destinations
       'destinations'            => 'required|array|min:1',
-      'destinations.*.province_id' => 'required|exists:provinces,id',
-      'destinations.*.regency_id'  => 'nullable|exists:regencies,id',
-      'destinations.*.address'     => 'nullable|string|max:500',
+      'destinations.*.province_id' => 'required_if:domain,lddp,ldlp|exists:provinces,id',
+      'destinations.*.regency_id'  => 'required_if:domain,lddp,ldlp|exists:regencies,id',
+      'destinations.*.address'     => 'required_if:domain,lddp,ldlp|string|max:500',
+      'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
       // Followers
       'followers'     => 'nullable|array',
       'followers.*'   => 'exists:users,id',
@@ -113,7 +113,6 @@ class SppdController extends Controller
           'creator_id'      => Auth::id(),
           'budget_id'       => $validated['budget_id'],
           'category_id'     => $validated['category_id'],
-          'recipient'       => $validated['recipient'],
           'purpose'         => $validated['purpose'],
           'problem'         => $validated['problem'],
           'facts'           => $validated['facts'],
@@ -133,7 +132,25 @@ class SppdController extends Controller
 
         // Save destinations
         foreach ($validated['destinations'] as $dest) {
-          $sppd->destinations()->create($dest);
+          if ($sppd->domain->value === 'dalam_daerah') {
+            // Set default to Sulawesi Tenggara and Kota Kendari
+            $sultra = \App\Models\Province::where('name', 'Sulawesi Tenggara')->first();
+            $kendari = \App\Models\Regency::where('name', 'LIKE', '%Kendari%')
+              ->where('province_id', $sultra?->id)
+              ->first();
+
+            $sppd->destinations()->create([
+              'address' => $dest['address_only'],
+              'province_id' => $sultra?->id,
+              'regency_id' => $kendari?->id,
+            ]);
+          } else {
+            $sppd->destinations()->create([
+              'province_id' => $dest['province_id'] ?? null,
+              'regency_id' => $dest['regency_id'] ?? null,
+              'address' => $dest['address'] ?? null,
+            ]);
+          }
         }
 
         // Save followers
@@ -158,7 +175,7 @@ class SppdController extends Controller
         // Generate approvals via dynamic workflow
         $workflowService = app(\App\Services\SppdWorkflowService::class);
         $success = $workflowService->generateApprovals($sppd);
-        
+
         if (!$success) {
           throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut. Silakan hubungi admin untuk melengkapi aturan Workflow SPPD.');
         }
