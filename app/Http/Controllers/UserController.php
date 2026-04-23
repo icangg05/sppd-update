@@ -37,20 +37,47 @@ class UserController extends Controller
     $users = $query->orderBy('name')->paginate(20)->withQueryString();
     
     // Dropdown department hanya untuk super admin atau minimal tampilkan department sendiri
-    $departments = auth()->user()->hasRole('super_admin') 
-      ? Department::orderBy('name')->get() 
-      : collect([auth()->user()->department])->filter();
+    $departments = $this->getHierarchicalDepartments();
 
     return view('master.users.index', compact('users', 'departments'));
   }
 
   public function create()
   {
-    $departments = Department::orderBy('name')->get();
+    $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
     $positions = Position::orderBy('name')->get();
 
     return view('master.users.create', compact('departments', 'ranks', 'positions'));
+  }
+
+  private function getHierarchicalDepartments()
+  {
+    $user = auth()->user();
+    
+    if ($user->hasRole('super_admin')) {
+      $roots = Department::whereNull('parent_id')->orderBy('name')->get();
+    } else {
+      // Admin OPD hanya bisa melihat departemennya sendiri dan semua di bawahnya
+      $roots = Department::where('id', $user->department_id)->get();
+    }
+
+    $list = [];
+    foreach ($roots as $root) {
+      $this->flattenDepartment($root, 0, $list);
+    }
+    
+    return $list;
+  }
+
+  private function flattenDepartment($dept, $level, &$list)
+  {
+    $dept->display_name = str_repeat('— ', $level) . $dept->name;
+    $list[] = $dept;
+
+    foreach ($dept->children()->orderBy('name')->get() as $child) {
+      $this->flattenDepartment($child, $level + 1, $list);
+    }
   }
 
   public function store(Request $request)
@@ -93,7 +120,7 @@ class UserController extends Controller
 
   public function edit(User $user)
   {
-    $departments = Department::orderBy('name')->get();
+    $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
     $positions = Position::orderBy('name')->get();
     

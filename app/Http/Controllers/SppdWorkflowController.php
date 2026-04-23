@@ -16,34 +16,27 @@ class SppdWorkflowController extends Controller
         return view('master.workflows.index', compact('workflows'));
     }
 
-    public function preview()
+    public function preview(\App\Services\SppdWorkflowService $workflowService)
     {
         $user = auth()->user();
         $workflows = SppdWorkflow::where('is_active', true)->orderBy('id')->get();
         
-        // Resolve approver names for the current user's department
+        // Resolve approver names for the current user's context
         $roleMapping = [];
-        if ($user->department_id) {
-            $users = \App\Models\User::where('department_id', $user->department_id)
-                ->orWhereHas('roles', function($q) {
-                    $q->whereIn('name', ['sekda', 'walikota', 'asisten', 'kepala_daerah']);
-                })
-                ->where('is_active', true)
-                ->with('roles')
-                ->get();
-            
-            foreach ($users as $u) {
-                foreach ($u->roles as $r) {
-                    $roleMapping[$r->name] = $u->name;
-                    
-                    // Also map to generic roles if this is a synonym
-                    if (in_array($r->name, ['kabid', 'irban', 'kabag'])) {
-                        $roleMapping['kabid'] = $u->name;
-                    }
-                    if (in_array($r->name, ['kasubag', 'kasi', 'kepala_uptd'])) {
-                        $roleMapping['kasubag'] = $u->name;
-                    }
-                }
+        
+        // Get all unique roles needed in the workflows
+        $neededRoles = [];
+        foreach ($workflows as $w) {
+            foreach ($w->steps as $step) {
+                $neededRoles[] = $step;
+            }
+        }
+        $neededRoles = array_unique($neededRoles);
+
+        foreach ($neededRoles as $role) {
+            $approver = $workflowService->resolveApprover($role, $user);
+            if ($approver) {
+                $roleMapping[$role] = $approver->name;
             }
         }
 

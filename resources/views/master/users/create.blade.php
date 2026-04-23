@@ -55,15 +55,14 @@
       </div>
       <div>
         <label class="form-label">Instansi</label>
-        <select name="department_id" class="form-select" {{ !auth()->user()->hasRole('super_admin') ? 'disabled' : '' }}>
+        <select name="department_id" class="form-select">
           <option value="">— Pilih —</option>
           @foreach($departments as $d)
-            <option value="{{ $d->id }}" {{ old('department_id', auth()->user()->hasRole('super_admin') ? '' : auth()->user()->department_id) == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+            <option value="{{ $d->id }}" {{ old('department_id', auth()->user()->hasRole('super_admin') ? '' : auth()->user()->department_id) == $d->id ? 'selected' : '' }}>
+              {{ $d->display_name }}
+            </option>
           @endforeach
         </select>
-        @if(!auth()->user()->hasRole('super_admin'))
-          <input type="hidden" name="department_id" value="{{ auth()->user()->department_id }}">
-        @endif
       </div>
       <div>
         <label class="form-label">Golongan/Pangkat</label>

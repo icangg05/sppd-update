@@ -27,7 +27,8 @@
 				<select name="department_id" class="form-select w-full sm:w-56">
 					<option value="">Semua Instansi</option>
 					@foreach ($departments as $d)
-						<option value="{{ $d->id }}" {{ request('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}
+						<option value="{{ $d->id }}" {{ request('department_id') == $d->id ? 'selected' : '' }}>
+							{{ $d->display_name }}
 						</option>
 					@endforeach
 				</select>

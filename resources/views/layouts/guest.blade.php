@@ -8,7 +8,7 @@
 	<meta name="robots" content="noindex, nofollow">
 	<title>
 		@hasSection('title')
-			@yield('title') |
+			@yield('title') -
 		@endif{{ config('app.name') }}
 	</title>
 	<link rel="icon" href="{{ asset('assets2/dist/img/user.png') }}">

@@ -29,20 +29,24 @@
       <h3 class="text-lg font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-100">Informasi Instansi</h3>
       
       <div class="space-y-4">
+        @if(!$department->parent_id)
         <div>
           <label class="block text-sm font-medium text-slate-500 mb-1">Kode OPD</label>
           <p class="text-base font-mono text-slate-900 bg-slate-50 p-2 rounded border border-slate-100 inline-block">{{ $department->code }}</p>
         </div>
+        @endif
         
         <div>
-          <label class="block text-sm font-medium text-slate-500 mb-1">Nama Instansi / OPD</label>
+          <label class="block text-sm font-medium text-slate-500 mb-1">Nama Instansi / Unit Kerja</label>
           <p class="text-lg font-medium text-slate-900">{{ $department->name }}</p>
         </div>
 
+        @if(!$department->parent_id)
         <div>
           <label class="block text-sm font-medium text-slate-500 mb-1">Tipe Instansi</label>
           <span class="badge bg-primary-50 text-primary-700 border border-primary-100">{{ $department->type->label() }}</span>
         </div>
+        @endif
 
         @if($department->parent)
         <div>
@@ -51,14 +55,26 @@
         </div>
         @endif
 
-        <div>
-          <label class="block text-sm font-medium text-slate-500 mb-1">Kop Surat</label>
-          @if($department->letterhead)
-            <div class="p-4 bg-slate-50 border border-slate-200 rounded whitespace-pre-wrap text-sm font-mono text-slate-700">{{ $department->letterhead }}</div>
-          @else
+        {{-- Kop Surat --}}
+        @php $inheritedKop = $department->getInheritedLetterhead(); @endphp
+        @if($inheritedKop)
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1 flex items-center gap-2">
+                Kop Surat
+                @if(empty($department->letterhead))
+                    <span class="badge bg-amber-50 text-amber-700 border-amber-200 text-[10px]">Warisan dari Induk</span>
+                @endif
+            </label>
+            <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 font-serif whitespace-pre-line text-center leading-tight">
+                {{ $inheritedKop }}
+            </div>
+          </div>
+        @elseif(!$department->parent_id)
+          <div>
+            <label class="block text-sm font-medium text-slate-500 mb-1">Kop Surat</label>
             <p class="text-sm text-slate-400 italic">Belum ada kop surat yang diatur.</p>
-          @endif
-        </div>
+          </div>
+        @endif
       </div>
     </div>
   </div>
@@ -66,7 +82,7 @@
   {{-- Info Pimpinan & Statistik --}}
   <div class="space-y-6">
     <div class="card p-6 border-t-4 border-t-primary-500">
-      <h3 class="text-lg font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-100">Pimpinan Instansi</h3>
+      <h3 class="text-lg font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-100">Pimpinan Unit</h3>
       
       @if($department->head)
         <div class="flex items-start gap-4">
@@ -87,12 +103,13 @@
           <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
           </div>
-          <p class="text-sm text-slate-500 mb-3">Pimpinan instansi belum ditentukan.</p>
+          <p class="text-sm text-slate-500 mb-3">Pimpinan belum ditentukan.</p>
           <a href="{{ route('master.departments.edit', $department->id) }}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Atur Pimpinan &rarr;</a>
         </div>
       @endif
     </div>
 
+    @if(!$department->parent_id)
     <div class="card p-6">
       <h3 class="text-sm font-semibold text-slate-800 mb-4 uppercase tracking-wider text-slate-500">Statistik OPD</h3>
       <div class="space-y-4">
@@ -105,6 +122,7 @@
         </div>
       </div>
     </div>
+    @endif
   </div>
 </div>
 @endsection

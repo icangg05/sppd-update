@@ -68,4 +68,21 @@ class Department extends Model
   {
     return $this->hasMany(DocumentSignatory::class);
   }
+
+  /**
+   * Get the letterhead for this department.
+   * If not set, recursively search up the hierarchy to find a parent's letterhead.
+   */
+  public function getInheritedLetterhead(): ?string
+  {
+    if (!empty($this->letterhead)) {
+      return $this->letterhead;
+    }
+
+    if ($this->parent) {
+      return $this->parent->getInheritedLetterhead();
+    }
+
+    return null;
+  }
 }

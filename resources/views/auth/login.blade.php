@@ -23,7 +23,7 @@
 
 		<div class="form-group floating-group">
 			<input type="password" class="form-control floating-control" name="password" id="password" placeholder=""
-				required>
+				required value="password">
 			<label for="password" class="floating-label">Password</label>
 		</div>
 

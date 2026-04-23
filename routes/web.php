@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
   // SPPD
   Route::get('/sppd', [SppdController::class, 'index'])->name('sppd.index');
   Route::get('/sppd/create', [SppdController::class, 'create'])->name('sppd.create');
+  Route::get('/sppd/create/details', [SppdController::class, 'createDetails'])->name('sppd.create.details');
   Route::post('/sppd', [SppdController::class, 'store'])->name('sppd.store');
   Route::get('/sppd/{sppd}', [SppdController::class, 'show'])->name('sppd.show');
   Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
@@ -71,4 +72,5 @@ Route::middleware('auth')->group(function () {
 
   // API
   Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');
+  Route::get('/api/sppd/workflow-preview', [SppdController::class, 'previewWorkflow'])->name('api.sppd.workflow-preview');
 });

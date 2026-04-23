@@ -69,12 +69,11 @@
 													{{ $roleMapping[$role] }}
 												</span>
 											@else
-												<span class="text-[11px] text-rose-500 font-medium mt-1 italic">
-													<svg class="w-3 h-3 inline mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-														stroke-width="2">
-														<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+												<span class="text-[11px] text-rose-500 font-bold mt-1 uppercase flex items-center">
+													<svg class="w-3.5 h-3.5 inline mr-1 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+														<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
 													</svg>
-													Pejabat Belum Ada
+													Data Pejabat Kosong!
 												</span>
 											@endif
 										</div>

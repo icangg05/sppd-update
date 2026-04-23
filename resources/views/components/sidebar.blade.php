@@ -72,7 +72,7 @@
 				<path stroke-linecap="round" stroke-linejoin="round"
 					d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
 			</svg>
-			OPD
+			{{ auth()->user()->hasRole('super_admin') ? 'OPD' : 'Unit Kerja' }}
 		</a>
 
 		<a href="{{ route('master.budgets.index') }}"
@@ -83,19 +83,13 @@
 			</svg>
 			DPA
 		</a>
-		<a href="{{ route('workflows.preview') }}"
-			class="sidebar-link {{ request()->routeIs('workflows.preview') ? 'active' : '' }}">
-			<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-				<path stroke-linecap="round" stroke-linejoin="round"
-					d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-			</svg>
-			Alur Pengajuan
-		</a>
 
 		@role('super_admin')
-			<a href="{{ route('master.workflows.index') }}" class="sidebar-link {{ request()->routeIs('master.workflows.*') ? 'active' : '' }}">
+			<a href="{{ route('master.workflows.index') }}"
+				class="sidebar-link {{ request()->routeIs('master.workflows.*') ? 'active' : '' }}">
 				<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+					<path stroke-linecap="round" stroke-linejoin="round"
+						d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
 				</svg>
 				Workflow SPPD
 			</a>

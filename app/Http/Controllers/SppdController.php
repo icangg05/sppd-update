@@ -7,17 +7,15 @@ use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
 use App\Models\Province;
-use App\Models\Regency;
 use App\Models\SppdApproval;
 use App\Models\SppdCategory;
-use App\Models\SppdCostDetail;
-use App\Models\SppdDestination;
-use App\Models\SppdFollower;
 use App\Models\SppdRequest;
 use App\Models\User;
+use App\Services\SppdWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SppdController extends Controller
 {
@@ -62,12 +60,69 @@ class SppdController extends Controller
 
   public function create()
   {
-    $categories = SppdCategory::all();
-    $budgets    = Budget::with('department')->get();
-    $provinces  = Province::orderBy('name')->get();
-    $users      = User::where('is_active', true)->orderBy('name')->get();
+    $query = User::where('is_active', true);
 
-    return view('sppd.create', compact('categories', 'budgets', 'provinces', 'users'));
+    // Filter: Admin OPD hanya bisa melihat pegawai di instansinya sendiri
+    if (!Auth::user()->hasRole('super_admin')) {
+      $query->where('department_id', Auth::user()->department_id);
+    }
+
+    $users = $query->orderBy('name')->get();
+    return view('sppd.create', compact('users'));
+  }
+
+  public function createDetails(Request $request)
+  {
+    $request->validate([
+      'user_id' => 'required|exists:users,id',
+      'domain'  => 'required|in:dalam_daerah,lddp,ldlp'
+    ]);
+
+    $pelaksana = User::with('department')->findOrFail($request->user_id);
+
+    // Keamanan tambahan: Pastikan Admin OPD tidak menembak user_id dari OPD lain lewat URL
+    if (!Auth::user()->hasRole('super_admin') && $pelaksana->department_id !== Auth::user()->department_id) {
+      return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
+    }
+
+    $domain = $request->domain;
+
+    // Validasi apakah alur tersedia
+    $workflowService = new SppdWorkflowService();
+    $steps = $workflowService->simulateApprovals($pelaksana, $domain);
+
+    if (empty($steps)) {
+      return redirect()->route('sppd.create')
+        ->with('error', 'Alur pengajuan untuk pelaksana ini belum diatur. Harap hubungi Admin.');
+    }
+
+    // Cek kelengkapan pejabat
+    foreach ($steps as $step) {
+      if ($step['status'] !== 'found') {
+        return redirect()->route('sppd.create')
+          ->with('error', 'Pejabat penanggung jawab (' . $step['role_label'] . ') belum diatur di unit kerja terkait.');
+      }
+    }
+
+    // Filter Anggaran: Hanya yang milik instansi user login
+    $budgetQuery = Budget::with('department');
+    if (!Auth::user()->hasRole('super_admin')) {
+      $budgetQuery->where('department_id', Auth::user()->department_id);
+    }
+    $budgets = $budgetQuery->get();
+
+    $categories = SppdCategory::all();
+
+    // Filter Pengikut: Hanya yang satu instansi
+    $userQuery = User::where('is_active', true);
+    if (!Auth::user()->hasRole('super_admin')) {
+      $userQuery->where('department_id', Auth::user()->department_id);
+    }
+    $users = $userQuery->orderBy('name')->get();
+
+    $provinces = Province::orderBy('name')->get();
+
+    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps'));
   }
 
   public function store(Request $request)
@@ -107,16 +162,21 @@ class SppdController extends Controller
     ]);
 
     try {
-      DB::transaction(function () use ($validated, $request) {
+      DB::transaction(function () use ($validated, $request, &$sppd) {
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('sppd/attachments', 'public');
+        }
+
         $sppd = SppdRequest::create([
           'user_id'         => $validated['user_id'],
           'creator_id'      => Auth::id(),
           'budget_id'       => $validated['budget_id'],
           'category_id'     => $validated['category_id'],
           'purpose'         => $validated['purpose'],
-          'problem'         => $validated['problem'],
-          'facts'           => $validated['facts'],
-          'analysis'        => $validated['analysis'],
+          'problem'         => $validated['problem'] ?? null,
+          'facts'           => $validated['facts'] ?? null,
+          'analysis'        => $validated['analysis'] ?? null,
           'start_date'      => $validated['start_date'],
           'end_date'        => $validated['end_date'],
           'transport_type'  => $validated['transport_type'],
@@ -128,16 +188,14 @@ class SppdController extends Controller
           'spt_date'        => $validated['spt_date'],
           'status'          => SppdStatus::IN_PROGRESS,
           'notes'           => $validated['notes'] ?? null,
+          'attachment'      => $attachmentPath,
         ]);
 
         // Save destinations
         foreach ($validated['destinations'] as $dest) {
           if ($sppd->domain->value === 'dalam_daerah') {
-            // Set default to Sulawesi Tenggara and Kota Kendari
             $sultra = \App\Models\Province::where('name', 'Sulawesi Tenggara')->first();
-            $kendari = \App\Models\Regency::where('name', 'LIKE', '%Kendari%')
-              ->where('province_id', $sultra?->id)
-              ->first();
+            $kendari = \App\Models\Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
 
             $sppd->destinations()->create([
               'address' => $dest['address_only'],
@@ -160,18 +218,6 @@ class SppdController extends Controller
           }
         }
 
-        // Save cost details
-        if (!empty($validated['costs'])) {
-          foreach ($validated['costs'] as $cost) {
-            $sppd->costDetails()->create([
-              'user_id'     => $sppd->user_id,
-              'description' => $cost['description'],
-              'unit_cost'   => $cost['unit_cost'],
-              'quantity'    => $cost['quantity'],
-            ]);
-          }
-        }
-
         // Generate approvals via dynamic workflow
         $workflowService = app(\App\Services\SppdWorkflowService::class);
         $success = $workflowService->generateApprovals($sppd);
@@ -179,9 +225,68 @@ class SppdController extends Controller
         if (!$success) {
           throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut. Silakan hubungi admin untuk melengkapi aturan Workflow SPPD.');
         }
+
+        // ------------------------------------------------------------------
+        // GENERATE PDF (SPT & SPPD)
+        // ------------------------------------------------------------------
+        $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
+        
+        // Ambil data pejabat penandatangan (Step terakhir di workflow)
+        $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+        
+        // Hitung durasi
+        $start = \Carbon\Carbon::parse($sppd->start_date);
+        $end = \Carbon\Carbon::parse($sppd->end_date);
+        $duration = $start->diffInDays($end) + 1;
+
+        // Data khusus untuk PDF
+        $pdfData = [
+            'approver_name' => $lastApproval->approver->name ?? '................................',
+            'approver_role' => $lastApproval->role_label ?? 'Kepala Dinas',
+            'approver_nip' => $lastApproval->approver->nip ?? '................................',
+            'approver_rank' => $lastApproval->approver->rank->name ?? '',
+            'duration' => $duration
+        ];
+
+        // 1. Generate SPT (Kolektif)
+        $sptFileName = 'SPT-' . Str::slug($sppd->document_number ?: $sppd->id) . '-' . time() . '.pdf';
+        $sptPath = 'sppd/documents/' . $sptFileName;
+        $sptPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', [
+            'sppd' => $sppd,
+            'pdfData' => $pdfData
+        ])->setPaper('a4', 'portrait');
+        \Illuminate\Support\Facades\Storage::disk('public')->put($sptPath, $sptPdf->output());
+        $sppd->update(['spt_path' => $sptPath]);
+
+        // 2. Generate SPPD (Individu)
+        // a. Untuk Pelaksana Utama
+        $sppdMainFileName = 'SPPD-UTAMA-' . Str::slug($sppd->user->name) . '-' . time() . '.pdf';
+        $sppdMainPath = 'sppd/documents/' . $sppdMainFileName;
+        $sppdPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
+            'sppd' => $sppd,
+            'user' => $sppd->user,
+            'is_main' => true,
+            'pdfData' => $pdfData
+        ])->setPaper('f4', 'landscape');
+        \Illuminate\Support\Facades\Storage::disk('public')->put($sppdMainPath, $sppdPdf->output());
+        $sppd->update(['sppd_path' => $sppdMainPath]);
+
+        // b. Untuk Pengikut
+        foreach ($sppd->followers as $follower) {
+            $fFileName = 'SPPD-PENGIKUT-' . Str::slug($follower->user->name) . '-' . time() . '.pdf';
+            $fPath = 'sppd/documents/' . $fFileName;
+            $fPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
+                'sppd' => $sppd,
+                'user' => $follower->user,
+                'is_main' => false,
+                'pdfData' => $pdfData
+            ])->setPaper('f4', 'landscape');
+            \Illuminate\Support\Facades\Storage::disk('public')->put($fPath, $fPdf->output());
+            $follower->update(['sppd_path' => $fPath]);
+        }
       });
 
-      return redirect()->route('sppd.index')->with('success', 'SPPD berhasil dibuat dan diajukan.');
+      return redirect()->route('sppd.index')->with('success', 'SPPD berhasil dibuat dan diajukan. Dokumen SPT & SPPD telah di-generate.');
     } catch (\Exception $e) {
       return back()->withInput()->with('error', $e->getMessage());
     }
@@ -260,6 +365,31 @@ class SppdController extends Controller
   public function getRegencies(Province $province)
   {
     return response()->json($province->regencies()->orderBy('name')->get());
+  }
+
+  /**
+   * API: Preview workflow for a specific user and destination
+   */
+  public function previewWorkflow(Request $request)
+  {
+    $request->validate([
+      'user_id' => 'required|exists:users,id',
+      'domain' => 'nullable|string'
+    ]);
+
+    $user = User::with('department.parent')->find($request->user_id);
+    $workflowService = app(\App\Services\SppdWorkflowService::class);
+
+    $steps = $workflowService->simulateApprovals($user, $request->domain);
+
+    return response()->json([
+      'user' => [
+        'name' => $user->name,
+        'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
+        'role' => $user->getRoleNames()->first() ?? 'Tanpa Role',
+      ],
+      'steps' => $steps
+    ]);
   }
   public function destroy(SppdRequest $sppd)
   {
