@@ -14,7 +14,7 @@
   </a>
 </div>
 
-<form method="POST" action="{{ route('master.departments.update', $department->id) }}">
+<form method="POST" action="{{ route('master.departments.update', $department->id) }}" enctype="multipart/form-data">
   @csrf
   @method('PUT')
   <div class="card p-6 mb-6">
@@ -69,8 +69,19 @@
       </div>
 
       <div class="md:col-span-2" id="letterhead_field">
-        <label class="form-label">Kop Surat (Teks/Baris Kop)</label>
-        <textarea name="letterhead" class="form-input" rows="4" placeholder="PEMERINTAH KOTA KENDARI&#10;DINAS KOMUNIKASI DAN INFORMATIKA&#10;Jalan ...">{{ old('letterhead', $department->letterhead) }}</textarea>
+        <label class="form-label font-bold text-slate-700">Unggah Gambar Kop Surat (PNG/JPG)</label>
+        @if($department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
+            <div class="mb-3">
+                <p class="text-xs text-slate-500 mb-1">Kop Saat Ini:</p>
+                <img src="{{ asset('storage/' . $department->letterhead) }}" class="max-h-24 border rounded p-1">
+            </div>
+        @else
+            <div class="mb-3 p-3 bg-amber-50 border border-amber-100 rounded text-amber-700 text-xs italic">
+                Peringatan: Kop Surat berupa teks lama akan digantikan jika Anda mengunggah file gambar baru.
+            </div>
+        @endif
+        <input type="file" name="letterhead" class="form-input" accept="image/*">
+        <p class="mt-1 text-[10px] text-slate-500 italic">Disarankan ukuran 1000x200 pixel. Gunakan format PNG transparan jika memungkinkan.</p>
         @error('letterhead') <p class="form-error">{{ $message }}</p> @enderror
       </div>
     </div>

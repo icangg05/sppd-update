@@ -112,7 +112,7 @@ class DepartmentController extends Controller
       'type'      => 'required|in:' . implode(',', array_column(DepartmentType::cases(), 'value')),
       'parent_id' => 'nullable|exists:departments,id',
       'head_id'   => 'nullable|exists:users,id',
-      'letterhead'=> 'nullable|string',
+      'letterhead'=> 'nullable',
     ]);
 
     // Auto level calculation
@@ -125,6 +125,10 @@ class DepartmentController extends Controller
         }
     } else {
         $validated['level'] = 1;
+    }
+
+    if ($request->hasFile('letterhead')) {
+        $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
     }
 
     Department::create($validated);
@@ -183,7 +187,7 @@ class DepartmentController extends Controller
       'type'      => 'required|in:' . implode(',', array_column(DepartmentType::cases(), 'value')),
       'parent_id' => 'nullable|exists:departments,id',
       'head_id'   => 'nullable|exists:users,id',
-      'letterhead'=> 'nullable|string',
+      'letterhead'=> 'nullable',
     ]);
 
     // Re-calculate level on update
@@ -192,6 +196,14 @@ class DepartmentController extends Controller
         $validated['level'] = ($parent->level ?? 1) + 1;
     } else {
         $validated['level'] = 1;
+    }
+
+    if ($request->hasFile('letterhead')) {
+        // Delete old image if exists and it looks like a path
+        if ($department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead);
+        }
+        $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
     }
 
     $department->update($validated);

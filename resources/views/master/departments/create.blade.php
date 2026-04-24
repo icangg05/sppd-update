@@ -11,7 +11,7 @@
   <a href="{{ route('master.departments.index') }}" class="btn-secondary">← Kembali</a>
 </div>
 
-<form method="POST" action="{{ route('master.departments.store') }}">
+<form method="POST" action="{{ route('master.departments.store') }}" enctype="multipart/form-data">
   @csrf
   <div class="card p-6 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -67,8 +67,9 @@
 
       @if(auth()->user()->hasRole('super_admin'))
       <div class="md:col-span-2" id="letterhead_field">
-        <label class="form-label">Kop Surat (Teks/Baris Kop)</label>
-        <textarea name="letterhead" class="form-input" rows="3" placeholder="PEMERINTAH KOTA KENDARI&#10;DINAS KOMUNIKASI DAN INFORMATIKA&#10;Jalan ...">{{ old('letterhead') }}</textarea>
+        <label class="form-label font-bold text-slate-700">Unggah Gambar Kop Surat (PNG/JPG)</label>
+        <input type="file" name="letterhead" class="form-input" accept="image/*">
+        <p class="mt-1 text-[10px] text-slate-500 italic">Disarankan ukuran 1000x200 pixel. Hanya untuk OPD/Instansi Utama.</p>
         @error('letterhead') <p class="form-error">{{ $message }}</p> @enderror
       </div>
       @endif

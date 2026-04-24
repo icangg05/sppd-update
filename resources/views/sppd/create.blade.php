@@ -162,13 +162,24 @@
 						);
 					}
 
+					// Cek Kop Surat
+					if (!data.has_header) {
+						isComplete = false;
+						$errorMsg.removeClass('hidden');
+						$('#error-text').html(
+							`<strong>Kop Surat Belum Ada:</strong> Unit kerja <span class="font-bold underline">${data.user.department}</span> belum mengunggah Kop Surat. Harap hubungi Admin OPD Anda untuk melengkapi Kop Surat di menu Unit Kerja.`
+						);
+					}
+
 					if (isComplete && data.steps.length > 0) {
 						$btnLanjut.prop('disabled', false).removeClass('opacity-50 scale-95');
 						$errorMsg.addClass('hidden');
 					} else {
 						$btnLanjut.prop('disabled', true).addClass('opacity-50 scale-95');
 						$errorMsg.removeClass('hidden');
-						if (data.steps.length === 0) {
+						if (!data.has_header) {
+							// Already set above
+						} else if (data.steps.length === 0) {
 							$('#error-text').text('Aturan alur belum dibuat untuk kriteria pemohon/tujuan ini.');
 						} else {
 							$('#error-text').text(

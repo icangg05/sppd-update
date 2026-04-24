@@ -13,11 +13,11 @@ class PositionAndRankSeeder extends Seeder
     // ── Golongan / Pangkat ──
     $ranks = [
       ['name' => 'Juru Muda', 'group' => 'I/a'],
-      ['name' => 'Juru Muda Tingkat 1', 'group' => 'I/b'],
+      ['name' => 'Juru Muda Tingkat I', 'group' => 'I/b'],
       ['name' => 'Juru', 'group' => 'I/c'],
-      ['name' => 'Juru Tingkat 1', 'group' => 'I/d'],
+      ['name' => 'Juru Tingkat I', 'group' => 'I/d'],
       ['name' => 'Pengatur Muda', 'group' => 'II/a'],
-      ['name' => 'Pengatur Muda Tingkat 1', 'group' => 'II/b'],
+      ['name' => 'Pengatur Muda Tingkat I', 'group' => 'II/b'],
       ['name' => 'Pengatur', 'group' => 'II/c'],
       ['name' => 'Pengatur Tingkat 1', 'group' => 'II/d'],
       ['name' => 'Penata Muda', 'group' => 'III/a'],

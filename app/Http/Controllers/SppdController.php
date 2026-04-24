@@ -165,7 +165,7 @@ class SppdController extends Controller
       DB::transaction(function () use ($validated, $request, &$sppd) {
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('sppd/attachments', 'public');
+          $attachmentPath = $request->file('attachment')->store('sppd/attachments', 'public');
         }
 
         $sppd = SppdRequest::create([
@@ -226,67 +226,12 @@ class SppdController extends Controller
           throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut. Silakan hubungi admin untuk melengkapi aturan Workflow SPPD.');
         }
 
-        // ------------------------------------------------------------------
-        // GENERATE PDF (SPT & SPPD)
-        // ------------------------------------------------------------------
-        $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-        
-        // Ambil data pejabat penandatangan (Step terakhir di workflow)
-        $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
-        
-        // Hitung durasi
-        $start = \Carbon\Carbon::parse($sppd->start_date);
-        $end = \Carbon\Carbon::parse($sppd->end_date);
-        $duration = $start->diffInDays($end) + 1;
-
-        // Data khusus untuk PDF
-        $pdfData = [
-            'approver_name' => $lastApproval->approver->name ?? '................................',
-            'approver_role' => $lastApproval->role_label ?? 'Kepala Dinas',
-            'approver_nip' => $lastApproval->approver->nip ?? '................................',
-            'approver_rank' => $lastApproval->approver->rank->name ?? '',
-            'duration' => $duration
-        ];
-
-        // 1. Generate SPT (Kolektif)
-        $sptFileName = 'SPT-' . Str::slug($sppd->document_number ?: $sppd->id) . '-' . time() . '.pdf';
-        $sptPath = 'sppd/documents/' . $sptFileName;
-        $sptPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', [
-            'sppd' => $sppd,
-            'pdfData' => $pdfData
-        ])->setPaper('a4', 'portrait');
-        \Illuminate\Support\Facades\Storage::disk('public')->put($sptPath, $sptPdf->output());
-        $sppd->update(['spt_path' => $sptPath]);
-
-        // 2. Generate SPPD (Individu)
-        // a. Untuk Pelaksana Utama
-        $sppdMainFileName = 'SPPD-UTAMA-' . Str::slug($sppd->user->name) . '-' . time() . '.pdf';
-        $sppdMainPath = 'sppd/documents/' . $sppdMainFileName;
-        $sppdPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
-            'sppd' => $sppd,
-            'user' => $sppd->user,
-            'is_main' => true,
-            'pdfData' => $pdfData
-        ])->setPaper('f4', 'landscape');
-        \Illuminate\Support\Facades\Storage::disk('public')->put($sppdMainPath, $sppdPdf->output());
-        $sppd->update(['sppd_path' => $sppdMainPath]);
-
-        // b. Untuk Pengikut
-        foreach ($sppd->followers as $follower) {
-            $fFileName = 'SPPD-PENGIKUT-' . Str::slug($follower->user->name) . '-' . time() . '.pdf';
-            $fPath = 'sppd/documents/' . $fFileName;
-            $fPdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
-                'sppd' => $sppd,
-                'user' => $follower->user,
-                'is_main' => false,
-                'pdfData' => $pdfData
-            ])->setPaper('f4', 'landscape');
-            \Illuminate\Support\Facades\Storage::disk('public')->put($fPath, $fPdf->output());
-            $follower->update(['sppd_path' => $fPath]);
-        }
+        // PDF generation is now handled on-the-fly via streaming to save storage.
+        // Files will only be saved permanently when the document is officially signed.
       });
 
-      return redirect()->route('sppd.index')->with('success', 'SPPD berhasil dibuat dan diajukan. Dokumen SPT & SPPD telah di-generate.');
+      return redirect()->route('sppd.show', $sppd->id)
+        ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan pratinjau dokumen SPT & SPPD pada halaman detail.');
     } catch (\Exception $e) {
       return back()->withInput()->with('error', $e->getMessage());
     }
@@ -388,9 +333,77 @@ class SppdController extends Controller
         'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
         'role' => $user->getRoleNames()->first() ?? 'Tanpa Role',
       ],
+      'has_header' => (bool) ($user->department?->letterhead && \Illuminate\Support\Str::contains($user->department->letterhead, '/')),
       'steps' => $steps
     ]);
   }
+  public function streamSpt(SppdRequest $sppd)
+  {
+    $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
+    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
+
+    $approver = $lastApproval->approver;
+    $approverRole = $approver->position_name
+      ?? $approver->position?->name
+      ?? $lastApproval->role_label
+      ?? 'Kepala Dinas';
+
+    $pdfData = [
+      'approver_name'  => $approver->name ?? '................................',
+      'approver_role'  => $approverRole,
+      'approver_nip'   => $approver->nip ?? null,
+      'approver_rank'  => $approver->rank->name ?? '',
+      'approver_group' => $approver->rank->group ?? '',
+      'is_walikota'    => $approver && $approver->hasRole('walikota'),
+      'duration'       => $duration
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', compact('sppd', 'pdfData'))
+      ->setPaper('f4', 'portrait')
+      ->stream('SPT-' . \Illuminate\Support\Str::slug($sppd->document_number ?: $sppd->id) . '.pdf');
+  }
+
+  public function streamSppd(SppdRequest $sppd, User $user = null)
+  {
+    $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
+    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
+
+    // Jika user_id dikirim lewat request (untuk pengikut)
+    if (request()->has('user_id')) {
+      $targetUser = User::findOrFail(request()->user_id);
+    } else {
+      $targetUser = ($user && $user->id) ? $user : $sppd->user;
+    }
+
+    $isMain = $targetUser->id === $sppd->user_id;
+
+    $approver = $lastApproval->approver;
+    $approverRole = $approver->position_name
+      ?? $approver->position?->name
+      ?? $lastApproval->role_label
+      ?? 'Kepala Dinas';
+
+    $pdfData = [
+      'approver_name' => $approver->name ?? '................................',
+      'approver_role' => $approverRole,
+      'approver_nip' => $approver->nip ?? null,
+      'approver_rank' => $approver->rank->name ?? '',
+      'approver_group' => $approver->rank->group ?? '',
+      'is_walikota' => $approver && $approver->hasRole('walikota'),
+      'duration' => $duration
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
+      'sppd' => $sppd,
+      'user' => $targetUser,
+      'is_main' => $isMain,
+      'pdfData' => $pdfData
+    ])->setPaper([0, 0, 935.43, 684.45])
+      ->stream('SPPD-' . \Illuminate\Support\Str::slug($targetUser->name) . '.pdf');
+  }
+
   public function destroy(SppdRequest $sppd)
   {
     $isOwner = Auth::id() === $sppd->creator_id || Auth::id() === $sppd->user_id;

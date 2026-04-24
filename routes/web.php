@@ -32,6 +32,8 @@ Route::middleware('auth')->group(function () {
   Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
   Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
   Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
+  Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');
+  Route::get('/sppd/{sppd}/stream/sppd', [SppdController::class, 'streamSppd'])->name('sppd.stream.sppd');
 
   // Workflows Preview
   Route::get('/workflows/preview', [SppdWorkflowController::class, 'preview'])->name('workflows.preview');
