@@ -35,6 +35,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>{{ config('app.name') }}</title>
 	<style>
 		@page {
 			margin: 0.7cm 1cm;
@@ -108,7 +109,7 @@
 		.signature-section {
 			width: 100%;
 			margin-top: 20px;
-			font-size: 7pt
+			font-size: 7pt;
 		}
 
 		.sig-box {
@@ -128,21 +129,21 @@
 		}
 
 		.back-table td {
-			border: 2px solid #000;
+			border: 1px solid #000;
 			width: 50%;
 			padding: 1px;
 			vertical-align: top;
 			font-size: 7pt;
 		}
 
-		.bline {
-			border: 1px solid red;
-		}
-
 		.table-right tr,
 		.table-right td {
 			border: none;
-			padding: 0 0;
+			padding: 0;
+		}
+
+		.bline {
+			border: 1px solid red !important;
 		}
 	</style>
 </head>
@@ -178,10 +179,10 @@
 						<td style="padding: 0 0;">:</td>
 						<td style="padding: 0 0;"></td>
 					</tr>
-					<tr class="bline">
-						<td style="padding: 0 0; width: 60px;">Lembar Ke</td>
-						<td style="padding: 0 0;">:</td>
-						<td style="padding: 0 0;">I, II, III, IV</td>
+					<tr>
+						<td style="padding: 0; width: 60px;">Lembar Ke</td>
+						<td style="padding: 0;">:</td>
+						<td style="padding: 0;">I, II, III, IV</td>
 					</tr>
 					<tr>
 						<td style="padding: 0 0; width: 60px;">Kode No</td>
@@ -314,10 +315,10 @@
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 35px 0;" colspan="2"></td>
+							<td style="padding: 30px 0;" colspan="2"></td>
 						</tr>
 						<tr>
-							<td style="padding: 3px 0; font-weight: bold; text-decoration: underline;"
+							<td style="padding: 3px 0 0 0; font-weight: bold; text-decoration: underline;"
 								colspan="2">
 								{{ $pdfData['approver_name'] }}
 							</td>
@@ -406,7 +407,7 @@
 							<tr>
 								<td style="width: 14px;"></td>
 								<td colspan="2">
-									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 								</td>
 							</tr>
 						</table>
@@ -436,7 +437,7 @@
 							<tr>
 								<td style="width: 14px;"></td>
 								<td colspan="2">
-									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 								</td>
 							</tr>
 						</table>
@@ -466,7 +467,7 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td colspan="2">
-										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 									</td>
 								</tr>
 							</table>
@@ -496,7 +497,7 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td colspan="2">
-										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 									</td>
 								</tr>
 							</table>
@@ -624,7 +625,7 @@
 		<div class="clear"></div>
 	</div>
 
-	<footer style="font-size: 8pt;">
+	<footer style="font-size: 7pt;">
 		<div style="position: fixed; bottom: 5px; width: 100%;">
 			<div style="width: 100%; border-top: 1px solid black; padding: 0 0 5px 0;"></div>
 

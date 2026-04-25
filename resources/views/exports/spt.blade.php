@@ -3,6 +3,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>{{ 'SPT - ' . config('app.name') }}</title>
 	<style>
 		@page {
 			margin: 1cm 2.5cm;
@@ -38,20 +39,19 @@
 		}
 
 		.subtitle {
-			text-align: center;
-			margin-bottom: 30px;
+			text-align: left;
+			margin-left: 179px;
 		}
 
 		.content-table {
 			width: 100%;
-			border-collapse: collapse;
-			margin-top: 20px;
+			margin-top: 35px;
 			vertical-align: top;
 		}
 
 		.content-table td {
 			vertical-align: top;
-			padding: 5px 0;
+			padding: 0;
 		}
 
 		.label {
@@ -107,7 +107,7 @@
 		}
 
 		.bline {
-			border: 1px solid red;
+			border: 1px solid red !important;
 		}
 	</style>
 </head>
@@ -135,7 +135,7 @@
 	</div>
 
 	<div class="title">SURAT PERINTAH TUGAS</div>
-	<div class="subtitle" style="margin-right: 240px">No : {{ $sppd->document_number ?? '' }}</div>
+	<div class="subtitle">No : {{ $sppd->document_number ?? '' }}</div>
 
 	<table class="content-table">
 		<tr>
@@ -146,7 +146,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td colspan="3" style="text-align: center; padding: 20px 0; font-weight: bold; font-size: 14pt">MEMERINTAHKAN</td>
+			<td colspan="3" style="text-align: center; padding: 15px 0; font-weight: bold; font-size: 14pt">MEMERINTAHKAN</td>
 		</tr>
 		<tr>
 			<td class="label">Kepada</td>
@@ -223,7 +223,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td colspan="3" style="text-align: justify;">
+			<td colspan="3" style="text-align: justify; padding-top: 4px;">
 				<p>
 					Demikian Surat Tugas ini diberikan kepada yang bersangkutan untuk dilaksanakan dengan penuh rasa tanggung jawab.
 				</p>
