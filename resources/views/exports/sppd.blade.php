@@ -172,7 +172,7 @@
 				@endif
 			</div>
 
-			<div style="float: right; width: 150px; font-size: 7pt;">
+			<div style="float: right; width: 150px; font-size: 7pt; margin-top: 10px;">
 				<table style="width: 100%;">
 					<tr>
 						<td style="padding: 0 0; width: 60px;">Lampiran</td>
@@ -217,8 +217,8 @@
 						a. &nbsp;Pangkat dan Golongan ruang gaji<br>
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;menurut PP No.30 Tahun 2015
 					</td>
-					<td style="width: 54%; border-bottom: none;">a. &nbsp;{{ $user->rank->name ?? '-' }} -
-						{{ $user->rank->group ?? '-' }}
+					<td style="width: 54%; border-bottom: none;">
+						a. &nbsp;{{ $user->rank ? $user->rank->name . ' - ' . $user->rank->group : '-' }}
 					</td>
 				</tr>
 				<tr>
@@ -315,7 +315,13 @@
 							</td>
 						</tr>
 						<tr>
-							<td style="padding: 30px 0;" colspan="2"></td>
+							<td style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '30px' }} 0;" colspan="2">
+								@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+									<div style="margin-top: 2px;">
+										<img src="{{ $pdfData['qr_image'] }}" style="width: 60px; height: 60px;">
+									</div>
+								@endif
+							</td>
 						</tr>
 						<tr>
 							<td style="padding: 3px 0 0 0; font-weight: bold; text-decoration: underline;"
@@ -325,12 +331,12 @@
 						</tr>
 						@if ($pdfData['approver_nip'])
 							<tr>
-								<td style="padding: 0.5px 0;" colspan="2">
+								<td style="padding: 0;" colspan="2">
 									{{ $pdfData['approver_rank'] }}, Gol. {{ $pdfData['approver_group'] }}
 								</td>
 							</tr>
 							<tr>
-								<td style="padding: 0.5px 0;" colspan="2">
+								<td style="padding: 0;" colspan="2">
 									NIP. {{ $pdfData['approver_nip'] }}
 								</td>
 							</tr>
@@ -365,7 +371,11 @@
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: 25px 0;"></td>
+								<td colspan="2" style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '25px' }} 0;">
+									@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+										<img src="{{ $pdfData['qr_image'] }}" style="width: 50px; height: 50px;">
+									@endif
+								</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
@@ -383,81 +393,30 @@
 					</td>
 				</tr>
 
-				<!-- Baris II -->
-				<tr>
-					<td style="height: 100px; position: relative;">
-						<table class="table-right">
-							<tr>
-								<td style="width: 14px;">II.</td>
-								<td style="width: 90px;">Tiba Di</td>
-								<td style="text-transform: uppercase;">
-									: {{ $sppd->destinations->first()->regency->name ?? '' }}
-								</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td>Pada Tanggal</td>
-								<td>: {{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td>Jabatan</td>
-								<td>:</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2">
-									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
-								</td>
-							</tr>
-						</table>
-					</td>
-					<td style="height: 100px; position: relative;">
-						<table class="table-right">
-							<tr>
-								<td style="width: 14px;"></td>
-								<td style="width: 90px;">Berangkat dari</td>
-								<td style="text-transform: uppercase;">: {{ $sppd->destinations->first()->regency->name ?? '' }}</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td>Ke</td>
-								<td>:</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td>Pada Tanggal</td>
-								<td>:</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td>Jabatan</td>
-								<td>:</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2">
-									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-
-				<!-- Baris III, IV, V -->
-				@for ($i = 3; $i <= 5; $i++)
+				<!-- Baris II - V (Dinamis berdasarkan destinasi, maks 4 tujuan) -->
+				@for ($i = 2; $i <= 5; $i++)
+					@php
+						$destIndex = $i - 2; // index 0 = destinasi pertama (untuk baris II)
+						$dest = $sppd->destinations->get($destIndex);
+						$nextDest = $sppd->destinations->get($destIndex + 1);
+					@endphp
 					<tr>
 						<td style="height: 100px; position: relative;">
 							<table class="table-right">
 								<tr>
 									<td style="width: 14px;">{{ $toRoman($i) }}.</td>
 									<td style="width: 90px;">Tiba Di</td>
-									<td style="text-transform: uppercase;">:</td>
+									<td style="text-transform: uppercase;">
+										: {{ $dest->regency->name ?? '' }}
+									</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Pada Tanggal</td>
-									<td>:</td>
+									<td>: @if ($dest && $i == 2)
+											{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}
+										@endif
+									</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
@@ -477,12 +436,12 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td style="width: 90px;">Berangkat dari</td>
-									<td style="text-transform: uppercase;">:</td>
+									<td style="text-transform: uppercase;">: {{ $dest->regency->name ?? '' }}</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Ke</td>
-									<td>:</td>
+									<td style="text-transform: uppercase;">: {{ $nextDest->regency->name ?? '' }}</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>

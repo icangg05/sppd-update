@@ -182,8 +182,12 @@
 								</div>
 							</div>
 						</div>
-						<button type="button" id="btn-add-dest"
-							class="text-xs text-primary-600 mt-3 font-medium hover:underline">+ Tambah Lokasi Tujuan Lainnya</button>
+						<div class="flex items-center gap-3 mt-3">
+							<button type="button" id="btn-add-dest"
+								class="text-xs text-primary-600 font-medium hover:underline">+ Tambah Lokasi Tujuan Lainnya</button>
+							<span id="dest-counter" class="text-xs text-slate-400">(<span id="dest-count">1</span>/4 tujuan)</span>
+							<span id="dest-max-info" class="hidden text-xs text-amber-600 font-medium">⚠ Maksimal 4 tujuan tercapai</span>
+						</div>
 					</div>
 				@endif
 			</div>
@@ -290,18 +294,51 @@
 				loadRegencies($(this));
 			});
 
+			const MAX_DEST = 4;
+
+			function updateDestCounter() {
+				const count = $('#dest-wrap .dest-row').length;
+				$('#dest-count').text(count);
+				if (count >= MAX_DEST) {
+					$('#btn-add-dest').addClass('hidden');
+					$('#dest-max-info').removeClass('hidden');
+				} else {
+					$('#btn-add-dest').removeClass('hidden');
+					$('#dest-max-info').addClass('hidden');
+				}
+			}
+
+			function reindexDestinations() {
+				$('#dest-wrap .dest-row').each(function(idx) {
+					$(this).find('[name]').each(function() {
+						const name = $(this).attr('name');
+						$(this).attr('name', name.replace(/destinations\[\d+\]/, `destinations[${idx}]`));
+					});
+				});
+			}
+
 			$('#btn-add-dest').on('click', function() {
 				addDest();
 			});
 
+			// Delegasi event hapus agar counter ikut update
+			$(document).on('click', '.btn-remove-dest', function() {
+				$(this).closest('.dest-row').remove();
+				reindexDestinations();
+				updateDestCounter();
+			});
+
 			function addDest() {
+				const count = $('#dest-wrap .dest-row').length;
+				if (count >= MAX_DEST) return; // Sudah maksimal
+
 				const provColClass = domain === 'lddp' ? 'hidden' : '';
 				const gridClass = domain === 'lddp' ? 'md:grid-cols-2' : 'md:grid-cols-3';
 
 				const html = `
                     <div class="dest-row grid grid-cols-1 ${gridClass} gap-2 p-3 bg-slate-50 rounded-lg relative mt-2">
                         <div class="${provColClass}">
-                            <select name="destinations[${di}][province_id]" class="form-select prov-sel" required>
+                            <select name="destinations[${count}][province_id]" class="form-select prov-sel" required>
                                 <option value="">— Provinsi —</option>
                                 @foreach ($provinces as $p)
                                     @if ($domain === 'ldlp' && $p->name === 'Sulawesi Tenggara') @continue @endif
@@ -310,13 +347,13 @@
                             </select>
                         </div>
                         <div>
-                            <select name="destinations[${di}][regency_id]" class="form-select reg-sel" required>
+                            <select name="destinations[${count}][regency_id]" class="form-select reg-sel" required>
                                 <option value="">— Kabupaten/Kota —</option>
                             </select>
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" name="destinations[${di}][address]" class="form-input flex-1" placeholder="Tempat Tujuan / Alamat" required>
-                            <button type="button" onclick="$(this).closest('.dest-row').remove()" class="text-rose-500 hover:text-rose-700">
+                            <input type="text" name="destinations[${count}][address]" class="form-input flex-1" placeholder="Tempat Tujuan / Alamat" required>
+                            <button type="button" class="btn-remove-dest text-rose-500 hover:text-rose-700">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -329,7 +366,7 @@
 					$pSel.val(seSultraId);
 					loadRegencies($pSel);
 				}
-				di++;
+				updateDestCounter();
 			}
 
 			function loadRegencies($provElement) {

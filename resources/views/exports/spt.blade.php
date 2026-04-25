@@ -193,7 +193,8 @@
 							<td style="padding: 0 0;"></td>
 							<td style="padding: 0 0;">Pangkat/Gol</td>
 							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $follower->user->rank->name ?? '-' }}</td>
+							<td style="padding: 0 0;">{{ $follower->user->rank->name ?? '-' }}, Gol.
+								{{ $follower->user->rank->group ?? '-' }}</td>
 						</tr>
 						<tr>
 							<td style="padding: 0 0;"></td>
@@ -238,10 +239,14 @@
 			<div style="margin-top: 10px; font-weight: bold; text-transform: uppercase;">
 				{{ $pdfData['approver_role'] ?? 'Walikota Kendari' }}
 			</div>
-			<div style="height: 25px;">
-				{{-- QR Code atau Tanda Tangan --}}
-			</div>
-			<p style="margin-top: 60px; line-height: 1.8;">
+			@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+				<div style="margin-top: 8px;">
+					<img src="{{ $pdfData['qr_image'] }}" style="width: 80px; height: 80px;">
+				</div>
+			@else
+				<div style="height: 70px;"></div>
+			@endif
+			<p style="margin-top: 5px; line-height: 1.8;">
 				<span style="font-weight: bold; text-decoration: underline;">
 					{{ $pdfData['approver_name'] }}
 				</span>
@@ -268,7 +273,7 @@
 		</ol>
 	</div>
 
-	<footer style="position: absolute; bottom: -2; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
+	<footer style="position: absolute; bottom: -10px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
 		<div style="font-style: italic; margin-bottom: 10px;">Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama
 			Pelaksanaan Tugas</div>
 		<div style="border-top: 1px solid #000; margin: 5px 0"></div>

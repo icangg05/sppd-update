@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ApprovalStatus;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
+use App\Helpers\QrSimulator;
 use App\Models\Budget;
 use App\Models\Province;
 use App\Models\SppdApproval;
@@ -356,8 +357,16 @@ class SppdController extends Controller
       'approver_rank'  => $approver->rank->name ?? '',
       'approver_group' => $approver->rank->group ?? '',
       'is_walikota'    => $approver && $approver->hasRole('walikota'),
+      'is_approved'    => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
+      'qr_image'       => null,
       'duration'       => $duration
     ];
+
+    // Generate QR code simulasi jika sudah disetujui
+    if ($pdfData['is_approved']) {
+      $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
+      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 150);
+    }
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', compact('sppd', 'pdfData'))
       ->setPaper('f4', 'portrait')
@@ -367,7 +376,6 @@ class SppdController extends Controller
   public function streamSppd(SppdRequest $sppd, User $user = null)
   {
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
     $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
 
     // Jika user_id dikirim lewat request (untuk pengikut)
@@ -379,21 +387,45 @@ class SppdController extends Controller
 
     $isMain = $targetUser->id === $sppd->user_id;
 
-    $approver = $lastApproval->approver;
-    $approverRole = $approver->position_name
-      ?? $approver->position?->name
-      ?? $lastApproval->role_label
+    // Untuk SPPD: penandatangan adalah pimpinan OPD (bukan Walikota/Sekda/Kepala Daerah).
+    // Ambil approval step terakhir yang BUKAN dari role kepala daerah/sekda/walikota.
+    $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+
+    $opdHeadApproval = $sppd->approvals()
+      ->with('approver.roles')
+      ->reorder('step_order', 'desc')
+      ->get()
+      ->first(function ($approval) use ($cityWideRoles) {
+        return $approval->approver &&
+          !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
+      });
+
+    // Fallback ke step pertama jika semua approver adalah pejabat kota
+    $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
+
+    $approver = $sppdApproval?->approver;
+    $approverRole = $approver?->position_name
+      ?? $approver?->position?->name
+      ?? $sppdApproval?->role_label
       ?? 'Kepala Dinas';
 
     $pdfData = [
-      'approver_name' => $approver->name ?? '................................',
+      'approver_name' => $approver?->name ?? '................................',
       'approver_role' => $approverRole,
-      'approver_nip' => $approver->nip ?? null,
-      'approver_rank' => $approver->rank->name ?? '',
-      'approver_group' => $approver->rank->group ?? '',
-      'is_walikota' => $approver && $approver->hasRole('walikota'),
-      'duration' => $duration
+      'approver_nip'  => $approver?->nip ?? null,
+      'approver_rank' => $approver?->rank?->name ?? '',
+      'approver_group' => $approver?->rank?->group ?? '',
+      'is_walikota'   => false,
+      'is_approved'   => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
+      'qr_image'      => null,
+      'duration'      => $duration
     ];
+
+    // Generate QR code simulasi jika sudah disetujui
+    if ($pdfData['is_approved']) {
+      $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
+      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 150);
+    }
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
       'sppd' => $sppd,
