@@ -97,6 +97,23 @@ class SppdController extends Controller
         ->with('error', 'Alur pengajuan untuk pelaksana ini belum diatur. Harap hubungi Admin.');
     }
 
+    // Cek apakah pelaksana masih dalam perjalanan aktif
+    // (status IN_PROGRESS atau APPROVED dengan end_date belum lewat)
+    $hasActiveTravel = SppdRequest::where('user_id', $pelaksana->id)
+      ->where(function ($q) {
+        $q->where('status', SppdStatus::IN_PROGRESS)
+          ->orWhere(function ($q2) {
+            $q2->where('status', SppdStatus::APPROVED)
+               ->where('end_date', '>=', today());
+          });
+      })
+      ->exists();
+
+    if ($hasActiveTravel) {
+      return redirect()->route('sppd.create')
+        ->with('error', 'Pegawai ' . $pelaksana->name . ' masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan). SPPD baru dapat diajukan setelah tanggal perjalanan selesai.');
+    }
+
     // Cek kelengkapan pejabat
     foreach ($steps as $step) {
       if ($step['status'] !== 'found') {
@@ -123,7 +140,20 @@ class SppdController extends Controller
 
     $provinces = Province::orderBy('name')->get();
 
-    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps'));
+    // Kumpulkan ID user yang sedang dalam perjalanan aktif (untuk disable di pilihan pengikut)
+    $activeFollowerIds = SppdRequest::whereIn('user_id', $users->pluck('id'))
+      ->where(function ($q) {
+        $q->where('status', SppdStatus::IN_PROGRESS)
+          ->orWhere(function ($q2) {
+            $q2->where('status', SppdStatus::APPROVED)
+               ->where('end_date', '>=', today());
+          });
+      })
+      ->pluck('user_id')
+      ->unique()
+      ->toArray();
+
+    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps', 'activeFollowerIds'));
   }
 
   public function store(Request $request)
@@ -161,6 +191,21 @@ class SppdController extends Controller
       'costs.*.unit_cost'    => 'required_with:costs|numeric|min:0',
       'costs.*.quantity'     => 'required_with:costs|integer|min:1',
     ]);
+
+    // Cek aktif perjalanan sebelum menyimpan (double-check server side)
+    $hasActiveTravel = SppdRequest::where('user_id', $validated['user_id'])
+      ->where(function ($q) {
+        $q->where('status', SppdStatus::IN_PROGRESS)
+          ->orWhere(function ($q2) {
+            $q2->where('status', SppdStatus::APPROVED)
+               ->where('end_date', '>=', today());
+          });
+      })
+      ->exists();
+
+    if ($hasActiveTravel) {
+      return back()->withInput()->with('error', 'Pegawai ini masih memiliki SPPD aktif. SPPD baru hanya dapat diajukan setelah tanggal perjalanan sebelumnya selesai.');
+    }
 
     try {
       DB::transaction(function () use ($validated, $request, &$sppd) {
@@ -444,19 +489,11 @@ class SppdController extends Controller
     }
 
     if ($sppd->status !== SppdStatus::DRAFT && $sppd->status !== SppdStatus::IN_PROGRESS) {
-      return back()->with('error', 'SPPD yang sudah diproses tidak dapat dihapus.');
-    }
-
-    // If in progress, check if any approval has been made
-    if ($sppd->status === SppdStatus::IN_PROGRESS) {
-      $hasApproval = $sppd->approvals()->where('status', '!=', ApprovalStatus::PENDING)->exists();
-      if ($hasApproval) {
-        return back()->with('error', 'SPPD tidak dapat dihapus karena sudah ada pejabat yang memberikan persetujuan/penolakan.');
-      }
+      return back()->with('error', 'SPPD yang sudah disetujui penuh atau selesai tidak dapat dihapus.');
     }
 
     $sppd->delete();
 
-    return redirect()->route('sppd.index')->with('success', 'SPPD berhasil dihapus/dibatalkan.');
+    return redirect()->route('sppd.index')->with('success', 'Pengajuan SPPD berhasil dibatalkan dan dihapus.');
   }
 }

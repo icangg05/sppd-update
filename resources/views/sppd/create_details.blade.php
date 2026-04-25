@@ -246,10 +246,17 @@
 				<div class="max-h-48 overflow-y-auto p-3 bg-slate-50 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-2">
 					@foreach ($users as $u)
 						@if ($u->id != $pelaksana->id)
-							<label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-100 p-1 rounded">
+							@php $isActive = in_array($u->id, $activeFollowerIds); @endphp
+							<label class="flex items-center gap-2 text-xs p-1 rounded {{ $isActive ? 'opacity-75 cursor-not-allowed bg-rose-50' : 'cursor-pointer hover:bg-slate-100' }}">
 								<input type="checkbox" name="followers[]" value="{{ $u->id }}"
-									class="rounded border-slate-300 text-primary-600">
-								{{ $u->name }}
+									class="rounded border-slate-300 {{ $isActive ? '' : 'text-primary-600' }}"
+									{{ $isActive ? 'disabled' : '' }}>
+								<span class="{{ $isActive ? 'text-rose-600 font-medium' : '' }}">
+									{{ $u->name }}
+									@if ($isActive)
+										<span class="block text-[10px] text-rose-400 font-normal leading-tight">Sedang perjalanan dinas</span>
+									@endif
+								</span>
 							</label>
 						@endif
 					@endforeach
