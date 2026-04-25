@@ -1,3 +1,35 @@
+@php
+	// Membuat closure untuk mengubah angka menjadi romawi
+	$toRoman = function ($number) {
+	    $map = [
+	        'M' => 1000,
+	        'CM' => 900,
+	        'D' => 500,
+	        'CD' => 400,
+	        'C' => 100,
+	        'XC' => 90,
+	        'L' => 50,
+	        'XL' => 40,
+	        'X' => 10,
+	        'IX' => 9,
+	        'V' => 5,
+	        'IV' => 4,
+	        'I' => 1,
+	    ];
+	    $returnValue = '';
+	    while ($number > 0) {
+	        foreach ($map as $roman => $int) {
+	            if ($number >= $int) {
+	                $number -= $int;
+	                $returnValue .= $roman;
+	                break;
+	            }
+	        }
+	    }
+	    return $returnValue;
+	};
+@endphp
+
 <!DOCTYPE html>
 <html>
 
@@ -27,7 +59,7 @@
 		}
 
 		.right-column {
-			padding-top: 25px;
+			padding-top: 8px;
 			width: 44%;
 			float: right;
 			padding-left: 1%;
@@ -96,16 +128,21 @@
 		}
 
 		.back-table td {
-			border: 1px solid #000;
-			height: 80px;
+			border: 2px solid #000;
 			width: 50%;
-			padding: 4px;
+			padding: 1px;
 			vertical-align: top;
 			font-size: 7pt;
 		}
 
 		.bline {
 			border: 1px solid red;
+		}
+
+		.table-right tr,
+		.table-right td {
+			border: none;
+			padding: 0 0;
 		}
 	</style>
 </head>
@@ -280,7 +317,7 @@
 							<td style="padding: 35px 0;" colspan="2"></td>
 						</tr>
 						<tr>
-							<td style="padding: 3px 0; font-weight: bold; text-transform: uppercase; text-decoration: underline;"
+							<td style="padding: 3px 0; font-weight: bold; text-decoration: underline;"
 								colspan="2">
 								{{ $pdfData['approver_name'] }}
 							</td>
@@ -305,58 +342,308 @@
 		<!-- BACK PAGE (RIGHT COLUMN) -->
 		<div class="right-column">
 			<table class="back-table">
+				<!-- Baris I -->
 				<tr>
 					<td></td>
 					<td>
-						I. Berangkat dari : Kendari<br>
-						Pada Tanggal : {{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d-m-Y') }}<br>
-						KEPALA DINAS<br><br><br>
-						<b>{{ $pdfData['approver_name'] }}</b><br>
-						NIP. {{ $pdfData['approver_nip'] }}
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;">I.</td>
+								<td style="width: 100%;">Berangkat dari <br>(Tempat Kedudukan)</td>
+								<td>: Kendari</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Pada Tanggal</td>
+								<td>: {{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="text-transform: uppercase; padding: 3px 0; font-weight: bold;">
+									{{ $pdfData['approver_role'] }}</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="padding: 25px 0;"></td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
+									{{ $pdfData['approver_name'] }}</td>
+							</tr>
+							@if ($pdfData['approver_nip'])
+								<tr>
+									<td style="width: 14px;"></td>
+									<td colspan="2">
+										NIP. {{ $pdfData['approver_nip'] }}</td>
+								</tr>
+							@endif
+						</table>
+					</td>
+				</tr>
+
+				<!-- Baris II -->
+				<tr>
+					<td style="height: 100px; position: relative;">
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;">II.</td>
+								<td style="width: 90px;">Tiba Di</td>
+								<td style="text-transform: uppercase;">
+									: {{ $sppd->destinations->first()->regency->name ?? '' }}
+								</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Pada Tanggal</td>
+								<td>: {{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Jabatan</td>
+								<td>:</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2">
+									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+								</td>
+							</tr>
+						</table>
+					</td>
+					<td style="height: 100px; position: relative;">
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;"></td>
+								<td style="width: 90px;">Berangkat dari</td>
+								<td style="text-transform: uppercase;">: {{ $sppd->destinations->first()->regency->name ?? '' }}</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Ke</td>
+								<td>:</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Pada Tanggal</td>
+								<td>:</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Jabatan</td>
+								<td>:</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2">
+									<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+
+				<!-- Baris III, IV, V -->
+				@for ($i = 3; $i <= 5; $i++)
+					<tr>
+						<td style="height: 100px; position: relative;">
+							<table class="table-right">
+								<tr>
+									<td style="width: 14px;">{{ $toRoman($i) }}.</td>
+									<td style="width: 90px;">Tiba Di</td>
+									<td style="text-transform: uppercase;">:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td>Pada Tanggal</td>
+									<td>:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td>Jabatan</td>
+									<td>:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td colspan="2">
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+									</td>
+								</tr>
+							</table>
+						</td>
+						<td style="height: 100px; position: relative;">
+							<table class="table-right">
+								<tr>
+									<td style="width: 14px;"></td>
+									<td style="width: 90px;">Berangkat dari</td>
+									<td style="text-transform: uppercase;">:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td>Ke</td>
+									<td>:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td>Pada Tanggal</td>
+									<td>:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td>Jabatan</td>
+									<td>:</td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td colspan="2">
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 11px;"></div>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				@endfor
+
+				<!-- Baris VI -->
+				<tr>
+					<td>
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;">VI.</td>
+								<td style="width: 100%;">Tiba Di <br>(Tempat Kedudukan)</td>
+								<td>: Kendari</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td>Pada Tanggal</td>
+								<td>: {{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="padding: 15px 0 0 0;">
+									Pejabat yang memberi perintah<br>
+									<span style="text-transform: uppercase; font-weight: bold;">
+										{{ $pdfData['approver_role'] }}
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="padding: 25px 0;"></td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
+									{{ $pdfData['approver_name'] }}</td>
+							</tr>
+							@if ($pdfData['approver_nip'])
+								<tr>
+									<td style="width: 14px;"></td>
+									<td colspan="2">
+										NIP. {{ $pdfData['approver_nip'] }}</td>
+								</tr>
+							@endif
+						</table>
+					</td>
+					<td>
+						<table class="table-right">
+							<tr>
+								<td style="width: 100%; text-align: justify;" colspan="2">
+									Telah diperiksa dengan keterangan bahwa perjalanan tersebut di atas telah benar dilakukan atas perintahnya
+									semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
+								</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="padding: 3px 0;">
+									Pejabat yang memberi perintah<br>
+									<span style="text-transform: uppercase; font-weight: bold;">
+										{{ $pdfData['approver_role'] }}
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="padding: 25px 0;"></td>
+							</tr>
+							<tr>
+								<td style="width: 14px;"></td>
+								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
+									{{ $pdfData['approver_name'] }}</td>
+							</tr>
+							@if ($pdfData['approver_nip'])
+								<tr>
+									<td style="width: 14px;"></td>
+									<td colspan="2">
+										NIP. {{ $pdfData['approver_nip'] }}</td>
+								</tr>
+							@endif
+						</table>
+					</td>
+				</tr>
+
+				<!-- Baris VII -->
+				<tr>
+					<td colspan="2">
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;">VII.</td>
+								<td style="width: 100%;">Keterangan Lain-lain</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+
+				<!-- Baris VIII -->
+				<tr>
+					<td colspan="2">
+						<table class="table-right">
+							<tr>
+								<td style="width: 14px;">VIII.</td>
+								<td style="width: 100%;">PERHATIAN</td>
+							</tr>
+						</table>
 					</td>
 				</tr>
 				<tr>
-					<td>
-						II. Tiba di : {{ $sppd->destinations->first()->regency->name ?? '........' }}<br>
-						Pada Tanggal : ....................
-					</td>
-					<td>
-						Berangkat dari : {{ $sppd->destinations->first()->regency->name ?? '........' }}<br>
-						Ke : ....................<br>
-						Pada Tanggal : ....................
-					</td>
-				</tr>
-				<tr>
-					<td>III. Tiba di : ....................</td>
-					<td>Berangkat dari : ....................</td>
-				</tr>
-				<tr>
-					<td>IV. Tiba di : ....................</td>
-					<td>Berangkat dari : ....................</td>
-				</tr>
-				<tr>
-					<td>V. Tiba di : ....................</td>
-					<td>Berangkat dari : ....................</td>
-				</tr>
-				<tr>
-					<td>
-						VI. Tiba di : Kendari<br>
-						Pada Tanggal : {{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d-m-Y') }}<br><br>
-						Pejabat yang memberi perintah<br>
-						KEPALA DINAS<br><br><br>
-						<b>{{ $pdfData['approver_name'] }}</b>
-					</td>
-					<td>
-						Telah diperiksa dengan keterangan bahwa perjalanan tersebut di atas benar dilakukan...<br><br>
-						Pejabat yang memberi perintah<br>
-						KEPALA DINAS<br><br><br>
-						<b>{{ $pdfData['approver_name'] }}</b>
+					<td colspan="2">
+						<table class="table-right">
+							<tr>
+								<td style="width: 100%; text-align: justify;">
+									Pejabat yang berwenang memberi SPPD pegawai yang melakukan
+									Perjalanan Dinas, para
+									pejabat yang mengesahkan tanggal berangkat/tiba, serta bendaharawan bertanggung jawab berdasarkan
+									peraturan-peraturan Keuangan Negara, apabila Negara menderita rugi akibat kesalahan, kelalaian dan kealpaan
+									(Lampiran SK. Menteri Keuangan tanggal 30-4-1974 Nomor B-296/MK/I/1974).</td>
+							</tr>
+						</table>
 					</td>
 				</tr>
 			</table>
 		</div>
 		<div class="clear"></div>
 	</div>
+
+	<footer style="font-size: 8pt;">
+		<div style="position: fixed; bottom: 5px; width: 100%;">
+			<div style="width: 100%; border-top: 1px solid black; padding: 0 0 5px 0;"></div>
+
+			<table style="width: 100%; font-style: italic;">
+				<tr>
+					<td>
+						<div style="width: 100%; float: left;">
+							Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
+						</div>
+					</td>
+					<td>
+						<div style="width: 100%; float: right; text-align: right;">
+							Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</footer>
 </body>
 
 </html>
