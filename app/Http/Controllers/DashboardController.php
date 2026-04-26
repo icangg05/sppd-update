@@ -38,6 +38,13 @@ class DashboardController extends Controller
       ->take(5)
       ->get();
 
-    return view('dashboard', compact('stats', 'recentSppd', 'pendingApprovals'));
+    // Budget Stats for Chart
+    $budgetQuery = \App\Models\Budget::query();
+    if (!$user->hasRole('super_admin')) {
+      $budgetQuery->where('department_id', $user->department_id);
+    }
+    $budgets = $budgetQuery->get();
+
+    return view('dashboard', compact('stats', 'recentSppd', 'pendingApprovals', 'budgets'));
   }
 }

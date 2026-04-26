@@ -29,7 +29,6 @@ class User extends Authenticatable
     'department_id',
     'rank_id',
     'position_id',
-    'position_name',
     'photo',
     'is_active',
   ];

@@ -225,7 +225,7 @@
 					<td style="border-top: none; border-bottom: none;">b. &nbsp;Jabatan / Instansi</td>
 					<td style="border-top: none; border-bottom: none;">
 						b. <span style="text-transform: uppercase">
-							{{ $user->position_name ?? ($user->position->name ?? ($user->roles->first()->name ?? '-')) }}</span>
+							{{ $user->position->name ?? ($user->roles->first()->name ?? '-') }}</span>
 					</td>
 				</tr>
 				<tr>
@@ -249,9 +249,9 @@
 						b. &nbsp;Tempat Tujuan
 					</td>
 					<td>
-						a. &nbsp;{{ $sppd->departure_place ?? 'Kendari' }}<br>
+						a. &nbsp;{{ $sppd->departure_place ?? '-' }}<br>
 						b.&nbsp;@foreach ($sppd->destinations as $dest)
-							{{ $dest->regency->name ?? '' }}@if (!$loop->last)
+							{{ $dest->address ?? '' }}@if (!$loop->last)
 								,
 							@endif
 						@endforeach

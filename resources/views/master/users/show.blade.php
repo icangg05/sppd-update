@@ -27,7 +27,7 @@
         {{ strtoupper(substr($user->name, 0, 1)) }}
       </div>
       <h3 class="text-xl font-bold text-slate-900 mb-1">{{ $user->name }}</h3>
-      <p class="text-slate-500 mb-3">{{ $user->position_name ?? ($user->position?->name ?? 'Pegawai') }}</p>
+      <p class="text-slate-500 mb-3">{{ $user->position?->name ?? 'Pegawai' }}</p>
       
       <div class="w-full pt-4 border-t border-slate-100 flex flex-col gap-2">
         @if ($user->is_active)

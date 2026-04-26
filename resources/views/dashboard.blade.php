@@ -67,6 +67,28 @@
   </div>
 </div>
 
+{{-- Budget Chart --}}
+<div class="grid grid-cols-1 gap-6 mb-6">
+  <div class="card p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-slate-900">Realisasi Anggaran Per Mata Anggaran</h3>
+      <div class="flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 bg-slate-200 rounded-sm"></span>
+          <span class="text-slate-500">Pagu</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 bg-primary-500 rounded-sm"></span>
+          <span class="text-slate-500">Realisasi</span>
+        </div>
+      </div>
+    </div>
+    <div class="h-[300px] w-full">
+      <canvas id="budgetChart"></canvas>
+    </div>
+  </div>
+</div>
+
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
   {{-- Recent SPPD --}}
   <div class="xl:col-span-2 table-container">
@@ -131,4 +153,86 @@
     </div>
   </div>
 </div>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('budgetChart');
+    if (!ctx) return;
+
+    const budgetData = @json($budgets);
+    
+    // Format data for chart
+    const labels = budgetData.map(b => b.name);
+    const paguData = budgetData.map(b => b.total_amount);
+    const realizationData = budgetData.map(b => b.realization);
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Realisasi',
+            data: realizationData,
+            backgroundColor: '#0ea5e9', // primary-500
+            borderRadius: 4,
+            barPercentage: 0.6,
+          },
+          {
+            label: 'Pagu',
+            data: paguData,
+            backgroundColor: '#e2e8f0', // slate-200
+            borderRadius: 4,
+            barPercentage: 0.6,
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y', // Horizontal bar chart
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.x !== null) {
+                  label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.x);
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                if (value >= 1000000) return (value / 1000000) + ' Jt';
+                return value;
+              }
+            },
+            grid: {
+              display: false
+            }
+          },
+          y: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+@endpush
 @endsection

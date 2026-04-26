@@ -160,24 +160,26 @@
 						<td style="padding: 0 0; width: 10px">:</td>
 						<td style="padding: 0 0;">{{ $sppd->user->name }}</td>
 					</tr>
-					<tr>
-						<td style="padding: 0 0;"></td>
-						<td style="padding: 0 0;">Pangkat/Golongan</td>
-						<td style="padding: 0 0;">:</td>
-						<td style="padding: 0 0;">{{ $sppd->user->rank->name ?? '-' }}, Gol. {{ $sppd->user->rank->group ?? '-' }}</td>
-					</tr>
-					<tr>
-						<td style="padding: 0 0;"></td>
-						<td style="padding: 0 0;">NIP</td>
-						<td style="padding: 0 0;">:</td>
-						<td style="padding: 0 0;">{{ $sppd->user->nip ?? '-' }}</td>
-					</tr>
+					@if ($sppd->user->nip)
+						<tr>
+							<td style="padding: 0 0;"></td>
+							<td style="padding: 0 0;">Pangkat/Golongan</td>
+							<td style="padding: 0 0;">:</td>
+							<td style="padding: 0 0;">{{ $sppd->user->rank->name ?? '-' }}, Gol. {{ $sppd->user->rank->group ?? '-' }}</td>
+						</tr>
+						<tr>
+							<td style="padding: 0 0;"></td>
+							<td style="padding: 0 0;">NIP</td>
+							<td style="padding: 0 0;">:</td>
+							<td style="padding: 0 0;">{{ $sppd->user->nip ?? '-' }}</td>
+						</tr>
+					@endif
 					<tr>
 						<td style="padding: 0 0;"></td>
 						<td style="padding: 0 0;">Jabatan</td>
 						<td style="padding: 0 0;">:</td>
 						<td style="padding: 0 0; text-transform: uppercase;">
-							{{ $sppd->user->position_name ?? ($sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-')) }}
+							{{ $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-') }}
 						</td>
 					</tr>
 
@@ -189,25 +191,27 @@
 							<td style="padding: 0 0;">:</td>
 							<td style="padding: 0 0;">{{ $follower->user->name }}</td>
 						</tr>
-						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">Pangkat/Gol</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $follower->user->rank->name ?? '-' }}, Gol.
-								{{ $follower->user->rank->group ?? '-' }}</td>
-						</tr>
-						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">NIP</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $follower->user->nip ?? '-' }}</td>
-						</tr>
+						@if ($follower->user->nip)
+							<tr>
+								<td style="padding: 0 0;"></td>
+								<td style="padding: 0 0;">Pangkat/Gol</td>
+								<td style="padding: 0 0;">:</td>
+								<td style="padding: 0 0;">{{ $follower->user->rank->name ?? '-' }}, Gol.
+									{{ $follower->user->rank->group ?? '-' }}</td>
+							</tr>
+							<tr>
+								<td style="padding: 0 0;"></td>
+								<td style="padding: 0 0;">NIP</td>
+								<td style="padding: 0 0;">:</td>
+								<td style="padding: 0 0;">{{ $follower->user->nip ?? '-' }}</td>
+							</tr>
+						@endif
 						<tr>
 							<td style="padding: 0 0;"></td>
 							<td style="padding: 0 0;">Jabatan</td>
 							<td style="padding: 0 0;">:</td>
 							<td style="padding: 0 0; text-transform: uppercase;">
-								{{ $follower->user->position_name ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')) }}
+								{{ $follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-') }}
 							</td>
 						</tr>
 					@endforeach

@@ -23,6 +23,14 @@
 					</button>
 				</form>
 			@endif
+			<a href="{{ route('sppd.next', $sppd) }}"
+				class="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition-colors flex items-center gap-2">
+				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round"
+						d="M13 5l7 7m0 0l-7 7m7-7H3" />
+				</svg>
+				Portal Selanjutnya
+			</a>
 			<span class="badge-{{ $sppd->status->value }} text-sm px-3 py-1">{{ $sppd->status->label() }}</span>
 			<a href="{{ route('sppd.index') }}" class="btn-secondary">← Kembali</a>
 		</div>
@@ -31,52 +39,6 @@
 	<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
 		{{-- Left: Main info --}}
 		<div class="xl:col-span-2 space-y-6">
-			{{-- Dokumen (On-the-fly Preview) --}}
-			<div class="card p-6 border-l-4 border-l-primary-500 shadow-sm bg-gradient-to-r from-white to-slate-50">
-				<h3 class="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-					<svg class="w-5 h-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-						<path stroke-linecap="round" stroke-linejoin="round"
-							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-					</svg>
-					Pratinjau Dokumen
-				</h3>
-				<div class="flex flex-wrap gap-3">
-					<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
-						class="btn-primary py-2 px-4 text-xs shadow-sm flex items-center gap-2">
-						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-						</svg>
-						Lihat SPT (Kolektif)
-					</a>
-					<a href="{{ route('sppd.stream.sppd', $sppd) }}" target="_blank"
-						class="btn-secondary py-2 px-4 text-xs shadow-sm flex items-center gap-2">
-						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-						</svg>
-						Lihat SPPD (Pelaksana)
-					</a>
-					@foreach ($sppd->followers as $f)
-						<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd->id, 'user_id' => $f->user_id]) }}" target="_blank"
-							class="btn-ghost border border-slate-200 bg-white py-2 px-4 text-xs shadow-sm flex items-center gap-2">
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-							</svg>
-							Lihat SPPD ({{ $f->user->name }})
-						</a>
-					@endforeach
-				</div>
-				<p class="mt-3 text-[10px] text-slate-400 italic font-medium">Note: Pratinjau ini dihasilkan secara otomatis dari
-					sistem. Dokumen asli hanya disimpan setelah tahap persetujuan selesai.</p>
-			</div>
 
 			{{-- Info Perjalanan --}}
 			<div class="card p-6">

@@ -32,6 +32,21 @@ Route::middleware('auth')->group(function () {
   Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
   Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
   Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
+  
+  // Legacy Workflow Portal
+  Route::get('/sppd/{sppd}/next', [SppdController::class, 'next'])->name('sppd.next');
+  
+  // Sub-pages of 'Selanjutnya'
+  Route::get('/sppd/{sppd}/manage-sppd', [SppdController::class, 'manageSppd'])->name('sppd.manage-sppd');
+  Route::get('/sppd/{sppd}/manage-spt', [SppdController::class, 'manageSpt'])->name('sppd.manage-spt');
+  Route::get('/sppd/{sppd}/receipts', [SppdController::class, 'receipts'])->name('sppd.receipts');
+  Route::get('/sppd/{sppd}/actual-expenses', [SppdController::class, 'actualExpenses'])->name('sppd.actual-expenses');
+  Route::get('/sppd/{sppd}/final-costs', [SppdController::class, 'finalCosts'])->name('sppd.final-costs');
+  Route::get('/sppd/{sppd}/report-input', [SppdController::class, 'reportInput'])->name('sppd.report-input');
+  
+  // TTE / Signature resets
+  Route::post('/sppd/{sppd}/reset-tte/{type}', [SppdController::class, 'resetTte'])->name('sppd.reset-tte');
+  
   Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');
   Route::get('/sppd/{sppd}/stream/sppd', [SppdController::class, 'streamSppd'])->name('sppd.stream.sppd');
 

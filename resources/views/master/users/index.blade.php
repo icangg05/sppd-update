@@ -81,7 +81,7 @@
 						</td>
 						<td class="text-xs font-mono text-slate-500">{{ $user->nip ?? '-' }}</td>
 						<td class="text-sm">{{ $user->department?->name ?? '-' }}</td>
-						<td class="text-sm">{{ $user->position_name ?? ($user->position?->name ?? '-') }}</td>
+						<td class="text-sm">{{ $user->position?->name ?? '-' }}</td>
 						<td class="text-sm">
 							@if ($user->rank)
 								<p class="text-slate-900 font-medium">{{ $user->rank->name }}</p>

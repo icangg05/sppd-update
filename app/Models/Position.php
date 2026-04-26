@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Position extends Model
 {
-  protected $fillable = ['name'];
+  protected $fillable = ['name', 'level'];
 
   public function users(): HasMany
   {

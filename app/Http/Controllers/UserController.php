@@ -46,7 +46,7 @@ class UserController extends Controller
   {
     $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
-    $positions = Position::orderBy('name')->get();
+    $positions = Position::orderBy('level')->get();
 
     return view('master.users.create', compact('departments', 'ranks', 'positions'));
   }
@@ -93,7 +93,6 @@ class UserController extends Controller
       'department_id' => 'nullable|exists:departments,id',
       'rank_id'       => 'nullable|exists:ranks,id',
       'position_id'   => 'nullable|exists:positions,id',
-      'position_name' => 'nullable|string|max:255',
       'role'          => 'required|string',
     ]);
 
@@ -122,7 +121,7 @@ class UserController extends Controller
   {
     $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
-    $positions = Position::orderBy('name')->get();
+    $positions = Position::orderBy('level')->get();
     
     return view('master.users.edit', compact('user', 'departments', 'ranks', 'positions'));
   }
@@ -140,7 +139,6 @@ class UserController extends Controller
       'department_id' => 'nullable|exists:departments,id',
       'rank_id'       => 'nullable|exists:ranks,id',
       'position_id'   => 'nullable|exists:positions,id',
-      'position_name' => 'nullable|string|max:255',
       'role'          => 'required|string',
     ]);
 

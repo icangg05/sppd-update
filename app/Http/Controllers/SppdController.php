@@ -277,7 +277,7 @@ class SppdController extends Controller
       });
 
       return redirect()->route('sppd.show', $sppd->id)
-        ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan pratinjau dokumen SPT & SPPD pada halaman detail.');
+        ->with('success', 'SPPD berhasil dibuat dan diajukan. Gunakan tombol "Portal Selanjutnya" untuk mengelola dokumen.');
     } catch (\Exception $e) {
       return back()->withInput()->with('error', $e->getMessage());
     }
@@ -303,6 +303,80 @@ class SppdController extends Controller
     ]);
 
     return view('sppd.show', compact('sppd'));
+  }
+
+  /**
+   * Portal 'Selanjutnya' (Image 2)
+   */
+  public function next(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'followers.user']);
+    return view('sppd.next', compact('sppd'));
+  }
+
+  /**
+   * Halaman Kelola SPPD (Image 1)
+   */
+  public function manageSppd(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'followers.user']);
+    return view('sppd.manage_sppd', compact('sppd'));
+  }
+
+  /**
+   * Halaman Kelola SPT (Image 2)
+   */
+  public function manageSpt(SppdRequest $sppd)
+  {
+    $sppd->load(['user']);
+    return view('sppd.manage_spt', compact('sppd'));
+  }
+
+  /**
+   * Reset TTE (Electronic Signature) for a specific document type
+   */
+  public function resetTte(SppdRequest $sppd, $type)
+  {
+    // Logic to clear existing digital signatures for this document type
+    $sppd->digitalSignatures()->where('document_type', $type)->delete();
+
+    return back()->with('success', "TTE untuk " . strtoupper($type) . " berhasil di-reset.");
+  }
+
+  /**
+   * Halaman Kuitansi (Image 3)
+   */
+  public function receipts(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'advanceReceipts']);
+    return view('sppd.costs.receipts', compact('sppd'));
+  }
+
+  /**
+   * Halaman Laporan Pengeluaran Rill (Image 4)
+   */
+  public function actualExpenses(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'actualExpenses']);
+    return view('sppd.costs.actuals', compact('sppd'));
+  }
+
+  /**
+   * Halaman Rincian Biaya Perjalanan Dinas (Image 5)
+   */
+  public function finalCosts(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'costDetails']);
+    return view('sppd.costs.final_details', compact('sppd'));
+  }
+
+  /**
+   * Halaman Input Laporan Perjalanan
+   */
+  public function reportInput(SppdRequest $sppd)
+  {
+    $sppd->load(['user', 'report']);
+    return view('sppd.report_input', compact('sppd'));
   }
 
 

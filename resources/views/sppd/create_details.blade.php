@@ -264,6 +264,7 @@
 			</div>
 		</div>
 
+
 		{{-- TANGGAL SPPD DAN SPT --}}
 		<div class="card p-6 mb-6">
 			<div class="bg-primary-50 px-4 py-2 -mx-6 -mt-6 mb-4 border-b border-primary-100">
@@ -404,6 +405,7 @@
 					if ($(this).val()) loadRegencies($(this));
 				});
 			}
+
 		});
 	</script>
 @endpush

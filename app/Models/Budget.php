@@ -10,7 +10,7 @@ class Budget extends Model
 {
   protected $guarded = ['id'];
 
-  protected $appends = ['realization', 'balance'];
+  protected $appends = ['realization', 'balance', 'realization_percentage'];
 
   protected function casts(): array
   {
@@ -22,18 +22,25 @@ class Budget extends Model
 
   public function getRealizationAttribute(): float
   {
-    // Placeholder calculation: sum from associated SPPD requests
-    return (float) $this->sppdRequests()
+    $requestIdQuery = $this->sppdRequests()
       ->whereIn('status', ['approved', 'completed'])
-      ->get()
-      ->sum(function ($request) {
-        return 0;
-      });
+      ->select('id');
+
+    $totalCostDetails = SppdCostDetail::whereIn('sppd_request_id', $requestIdQuery)->sum('total');
+    $totalActualExpenses = SppdActualExpense::whereIn('sppd_request_id', $requestIdQuery)->sum('amount');
+
+    return (float) ($totalCostDetails + $totalActualExpenses);
   }
 
   public function getBalanceAttribute(): float
   {
-    return (float) $this->total_amount - $this->realization;
+    return (float) ($this->total_amount - $this->realization);
+  }
+
+  public function getRealizationPercentageAttribute(): float
+  {
+    if ($this->total_amount <= 0) return 0;
+    return round(($this->realization / $this->total_amount) * 100, 2);
   }
 
   public function department(): BelongsTo
