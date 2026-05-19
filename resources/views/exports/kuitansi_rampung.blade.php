@@ -108,7 +108,7 @@
 			<td style="width: 65%; vertical-align: top;">
 				<p style="margin: 4px;">
 					PEMERINTAH KOTA KENDARI<br />
-					DINAS KOMUNIKASI DAN INFORMATIKA
+					<strong>{{ strtoupper($pdfData['dept_name']) }}</strong>
 				</p>
 			</td>
 			<td style="width: 35%; vertical-align: top;">
@@ -116,12 +116,12 @@
 					<tr>
 						<td style="width: 130px;">TAHUN ANGGARAN</td>
 						<td class="info-sep">:</td>
-						<td style="width: 105px;">2026</td>
+						<td style="width: 105px;">{{ $pdfData['tahun_anggaran'] }}</td>
 					</tr>
 					<tr>
 						<td style="width: 130px;">KODE REKENING</td>
 						<td class="info-sep">:</td>
-						<td style="width: 105px;">5.1.02.04.01.00001</td>
+						<td style="width: 105px;">{{ $pdfData['kode_rekening'] }}</td>
 					</tr>
 					<tr>
 						<td style="width: 130px;">BKU NO.</td>
@@ -129,7 +129,7 @@
 						<td style="width: 105px;">{{ $pdfData['bku'] ?? '-' }}</td>
 					</tr>
 					<tr>
-						<td style="width: 130px;">Tanggal</td>
+						<td style="width: 130px;">TANGGAL</td>
 						<td class="info-sep">:</td>
 						<td style="width: 105px;">{{ $pdfData['date'] ?? '-' }}</td>
 					</tr>
@@ -144,12 +144,12 @@
 		<tr>
 			<td class="info-label">SUDAH TERIMA DARI</td>
 			<td class="info-sep">:</td>
-			<td>Pengguna Anggaran Dinas Komunikasi dan Informatika</td>
+			<td>Pengguna Anggaran {{ $pdfData['dept_name'] }}</td>
 		</tr>
 		<tr>
 			<td class="info-label">UANG SEBESAR</td>
 			<td class="info-sep">:</td>
-			<td>Rp {{ number_format($pdfData['panjar_amount'], 0, ',', '.') }}</td>
+			<td>Rp. {{ number_format($pdfData['uang_sebesar'], 0, ',', '.') }}</td>
 		</tr>
 		<tr>
 			<td class="info-label">UNTUK PEMBAYARAN</td>
@@ -161,7 +161,7 @@
 	<!-- Terbilang rupiah -->
 	<div
 		style="font-size: 9pt; margin-top: 20px; margin-bottom: 5px; padding: 3px; border: 1px solid black; font-weight: bold; text-align: center;">
-		<p style="margin: 0;">TERBILANG : {{ $pdfData['terbilang_selisih'] }}</p>
+		<p style="margin: 0;">TERBILANG : {{ $pdfData['terbilang_uang'] }}</p>
 	</div>
 
 
@@ -192,11 +192,11 @@
 				<div style="height: 55px;"></div>
 				<p>
 					<span style="font-weight: bold;">
-						HARTINI, A.Md. Komp
+						{{ $pdfData['bendahara_name'] }}
 					</span>
 					<br>
-					@if ($pdfData['approver_nip'] ?? null)
-						NIP. {{ $pdfData['bendahara_nip'] ?? '196902131997032007' }}
+					@if ($pdfData['bendahara_nip'] ?? null)
+						NIP. {{ $pdfData['bendahara_nip'] }}
 					@endif
 				</p>
 			</td>

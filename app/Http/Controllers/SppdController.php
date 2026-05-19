@@ -104,7 +104,7 @@ class SppdController extends Controller
         $q->where('status', SppdStatus::IN_PROGRESS)
           ->orWhere(function ($q2) {
             $q2->where('status', SppdStatus::APPROVED)
-               ->where('end_date', '>=', today());
+              ->where('end_date', '>=', today());
           });
       })
       ->exists();
@@ -146,7 +146,7 @@ class SppdController extends Controller
         $q->where('status', SppdStatus::IN_PROGRESS)
           ->orWhere(function ($q2) {
             $q2->where('status', SppdStatus::APPROVED)
-               ->where('end_date', '>=', today());
+              ->where('end_date', '>=', today());
           });
       })
       ->pluck('user_id')
@@ -198,7 +198,7 @@ class SppdController extends Controller
         $q->where('status', SppdStatus::IN_PROGRESS)
           ->orWhere(function ($q2) {
             $q2->where('status', SppdStatus::APPROVED)
-               ->where('end_date', '>=', today());
+              ->where('end_date', '>=', today());
           });
       })
       ->exists();
@@ -348,8 +348,15 @@ class SppdController extends Controller
    */
   public function receipts(SppdRequest $sppd)
   {
-    $sppd->load(['user', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
-    return view('sppd.costs.receipts', compact('sppd'));
+    $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
+
+    // Cari bendahara pengeluaran di OPD terkait
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $sppd->user->department_id)
+      ->where('is_active', true)
+      ->first();
+
+    return view('sppd.costs.receipts', compact('sppd', 'bendahara'));
   }
 
   /**
@@ -607,44 +614,87 @@ class SppdController extends Controller
    */
   public function streamKuitansiRampung(SppdRequest $sppd, Request $request)
   {
-    $sppd->load(['user.department', 'user.rank', 'user.position', 'followers.user.rank', 'advanceReceipts', 'actualExpenses', 'costDetails', 'approvals.approver']);
+    $sppd->load([
+      'user.department.head',
+      'user.department.parent',
+      'user.rank',
+      'user.position',
+      'budget.department',
+      'followers.user.rank',
+      'advanceReceipts',
+      'actualExpenses',
+      'costDetails',
+      'approvals.approver',
+    ]);
 
     $userId = $request->query('user_id', $sppd->user_id);
     $targetUser = User::with(['rank', 'position'])->findOrFail($userId);
 
-    $panjar = $sppd->advanceReceipts->where('user_id', $userId)->first();
+    // Hitung biaya
+    $panjar       = $sppd->advanceReceipts->where('user_id', $userId)->first();
     $panjarAmount = $panjar?->amount ?? 0;
-    $totalExpenses = $sppd->actualExpenses->where('user_id', $userId)->sum('amount');
-    if ($totalExpenses == 0) {
-      $totalExpenses = $sppd->costDetails->where('user_id', $userId)->sum('total');
+    $totalCosts   = $sppd->costDetails->where('user_id', $userId)->sum('total');       // Rincian Biaya
+    $totalActual  = $sppd->actualExpenses->where('user_id', $userId)->sum('amount');   // Pengeluaran Riil
+
+    // Uang Sebesar = Total Rincian Biaya + Total Pengeluaran Riil
+    $uangSebesar = $totalCosts + $totalActual;
+
+    // Data instansi & budget
+    $department = $sppd->user->department;
+    $budget     = $sppd->budget;
+    $deptName   = $department?->name ?? '-';
+
+    // Pimpinan OPD = Pengguna Anggaran
+    // Cari user role kepala_opd di department user (atau parent OPD jika di sub-unit)
+    $opdDept = $department;
+    if ($opdDept && $opdDept->parent_id) {
+      // Jika user berada di sub-unit, naik ke OPD induk
+      $opdDept = $opdDept->parent ?? $opdDept;
     }
-    $selisih = $panjarAmount - $totalExpenses;
 
-    // Get approver (last approval step = Kepala OPD)
-    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
-    $approver = $lastApproval?->approver;
-
-    // Get bendahara from department
-    $bendahara = User::role('bendahara')
-      ->where('department_id', $sppd->user->department_id)
+    $pimpinan = User::role('kepala_opd')
+      ->where('department_id', $opdDept?->id)
       ->where('is_active', true)
       ->first();
 
-    // Generate QR code yang mengarah ke URL halaman kuitansi rampung ini
-    $pdfUrl = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    // Fallback: cari di department user langsung jika tidak ditemukan di induk
+    if (!$pimpinan && $opdDept?->id !== $department?->id) {
+      $pimpinan = User::role('kepala_opd')
+        ->where('department_id', $department?->id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    // Bendahara pengeluaran
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $department?->id)
+      ->where('is_active', true)
+      ->first();
+
+    // QR Code
+    $pdfUrl  = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
     $qrImage = QrSimulator::generate($pdfUrl, 120);
 
     $pdfData = [
-      'panjar_amount'     => $panjarAmount,
-      'total_expenses'    => $totalExpenses,
-      'selisih'           => $selisih,
-      'terbilang_panjar'  => \App\Helpers\Terbilang::rupiah($panjarAmount),
-      'terbilang_selisih' => \App\Helpers\Terbilang::rupiah(abs($selisih)),
-      'approver_name'     => $approver?->name ?? '................................',
-      'approver_role'     => $approver?->position?->name ?? $lastApproval?->role_label ?? 'Pengguna Anggaran',
-      'approver_nip'      => $approver?->nip,
+      // Data anggaran
+      'tahun_anggaran'    => $budget?->year ?? date('Y'),
+      'kode_rekening'     => $budget?->account_code ?? '-',
+      'dept_name'         => $deptName,
+
+      // Data keuangan
+      'uang_sebesar'      => $uangSebesar,
+      'terbilang_uang'    => \App\Helpers\Terbilang::rupiah($uangSebesar),
+
+      // Pengguna Anggaran = Pimpinan OPD (role kepala_opd)
+      'approver_name'     => $pimpinan?->name ?? '................................',
+      'approver_nip'      => $pimpinan?->nip,
+      'approver_dept'     => $opdDept?->name ?? $deptName,
+
+      // Bendahara Pengeluaran
       'bendahara_name'    => $bendahara?->name ?? '................................',
       'bendahara_nip'     => $bendahara?->nip,
+
+      // QR & Misc
       'qr_image'          => $qrImage,
       'bku'               => null,
       'date'              => now()->translatedFormat('d F Y'),
