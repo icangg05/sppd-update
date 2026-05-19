@@ -710,17 +710,58 @@ class SppdController extends Controller
    */
   public function streamPengeluaranRiil(SppdRequest $sppd, Request $request)
   {
-    $sppd->load(['user.department', 'user.rank', 'user.position', 'pptk.rank', 'actualExpenses']);
+    $sppd->load([
+      'user.department.parent',
+      'user.department.head',
+      'user.rank',
+      'user.position',
+      'pptk.rank',
+      'actualExpenses',
+      'approvals.approver'
+    ]);
 
     $userId = $request->query('user_id', $sppd->user_id);
     $targetUser = User::with(['rank', 'position', 'roles'])->findOrFail($userId);
     $expenses = $sppd->actualExpenses->where('user_id', $userId)->values();
 
     $pptk = $sppd->pptk;
+
+    // Data instansi
+    $department = $sppd->user->department;
+
+    // Pimpinan OPD (Kepala Dinas)
+    $opdDept = $department;
+    if ($opdDept && $opdDept->parent_id) {
+      $opdDept = $opdDept->parent ?? $opdDept;
+    }
+
+    $pimpinan = User::role('kepala_opd')
+      ->where('department_id', $opdDept?->id)
+      ->where('is_active', true)
+      ->first();
+
+    if (!$pimpinan && $opdDept?->id !== $department?->id) {
+      $pimpinan = User::role('kepala_opd')
+        ->where('department_id', $department?->id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    $approver = $lastApproval?->approver;
+
+    // QR Code
+    $pdfUrl  = route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    $qrImage = QrSimulator::generate($pdfUrl, 120);
+
     $pdfData = [
-      'pptk_name' => $pptk?->name ?? '................................',
-      'pptk_role' => 'PPTK',
-      'pptk_nip'  => $pptk?->nip,
+      'pptk_name'     => $pptk?->name ?? '_________________________',
+      'pptk_nip'      => $pptk?->nip,
+      'pimpinan_name' => $pimpinan?->name ?? '_________________________',
+      'pimpinan_nip'  => $pimpinan?->nip,
+      'pimpinan_role' => $pimpinan?->position?->name ?? 'Kepala Dinas',
+      'is_walikota'   => ($approver && $approver->hasRole('walikota')) || ($pimpinan && $pimpinan->hasRole('walikota')),
+      'qr_image'      => $qrImage,
     ];
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.pengeluaran_riil', compact('sppd', 'targetUser', 'expenses', 'pdfData'))

@@ -5,8 +5,18 @@ namespace App\Helpers;
 class Terbilang
 {
   private static array $angka = [
-    '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima',
-    'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'
+    '',
+    'Satu',
+    'Dua',
+    'Tiga',
+    'Empat',
+    'Lima',
+    'Enam',
+    'Tujuh',
+    'Delapan',
+    'Sembilan',
+    'Sepuluh',
+    'Sebelas'
   ];
 
   public static function convert(float $nilai): string

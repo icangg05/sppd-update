@@ -108,7 +108,7 @@
 			<td style="width: 65%; vertical-align: top;">
 				<p style="margin: 4px;">
 					PEMERINTAH KOTA KENDARI<br />
-					<strong>{{ strtoupper($pdfData['dept_name']) }}</strong>
+					{{ strtoupper($pdfData['dept_name']) }}
 				</p>
 			</td>
 			<td style="width: 35%; vertical-align: top;">
