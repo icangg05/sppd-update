@@ -348,7 +348,7 @@ class SppdController extends Controller
    */
   public function receipts(SppdRequest $sppd)
   {
-    $sppd->load(['user', 'advanceReceipts']);
+    $sppd->load(['user', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
     return view('sppd.costs.receipts', compact('sppd'));
   }
 
@@ -357,7 +357,7 @@ class SppdController extends Controller
    */
   public function actualExpenses(SppdRequest $sppd)
   {
-    $sppd->load(['user', 'actualExpenses']);
+    $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
     return view('sppd.costs.actuals', compact('sppd'));
   }
 
@@ -366,7 +366,7 @@ class SppdController extends Controller
    */
   public function finalCosts(SppdRequest $sppd)
   {
-    $sppd->load(['user', 'costDetails']);
+    $sppd->load(['user', 'followers.user', 'costDetails.user']);
     return view('sppd.costs.final_details', compact('sppd'));
   }
 
@@ -379,7 +379,38 @@ class SppdController extends Controller
     return view('sppd.report_input', compact('sppd'));
   }
 
+  /**
+   * Store or update Laporan Perjalanan
+   */
+  public function storeReport(Request $request, SppdRequest $sppd)
+  {
+    $validated = $request->validate([
+      'report_text'        => 'required|string',
+      'report_date'        => 'nullable|date',
+      'report_file'        => 'nullable|file|max:20480',
+      'documentation_file' => 'nullable|image|max:20480',
+    ]);
 
+    if ($request->hasFile('report_file')) {
+      $validated['report_file'] = $request->file('report_file')
+        ->store('sppd/reports', 'public');
+    }
+
+    if ($request->hasFile('documentation_file')) {
+      $validated['documentation_file'] = $request->file('documentation_file')
+        ->store('sppd/documentation', 'public');
+    }
+
+    // Calculate total expense from actual expenses
+    $validated['total_expense'] = $sppd->actualExpenses()->sum('amount');
+
+    $sppd->report()->updateOrCreate(
+      ['sppd_request_id' => $sppd->id],
+      $validated
+    );
+
+    return back()->with('success', 'Laporan perjalanan berhasil disimpan.');
+  }
 
 
 

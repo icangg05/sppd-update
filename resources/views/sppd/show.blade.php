@@ -23,6 +23,7 @@
 					</button>
 				</form>
 			@endif
+			@if(in_array($sppd->status->value, ['approved', 'completed']))
 			<a href="{{ route('sppd.next', $sppd) }}"
 				class="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition-colors flex items-center gap-2">
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -31,6 +32,7 @@
 				</svg>
 				Portal Selanjutnya
 			</a>
+			@endif
 			<span class="badge-{{ $sppd->status->value }} text-sm px-3 py-1">{{ $sppd->status->label() }}</span>
 			<a href="{{ route('sppd.index') }}" class="btn-secondary">← Kembali</a>
 		</div>

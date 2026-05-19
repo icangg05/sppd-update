@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
       SppdCategorySeeder::class,
       DepartmentSeeder::class,
       BudgetSeeder::class,
+      SppdWorkflowSeeder::class,
     ]);
 
     // Create default super admin

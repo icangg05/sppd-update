@@ -92,8 +92,10 @@
 						</td>
 						<td class="flex gap-2">
 							<a href="{{ route('sppd.show', $sppd) }}" class="btn-ghost text-xs py-1 px-2 border border-slate-200">Detail</a>
-							<a href="{{ route('sppd.next', $sppd) }}"
-								class="bg-orange-400 hover:bg-orange-500 text-white text-[10px] font-bold py-1 px-3 rounded uppercase transition-colors">Selanjutnya</a>
+							@if(in_array($sppd->status->value, ['approved', 'completed']))
+								<a href="{{ route('sppd.next', $sppd) }}"
+									class="bg-orange-400 hover:bg-orange-500 text-white text-[10px] font-bold py-1 px-3 rounded uppercase transition-colors">Selanjutnya</a>
+							@endif
 
 							@if ($sppd->status->value === 'in_progress' && (auth()->id() === $sppd->creator_id || auth()->id() === $sppd->user_id))
 								<form action="{{ route('sppd.destroy', $sppd) }}" method="POST"

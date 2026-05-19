@@ -41,7 +41,6 @@ class DummyUserSeeder extends Seeder
         'employee_type' => EmployeeType::PNS,
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVb?->id,
-        'position_name' => 'Sekretaris Daerah',
         'role'          => 'sekda',
       ],
       // Kepala Dinas Pendidikan
@@ -53,7 +52,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVb?->id,
         'position_id'   => $kadin?->id,
-        'position_name' => 'Kepala Dinas Pendidikan',
         'role'          => 'kepala_opd',
       ],
       // Sekretaris Dinas Pendidikan
@@ -65,7 +63,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVa?->id,
         'position_id'   => $sekdin?->id,
-        'position_name' => 'Sekretaris Dinas Pendidikan',
         'role'          => 'sekretaris',
       ],
       // Kabid di Dinas Pendidikan
@@ -77,7 +74,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIId?->id,
         'position_id'   => $kabid?->id,
-        'position_name' => 'Kabid Pembinaan SMA',
         'role'          => 'kasubag',
       ],
       // Staf Dinas Pendidikan
@@ -89,7 +85,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIIb?->id,
         'position_id'   => $staf?->id,
-        'position_name' => 'Staf Umum',
         'role'          => 'staff',
       ],
       // Bendahara Dinas Pendidikan
@@ -101,7 +96,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIIa?->id,
         'position_id'   => $bendahara?->id,
-        'position_name' => 'Bendahara',
         'role'          => 'bendahara',
       ],
       // PPTK Dinas Pendidikan
@@ -113,7 +107,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIIb?->id,
         'position_id'   => $pptk?->id,
-        'position_name' => 'PPTK',
         'role'          => 'pptk',
       ],
       // Kepala Dinas Kesehatan
@@ -125,7 +118,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVb?->id,
         'position_id'   => $kadin?->id,
-        'position_name' => 'Kepala Dinas Kesehatan',
         'role'          => 'kepala_opd',
       ],
       // Staf Dinas Kesehatan
@@ -137,7 +129,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
-        'position_name' => 'Staf Pelayanan Kesehatan',
         'role'          => 'staff',
       ],
       // Kepala DPUPR
@@ -149,7 +140,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVb?->id,
         'position_id'   => $kadin?->id,
-        'position_name' => 'Kepala Dinas PUPR',
         'role'          => 'kepala_opd',
       ],
       // Kepala Bappeda
@@ -161,7 +151,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIVb?->id,
         'position_id'   => $kadin?->id,
-        'position_name' => 'Kepala Bappeda',
         'role'          => 'kepala_opd',
       ],
       // Admin OPD Dinas Pendidikan
@@ -173,7 +162,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => rand(1, 143),
         'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
-        'position_name' => 'Admin SPPD',
         'role'          => 'admin_opd',
       ],
       [
@@ -184,7 +172,6 @@ class DummyUserSeeder extends Seeder
         'department_id' => 36,
         'rank_id'       => null,
         'position_id'   => $staf?->id,
-        'position_name' => 'Admin Kominfo',
         'role'          => 'admin_opd',
       ],
     ];

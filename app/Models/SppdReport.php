@@ -11,6 +11,8 @@ class SppdReport extends Model
   protected $fillable = [
     'sppd_request_id',
     'report_text',
+    'report_date',
+    'report_file',
     'receipt_file',
     'documentation_file',
     'total_expense',
@@ -22,6 +24,7 @@ class SppdReport extends Model
   protected function casts(): array
   {
     return [
+      'report_date' => 'date',
       'total_expense' => 'decimal:2',
       'verification_status' => VerificationStatus::class,
       'verified_at' => 'datetime',
