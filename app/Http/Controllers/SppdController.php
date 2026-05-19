@@ -601,4 +601,103 @@ class SppdController extends Controller
 
     return redirect()->route('sppd.index')->with('success', 'Pengajuan SPPD berhasil dibatalkan dan dihapus.');
   }
+
+  /**
+   * Stream PDF: Kuitansi Rampung
+   */
+  public function streamKuitansiRampung(SppdRequest $sppd, Request $request)
+  {
+    $sppd->load(['user.department', 'user.rank', 'user.position', 'followers.user.rank', 'advanceReceipts', 'actualExpenses', 'costDetails', 'approvals.approver']);
+
+    $userId = $request->query('user_id', $sppd->user_id);
+    $targetUser = User::with(['rank', 'position'])->findOrFail($userId);
+
+    $panjar = $sppd->advanceReceipts->where('user_id', $userId)->first();
+    $panjarAmount = $panjar?->amount ?? 0;
+    $totalExpenses = $sppd->actualExpenses->where('user_id', $userId)->sum('amount');
+    if ($totalExpenses == 0) {
+      $totalExpenses = $sppd->costDetails->where('user_id', $userId)->sum('total');
+    }
+    $selisih = $panjarAmount - $totalExpenses;
+
+    // Get approver (last approval step = Kepala OPD)
+    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    $approver = $lastApproval?->approver;
+
+    // Get bendahara from department
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $sppd->user->department_id)
+      ->where('is_active', true)
+      ->first();
+
+    // Generate QR code yang mengarah ke URL halaman kuitansi rampung ini
+    $pdfUrl = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    $qrImage = QrSimulator::generate($pdfUrl, 120);
+
+    $pdfData = [
+      'panjar_amount'     => $panjarAmount,
+      'total_expenses'    => $totalExpenses,
+      'selisih'           => $selisih,
+      'terbilang_panjar'  => \App\Helpers\Terbilang::rupiah($panjarAmount),
+      'terbilang_selisih' => \App\Helpers\Terbilang::rupiah(abs($selisih)),
+      'approver_name'     => $approver?->name ?? '................................',
+      'approver_role'     => $approver?->position?->name ?? $lastApproval?->role_label ?? 'Pengguna Anggaran',
+      'approver_nip'      => $approver?->nip,
+      'bendahara_name'    => $bendahara?->name ?? '................................',
+      'bendahara_nip'     => $bendahara?->nip,
+      'qr_image'          => $qrImage,
+      'bku'               => null,
+      'date'              => now()->translatedFormat('d F Y'),
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.kuitansi_rampung', compact('sppd', 'targetUser', 'pdfData'))
+      ->setPaper('f4', 'portrait')
+      ->stream('KUITANSI_RAMPUNG-' . Str::slug($targetUser->name) . '.pdf');
+  }
+
+  /**
+   * Stream PDF: Laporan Pengeluaran Riil
+   */
+  public function streamPengeluaranRiil(SppdRequest $sppd, Request $request)
+  {
+    $sppd->load(['user.department', 'user.rank', 'user.position', 'pptk.rank', 'actualExpenses']);
+
+    $userId = $request->query('user_id', $sppd->user_id);
+    $targetUser = User::with(['rank', 'position', 'roles'])->findOrFail($userId);
+    $expenses = $sppd->actualExpenses->where('user_id', $userId)->values();
+
+    $pptk = $sppd->pptk;
+    $pdfData = [
+      'pptk_name' => $pptk?->name ?? '................................',
+      'pptk_role' => 'PPTK',
+      'pptk_nip'  => $pptk?->nip,
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.pengeluaran_riil', compact('sppd', 'targetUser', 'expenses', 'pdfData'))
+      ->setPaper('f4', 'portrait')
+      ->stream('PENGELUARAN_RILL-' . Str::slug($targetUser->name) . '.pdf');
+  }
+
+  /**
+   * Stream PDF: Rincian Biaya Perjalanan Dinas
+   */
+  public function streamRincianBiaya(SppdRequest $sppd, Request $request)
+  {
+    $sppd->load(['user.department', 'user.rank', 'user.position', 'pptk.rank', 'costDetails']);
+
+    $userId = $request->query('user_id', $sppd->user_id);
+    $targetUser = User::with(['rank', 'position', 'roles'])->findOrFail($userId);
+    $costs = $sppd->costDetails->where('user_id', $userId)->values();
+
+    $pptk = $sppd->pptk;
+    $pdfData = [
+      'pptk_name' => $pptk?->name ?? '................................',
+      'pptk_role' => 'PPTK',
+      'pptk_nip'  => $pptk?->nip,
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.rincian_biaya', compact('sppd', 'targetUser', 'costs', 'pdfData'))
+      ->setPaper('f4', 'portrait')
+      ->stream('RBPD-' . Str::slug($targetUser->name) . '.pdf');
+  }
 }

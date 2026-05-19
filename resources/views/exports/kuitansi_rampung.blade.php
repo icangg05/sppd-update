@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Kuitansi Rampung</title>
+	<style>
+		@page {
+			margin: 0.5cm 1.5cm 1.5cm 1.5cm;
+			size: 21.5cm 33cm;
+		}
+
+		body {
+			font-family: 'Times New Roman', Times, serif;
+			font-size: 11pt;
+			color: #000;
+			line-height: 1.4;
+		}
+
+		table {
+			border-collapse: collapse;
+		}
+
+		.title {
+			text-align: center;
+			font-weight: bold;
+			font-size: 14pt;
+			text-decoration: underline;
+			text-transform: uppercase;
+			margin-bottom: 20px;
+			font-style: italic;
+			margin-top: 20px;
+		}
+
+		.info-table td {
+			padding: 2px 4px;
+			vertical-align: top;
+		}
+
+		.info-label {
+			width: 180px;
+		}
+
+		.info-sep {
+			width: 15px;
+			text-align: center;
+		}
+
+		.data-table {
+			width: 100%;
+			margin-top: 15px;
+			border: 1px solid #000;
+		}
+
+		.data-table th,
+		.data-table td {
+			border: 1px solid #000;
+			padding: 5px 8px;
+		}
+
+		.data-table th {
+			background: #f5f5f5;
+			font-weight: bold;
+			text-align: center;
+			font-size: 10pt;
+		}
+
+		.text-right {
+			text-align: right;
+		}
+
+		.text-center {
+			text-align: center;
+		}
+
+		.bold {
+			font-weight: bold;
+		}
+
+		.signature-table {
+			width: 100%;
+		}
+
+		.signature-table td {
+			vertical-align: top;
+			text-align: left;
+		}
+
+		.underline {
+			text-decoration: underline;
+		}
+
+		.bline {
+			border: 1px solid red !important;
+		}
+	</style>
+</head>
+
+<body>
+	<!-- QR Code — scan untuk membuka kembali halaman ini -->
+	<div style="text-align: right; margin-bottom: -22px;">
+		<img src="{{ $pdfData['qr_image'] }}" style="width: 80px; height: 80px;" alt="QR Code">
+	</div>
+
+	<!-- Nama dinas & keterangan (tahun, koded, bku, tanggal) -->
+	<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+		<tr>
+			<td style="width: 65%; vertical-align: top;">
+				<p style="margin: 4px;">
+					PEMERINTAH KOTA KENDARI<br />
+					DINAS KOMUNIKASI DAN INFORMATIKA
+				</p>
+			</td>
+			<td style="width: 35%; vertical-align: top;">
+				<table style="width: 100%;">
+					<tr>
+						<td style="width: 130px;">TAHUN ANGGARAN</td>
+						<td class="info-sep">:</td>
+						<td style="width: 105px;">2026</td>
+					</tr>
+					<tr>
+						<td style="width: 130px;">KODE REKENING</td>
+						<td class="info-sep">:</td>
+						<td style="width: 105px;">5.1.02.04.01.00001</td>
+					</tr>
+					<tr>
+						<td style="width: 130px;">BKU NO.</td>
+						<td class="info-sep">:</td>
+						<td style="width: 105px;">{{ $pdfData['bku'] ?? '-' }}</td>
+					</tr>
+					<tr>
+						<td style="width: 130px;">Tanggal</td>
+						<td class="info-sep">:</td>
+						<td style="width: 105px;">{{ $pdfData['date'] ?? '-' }}</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
+	<div class="title">KUITANSI</div>
+
+	<table class="info-table" style="width: 100%; font-size: 9pt;">
+		<tr>
+			<td class="info-label">SUDAH TERIMA DARI</td>
+			<td class="info-sep">:</td>
+			<td>Pengguna Anggaran Dinas Komunikasi dan Informatika</td>
+		</tr>
+		<tr>
+			<td class="info-label">UANG SEBESAR</td>
+			<td class="info-sep">:</td>
+			<td>Rp {{ number_format($pdfData['panjar_amount'], 0, ',', '.') }}</td>
+		</tr>
+		<tr>
+			<td class="info-label">UNTUK PEMBAYARAN</td>
+			<td class="info-sep">:</td>
+			<td>{{ $sppd->purpose }}</td>
+		</tr>
+	</table>
+
+	<!-- Terbilang rupiah -->
+	<div
+		style="font-size: 9pt; margin-top: 20px; margin-bottom: 5px; padding: 3px; border: 1px solid black; font-weight: bold; text-align: center;">
+		<p style="margin: 0;">TERBILANG : {{ $pdfData['terbilang_selisih'] }}</p>
+	</div>
+
+
+	<!-- Tanggal di sebelah kanan -->
+	<p style="text-transform: uppercase; text-align: right; margin-top: 20px; margin-bottom: 0; font-size: 9pt;">
+		Kendari, {{ now()->translatedFormat('d F Y') }}
+	</p>
+
+
+	<!-- Bagian tanda tangan & tanggal -->
+	<table class="signature-table" style="font-size: 9pt;">
+		<tr>
+			<td style="width: 33%;">
+				<p>SETUJU BAYAR<br />PENGGUNA ANGGARAN</p>
+				<div style="height: 55px;"></div>
+				<p>
+					<span style="font-weight: bold;">
+						{{ $pdfData['approver_name'] ?? '.............................' }}
+					</span>
+					<br>
+					@if ($pdfData['approver_nip'] ?? null)
+						NIP. {{ $pdfData['approver_nip'] }}
+					@endif
+				</p>
+			</td>
+			<td style="width: 33%;">
+				<p><br />BENDAHARA PENGELUARAN</p>
+				<div style="height: 55px;"></div>
+				<p>
+					<span style="font-weight: bold;">
+						HARTINI, A.Md. Komp
+					</span>
+					<br>
+					@if ($pdfData['approver_nip'] ?? null)
+						NIP. {{ $pdfData['bendahara_nip'] ?? '196902131997032007' }}
+					@endif
+				</p>
+			</td>
+			<td style="width: 33%;">
+				<p><br />YANG MENERIMA</p>
+				<div style="height: 55px;"></div>
+				<p>
+					<span style="font-weight: bold;">
+						{{ $targetUser->name }}
+					</span>
+					<br>
+					@if ($targetUser->nip)
+						NIP. {{ $targetUser->nip }}
+					@endif
+				</p>
+			</td>
+		</tr>
+	</table>
+</body>
+
+</html>
