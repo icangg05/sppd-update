@@ -365,7 +365,36 @@ class SppdController extends Controller
   public function actualExpenses(SppdRequest $sppd)
   {
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
-    return view('sppd.costs.actuals', compact('sppd'));
+
+    // Kandidat PPTK: pegawai di OPD yang sama (termasuk sub-unit)
+    $dept = $sppd->user->department;
+    $opdId = $dept->parent_id ?? $dept->id; // naik ke OPD induk jika di sub-unit
+
+    // Kumpulkan ID OPD induk + semua sub-unit
+    $deptIds = \App\Models\Department::where('id', $opdId)
+      ->orWhere('parent_id', $opdId)
+      ->pluck('id');
+
+    $pptkCandidates = User::whereIn('department_id', $deptIds)
+      ->where('is_active', true)
+      ->orderBy('name')
+      ->get(['id', 'name', 'nip']);
+
+    return view('sppd.costs.actuals', compact('sppd', 'pptkCandidates'));
+  }
+
+  /**
+   * Update PPTK pada SPPD
+   */
+  public function updatePptk(SppdRequest $sppd, Request $request)
+  {
+    $request->validate([
+      'pptk_id' => 'required|exists:users,id',
+    ]);
+
+    $sppd->update(['pptk_id' => $request->pptk_id]);
+
+    return back()->with('success', 'PPTK berhasil diperbarui.');
   }
 
   /**

@@ -60,6 +60,9 @@ Route::middleware('auth')->group(function () {
   // Kuitansi Panjar (create or update)
   Route::post('/sppd/{sppd}/advance-receipts', [SppdAdvanceReceiptController::class, 'storeOrUpdate'])->name('sppd.advance-receipts.store');
 
+  // Update PPTK
+  Route::put('/sppd/{sppd}/pptk', [SppdController::class, 'updatePptk'])->name('sppd.update-pptk');
+
   // Laporan Perjalanan (store/update)
   Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
   
