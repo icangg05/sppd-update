@@ -3,7 +3,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Pengeluaran Riil</title>
+	<title>Pengeluaran Riil - {{ config('app.name') }}</title>
 	<style>
 		@page {
 			margin: 1.5cm 2.3cm;
@@ -125,7 +125,7 @@
 
 <body>
 	<!-- QR Code — scan untuk verifikasi dokumen -->
-	<div style="position: absolute; top: -37px; right: -70px;">
+	<div style="position: absolute; top: -40px; right: -70px;">
 		<img src="{{ $pdfData['qr_image'] }}" style="width: 85px; height: 85px;" alt="QR Code">
 	</div>
 
@@ -212,7 +212,7 @@
 			</table>
 		</li>
 		<li>
-			Jumlah uang tersebut pada angka 1 diatas benar-benar dikeluarkan untuk pelaksanaan perjalanan dinas dimaksud dan
+			Jumlah uang tersebut pada angka 1 di atas benar-benar dikeluarkan untuk pelaksanaan perjalanan dinas dimaksud dan
 			apabila dikemudian hari terdapat kelebihan atas pembayaran, kami bersedia untuk menyetorkan kelebihan tersebut ke Kas
 			Daerah.
 		</li>
@@ -235,17 +235,17 @@
 				</p>
 				<div style="height: 50px;"></div>
 				<p>
-					<span class="bold">{{ $pdfData['pptk_name'] }}</span><br />
+					<span class="bold" style="text-decoration: underline;">{{ $pdfData['pptk_name'] }}</span><br />
 					@if ($pdfData['pptk_nip'] ?? null)
 						NIP. {{ $pdfData['pptk_nip'] }}
 					@endif
 				</p>
 			</td>
 			<td style="width: 50%;">
-				<p><br />Melakukan Perjalanan Dinas</p>
+				<p><br />Yang Melakukan Perjalanan Dinas</p>
 				<div style="height: 50px;"></div>
 				<p>
-					<span class="bold">{{ $targetUser->name }}</span><br />
+					<span class="bold" style="text-decoration: underline;">{{ $targetUser->name }}</span><br />
 					@if ($targetUser->nip)
 						NIP. {{ $targetUser->nip }}
 					@endif
@@ -260,7 +260,7 @@
 				</p>
 				<div style="height: 50px;"></div>
 				<p>
-					<span class="bold">{{ $pdfData['pimpinan_name'] }}</span><br />
+					<span class="bold" style="text-decoration: underline;">{{ $pdfData['pimpinan_name'] }}</span><br />
 					@if ($pdfData['pimpinan_nip'] ?? null)
 						NIP. {{ $pdfData['pimpinan_nip'] }}
 					@endif

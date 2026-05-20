@@ -3,10 +3,10 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Kuitansi Rampung</title>
+	<title>Kuitansi Rampung - {{ config('app.name') }}</title>
 	<style>
 		@page {
-			margin: 0.5cm 1.5cm 1.5cm 1.5cm;
+			margin: 2cm 1.5cm;
 			size: 21.5cm 33cm;
 		}
 
@@ -98,8 +98,8 @@
 
 <body>
 	<!-- QR Code — scan untuk membuka kembali halaman ini -->
-	<div style="text-align: right; margin-bottom: -22px;">
-		<img src="{{ $pdfData['qr_image'] }}" style="width: 80px; height: 80px;" alt="QR Code">
+	<div style="position: absolute; top: -60px; right: -43px;">
+		<img src="{{ $pdfData['qr_image'] }}" style="width: 85px; height: 85px;" alt="QR Code">
 	</div>
 
 	<!-- Nama dinas & keterangan (tahun, koded, bku, tanggal) -->
@@ -178,8 +178,8 @@
 				<p>SETUJU BAYAR<br />PENGGUNA ANGGARAN</p>
 				<div style="height: 55px;"></div>
 				<p>
-					<span style="font-weight: bold;">
-						{{ $pdfData['approver_name'] ?? '.............................' }}
+					<span style="font-weight: bold; text-decoration: underline;">
+						{{ $pdfData['approver_name'] ?? '_________________________' }}
 					</span>
 					<br>
 					@if ($pdfData['approver_nip'] ?? null)
@@ -191,7 +191,7 @@
 				<p><br />BENDAHARA PENGELUARAN</p>
 				<div style="height: 55px;"></div>
 				<p>
-					<span style="font-weight: bold;">
+					<span style="font-weight: bold; text-decoration: underline;">
 						{{ $pdfData['bendahara_name'] }}
 					</span>
 					<br>
@@ -204,7 +204,7 @@
 				<p><br />YANG MENERIMA</p>
 				<div style="height: 55px;"></div>
 				<p>
-					<span style="font-weight: bold;">
+					<span style="font-weight: bold; text-decoration: underline;">
 						{{ $targetUser->name }}
 					</span>
 					<br>

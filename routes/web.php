@@ -35,10 +35,10 @@ Route::middleware('auth')->group(function () {
   Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
   Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
   Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
-  
+
   // Legacy Workflow Portal
   Route::get('/sppd/{sppd}/next', [SppdController::class, 'next'])->name('sppd.next');
-  
+
   // Sub-pages of 'Selanjutnya'
   Route::get('/sppd/{sppd}/manage-sppd', [SppdController::class, 'manageSppd'])->name('sppd.manage-sppd');
   Route::get('/sppd/{sppd}/manage-spt', [SppdController::class, 'manageSpt'])->name('sppd.manage-spt');
@@ -65,10 +65,10 @@ Route::middleware('auth')->group(function () {
 
   // Laporan Perjalanan (store/update)
   Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
-  
+
   // TTE / Signature resets
   Route::post('/sppd/{sppd}/reset-tte/{type}', [SppdController::class, 'resetTte'])->name('sppd.reset-tte');
-  
+
   Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');
   Route::get('/sppd/{sppd}/stream/sppd', [SppdController::class, 'streamSppd'])->name('sppd.stream.sppd');
   Route::get('/sppd/{sppd}/stream/kuitansi-rampung', [SppdController::class, 'streamKuitansiRampung'])->name('sppd.stream.kuitansi-rampung');

@@ -402,8 +402,15 @@ class SppdController extends Controller
    */
   public function finalCosts(SppdRequest $sppd)
   {
-    $sppd->load(['user', 'followers.user', 'costDetails.user']);
-    return view('sppd.costs.final_details', compact('sppd'));
+    $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
+
+    // Cari bendahara pengeluaran di OPD terkait
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $sppd->user->department_id)
+      ->where('is_active', true)
+      ->first();
+
+    return view('sppd.costs.final_details', compact('sppd', 'bendahara'));
   }
 
   /**
@@ -803,20 +810,75 @@ class SppdController extends Controller
    */
   public function streamRincianBiaya(SppdRequest $sppd, Request $request)
   {
-    $sppd->load(['user.department', 'user.rank', 'user.position', 'pptk.rank', 'costDetails']);
+    $sppd->load([
+      'user.department.parent',
+      'user.rank',
+      'user.position',
+      'pptk.rank',
+      'pptk.position',
+      'costDetails',
+      'actualExpenses',
+      'advanceReceipts',
+      'approvals.approver'
+    ]);
 
     $userId = $request->query('user_id', $sppd->user_id);
     $targetUser = User::with(['rank', 'position', 'roles'])->findOrFail($userId);
     $costs = $sppd->costDetails->where('user_id', $userId)->values();
 
+    // Total Pengeluaran Riil untuk baris pertama tabel
+    $totalPengeluaranRiil = $sppd->actualExpenses->where('user_id', $userId)->sum('amount');
+
+    // Kuitansi Panjar (yang telah dibayar semula)
+    $panjarAmount = $sppd->advanceReceipts->where('user_id', $userId)->sum('amount');
+
+    // Data instansi
+    $department = $sppd->user->department;
+
+    // Pimpinan OPD (Kepala Dinas)
+    $opdDept = $department;
+    if ($opdDept && $opdDept->parent_id) {
+      $opdDept = $opdDept->parent ?? $opdDept;
+    }
+
+    $pimpinan = User::role('kepala_opd')
+      ->where('department_id', $opdDept?->id)
+      ->where('is_active', true)
+      ->first();
+
+    if (!$pimpinan && $opdDept?->id !== $department?->id) {
+      $pimpinan = User::role('kepala_opd')
+        ->where('department_id', $department?->id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    // Bendahara Pengeluaran
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $department?->id)
+      ->where('is_active', true)
+      ->first();
+
+    // PPTK
     $pptk = $sppd->pptk;
+
+    // QR Code
+    $pdfUrl  = route('sppd.stream.rincian-biaya', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    $qrImage = QrSimulator::generate($pdfUrl, 120);
+
     $pdfData = [
-      'pptk_name' => $pptk?->name ?? '................................',
-      'pptk_role' => 'PPTK',
-      'pptk_nip'  => $pptk?->nip,
+      'pptk_name'      => $pptk?->name ?? '_________________________',
+      'pptk_nip'       => $pptk?->nip,
+      'pimpinan_name'  => $pimpinan?->name ?? '_________________________',
+      'pimpinan_nip'   => $pimpinan?->nip,
+      'pimpinan_role'  => $pimpinan?->position?->name ?? 'Kepala Dinas',
+      'bendahara_name' => $bendahara?->name ?? '_________________________',
+      'bendahara_nip'  => $bendahara?->nip,
+      'panjar_amount'  => $panjarAmount,
+      'qr_image'       => $qrImage,
     ];
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.rincian_biaya', compact('sppd', 'targetUser', 'costs', 'pdfData'))
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.rincian_biaya', compact('sppd', 'targetUser', 'costs', 'totalPengeluaranRiil', 'pdfData'))
       ->setPaper('f4', 'portrait')
       ->stream('RBPD-' . Str::slug($targetUser->name) . '.pdf');
   }
