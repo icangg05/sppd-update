@@ -125,8 +125,8 @@
 
 <body>
 	<!-- QR Code — scan untuk verifikasi dokumen -->
-	<div style="position: absolute; top: -40px; right: -70px;">
-		<img src="{{ $pdfData['qr_image'] }}" style="width: 85px; height: 85px;" alt="QR Code">
+	<div style="position: absolute; top: -1cm; right: -1.8cm">
+		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
 	</div>
 
 	<div class="header"
@@ -148,7 +148,7 @@
 			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
 			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department->name }}</div>
 			<div style="font-size: 10pt;">{{ $sppd->user->department->address ?? '' }}</div>
-		@endif
+		@endifz
 	</div>
 
 	<div class="title" style="margin-top: 15px;">DAFTAR PENGELUARAN RIIL</div>

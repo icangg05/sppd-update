@@ -56,7 +56,7 @@
 		.data-table th,
 		.data-table td {
 			border: 1px solid #000;
-			padding: 3px 8px;
+			padding: 2.5px 8px;
 			font-size: 9pt;
 			vertical-align: top;
 		}
@@ -100,8 +100,8 @@
 </head>
 
 <body>
-	<div style="position: absolute; top: -37px; right: -50px;">
-		<img src="{{ $pdfData['qr_image'] }}" style="width: 85px; height: 85px;" alt="QR Code">
+	<div style="position: absolute; top: -1cm; right: -1.3cm;">
+		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
 	</div>
 
 	<div class="title" style="margin-bottom: 9px;">RINCIAN BIAYA PERJALANAN DINAS</div>
@@ -185,7 +185,7 @@
 
 	<table class="signature-table" style="margin-top: 5px;">
 		<tr>
-			<td style="width: 50%; line-height: 1.7;">
+			<td style="width: 55%; line-height: 1.7;">
 				<p>
 					<br />
 					Telah dibayarkan Sejumlah<br />
@@ -200,7 +200,7 @@
 					@endif
 				</p>
 			</td>
-			<td style="width: 50%; line-height: 1.7;">
+			<td style="width: 45%; line-height: 1.7;">
 				<p>
 					Kendari, {{ now()->translatedFormat('d F Y') }}<br />
 					Telah Menerima Jumlah Uang Sebesar,<br />
@@ -220,7 +220,7 @@
 
 	<div style="border-top: 1px solid black; width: 100%; margin: 10px 0 20px 0;"></div>
 
-	<div style="font-size: 9pt; text-align: center; margin-bottom: 20px;">
+	<div style="font-size: 9pt; text-align: center; margin-bottom: 15px;">
 		PERHITUNGAN SPPD RAMPUNG
 	</div>
 
@@ -253,7 +253,7 @@
 
 	<table class="signature-table">
 		<tr>
-			<td style="width: 50%; line-height: 1.7;">
+			<td style="width: 55%; line-height: 1.7;">
 				<p>
 					Setuju bayar:<br />
 					{{ $pdfData['pimpinan_role'] }}
@@ -266,7 +266,7 @@
 					@endif
 				</p>
 			</td>
-			<td style="width: 50%; line-height: 1.7;">
+			<td style="width: 45%; line-height: 1.7;">
 				<p>
 					Mengetahui/Menyetujui<br />
 					Pejabat Pelaksana Teknis Kegiatan

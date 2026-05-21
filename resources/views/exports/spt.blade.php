@@ -240,17 +240,17 @@
 		<div class="signature-wrap">
 			<div>Ditetapkan di Kendari</div>
 			<div>Pada Tanggal : {{ $sppd->spt_date->translatedFormat('d F Y') }}</div>
-			<div style="margin-top: 10px; font-weight: bold; text-transform: uppercase;">
+			<div style="margin-top: 10px; text-transform: uppercase;">
 				{{ $pdfData['approver_role'] ?? 'Walikota Kendari' }}
 			</div>
 			@if ($pdfData['is_approved'] && $pdfData['qr_image'])
-				<div style="margin-top: 8px;">
-					<img src="{{ $pdfData['qr_image'] }}" style="width: 80px; height: 80px;">
+				<div style="margin-top: 11px;">
+					<img src="{{ $pdfData['qr_image'] }}">
 				</div>
 			@else
 				<div style="height: 70px;"></div>
 			@endif
-			<p style="margin-top: 5px; line-height: 1.8;">
+			<p style="margin-top: 3px; line-height: 1.8;">
 				<span style="font-weight: bold; text-decoration: underline;">
 					{{ $pdfData['approver_name'] }}
 				</span>

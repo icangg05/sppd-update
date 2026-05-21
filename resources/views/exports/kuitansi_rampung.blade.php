@@ -98,12 +98,12 @@
 
 <body>
 	<!-- QR Code — scan untuk membuka kembali halaman ini -->
-	<div style="position: absolute; top: -60px; right: -43px;">
-		<img src="{{ $pdfData['qr_image'] }}" style="width: 85px; height: 85px;" alt="QR Code">
+	<div style="position: absolute; top: -1.5cm; right: -1cm">
+		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
 	</div>
 
 	<!-- Nama dinas & keterangan (tahun, koded, bku, tanggal) -->
-	<table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+	<table style="width: 98%; border-collapse: collapse; font-size: 9pt;">
 		<tr>
 			<td style="width: 65%; vertical-align: top;">
 				<p style="margin: 4px;">

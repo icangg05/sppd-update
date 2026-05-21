@@ -63,6 +63,8 @@ class Terbilang
       return 'Nol Rupiah';
     }
 
-    return trim(preg_replace('/\s+/', ' ', self::convert($nilai))) . ' Rupiah';
+    $prefix = $nilai < 0 ? 'Minus ' : '';
+
+    return $prefix . trim(preg_replace('/\s+/', ' ', self::convert(abs($nilai)))) . ' Rupiah';
   }
 }

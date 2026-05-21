@@ -310,7 +310,7 @@
 							<td style="padding: 0.5px 0;">: {{ $sppd->sppd_date->translatedFormat('d F Y') }}</td>
 						</tr>
 						<tr>
-							<td style="padding: 3px 0; font-weight: bold; text-transform: uppercase;" colspan="2">
+							<td style="padding: 3px 0; text-transform: uppercase;" colspan="2">
 								{{ $pdfData['approver_role'] }}
 							</td>
 						</tr>
@@ -318,7 +318,7 @@
 							<td style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '30px' }} 0;" colspan="2">
 								@if ($pdfData['is_approved'] && $pdfData['qr_image'])
 									<div style="margin-top: 2px;">
-										<img src="{{ $pdfData['qr_image'] }}" style="width: 60px; height: 60px;">
+										<img src="{{ $pdfData['qr_image'] }}">
 									</div>
 								@endif
 							</td>
@@ -366,14 +366,14 @@
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
-								<td colspan="2" style="text-transform: uppercase; padding: 3px 0; font-weight: bold;">
+								<td colspan="2" style="text-transform: uppercase; padding: 3px 0;">
 									{{ $pdfData['approver_role'] }}</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
 								<td colspan="2" style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '25px' }} 0;">
 									@if ($pdfData['is_approved'] && $pdfData['qr_image'])
-										<img src="{{ $pdfData['qr_image'] }}" style="width: 50px; height: 50px;">
+										<img src="{{ $pdfData['qr_image'] }}">
 									@endif
 								</td>
 							</tr>
@@ -482,7 +482,7 @@
 								<td style="width: 14px;"></td>
 								<td colspan="2" style="padding: 15px 0 0 0;">
 									Pejabat yang memberi perintah<br>
-									<span style="text-transform: uppercase; font-weight: bold;">
+									<span style="text-transform: uppercase;">
 										{{ $pdfData['approver_role'] }}
 									</span>
 								</td>
@@ -517,7 +517,7 @@
 								<td style="width: 14px;"></td>
 								<td colspan="2" style="padding: 3px 0;">
 									Pejabat yang memberi perintah<br>
-									<span style="text-transform: uppercase; font-weight: bold;">
+									<span style="text-transform: uppercase;">
 										{{ $pdfData['approver_role'] }}
 									</span>
 								</td>

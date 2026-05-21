@@ -558,7 +558,7 @@ class SppdController extends Controller
     // Generate QR code simulasi jika sudah disetujui
     if ($pdfData['is_approved']) {
       $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
-      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 150);
+      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
     }
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', compact('sppd', 'pdfData'))
@@ -617,7 +617,7 @@ class SppdController extends Controller
     // Generate QR code simulasi jika sudah disetujui
     if ($pdfData['is_approved']) {
       $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
-      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 150);
+      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 55);
     }
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [
@@ -709,7 +709,7 @@ class SppdController extends Controller
 
     // QR Code
     $pdfUrl  = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    $qrImage = QrSimulator::generate($pdfUrl, 120);
+    $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
       // Data anggaran
@@ -739,6 +739,92 @@ class SppdController extends Controller
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.kuitansi_rampung', compact('sppd', 'targetUser', 'pdfData'))
       ->setPaper('f4', 'portrait')
       ->stream('KUITANSI_RAMPUNG-' . Str::slug($targetUser->name) . '.pdf');
+  }
+
+  /**
+   * Stream PDF: Kuitansi Panjar
+   */
+  public function streamKuitansiPanjar(SppdRequest $sppd, Request $request)
+  {
+    $sppd->load([
+      'user.department.head',
+      'user.department.parent',
+      'user.rank',
+      'user.position',
+      'budget.department',
+      'followers.user.rank',
+      'advanceReceipts',
+      'approvals.approver',
+    ]);
+
+    $userId = $request->query('user_id', $sppd->user_id);
+    $targetUser = User::with(['rank', 'position'])->findOrFail($userId);
+
+    // Kuitansi Panjar
+    $panjar       = $sppd->advanceReceipts->where('user_id', $userId)->first();
+    $panjarAmount = $panjar?->amount ?? 0;
+
+    // Data instansi & budget
+    $department = $sppd->user->department;
+    $budget     = $sppd->budget;
+    $deptName   = $department?->name ?? '-';
+
+    // Pimpinan OPD = Pengguna Anggaran
+    $opdDept = $department;
+    if ($opdDept && $opdDept->parent_id) {
+      $opdDept = $opdDept->parent ?? $opdDept;
+    }
+
+    $pimpinan = User::role('kepala_opd')
+      ->where('department_id', $opdDept?->id)
+      ->where('is_active', true)
+      ->first();
+
+    if (!$pimpinan && $opdDept?->id !== $department?->id) {
+      $pimpinan = User::role('kepala_opd')
+        ->where('department_id', $department?->id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    // Bendahara pengeluaran
+    $bendahara = User::role('bendahara')
+      ->where('department_id', $department?->id)
+      ->where('is_active', true)
+      ->first();
+
+    // QR Code
+    $pdfUrl  = route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    $qrImage = QrSimulator::generate($pdfUrl);
+
+    $pdfData = [
+      // Data anggaran
+      'tahun_anggaran'    => $budget?->year ?? date('Y'),
+      'kode_rekening'     => $budget?->account_code ?? '-',
+      'dept_name'         => $deptName,
+
+      // Data keuangan
+      'uang_sebesar'      => $panjarAmount,
+      'terbilang_uang'    => \App\Helpers\Terbilang::rupiah($panjarAmount),
+
+      // Pengguna Anggaran = Pimpinan OPD (role kepala_opd)
+      'approver_name'     => $pimpinan?->name ?? '................................',
+      'approver_nip'      => $pimpinan?->nip,
+      'approver_dept'     => $opdDept?->name ?? $deptName,
+
+      // Bendahara Pengeluaran
+      'bendahara_name'    => $bendahara?->name ?? '................................',
+      'bendahara_nip'     => $bendahara?->nip,
+
+      // QR & Misc
+      'qr_image'          => $qrImage,
+      'bku'               => null,
+      'date'              => now()->translatedFormat('d F Y'),
+    ];
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.kuitansi_rampung', compact('sppd', 'targetUser', 'pdfData'))
+      ->setPaper('f4', 'portrait')
+      ->stream('KUITANSI_PANJAR-' . Str::slug($targetUser->name) . '.pdf');
   }
 
   /**
@@ -788,7 +874,7 @@ class SppdController extends Controller
 
     // QR Code
     $pdfUrl  = route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    $qrImage = QrSimulator::generate($pdfUrl, 120);
+    $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
       'pptk_name'     => $pptk?->name ?? '_________________________',
@@ -864,7 +950,7 @@ class SppdController extends Controller
 
     // QR Code
     $pdfUrl  = route('sppd.stream.rincian-biaya', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    $qrImage = QrSimulator::generate($pdfUrl, 120);
+    $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
       'pptk_name'      => $pptk?->name ?? '_________________________',
