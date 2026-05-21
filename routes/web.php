@@ -8,6 +8,7 @@ use App\Http\Controllers\SppdActualExpenseController;
 use App\Http\Controllers\SppdAdvanceReceiptController;
 use App\Http\Controllers\SppdController;
 use App\Http\Controllers\SppdCostDetailController;
+use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -66,7 +67,10 @@ Route::middleware('auth')->group(function () {
   // Laporan Perjalanan (store/update)
   Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
 
-  // TTE / Signature resets
+  // TTE / Electronic signature
+  Route::post('/sppd/{sppd}/sign/{type}', [SppdDigitalSignatureController::class, 'request'])->name('sppd.sign');
+  Route::get('/sppd/{sppd}/sign/{signature}/status', [SppdDigitalSignatureController::class, 'status'])->name('sppd.sign.status');
+  Route::get('/sppd/{sppd}/sign/{signature}/download', [SppdDigitalSignatureController::class, 'download'])->name('sppd.sign.download');
   Route::post('/sppd/{sppd}/reset-tte/{type}', [SppdController::class, 'resetTte'])->name('sppd.reset-tte');
 
   Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');

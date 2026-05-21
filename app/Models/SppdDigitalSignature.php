@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\SignatureStatus;
+use App\Models\SppdRequest;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +17,17 @@ class SppdDigitalSignature extends Model
     'signed_at',
     'signature_data',
     'certificate_serial',
+    'document_type',
+    'provider_id',
+    'provider_name',
+    'error_message',
+    'signed_file_path',
+    'qr_code_data',
+    'sign_page',
+    'sign_x',
+    'sign_y',
+    'sign_width',
+    'sign_height',
   ];
 
   protected function casts(): array
@@ -46,5 +59,22 @@ class SppdDigitalSignature extends Model
       'signature_data' => $signatureData,
       'certificate_serial' => $certificateSerial,
     ]);
+  }
+
+  public function markError(string $message): void
+  {
+    $this->update([
+      'status' => SignatureStatus::REJECTED,
+      'error_message' => $message,
+    ]);
+  }
+
+  public function getSignedFileUrlAttribute(): ?string
+  {
+    if (! $this->signed_file_path) {
+      return null;
+    }
+
+    return \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'))->url($this->signed_file_path);
   }
 }

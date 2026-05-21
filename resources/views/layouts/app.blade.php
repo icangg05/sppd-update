@@ -51,8 +51,9 @@
 					</svg>
 					{{ session('error') }}
 				</div>
-			@endif
-
+			@endif		@if (session('error_details'))
+			<script>console.log('TTE error details:', @json(session('error_details')));</script>
+		@endif
 			@yield('content')
 		</main>
 

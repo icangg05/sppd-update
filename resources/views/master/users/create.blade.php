@@ -52,6 +52,13 @@
 					@enderror
 				</div>
 				<div>
+					<label class="form-label">NIK <span class="text-red-500">*</span></label>
+					<input type="text" name="nik" value="{{ old('nik') }}" class="form-input" placeholder="16 digit NIK">
+					@error('nik')
+						<p class="form-error">{{ $message }}</p>
+					@enderror
+				</div>
+				<div>
 					<label class="form-label">No. Telepon</label>
 					<input type="text" name="phone" value="{{ old('phone') }}" class="form-input">
 				</div>

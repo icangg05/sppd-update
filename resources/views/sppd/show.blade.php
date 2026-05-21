@@ -217,6 +217,8 @@
 				    ->where('approver_id', auth()->id())
 				    ->where('status', \App\Enums\ApprovalStatus::PENDING)
 				    ->first();
+				$lastApprovalStep = $sppd->approvals->max('step_order');
+				$isFinalApproval = $myApproval && $myApproval->step_order === $lastApprovalStep;
 			@endphp
 			@if ($myApproval)
 				<div class="card p-6 border-amber-200 bg-amber-50">
@@ -224,9 +226,20 @@
 					<p class="text-sm text-amber-700 mb-4">Sebagai <strong>{{ $myApproval->role_label }}</strong> (Step
 						{{ $myApproval->step_order }})</p>
 
+					@if ($isFinalApproval)
+						<div class="p-3 mb-4 bg-slate-100 rounded-lg border border-slate-200">
+							<p class="text-sm font-medium text-slate-700">Langkah terakhir: masukkan passphrase TTE untuk mengirim permintaan penandatanganan elektronik.</p>
+						</div>
+					@endif
+
 					<form action="{{ route('sppd.approve', $sppd) }}" method="POST" class="mb-3">
 						@csrf
 						<textarea name="notes" class="form-input mb-2 text-sm" rows="2" placeholder="Catatan (opsional)"></textarea>
+						@if ($isFinalApproval)
+							<label class="block text-sm font-medium text-slate-700 mb-2">Passphrase penandatangan</label>
+							<input type="password" name="passphrase" required minlength="4"
+								class="w-full rounded border border-slate-300 px-3 py-2 focus:border-primary-500 focus:outline-none mb-3" />
+						@endif
 						<button type="submit" class="btn-success w-full">
 							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 								<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -244,6 +257,25 @@
 							Tolak
 						</button>
 					</form>
+				</div>
+			@endif
+
+			@php
+				$sppdSignature = $sppd->signatureFor('sppd');
+			@endphp
+			@if ($sppdSignature)
+				<div class="card p-4 mt-4 border-slate-200 bg-slate-50">
+					<p class="text-sm font-semibold text-slate-700">Status TTE SPPD</p>
+					<p class="text-sm text-slate-600">{{ $sppdSignature->status->label() }}</p>
+					@if ($sppdSignature->signed_file_path)
+						<a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
+							class="inline-block mt-3 bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded text-xs font-bold transition-all">
+							Download PDF TTE
+						</a>
+					@endif
+					@if ($sppdSignature->error_message)
+						<p class="text-xs mt-2 text-rose-600">Error TTE: {{ $sppdSignature->error_message }}</p>
+					@endif
 				</div>
 			@endif
 		</div>

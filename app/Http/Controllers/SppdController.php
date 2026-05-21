@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\SignatureDocumentType;
+use App\Enums\SignatureStatus;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Helpers\QrSimulator;
@@ -10,9 +12,11 @@ use App\Models\Budget;
 use App\Models\Province;
 use App\Models\SppdApproval;
 use App\Models\SppdCategory;
+use App\Models\SppdDigitalSignature;
 use App\Models\SppdRequest;
 use App\Models\User;
 use App\Services\SppdWorkflowService;
+use App\Services\Tte\SignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -468,15 +472,97 @@ class SppdController extends Controller
       return back()->with('error', 'Anda tidak memiliki hak untuk menyetujui SPPD ini.');
     }
 
-    $approval->approve($request->notes);
+    $isFinalApproval = $this->isFinalApprovalStep($sppd, $approval);
 
-    // Check if all approvals are approved
+    if ($isFinalApproval && !Auth::user()?->nik) {
+      return back()->with('error', 'NIK penandatangan belum tersedia. Silakan lengkapi profil Anda terlebih dahulu.');
+    }
+
+    $rules = ['notes' => 'nullable|string|max:500'];
+    if ($isFinalApproval) {
+      $rules['passphrase'] = 'required|string|min:4|max:255';
+    }
+
+    $validated = $request->validate($rules);
+
+    if ($isFinalApproval) {
+      $signature = $sppd->digitalSignatures()->updateOrCreate(
+        [
+          'signer_id' => Auth::id(),
+          'document_type' => SignatureDocumentType::SPPD->value,
+        ],
+        array_merge(
+          [
+            'sppd_request_id' => $sppd->id,
+            'signer_id' => Auth::id(),
+            'document_type' => SignatureDocumentType::SPPD->value,
+            'status' => SignatureStatus::PENDING,
+            'error_message' => null,
+            'signed_file_path' => null,
+            'provider_name' => config('tte.default_provider'),
+          ],
+          $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
+        )
+      );
+
+      $signatureService = app(SignatureService::class);
+      $signResult = $signatureService->sign($signature, $validated['passphrase']);
+
+      if ($signResult !== true) {
+        return back()
+          ->with('error', 'Error: ' . ($signature->error_message ?? 'Terjadi kesalahan saat memproses tanda tangan elektronik.'))
+          ->with('error_details', is_array($signResult) && array_key_exists('details', $signResult) ? $signResult['details'] : $signature->toArray());
+      }
+
+      $approval->approve($validated['notes'] ?? null);
+      $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED)->doesntExist();
+      if ($allApproved) {
+        $sppd->update(['status' => SppdStatus::APPROVED]);
+      }
+
+      return back()->with('success', 'SPPD berhasil disetujui dan TTE berhasil.');
+    }
+
+    $approval->approve($validated['notes'] ?? null);
+
     $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED)->doesntExist();
     if ($allApproved) {
       $sppd->update(['status' => SppdStatus::APPROVED]);
     }
 
     return back()->with('success', 'SPPD berhasil disetujui.');
+  }
+
+  private function isFinalApprovalStep(SppdRequest $sppd, SppdApproval $approval): bool
+  {
+    return $approval->step_order === $sppd->approvals()->max('step_order');
+  }
+
+  private function defaultSignatureCoordinates(SignatureDocumentType $documentType): array
+  {
+    return match ($documentType) {
+      SignatureDocumentType::SPPD => [
+        'sign_page' => 1,
+        'sign_x' => 220,
+        'sign_y' => 100,
+        'sign_width' => 545,
+        'sign_height' => 130,
+      ],
+      SignatureDocumentType::SPT => [
+        'sign_page' => 1,
+        'sign_x' => 220,
+        'sign_y' => 100,
+        'sign_width' => 545,
+        'sign_height' => 130,
+      ],
+      SignatureDocumentType::KUITANSI => [
+        'sign_page' => 1,
+        'sign_x' => 220,
+        'sign_y' => 100,
+        'sign_width' => 545,
+        'sign_height' => 130,
+      ],
+    };
   }
 
   public function reject(Request $request, SppdRequest $sppd)
@@ -555,8 +641,7 @@ class SppdController extends Controller
       'duration'       => $duration
     ];
 
-    // Generate QR code simulasi jika sudah disetujui
-    if ($pdfData['is_approved']) {
+    if ($pdfData['is_approved'] && $sppd->isSigned('spt')) {
       $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
       $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
     }
@@ -614,10 +699,9 @@ class SppdController extends Controller
       'duration'      => $duration
     ];
 
-    // Generate QR code simulasi jika sudah disetujui
-    if ($pdfData['is_approved']) {
+    if ($pdfData['is_approved'] && $sppd->isSigned('sppd')) {
       $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
-      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 55);
+      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 50);
     }
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.sppd', [

@@ -28,14 +28,19 @@
       </div>
       <h3 class="text-xl font-bold text-slate-900 mb-1">{{ $user->name }}</h3>
       <p class="text-slate-500 mb-3">{{ $user->position?->name ?? 'Pegawai' }}</p>
-      
+
       <div class="w-full pt-4 border-t border-slate-100 flex flex-col gap-2">
+        @if (!$user->nik)
+          <div class="rounded border border-amber-200 bg-amber-50 text-amber-800 p-3 text-sm">
+            NIK belum terisi. Lengkapi NIK di menu Edit Profil Pegawai sebelum melakukan TTE.
+          </div>
+        @endif
         @if ($user->is_active)
           <span class="badge bg-emerald-100 text-emerald-800 self-center">Status: Aktif</span>
         @else
           <span class="badge bg-red-100 text-red-800 self-center">Status: Nonaktif</span>
         @endif
-        
+
         <div class="mt-2 text-sm text-slate-600">
           @foreach ($user->roles as $role)
             <span class="inline-block px-2 py-1 bg-slate-100 rounded text-slate-700 border border-slate-200 m-0.5">{{ $role->name }}</span>
@@ -48,13 +53,16 @@
   <div class="md:col-span-2">
     <div class="card p-6">
       <h3 class="text-lg font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-100">Informasi Detail</h3>
-      
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
         <div>
           <label class="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">NIP / ID</label>
           <p class="text-base text-slate-900 font-mono">{{ $user->nip ?? '-' }}</p>
         </div>
-        
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">NIK</label>
+          <p class="text-base text-slate-900 font-mono">{{ $user->nik ?? '-' }}</p>
+        </div>
         <div>
           <label class="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">Username</label>
           <p class="text-base text-slate-900">{{ $user->username }}</p>
@@ -69,7 +77,7 @@
           <label class="block text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">No. Telepon</label>
           <p class="text-base text-slate-900">{{ $user->phone ?? '-' }}</p>
         </div>
-        
+
         <div class="sm:col-span-2 pt-2 pb-2">
           <hr class="border-slate-100">
         </div>

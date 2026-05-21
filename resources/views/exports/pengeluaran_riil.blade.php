@@ -58,7 +58,7 @@
 		.data-table th,
 		.data-table td {
 			border: 1px solid #000;
-			padding: 3px 8px;
+			padding: 2.5px 8px;
 		}
 
 		.data-table th {
@@ -148,7 +148,7 @@
 			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
 			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department->name }}</div>
 			<div style="font-size: 10pt;">{{ $sppd->user->department->address ?? '' }}</div>
-		@endifz
+		@endif
 	</div>
 
 	<div class="title" style="margin-top: 15px;">DAFTAR PENGELUARAN RIIL</div>

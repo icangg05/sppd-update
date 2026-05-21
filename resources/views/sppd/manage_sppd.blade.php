@@ -55,13 +55,38 @@
 						{{ $sppd->sppd_date?->format('d-m-Y') ?? $sppd->created_at->format('d-m-Y') }}</span>
 				</div>
 
-				<form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'sppd']) }}" method="POST">
-					@csrf
-					<button type="submit"
-						class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 rounded text-xs font-bold transition-colors shadow-sm">
-						Reset TTE
-					</button>
-				</form>
+				@php $sppdSignature = $sppd->signatureFor('sppd'); @endphp
+				<div class="space-y-4 w-full max-w-md">
+					@if ($sppdSignature)
+						<div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+							<p class="text-sm font-semibold text-slate-700">Status TTE SPPD:</p>
+							<p class="text-sm text-slate-600">{{ $sppdSignature->status->label() }}</p>
+							@if ($sppdSignature->signed_file_path)
+								<a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
+									class="inline-block mt-3 bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded text-xs font-bold transition-all">
+									Download PDF TTE
+								</a>
+							@endif
+							@if ($sppdSignature->error_message)
+								<p class="text-xs mt-2 text-rose-600">Error: {{ $sppdSignature->error_message }}</p>
+							@endif
+						</div>
+					@endif
+
+					<div class="p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-600">
+						TTE untuk SPPD dijalankan melalui proses persetujuan final. Jika terjadi kesalahan, ulangi persetujuan setelah memperbaiki passphrase.
+					</div>
+
+					@if ($sppdSignature)
+					<form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'sppd']) }}" method="POST">
+						@csrf
+						<button type="submit"
+							class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 rounded text-xs font-bold transition-colors shadow-sm">
+							Reset TTE
+						</button>
+					</form>
+					@endif
+				</div>
 			</div>
 		</div>
 

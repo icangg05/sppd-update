@@ -25,6 +25,7 @@ class UserController extends Controller
       $query->where(function ($q) use ($s) {
         $q->where('name', 'like', "%{$s}%")
           ->orWhere('username', 'like', "%{$s}%")
+          ->orWhere('nik', 'like', "%{$s}%")
           ->orWhere('nip', 'like', "%{$s}%")
           ->orWhere('email', 'like', "%{$s}%");
       });
@@ -35,7 +36,7 @@ class UserController extends Controller
     }
 
     $users = $query->orderBy('name')->paginate(20)->withQueryString();
-    
+
     // Dropdown department hanya untuk super admin atau minimal tampilkan department sendiri
     $departments = $this->getHierarchicalDepartments();
 
@@ -54,7 +55,7 @@ class UserController extends Controller
   private function getHierarchicalDepartments()
   {
     $user = auth()->user();
-    
+
     if ($user->hasRole('super_admin')) {
       $roots = Department::whereNull('parent_id')->orderBy('name')->get();
     } else {
@@ -66,7 +67,7 @@ class UserController extends Controller
     foreach ($roots as $root) {
       $this->flattenDepartment($root, 0, $list);
     }
-    
+
     return $list;
   }
 
@@ -85,6 +86,7 @@ class UserController extends Controller
     $validated = $request->validate([
       'name'          => 'required|string|max:255',
       'username'      => 'required|string|max:255|unique:users,username',
+      'nik'           => 'required|string|max:20|unique:users,nik',
       'email'         => 'required|email|unique:users,email',
       'password'      => 'required|string|min:6',
       'nip'           => 'nullable|string|max:20',
@@ -122,7 +124,7 @@ class UserController extends Controller
     $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
     $positions = Position::orderBy('level')->get();
-    
+
     return view('master.users.edit', compact('user', 'departments', 'ranks', 'positions'));
   }
 
@@ -131,6 +133,7 @@ class UserController extends Controller
     $validated = $request->validate([
       'name'          => 'required|string|max:255',
       'username'      => 'required|string|max:255|unique:users,username,' . $user->id,
+      'nik'           => 'required|string|max:20|unique:users,nik,' . $user->id,
       'email'         => 'required|email|unique:users,email,' . $user->id,
       'password'      => 'nullable|string|min:6',
       'nip'           => 'nullable|string|max:20',

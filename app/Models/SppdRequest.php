@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\SignatureStatus;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
+use App\Models\SppdDigitalSignature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -130,6 +132,19 @@ class SppdRequest extends Model
   public function digitalSignatures(): HasMany
   {
     return $this->hasMany(SppdDigitalSignature::class);
+  }
+
+  public function signatureFor(string $documentType): ?SppdDigitalSignature
+  {
+    return $this->digitalSignatures()
+      ->where('document_type', $documentType)
+      ->orderBy('created_at', 'desc')
+      ->first();
+  }
+
+  public function isSigned(string $documentType): bool
+  {
+    return optional($this->signatureFor($documentType))->status?->value === SignatureStatus::SIGNED->value;
   }
 
     // ──────────────────────────────────────────────
