@@ -115,7 +115,7 @@ class SppdController extends Controller
 
     if ($hasActiveTravel) {
       return redirect()->route('sppd.create')
-        ->with('error', 'Pegawai ' . $pelaksana->name . ' masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan). SPPD baru dapat diajukan setelah tanggal perjalanan selesai.');
+        ->with('error', 'Pegawai ' . $pelaksana->name . ' masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan).');
     }
 
     // Cek kelengkapan pejabat

@@ -6,8 +6,7 @@
 		<div>
 			<h1 class="page-title text-green-600 border-b-2 border-green-600 w-fit pb-1">KUITANSI</h1>
 		</div>
-		<a href="{{ route('sppd.next', $sppd) }}"
-			class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-1 rounded text-sm transition-colors">Kembali</a>
+		<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="danger">Kembali</x-ui.button>
 	</div>
 
 	@php
@@ -123,15 +122,21 @@
 				<input type="hidden" name="user_id" id="panjarUserId">
 
 				<div class="mb-4">
-					<label class="form-label">Jumlah Panjar (Rp)</label>
-					<input type="number" name="amount" id="panjarAmount" class="form-input" min="0" step="1" required
-						placeholder="0">
+					<x-form.input
+						type="number"
+						name="amount"
+						id="panjarAmount"
+						label="Jumlah Panjar (Rp)"
+						min="0"
+						:step="1"
+						placeholder="0"
+						required
+					/>
 				</div>
 
 				<div class="flex justify-end gap-2">
-					<button type="button" onclick="closePanjarModal()"
-						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-sm transition-colors">Batal</button>
-					<button type="submit" class="btn-primary px-6">Simpan</button>
+					<x-ui.button type="button" variant="secondary" onclick="closePanjarModal()">Batal</x-ui.button>
+					<x-ui.button type="submit">Simpan</x-ui.button>
 				</div>
 			</form>
 		</div>

@@ -8,7 +8,7 @@
     <h1 class="page-title">Tambah Workflow SPPD</h1>
     <p class="page-subtitle">Buat aturan persetujuan SPPD baru</p>
   </div>
-  <a href="{{ route('master.workflows.index') }}" class="btn-secondary">← Kembali</a>
+  <x-ui.button href="{{ route('master.workflows.index') }}" variant="secondary">← Kembali</x-ui.button>
 </div>
 
 <form method="POST" action="{{ route('master.workflows.store') }}">
@@ -17,49 +17,60 @@
     <h3 class="font-semibold text-slate-900 mb-4">Informasi Aturan</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="md:col-span-2">
-        <label class="form-label">Nama Workflow <span class="text-red-500">*</span></label>
-        <input type="text" name="name" value="{{ old('name') }}" class="form-input" placeholder="Misal: Alur Staff Reguler Luar Daerah" required>
-        @error('name') <p class="form-error">{{ $message }}</p> @enderror
+        <x-form.input
+          name="name"
+          label="Nama Workflow"
+          :value="old('name')"
+          placeholder="Misal: Alur Staff Reguler Luar Daerah"
+          required
+        />
       </div>
-      <div>
-        <label class="form-label">Berlaku Untuk Instansi (Opsional)</label>
-        <select name="department_type" class="form-select">
-          <option value="">-- Semua Tipe Instansi --</option>
-          @foreach($departmentTypes as $type)
-            <option value="{{ $type->value }}" {{ old('department_type') === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
-          @endforeach
-        </select>
-        <p class="text-xs text-slate-500 mt-1">Kosongkan jika berlaku untuk semua instansi.</p>
-      </div>
-      <div>
-        <label class="form-label">Berlaku Untuk Role Pemohon (Opsional)</label>
-        <select name="applicant_role" class="form-select">
-          <option value="">-- Semua Role --</option>
-          @foreach($roles as $role)
-            <option value="{{ $role->name }}" {{ old('applicant_role') === $role->name ? 'selected' : '' }}>{{ $role->name }}</option>
-          @endforeach
-        </select>
-        <p class="text-xs text-slate-500 mt-1">Kosongkan jika berlaku untuk semua peran pemohon.</p>
-      </div>
+
+      <x-form.select
+        name="department_type"
+        label="Berlaku Untuk Instansi (Opsional)"
+        hint="Kosongkan jika berlaku untuk semua instansi."
+      >
+        <option value="">-- Semua Tipe Instansi --</option>
+        @foreach($departmentTypes as $type)
+          <option value="{{ $type->value }}" {{ old('department_type') === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+        @endforeach
+      </x-form.select>
+
+      <x-form.select
+        name="applicant_role"
+        label="Berlaku Untuk Role Pemohon (Opsional)"
+        hint="Kosongkan jika berlaku untuk semua peran pemohon."
+      >
+        <option value="">-- Semua Role --</option>
+        @foreach($roles as $role)
+          <option value="{{ $role->name }}" {{ old('applicant_role') === $role->name ? 'selected' : '' }}>{{ $role->name }}</option>
+        @endforeach
+      </x-form.select>
+
       <div class="md:col-span-2">
-        <label class="form-label mb-2 block">Berlaku Untuk Tujuan (Opsional)</label>
+        <p class="form-label mb-2 block">Berlaku Untuk Tujuan (Opsional)</p>
         <div class="flex flex-wrap gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
           @foreach($domains as $domain)
-            <label class="flex items-center cursor-pointer">
-              <input type="checkbox" name="destination[]" value="{{ $domain->value }}" 
-                {{ is_array(old('destination')) && in_array($domain->value, old('destination')) ? 'checked' : '' }}
-                class="form-checkbox text-primary-600 rounded">
-              <span class="ml-2 text-sm text-slate-700">{{ $domain->label() }}</span>
-            </label>
+            <x-form.checkbox
+              name="destination[]"
+              :value="$domain->value"
+              :checked="is_array(old('destination')) && in_array($domain->value, old('destination'))"
+              label="{{ $domain->label() }}"
+              wrapper-class="flex items-center"
+            />
           @endforeach
         </div>
         <p class="text-xs text-slate-500 mt-1">Pilih satu atau lebih. Kosongkan jika berlaku untuk semua tujuan.</p>
       </div>
+
       <div class="flex items-center mt-6">
-        <label class="flex items-center cursor-pointer">
-          <input type="checkbox" name="is_active" class="form-checkbox text-primary-600 rounded" checked>
-          <span class="ml-2 text-sm text-slate-700 font-medium">Aktifkan Workflow Ini</span>
-        </label>
+        <x-form.checkbox
+          name="is_active"
+          label="Aktifkan Workflow Ini"
+          :checked="true"
+          wrapper-class="flex items-center"
+        />
       </div>
     </div>
   </div>
@@ -67,30 +78,26 @@
   <div class="card p-6 mb-6">
     <div class="flex items-center justify-between mb-4">
       <h3 class="font-semibold text-slate-900">Alur Persetujuan (Steps) <span class="text-red-500">*</span></h3>
-      <button type="button" id="add-step-btn" class="btn-secondary text-sm py-1.5">
+      <x-ui.button type="button" id="add-step-btn" variant="secondary" class="text-sm py-1.5">
         + Tambah Tahap
-      </button>
+      </x-ui.button>
     </div>
     <p class="text-sm text-slate-500 mb-4">Urutkan peran (role) yang harus menyetujui SPPD dari awal hingga akhir.</p>
-    
+
     @error('steps') <p class="form-error mb-4">{{ $message }}</p> @enderror
 
-    <div id="steps-container" class="space-y-3">
-      <!-- Steps will be generated here by JS -->
-    </div>
+    <div id="steps-container" class="space-y-3"></div>
   </div>
 
   <div class="flex justify-end gap-3">
-    <a href="{{ route('master.workflows.index') }}" class="btn-secondary">Batal</a>
-    <button type="submit" class="btn-primary">Simpan Workflow</button>
+    <x-ui.button href="{{ route('master.workflows.index') }}" variant="secondary">Batal</x-ui.button>
+    <x-ui.button type="submit">Simpan Workflow</x-ui.button>
   </div>
 </form>
 
 <template id="step-template">
   <div class="step-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-    <div class="step-number w-8 h-8 flex items-center justify-center bg-slate-200 text-slate-700 font-bold rounded-full text-sm">
-      1
-    </div>
+    <div class="step-number w-8 h-8 flex items-center justify-center bg-slate-200 text-slate-700 font-bold rounded-full text-sm">1</div>
     <div class="flex-1">
       <select name="steps[]" class="form-select" required>
         <option value="">-- Pilih Role Approver --</option>
@@ -111,9 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const addBtn = document.getElementById('add-step-btn');
   const template = document.getElementById('step-template').innerHTML;
 
-  // Initialize from old input if any, or just 1 empty step
   const oldSteps = @json(old('steps', []));
-  
+
   if (oldSteps.length > 0) {
     oldSteps.forEach(role => addStep(role));
   } else {
@@ -126,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = template;
     const stepEl = tempDiv.firstElementChild;
-    
+
     if (selectedRole) {
       const select = stepEl.querySelector('select');
       select.value = selectedRole;

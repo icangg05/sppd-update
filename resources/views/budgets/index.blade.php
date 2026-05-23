@@ -6,11 +6,8 @@
 @section('content')
 	<div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
 		<div class="flex items-center gap-3">
-			<div class="p-2 bg-emerald-100 rounded-lg">
-				<svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-				</svg>
+			<div class="p-2 bg-emerald-100 rounded">
+				<i class="fa-solid fa-file-lines text-emerald-600 text-xl"></i>
 			</div>
 			<div>
 				<h2 class="text-xl font-bold text-slate-900">Daftar Anggaran</h2>
@@ -19,20 +16,19 @@
 		</div>
 
 		<div class="flex items-center gap-2">
-			<button onclick="window.location.reload()" class="btn-secondary flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-				</svg>
+			<x-ui.button type="button" variant="secondary" onclick="window.location.reload()" class="flex items-center gap-2">
+				<x-slot name="icon">
+					<i class="fa-solid fa-arrows-rotate"></i>
+				</x-slot>
 				Refresh
-			</button>
+			</x-ui.button>
 			@can('budget.create')
-				<a href="{{ route('master.budgets.create') }}" class="btn-primary flex items-center gap-2">
-					<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
-					</svg>
+				<x-ui.button href="{{ route('master.budgets.create') }}" class="flex items-center gap-2">
+					<x-slot name="icon">
+						<i class="fa-solid fa-plus"></i>
+					</x-slot>
 					Tambah Data
-				</a>
+				</x-ui.button>
 			@endcan
 		</div>
 	</div>
@@ -41,33 +37,30 @@
 		{{-- Filter Header --}}
 		<div class="p-4 border-b border-slate-100 bg-slate-50/50">
 			<form action="{{ route('master.budgets.index') }}" method="GET" class="flex flex-wrap items-center gap-4">
-				<div class="flex-1 min-w-[200px]">
+				<div class="flex-1 min-w-50">
 					<div class="relative">
-						<input type="text" name="search" value="{{ request('search') }}"
+						<x-form.input
+							name="search"
+							:value="request('search')"
 							placeholder="Cari program, kegiatan, atau uraian..."
-							class="w-full pl-10 pr-4 py-2 rounded-lg border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+							class="pl-10"
+							wrapperClass="w-full"
+						/>
 						<div class="absolute left-3 top-2.5 text-slate-400">
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-							</svg>
+							<i class="fa-solid fa-magnifying-glass"></i>
 						</div>
 					</div>
 				</div>
 
-				<div class="w-full md:w-auto">
-					<select name="year" onchange="this.form.submit()"
-						class="w-full py-2 rounded-lg border-slate-200 text-sm focus:border-emerald-500">
-						@for ($y = date('Y'); $y >= 2019; $y--)
-							<option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-						@endfor
-					</select>
-				</div>
+				<x-form.select name="year" wrapperClass="w-full md:w-auto" class="w-full">
+					@for ($y = date('Y'); $y >= 2019; $y--)
+						<option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+					@endfor
+				</x-form.select>
 
-				<button type="submit"
-					class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+				<x-ui.button type="submit" class="px-6">
 					Go
-				</button>
+				</x-ui.button>
 			</form>
 		</div>
 
@@ -117,19 +110,22 @@
 							</td>
 							<td class="px-6 py-4 align-top text-center whitespace-nowrap">
 								<div class="flex flex-col gap-1">
-									<a href="{{ route('master.budgets.show', $budget->id) }}"
-										class="px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded uppercase hover:bg-blue-700 text-center block">Detail</a>
-									@can('budget.edit')
-										<a href="{{ route('master.budgets.edit', $budget->id) }}"
-											class="px-3 py-1 bg-amber-500 text-white text-[10px] font-bold rounded uppercase hover:bg-amber-600 text-center block">Edit</a>
-									@endcan
-									@can('budget.delete')
-										<form action="{{ route('master.budgets.destroy', $budget->id) }}" method="POST" class="inline-block w-full"
-											onsubmit="return confirm('Apakah Anda yakin ingin menghapus data anggaran ini?');">
-											@csrf
-											@method('DELETE')
-											<button type="submit"
-												class="w-full px-3 py-1 bg-red-600 text-white text-[10px] font-bold rounded uppercase hover:bg-red-700 text-center">Hapus</button>
+								<x-ui.button href="{{ route('master.budgets.show', $budget->id) }}" variant="secondary" class="text-[10px] font-bold uppercase px-3 py-1 block w-full">
+									Detail
+								</x-ui.button>
+								@can('budget.edit')
+									<x-ui.button href="{{ route('master.budgets.edit', $budget->id) }}" variant="warning" class="text-[10px] font-bold uppercase px-3 py-1 block w-full">
+										Edit
+									</x-ui.button>
+								@endcan
+								@can('budget.delete')
+									<form action="{{ route('master.budgets.destroy', $budget->id) }}" method="POST" class="inline-block w-full"
+										onsubmit="return confirm('Apakah Anda yakin ingin menghapus data anggaran ini?');">
+										@csrf
+										@method('DELETE')
+										<x-ui.button type="submit" variant="danger" class="w-full text-[10px] font-bold uppercase px-3 py-1">
+											Hapus
+										</x-ui.button>
 										</form>
 									@endcan
 								</div>
@@ -139,10 +135,7 @@
 						<tr>
 							<td colspan="9" class="px-6 py-12 text-center text-slate-400">
 								<div class="flex flex-col items-center gap-2">
-									<svg class="w-12 h-12 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-											d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-									</svg>
+									<i class="fa-solid fa-file-circle-xmark fa-2x text-slate-200"></i>
 									<span>Belum ada data anggaran ditemukan.</span>
 								</div>
 							</td>

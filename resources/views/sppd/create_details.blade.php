@@ -6,13 +6,12 @@
 			<h1 class="text-2xl font-bold text-slate-800">Detail Perjalanan Dinas</h1>
 			<p class="text-slate-500 text-sm">Tahap 2: Isi Detail & Lengkapi Data</p>
 		</div>
-		<a href="{{ route('sppd.create') }}"
-			class="text-primary-600 hover:underline text-sm font-medium flex items-center gap-1">
+		<x-ui.button href="{{ route('sppd.create') }}" variant="secondary" class="flex items-center gap-1">
 			<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 			</svg>
 			Kembali ke Tahap 1
-		</a>
+		</x-ui.button>
 	</div>
 
 	<form action="{{ route('sppd.store') }}" method="POST" enctype="multipart/form-data">
@@ -62,25 +61,37 @@
 				<h3 class="font-bold text-primary-800 text-sm tracking-wide uppercase">DATA PERIHAL</h3>
 			</div>
 			<div class="space-y-4">
-				<div>
-					<label for="purpose" class="form-label font-bold text-slate-700">Perihal (Maksud Perjalanan Dinas) <span
-							class="text-red-500">*</span></label>
-					<textarea name="purpose" id="purpose" class="form-textarea" rows="3" required
-					 placeholder="Masukkan maksud perjalanan dinas secara lengkap...">{{ old('purpose', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta') }}</textarea>
-				</div>
+				<x-form.textarea
+					name="purpose"
+					label="Perihal (Maksud Perjalanan Dinas)"
+					:rows="3"
+					placeholder="Masukkan maksud perjalanan dinas secara lengkap..."
+					:required="true"
+					:labelClass="'font-bold text-slate-700'"
+					:value="old('purpose', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta')"
+				/>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div>
-						<label for="problem" class="form-label font-medium">Persoalan</label>
-						<textarea name="problem" id="problem" class="form-textarea" rows="2">{{ old('problem', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta') }}</textarea>
-					</div>
-					<div>
-						<label for="facts" class="form-label font-medium">Fakta yang mempengaruhi</label>
-						<textarea name="facts" id="facts" class="form-textarea" rows="2">{{ old('facts', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta') }}</textarea>
-					</div>
-					<div>
-						<label for="analysis" class="form-label font-medium">Analisis</label>
-						<textarea name="analysis" id="analysis" class="form-textarea" rows="2">{{ old('analysis', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta') }}</textarea>
-					</div>
+					<x-form.textarea
+						name="problem"
+						label="Persoalan"
+						:rows="4"
+						:labelClass="'font-medium'"
+						:value="old('problem', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta')"
+					/>
+					<x-form.textarea
+						name="facts"
+						label="Fakta yang mempengaruhi"
+						:rows="4"
+						:labelClass="'font-medium'"
+						:value="old('facts', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta')"
+					/>
+					<x-form.textarea
+						name="analysis"
+						label="Analisis"
+						:rows="4"
+						:labelClass="'font-medium'"
+						:value="old('analysis', 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta')"
+					/>
 				</div>
 			</div>
 		</div>
@@ -92,42 +103,41 @@
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-				<div>
-					<label for="transport_type" class="form-label">Jenis Angkutan</label>
-					<select name="transport_type" id="transport_type" class="form-select">
-						<option value="">— Pilih —</option>
-						<option value="Darat" {{ old('transport_type', 'Darat') == 'Darat' ? 'selected' : '' }}>Darat</option>
-						<option value="Laut" {{ old('transport_type') == 'Laut' ? 'selected' : '' }}>Laut</option>
-						<option value="Udara" {{ old('transport_type') == 'Udara' ? 'selected' : '' }}>Udara</option>
-					</select>
-				</div>
-				<div>
-					<label for="transport_name" class="form-label">Angkutan</label>
-					<select name="transport_name" id="transport_name" class="form-select">
-						<option value="">— Pilih —</option>
-						<option value="Motor" {{ old('transport_name') == 'Motor' ? 'selected' : '' }}>Motor</option>
-						<option value="Mobil" {{ old('transport_name', 'Mobil') == 'Mobil' ? 'selected' : '' }}>Mobil</option>
-						<option value="Pesawat" {{ old('transport_name') == 'Pesawat' ? 'selected' : '' }}>Pesawat</option>
-						<option value="Kapal" {{ old('transport_name') == 'Kapal' ? 'selected' : '' }}>Kapal</option>
-						<option value="Kereta" {{ old('transport_name') == 'Kereta' ? 'selected' : '' }}>Kereta</option>
-						<option value="Lainnya" {{ old('transport_name') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-					</select>
-				</div>
-				<div>
-					<label for="departure_place" class="form-label">Tempat Berangkat</label>
-					<input type="text" name="departure_place" id="departure_place" class="form-input"
-						placeholder="Misal: Kantor Walikota" value="{{ old('departure_place', 'Kantor Kominfo') }}">
-				</div>
-				<div>
-					<label for="start_date" class="form-label">Tanggal Berangkat <span class="text-red-500">*</span></label>
-					<input type="date" name="start_date" id="start_date" value="{{ old('start_date', date('Y-m-d')) }}"
-						class="form-input" required>
-				</div>
-				<div>
-					<label for="end_date" class="form-label">Tanggal Kembali <span class="text-red-500">*</span></label>
-					<input type="date" name="end_date" id="end_date" value="{{ old('end_date', date('Y-m-d')) }}"
-						class="form-input" required>
-				</div>
+				<x-form.select name="transport_type" label="Jenis Angkutan">
+					<option value="">— Pilih —</option>
+					<option value="Darat" {{ old('transport_type', 'Darat') == 'Darat' ? 'selected' : '' }}>Darat</option>
+					<option value="Laut" {{ old('transport_type') == 'Laut' ? 'selected' : '' }}>Laut</option>
+					<option value="Udara" {{ old('transport_type') == 'Udara' ? 'selected' : '' }}>Udara</option>
+				</x-form.select>
+				<x-form.select name="transport_name" label="Angkutan">
+					<option value="">— Pilih —</option>
+					<option value="Motor" {{ old('transport_name') == 'Motor' ? 'selected' : '' }}>Motor</option>
+					<option value="Mobil" {{ old('transport_name', 'Mobil') == 'Mobil' ? 'selected' : '' }}>Mobil</option>
+					<option value="Pesawat" {{ old('transport_name') == 'Pesawat' ? 'selected' : '' }}>Pesawat</option>
+					<option value="Kapal" {{ old('transport_name') == 'Kapal' ? 'selected' : '' }}>Kapal</option>
+					<option value="Kereta" {{ old('transport_name') == 'Kereta' ? 'selected' : '' }}>Kereta</option>
+					<option value="Lainnya" {{ old('transport_name') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+				</x-form.select>
+				<x-form.input
+					name="departure_place"
+					label="Tempat Berangkat"
+					placeholder="Misal: Kantor Walikota"
+					:value="old('departure_place', 'Kantor Kominfo')"
+				/>
+				<x-form.input
+					type="date"
+					name="start_date"
+					label="Tanggal Berangkat"
+					:value="old('start_date', date('Y-m-d'))"
+					required
+				/>
+				<x-form.input
+					type="date"
+					name="end_date"
+					label="Tanggal Kembali"
+					:value="old('end_date', date('Y-m-d'))"
+					required
+				/>
 			</div>
 
 			<div id="destination-section">
@@ -200,42 +210,32 @@
 					<h3 class="font-bold text-primary-800 text-sm tracking-wide uppercase">ANGGARAN & KATEGORI</h3>
 				</div>
 				<div class="space-y-4">
-					<div>
-						<label for="budget_id" class="form-label">Sumber Anggaran / Kegiatan <span
-								class="text-red-500">*</span></label>
-						<select name="budget_id" id="budget_id" class="form-select" required>
-							<option value="">— Pilih Anggaran —</option>
-							@foreach ($budgets as $b)
-								<option value="{{ $b->id }}" {{ old('budget_id', 2) == $b->id ? 'selected' : '' }}>
-									{{ $b->program ?? '-' }} | {{ $b->activity ?? '-' }}
-								</option>
-							@endforeach
-						</select>
-					</div>
-					<div>
-						<label for="category_id" class="form-label">Kategori Perjalanan <span class="text-red-500">*</span></label>
-						<select name="category_id" id="category_id" class="form-select" required>
-							<option value="">— Pilih —</option>
-							@foreach ($categories as $c)
-								<option value="{{ $c->id }}" {{ old('category_id', 1) == $c->id ? 'selected' : '' }}>
-									{{ $c->name }}
-								</option>
-							@endforeach
-						</select>
-					</div>
-					<div>
-						<label for="urgency" class="form-label text-orange-600 font-bold">Sifat Pengajuan <span
-								class="text-red-500">*</span></label>
-						<select name="urgency" id="urgency" class="form-select border-orange-200" required>
-							<option value="Biasa" {{ old('urgency', 'Biasa') == 'Biasa' ? 'selected' : '' }}>Biasa</option>
-							<option value="Segera" {{ old('urgency') == 'Segera' ? 'selected' : '' }}>Segera</option>
-						</select>
-					</div>
-					<div>
-						<label for="attachment" class="form-label font-bold text-slate-700">Dokumen Pendukung <span
-								class="text-xs font-normal text-slate-400">(Opsional, PDF/JPG/PNG)</span></label>
-						<input type="file" name="attachment" id="attachment" class="form-input text-xs">
-					</div>
+					<x-form.select name="budget_id" label="Sumber Anggaran / Kegiatan" required>
+						<option value="">— Pilih Anggaran —</option>
+						@foreach ($budgets as $b)
+							<option value="{{ $b->id }}" {{ old('budget_id', 2) == $b->id ? 'selected' : '' }}>
+								{{ $b->program ?? '-' }} | {{ $b->activity ?? '-' }}
+							</option>
+						@endforeach
+					</x-form.select>
+					<x-form.select name="category_id" label="Kategori Perjalanan" required>
+						<option value="">— Pilih —</option>
+						@foreach ($categories as $c)
+							<option value="{{ is_object($c) ? $c->id : $c->value }}" {{ old('category_id', 1) == (is_object($c) ? $c->id : $c->value) ? 'selected' : '' }}>
+								{{ is_object($c) ? $c->name : $c->label() }}
+							</option>
+						@endforeach
+					</x-form.select>
+					<x-form.select name="urgency" label="Sifat Pengajuan" class="border-orange-200" required>
+						<option value="Biasa" {{ old('urgency', 'Biasa') == 'Biasa' ? 'selected' : '' }}>Biasa</option>
+						<option value="Segera" {{ old('urgency') == 'Segera' ? 'selected' : '' }}>Segera</option>
+					</x-form.select>
+					<x-form.file
+						name="attachment"
+						label="Dokumen Pendukung"
+						hint="(Opsional, PDF/JPG/PNG)"
+						class="text-xs"
+					/>
 				</div>
 			</div>
 
@@ -271,21 +271,23 @@
 				<h3 class="font-bold text-primary-800 text-sm tracking-wide uppercase">ADMINISTRASI TANGGAL</h3>
 			</div>
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label for="spt_date" class="form-label">Tanggal SPT</label>
-					<input type="date" name="spt_date" id="spt_date" value="{{ old('spt_date', '2026-04-21') }}"
-						class="form-input">
-				</div>
-				<div>
-					<label for="sppd_date" class="form-label">Tanggal SPPD</label>
-					<input type="date" name="sppd_date" id="sppd_date" value="{{ old('sppd_date', '2026-04-23') }}"
-						class="form-input">
-				</div>
+				<x-form.input
+					type="date"
+					name="spt_date"
+					label="Tanggal SPT"
+					:value="old('spt_date', '2026-04-21')"
+				/>
+				<x-form.input
+					type="date"
+					name="sppd_date"
+					label="Tanggal SPPD"
+					:value="old('sppd_date', '2026-04-23')"
+				/>
 			</div>
 		</div>
 
 		<div class="flex justify-end gap-3 mb-10">
-			<button type="submit" class="btn-primary px-12 py-3 text-lg shadow-lg">Buat & Ajukan SPPD</button>
+			<x-ui.button type="submit">Buat & Ajukan SPPD</x-ui.button>
 		</div>
 	</form>
 @endsection

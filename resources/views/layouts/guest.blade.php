@@ -2,329 +2,135 @@
 <html lang="en">
 
 <head>
-	<meta charset="UTF-8">
-	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-	<meta name="google" content="notranslate">
-	<meta name="robots" content="noindex, nofollow">
-	<title>
-		@hasSection('title')
-			@yield('title') -
-		@endif{{ config('app.name') }}
-	</title>
-	<link rel="icon" href="{{ asset('assets2/dist/img/user.png') }}">
-	<!-- Bootstrap 3.3.6 -->
-	<link rel="stylesheet" href="{{ asset('assets2/bootstrap/css/bootstrap.min.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets2/dist/css/AdminLTE.css') }}">
-	<link rel="stylesheet" href="{{ asset('assets2/plugins/iCheck/css/blue.css') }}">
-	<link rel="stylesheet"
-		href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-	<link href="https://fonts.googleapis.com/css?family=Anton|Permanent+Marker|Quicksand" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap"
-		rel="stylesheet">
-
-	<style>
-		body {
-			font-family: 'Poppins', sans-serif;
-			height: 100vh;
-			overflow: hidden;
-			margin: 0;
-		}
-
-		#video-background {
-			position: fixed;
-			right: 0;
-			bottom: 0;
-			min-width: 100%;
-			min-height: 100%;
-			width: auto;
-			height: auto;
-			z-index: -100;
-			object-fit: cover;
-		}
-
-		.login-overlay {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background: linear-gradient(135deg, rgba(41, 128, 185, 0.6) 0%, rgba(109, 213, 250, 0.6) 100%);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
-		.login-container {
-			width: 100%;
-			max-width: 900px;
-			padding: 15px;
-		}
-
-		.login-card {
-			background: transparent;
-			border-radius: 20px;
-			box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-			overflow: hidden;
-			display: flex;
-			flex-wrap: wrap;
-		}
-
-		.login-left {
-			flex: 1;
-			padding: 40px;
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			align-items: center;
-			text-align: center;
-			min-width: 300px;
-			background: transparent !important;
-			box-shadow: none !important;
-			border: none !important;
-		}
-
-		.login-right {
-			flex: 1;
-			padding: 50px 40px;
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			min-width: 300px;
-			background: rgba(255, 255, 255, 0.2);
-			backdrop-filter: blur(20px);
-			-webkit-backdrop-filter: blur(20px);
-		}
-
-		.brand-logos {
-			margin-bottom: 20px;
-		}
-
-		.brand-logos img {
-			margin: 0 10px;
-			transition: transform 0.3s ease;
-			filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-		}
-
-		.brand-logos img:hover {
-			transform: scale(1.05);
-		}
-
-		.app-title {
-			font-weight: 700;
-			font-size: 24px;
-			color: #000000;
-			margin-top: 10px;
-			line-height: 1.3;
-			letter-spacing: 0.5px;
-			text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-		}
-
-		.app-subtitle {
-			font-size: 14px;
-			color: #000000;
-			margin-top: 8px;
-			font-weight: 400;
-			text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-		}
-
-		.login-header {
-			margin-bottom: 35px;
-			text-align: center;
-		}
-
-		.login-header h3 {
-			font-weight: 600;
-			color: #2c3e50;
-			margin: 0 0 10px 0;
-			font-size: 22px;
-		}
-
-		.login-header p {
-			color: #000000;
-			font-size: 14px;
-			margin: 0;
-		}
-
-		/* Floating Label Styles */
-		.form-group.floating-group {
-			position: relative;
-			margin-bottom: 25px;
-		}
-
-		.form-control.floating-control {
-			height: 52px;
-			padding: 25px 15px 10px 15px;
-			border: 2px solid #eef2f7;
-			border-radius: 12px;
-			font-size: 15px;
-			background: #fdfdfd;
-			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-			box-shadow: none;
-			color: #34495e;
-		}
-
-		.form-control.floating-control:focus {
-			border-color: #3c8dbc;
-			background: #fff;
-			outline: none;
-			box-shadow: 0 0 0 4px rgba(60, 141, 188, 0.1);
-		}
-
-		.floating-label {
-			position: absolute;
-			top: 15px;
-			left: 17px;
-			font-size: 15px;
-			color: #95a5a6;
-			pointer-events: none;
-			transition: all 0.2s ease;
-			background: transparent;
-			font-weight: 400;
-		}
-
-		.form-control.floating-control:focus~.floating-label,
-		.form-control.floating-control:not(:placeholder-shown)~.floating-label {
-			top: 8px;
-			left: 15px;
-			font-size: 11px;
-			font-weight: 600;
-			color: #3c8dbc;
-			transform: translateY(0);
-		}
-
-		.btn-modern {
-			height: 52px;
-			border-radius: 12px;
-			font-weight: 600;
-			font-size: 16px;
-			letter-spacing: 1px;
-			text-transform: uppercase;
-			background: linear-gradient(135deg, #3c8dbc 0%, #2980b9 100%);
-			border: none;
-			box-shadow: 0 10px 20px rgba(60, 141, 188, 0.3);
-			transition: all 0.3s;
-			margin-top: 10px;
-		}
-
-		.btn-modern:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 15px 25px rgba(60, 141, 188, 0.4);
-			background: linear-gradient(135deg, #4fa3d4 0%, #3498db 100%);
-		}
-
-		.btn-modern:active {
-			transform: translateY(0);
-			box-shadow: 0 5px 15px rgba(60, 141, 188, 0.3);
-		}
-
-		.copyright {
-			margin-top: 40px;
-			font-size: 12px;
-			color: #000000;
-			text-align: center;
-		}
-
-		.copyright a {
-			color: #3c8dbc;
-			text-decoration: none;
-			transition: color 0.2s;
-		}
-
-		.copyright a:hover {
-			color: #3c8dbc;
-		}
-
-		@media (max-width: 768px) {
-			body {
-				height: auto;
-				overflow-y: auto;
-			}
-
-			.login-overlay {
-				position: relative;
-				height: auto;
-				min-height: 100vh;
-				padding: 40px 15px;
-				align-items: center;
-				display: flex;
-			}
-
-			.login-card {
-				flex-direction: column;
-				max-width: 400px;
-				margin: 0 auto;
-			}
-
-			.login-left {
-				padding: 20px;
-				min-height: auto;
-			}
-
-			.login-right {
-				padding: 30px 20px;
-			}
-
-			.app-title {
-				font-size: 20px;
-			}
-
-			.brand-logos {
-				display: none;
-			}
-		}
-	</style>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <meta name="google" content="notranslate">
+  <meta name="robots" content="noindex, nofollow">
+  <title>
+    @hasSection('title')
+      @yield('title') -
+    @endif{{ config('app.name') }}
+  </title>
+  <link rel="icon" href="{{ asset('assets2/dist/img/user.png') }}">
+  @vite(['resources/css/app.css'])
 </head>
 
-<body class="hold-transition">
-	<video autoplay muted loop id="video-background">
-		<source src="{{ asset('assets2/dist/img/background.webm') }}" type="video/webm">
-		Your browser does not support HTML5 video.
-	</video>
-	<div class="login-overlay">
-		<div class="login-container">
-			<div class="login-card">
-				<div class="login-left">
-					<img src="{{ asset('assets/img/HERO.webp') }}" alt="Hero Image"
-						style="max-width: 80%; margin-bottom: 30px; border-radius: 10px;">
-					<div class="brand-logos">
-						<img src="{{ asset('assets/img/logokdi.png') }}" alt="Logo Kendari" width="50">
-						<img src="{{ asset('assets/img/BSE.png') }}" alt="Logo BSE" width="120">
-					</div>
-					<div class="app-title">SPPD ELEKTRONIK<br>KOTA KENDARI</div>
-					<div class="app-subtitle">Sistem Informasi Perjalanan Dinas</div>
-				</div>
+<body class="min-h-screen bg-sky-950 font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
+  <div class="relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
 
-				<div class="login-right">
-					<div class="login-header">
-						<h3>Selamat Datang</h3>
-						<p>Silahkan login untuk memulai sesi anda</p>
-					</div>
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(186,230,253,0.28),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(125,211,252,0.22),transparent_20%),linear-gradient(135deg,rgba(12,74,110,0.96),rgba(8,47,73,0.98),rgba(3,105,161,0.94))]"></div>
+    <div
+      class="pointer-events-none absolute left-4 top-8 h-24 w-24 animate-[float_9s_ease-in-out_infinite] rounded-full border border-sky-200/35 bg-sky-200/30 shadow-[0_16px_35px_rgba(14,165,233,0.22)] sm:left-10 sm:h-32 sm:w-32">
+    </div>
+    <div
+      class="pointer-events-none absolute bottom-8 right-5 h-20 w-20 animate-[sway_11s_ease-in-out_infinite] rounded-full border border-sky-200/35 bg-sky-200/30 shadow-[0_16px_35px_rgba(14,165,233,0.22)] sm:right-10 sm:h-28 sm:w-28">
+    </div>
+    <div class="pointer-events-none absolute left-1/3 top-1/2 h-16 w-16 animate-[pulseGlow_8s_ease-in-out_infinite] rounded-full bg-sky-200/20 blur-2xl"></div>
+    <div class="pointer-events-none absolute right-1/4 top-1/4 h-12 w-12 animate-[float_7s_ease-in-out_infinite] rounded-full border border-sky-100/20 bg-sky-100/10"></div>
 
-					@yield('content')
+    <div class="relative mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-6xl items-center justify-center">
+      <div
+        class="grid w-full overflow-hidden rounded-[30px] border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
+        <div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9">
+          <div
+            class="inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
+            <span class="inline-block h-2 w-2 rounded-full bg-sky-200"></span>
+            SPPD Kota Kendari
+          </div>
 
-					<div class="copyright">
-						V 3.0 | &copy; <?= date('Y') ?> Pemerintah Kota Kendari
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+          <div
+            class="animate-[fadeUp_0.9s_ease] overflow-hidden rounded-3xl border border-sky-100/25 bg-sky-100/10 p-2 shadow-[0_18px_40px_rgba(14,165,233,0.16)]">
+            <img src="{{ asset('assets/img/HERO.webp') }}" alt="Foto Kepala Daerah dan Wakil"
+              class="h-full w-[70%] mx-auto rounded-2xl object-cover opacity-95">
+          </div>
 
-	<!-- jQuery 2.2.3 -->
-	<script src="{{ asset('assets2/plugins/jQuery/jquery-2.2.3.min.js') }}"></script>
-	<!-- Bootstrap 3.3.6 -->
-	<script src="{{ asset('assets2/bootstrap/js/bootstrap.min.js') }}"></script>
-	<script src="{{ asset('assets2/plugins/iCheck/js/icheck.min.js') }}"></script>
-	<script>
-		$(function() {
-			// Optional: Keep iCheck if needed for other inputs, but currently no checkboxes in new form
-			$('input[type="checkbox"]').iCheck({
-				checkboxClass: 'icheckbox_square-blue',
-				radioClass: 'iradio_square-blue',
-				increaseArea: '20%'
-			});
-		});
-	</script>
+          <div class="flex flex-row items-center gap-3 px-1">
+            <img src="{{ asset('assets/img/logokdi.png') }}" alt="Logo Pemkot Kendari"
+              class="h-20 rounded-2xl border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14">
+            <img src="{{ asset('assets/img/BSE.png') }}" alt="Logo BSrE"
+              class="h-20 rounded-2xl border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
+          </div>
+
+          <div class="space-y-1 px-1">
+            <h1 class="text-[1.4rem] font-black leading-tight text-white sm:text-[1.5rem]">SPPD Elektronik<br>Kota
+              Kendari</h1>
+            <p class="text-sm leading-6 text-sky-50/90">Sistem perjalanan dinas modern untuk OPD.</p>
+          </div>
+        </div>
+
+        <div
+          class="flex flex-col justify-center border-t border-sky-100/25 bg-sky-100/10 px-5 py-6 text-slate-900 sm:px-7 sm:py-8 lg:border-t-0 lg:border-l lg:px-9">
+          <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">Akses resmi</p>
+            <h2 class="text-[1.55rem] font-black text-white sm:text-[1.65rem]">Masuk ke Akun Anda</h2>
+            <p class="text-sm leading-6 text-sky-50/90">Gunakan akun resmi untuk mengelola pengajuan, persetujuan, dan
+              pelaporan perjalanan dinas.</p>
+          </div>
+
+          <div
+            class="mt-6 rounded-3xl border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
+            @yield('content')
+          </div>
+
+          <div class="mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
+            <p>
+              <span class="inline lg:hidden font-bold text-sky-100">SPPD Elektronik</span>
+              <span class="font-bold text-sky-100">V 4.0</span> • &copy; <?= date('Y') ?> Pemerintah Kota Kendari</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes sway {
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-8px) rotate(5deg);
+      }
+    }
+
+    @keyframes pulseGlow {
+      0%,
+      100% {
+        opacity: 0.35;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </body>
 
 </html>

@@ -6,7 +6,7 @@
 		<div>
 			<h1 class="page-title text-green-600 border-b-2 border-green-600 w-fit pb-1 uppercase">LAPORAN HASIL PERJALANAN DINAS</h1>
 		</div>
-		<a href="{{ route('sppd.next', $sppd) }}" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-1 rounded text-sm transition-colors">Kembali</a>
+		<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary">Kembali</x-ui.button>
 	</div>
 
 	<div class="card p-6 border-slate-200">
@@ -28,37 +28,51 @@
 		<form action="{{ route('sppd.report.store', $sppd) }}" method="POST" enctype="multipart/form-data">
 			@csrf
 			<div class="space-y-4">
-				<div>
-					<label class="form-label font-bold text-slate-700">Tanggal Laporan</label>
-					<input type="date" name="report_date" class="form-input max-w-xs" value="{{ $sppd->report->report_date?->format('Y-m-d') ?? now()->format('Y-m-d') }}">
-				</div>
+				<x-form.input
+					type="date"
+					name="report_date"
+					label="Tanggal Laporan"
+					:value="$sppd->report->report_date?->format('Y-m-d') ?? now()->format('Y-m-d')"
+					class="max-w-xs"
+				/>
 
-				<div>
-					<label class="form-label font-bold text-slate-700">Hasil Perjalanan / Laporan Narasi</label>
-					<textarea name="report_text" class="form-textarea" rows="15" placeholder="Masukkan detail hasil perjalanan dinas secara lengkap..." required>{{ $sppd->report->report_text ?? '' }}</textarea>
-				</div>
+				<x-form.textarea
+					name="report_text"
+					label="Hasil Perjalanan / Laporan Narasi"
+					:rows="15"
+					placeholder="Masukkan detail hasil perjalanan dinas secara lengkap..."
+					required
+					:value="$sppd->report->report_text ?? ''"
+				/>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="form-label font-bold text-slate-700">File Laporan <span class="text-slate-400 font-normal">(opsional, max 20MB)</span></label>
-						<input type="file" name="report_file" class="form-input" accept=".pdf,.doc,.docx">
-						@if($sppd->report?->report_file)
-							<p class="text-xs text-emerald-600 mt-1">✓ File sudah diupload: <a href="{{ asset('storage/' . $sppd->report->report_file) }}" target="_blank" class="underline">Lihat</a></p>
-						@endif
-					</div>
-					<div>
-						<label class="form-label font-bold text-slate-700">Foto Dokumentasi <span class="text-slate-400 font-normal">(opsional, max 20MB)</span></label>
-						<input type="file" name="documentation_file" class="form-input" accept="image/*">
-						@if($sppd->report?->documentation_file)
-							<p class="text-xs text-emerald-600 mt-1">✓ Foto sudah diupload: <a href="{{ asset('storage/' . $sppd->report->documentation_file) }}" target="_blank" class="underline">Lihat</a></p>
-						@endif
-					</div>
+					<x-form.file
+						name="report_file"
+						label="File Laporan"
+						accept=".pdf,.doc,.docx"
+						hint="opsional, max 20MB"
+					/>
+
+					@if($sppd->report?->report_file)
+						<p class="text-xs text-emerald-600 mt-1">✓ File sudah diupload: <a href="{{ asset('storage/' . $sppd->report->report_file) }}" target="_blank" class="underline">Lihat</a></p>
+					@endif
+
+					<x-form.file
+						name="documentation_file"
+						label="Foto Dokumentasi"
+						accept="image/*"
+						hint="opsional, max 20MB"
+					/>
+
+					@if($sppd->report?->documentation_file)
+						<p class="text-xs text-emerald-600 mt-1">✓ Foto sudah diupload: <a href="{{ asset('storage/' . $sppd->report->documentation_file) }}" target="_blank" class="underline">Lihat</a></p>
+					@endif
 				</div>
 
 				<div class="flex justify-end gap-3 pt-2">
-					<button type="submit" class="btn-primary px-8">
+					<x-ui.button type="submit" class="px-8">
 						{{ $sppd->report ? 'Perbarui Laporan' : 'Simpan Laporan' }}
-					</button>
+					</x-ui.button>
 				</div>
 			</div>
 		</form>

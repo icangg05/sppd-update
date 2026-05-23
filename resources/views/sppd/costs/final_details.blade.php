@@ -7,14 +7,13 @@
 			<h1 class="page-title text-green-600 border-b-2 border-green-600 w-fit pb-1 uppercase">LAPORAN RINCIAN BIAYA PERJALANAN
 				DINAS</h1>
 		</div>
-		<a href="{{ route('sppd.next', $sppd) }}"
-			class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-1 rounded text-sm transition-colors">Kembali</a>
+		<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="danger">Kembali</x-ui.button>
 	</div>
 
 	@if (!$sppd->pptk_id || !$bendahara)
 		<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
 			<div class="flex items-start gap-3">
-				<svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
 				</svg>
 				<div class="text-sm text-amber-800">
@@ -50,13 +49,12 @@
 				<p class="text-sm font-medium text-slate-700">{{ $person['label'] }} : <span
 						class="font-bold uppercase">{{ $person['name'] }}</span></p>
 				<div class="flex gap-2">
-					<button onclick="openCostModal('{{ $person['id'] }}', '{{ $person['name'] }}')"
-						class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
+					<x-ui.button type="button" onclick="openCostModal('{{ $person['id'] }}', '{{ $person['name'] }}')" class="flex items-center gap-1">
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 						</svg>
 						Tambah Biaya
-					</button>
+					</x-ui.button>
 					@if ($costs->count() > 0 && $sppd->pptk_id && $bendahara)
 						<a href="{{ route('sppd.stream.rincian-biaya', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
 							class="bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
@@ -172,43 +170,69 @@
 				<input type="hidden" name="user_id" id="costUserId">
 				<div class="grid grid-cols-2 gap-4 mb-4">
 					<div class="col-span-2">
-						<label class="form-label">Kategori Biaya</label>
-						<select name="cost_category" class="form-select" required>
+						<x-form.select name="cost_category" label="Kategori Biaya" required>
 							@foreach ($categories as $cat)
 								<option value="{{ $cat->value }}">{{ $cat->label() }}</option>
 							@endforeach
-						</select>
+						</x-form.select>
 					</div>
 					<div class="col-span-2">
-						<label class="form-label">Keterangan</label>
-						<input type="text" name="description" class="form-input" required placeholder="Keterangan biaya">
+						<x-form.input
+							name="description"
+							label="Keterangan"
+							placeholder="Keterangan biaya"
+							required
+						/>
 					</div>
 					<div>
-						<label class="form-label">Nama Maskapai <span class="text-slate-400">(opsional)</span></label>
-						<input type="text" name="airline_name" class="form-input" placeholder="Garuda, Lion Air, dll">
+						<x-form.input
+							name="airline_name"
+							label="Nama Maskapai"
+							hint="(opsional)"
+							placeholder="Garuda, Lion Air, dll"
+						/>
 					</div>
 					<div>
-						<label class="form-label">No. Tiket <span class="text-slate-400">(opsional)</span></label>
-						<input type="text" name="ticket_number" class="form-input" placeholder="Nomor tiket">
+						<x-form.input
+							name="ticket_number"
+							label="No. Tiket"
+							hint="(opsional)"
+							placeholder="Nomor tiket"
+						/>
 					</div>
 					<div>
-						<label class="form-label">Tarif Satuan (Rp)</label>
-						<input type="number" name="unit_cost" class="form-input" min="0" step="1" required
-							placeholder="0">
+						<x-form.input
+							type="number"
+							name="unit_cost"
+							label="Tarif Satuan (Rp)"
+							min="0"
+							:step="1"
+							placeholder="0"
+							required
+						/>
 					</div>
 					<div>
-						<label class="form-label">Jumlah (Item)</label>
-						<input type="number" name="quantity" class="form-input" min="1" value="1" required>
+						<x-form.input
+							type="number"
+							name="quantity"
+							label="Jumlah (Item)"
+							min="1"
+							value="1"
+							required
+						/>
 					</div>
 					<div class="col-span-2">
-						<label class="form-label">Upload Bukti/Nota <span class="text-slate-400">(opsional, max 20MB)</span></label>
-						<input type="file" name="receipt_photo" class="form-input" accept="image/*">
+						<x-form.file
+							name="receipt_photo"
+							label="Upload Bukti/Nota"
+							hint="(opsional, max 20MB)"
+							accept="image/*"
+						/>
 					</div>
 				</div>
 				<div class="flex justify-end gap-2">
-					<button type="button" onclick="closeCostModal()"
-						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-sm transition-colors">Batal</button>
-					<button type="submit" class="btn-primary px-6">Simpan</button>
+					<x-ui.button type="button" variant="secondary" onclick="closeCostModal()">Batal</x-ui.button>
+					<x-ui.button type="submit">Simpan</x-ui.button>
 				</div>
 			</form>
 		</div>
@@ -222,43 +246,67 @@
 				@csrf @method('PUT')
 				<div class="grid grid-cols-2 gap-4 mb-4">
 					<div class="col-span-2">
-						<label class="form-label">Kategori Biaya</label>
-						<select name="cost_category" id="editCostCategory" class="form-select" required>
+						<x-form.select name="cost_category" id="editCostCategory" label="Kategori Biaya" required>
 							@foreach ($categories as $cat)
 								<option value="{{ $cat->value }}">{{ $cat->label() }}</option>
 							@endforeach
-						</select>
+						</x-form.select>
 					</div>
 					<div class="col-span-2">
-						<label class="form-label">Keterangan</label>
-						<input type="text" name="description" id="editCostDesc" class="form-input" required>
+						<x-form.input
+							name="description"
+							id="editCostDesc"
+							label="Keterangan"
+							required
+						/>
 					</div>
 					<div>
-						<label class="form-label">Nama Maskapai</label>
-						<input type="text" name="airline_name" id="editCostAirline" class="form-input">
+						<x-form.input
+							name="airline_name"
+							id="editCostAirline"
+							label="Nama Maskapai"
+						/>
 					</div>
 					<div>
-						<label class="form-label">No. Tiket</label>
-						<input type="text" name="ticket_number" id="editCostTicket" class="form-input">
+						<x-form.input
+							name="ticket_number"
+							id="editCostTicket"
+							label="No. Tiket"
+						/>
 					</div>
 					<div>
-						<label class="form-label">Tarif Satuan (Rp)</label>
-						<input type="number" name="unit_cost" id="editCostUnitCost" class="form-input" min="0" step="1"
-							required>
+						<x-form.input
+							type="number"
+							name="unit_cost"
+							id="editCostUnitCost"
+							label="Tarif Satuan (Rp)"
+							min="0"
+							:step="1"
+							required
+						/>
 					</div>
 					<div>
-						<label class="form-label">Jumlah (Item)</label>
-						<input type="number" name="quantity" id="editCostQty" class="form-input" min="1" required>
+						<x-form.input
+							type="number"
+							name="quantity"
+							id="editCostQty"
+							label="Jumlah (Item)"
+							min="1"
+							required
+						/>
 					</div>
 					<div class="col-span-2">
-						<label class="form-label">Upload Bukti/Nota Baru <span class="text-slate-400">(opsional)</span></label>
-						<input type="file" name="receipt_photo" class="form-input" accept="image/*">
+						<x-form.file
+							name="receipt_photo"
+							label="Upload Bukti/Nota Baru"
+							hint="(opsional)"
+							accept="image/*"
+						/>
 					</div>
 				</div>
 				<div class="flex justify-end gap-2">
-					<button type="button" onclick="closeEditCostModal()"
-						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-sm transition-colors">Batal</button>
-					<button type="submit" class="btn-primary px-6">Simpan</button>
+					<x-ui.button type="button" variant="secondary" onclick="closeEditCostModal()">Batal</x-ui.button>
+					<x-ui.button type="submit">Simpan</x-ui.button>
 				</div>
 			</form>
 		</div>

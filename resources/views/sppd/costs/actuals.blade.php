@@ -6,8 +6,7 @@
 		<div>
 			<h1 class="page-title text-green-600 border-b-2 border-green-600 w-fit pb-1">LAPORAN PENGELUARAN RILL</h1>
 		</div>
-		<a href="{{ route('sppd.next', $sppd) }}"
-			class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-1 rounded text-sm transition-colors">Kembali</a>
+		<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="danger">Kembali</x-ui.button>
 	</div>
 
 	<div class="card p-4 mb-4 border-slate-200">
@@ -25,18 +24,20 @@
 			</div>
 			<form action="{{ route('sppd.update-pptk', $sppd) }}" method="POST" class="flex items-center gap-2">
 				@csrf @method('PUT')
-				<select name="pptk_id" class="form-select text-sm py-1.5 min-w-[220px]" required>
+				<x-form.select
+					name="pptk_id"
+					label=""
+					class="text-sm py-1.5 min-w-55"
+					required
+				>
 					<option value="">-- Pilih PPTK --</option>
 					@foreach ($pptkCandidates as $candidate)
 						<option value="{{ $candidate->id }}">
 							{{ $candidate->name }}{{ $candidate->nip ? ' (' . $candidate->nip . ')' : '' }}
 						</option>
 					@endforeach
-				</select>
-				<button type="submit"
-					class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors">
-					Simpan
-				</button>
+				</x-form.select>
+				<x-ui.button type="submit">Simpan</x-ui.button>
 			</form>
 		</div>
 	</div>
@@ -61,13 +62,12 @@
 							class="font-bold uppercase">{{ $person['name'] }}</span></p>
 				</div>
 				<div class="flex gap-2">
-					<button onclick="openExpenseModal('{{ $person['id'] }}', '{{ $person['name'] }}')"
-						class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
+					<x-ui.button type="button" onclick="openExpenseModal('{{ $person['id'] }}', '{{ $person['name'] }}')" class="flex items-center gap-1">
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 						</svg>
 						Tambah Data
-					</button>
+					</x-ui.button>
 					@if ($expenses->count() > 0 && $sppd->pptk_id)
 						<a href="{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
 							target="_blank"
@@ -154,18 +154,27 @@
 				@csrf
 				<input type="hidden" name="user_id" id="expenseUserId">
 				<div class="mb-4">
-					<label class="form-label">Uraian</label>
-					<input type="text" name="description" class="form-input" required placeholder="Contoh: Tiket pesawat pp">
+					<x-form.input
+						name="description"
+						label="Uraian"
+						placeholder="Contoh: Tiket pesawat pp"
+						required
+					/>
 				</div>
 				<div class="mb-4">
-					<label class="form-label">Tarif (Rp)</label>
-					<input type="number" name="amount" class="form-input" min="0" step="1000" required
-						placeholder="0">
+					<x-form.input
+						type="number"
+						name="amount"
+						label="Tarif (Rp)"
+						min="0"
+						:step="1000"
+						placeholder="0"
+						required
+					/>
 				</div>
 				<div class="flex justify-end gap-2">
-					<button type="button" onclick="closeExpenseModal()"
-						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-sm transition-colors">Batal</button>
-					<button type="submit" class="btn-primary px-6">Simpan</button>
+					<x-ui.button type="button" variant="secondary" onclick="closeExpenseModal()">Batal</x-ui.button>
+					<x-ui.button type="submit">Simpan</x-ui.button>
 				</div>
 			</form>
 		</div>
@@ -178,18 +187,27 @@
 			<form id="editExpenseForm" method="POST">
 				@csrf @method('PUT')
 				<div class="mb-4">
-					<label class="form-label">Uraian</label>
-					<input type="text" name="description" id="editExpenseDesc" class="form-input" required>
+					<x-form.input
+						name="description"
+						id="editExpenseDesc"
+						label="Uraian"
+						required
+					/>
 				</div>
 				<div class="mb-4">
-					<label class="form-label">Tarif (Rp)</label>
-					<input type="number" name="amount" id="editExpenseAmount" class="form-input" min="0" step="1000"
-						required>
+					<x-form.input
+						type="number"
+						name="amount"
+						id="editExpenseAmount"
+						label="Tarif (Rp)"
+						min="0"
+						:step="1000"
+						required
+					/>
 				</div>
 				<div class="flex justify-end gap-2">
-					<button type="button" onclick="closeEditExpenseModal()"
-						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold text-sm transition-colors">Batal</button>
-					<button type="submit" class="btn-primary px-6">Simpan</button>
+					<x-ui.button type="button" variant="secondary" onclick="closeEditExpenseModal()">Batal</x-ui.button>
+					<x-ui.button type="submit">Simpan</x-ui.button>
 				</div>
 			</form>
 		</div>

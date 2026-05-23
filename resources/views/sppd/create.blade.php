@@ -8,9 +8,7 @@
 		</div>
 	</div>
 
-
 	<form action="{{ route('sppd.create.details') }}" method="GET" id="form-step-1">
-		{{-- TAHAP 1: DATA PELAKSANA & CEK ALUR --}}
 		<div class="card p-6 mb-6 border-l-4 border-l-primary-500 shadow-sm">
 			<div class="bg-primary-50 px-4 py-2 -mx-6 -mt-6 mb-4 border-b border-primary-100 flex justify-between items-center">
 				<h3 class="font-bold text-primary-800 text-sm tracking-wide uppercase">TAHAP 1: PELAKSANA & ESTIMASI ALUR</h3>
@@ -18,30 +16,33 @@
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-				<div>
-					<label for="user_id" class="form-label font-bold text-slate-700">Pelaksana Perjalanan Dinas <span
-							class="text-red-500">*</span></label>
-					<select name="user_id" id="user_id" class="form-select select2" required>
-						<option value="">— Pilih Pegawai yang Berangkat —</option>
-						@foreach ($users as $u)
-							<option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
-								{{ $u->nip }} — {{ $u->name }}
-							</option>
-						@endforeach
-					</select>
-				</div>
-				<div>
-					<label for="domain" class="form-label font-bold text-slate-700">Domain Perjalanan <span
-							class="text-red-500">*</span></label>
-					<select name="domain" id="domain" class="form-select" required>
-						<option value="dalam_daerah" {{ old('domain') == 'dalam_daerah' ? 'selected' : '' }}>Dalam Daerah</option>
-						<option value="lddp" {{ old('domain') == 'lddp' ? 'selected' : '' }}>Luar Daerah Dalam Provinsi (LDDP)</option>
-						<option value="ldlp" {{ old('domain') == 'ldlp' ? 'selected' : '' }}>Luar Daerah Luar Provinsi (LDLP)</option>
-					</select>
-				</div>
+				<x-form.select
+					name="user_id"
+					id="user_id"
+					label="Pelaksana Perjalanan Dinas"
+					required
+					class="select2"
+				>
+					<option value="">— Pilih Pegawai yang Berangkat —</option>
+					@foreach ($users as $u)
+						<option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
+							{{ $u->nip }} — {{ $u->name }}
+						</option>
+					@endforeach
+				</x-form.select>
+
+				<x-form.select
+					name="domain"
+					id="domain"
+					label="Domain Perjalanan"
+					required
+				>
+					<option value="dalam_daerah" {{ old('domain') == 'dalam_daerah' ? 'selected' : '' }}>Dalam Daerah</option>
+					<option value="lddp" {{ old('domain') == 'lddp' ? 'selected' : '' }}>Luar Daerah Dalam Provinsi (LDDP)</option>
+					<option value="ldlp" {{ old('domain') == 'ldlp' ? 'selected' : '' }}>Luar Daerah Luar Provinsi (LDLP)</option>
+				</x-form.select>
 			</div>
 
-			{{-- Container Alur --}}
 			<div id="workflow-preview" class="mt-8 hidden p-5 bg-slate-50 rounded-xl border border-slate-200">
 				<div class="flex justify-between items-center mb-4">
 					<h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -54,9 +55,7 @@
 					<div id="workflow-status-badge"></div>
 				</div>
 
-				<div id="workflow-steps" class="flex flex-col md:flex-row flex-wrap items-center gap-4">
-					{{-- Steps will be injected here --}}
-				</div>
+				<div id="workflow-steps" class="flex flex-col md:flex-row flex-wrap items-center gap-4"></div>
 
 				<div id="workflow-error-msg"
 					class="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-xs text-rose-700 hidden">
@@ -65,10 +64,14 @@
 				</div>
 
 				<div class="mt-6 pt-4 border-t border-slate-200 flex justify-center">
-					<button type="submit" id="btn-lanjut" disabled
-						class="btn-primary py-3 px-16 shadow-md disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-300 transform scale-95 opacity-50">
+					<x-ui.button
+						type="submit"
+						id="btn-lanjut"
+						disabled
+						class="py-3 px-16 shadow-md disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-300 transform scale-95 opacity-50"
+					>
 						Lanjut Isi Detail SPPD &rarr;
-					</button>
+					</x-ui.button>
 				</div>
 			</div>
 		</div>
@@ -78,7 +81,6 @@
 @push('scripts')
 	<script>
 		$(document).ready(function() {
-			// Event Listeners
 			$('#user_id, #domain').on('change', function() {
 				cekAlur();
 			});
@@ -153,7 +155,6 @@
 						);
 					}
 
-					// Cek Kop Surat
 					if (!data.has_header) {
 						isComplete = false;
 						$errorMsg.removeClass('hidden');
@@ -169,7 +170,6 @@
 						$btnLanjut.prop('disabled', true).addClass('opacity-50 scale-95');
 						$errorMsg.removeClass('hidden');
 						if (!data.has_header) {
-							// Already set above
 						} else if (data.steps.length === 0) {
 							$('#error-text').text('Aturan alur belum dibuat untuk kriteria pemohon/tujuan ini.');
 						} else {
@@ -183,7 +183,6 @@
 				}
 			}
 
-			// Initial trigger if redirected back
 			if ($('#user_id').val()) cekAlur();
 		});
 	</script>
