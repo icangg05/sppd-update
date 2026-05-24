@@ -281,7 +281,7 @@ class SppdController extends Controller
       });
 
       return redirect()->route('sppd.show', $sppd->id)
-        ->with('success', 'SPPD berhasil dibuat dan diajukan. Gunakan tombol "Portal Selanjutnya" untuk mengelola dokumen.');
+        ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
     } catch (\Exception $e) {
       return back()->withInput()->with('error', $e->getMessage());
     }

@@ -2,160 +2,141 @@
 @section('title', 'Kuitansi')
 
 @section('content')
-	<div class="page-header">
-		<div>
-			<h1 class="page-title text-green-600 border-b-2 border-green-600 w-fit pb-1">KUITANSI</h1>
-		</div>
-		<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="danger">Kembali</x-ui.button>
-	</div>
+<div class="p-1 space-y-6">
 
-	@php
-		$people = collect([['id' => $sppd->user->id, 'name' => $sppd->user->name, 'label' => 'Pelaksana']]);
-		foreach ($sppd->followers as $f) {
-		    $people->push(['id' => $f->user->id, 'name' => $f->user->name, 'label' => 'Pengikut']);
-		}
-		$hasExpenses = $sppd->actualExpenses->count() > 0 || $sppd->costDetails->count() > 0;
-		$hasBendahara = $bendahara !== null;
-	@endphp
+  {{-- Header --}}
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-emerald-500 inline-block pb-1">
+        <i class="fa-solid fa-file-invoice-dollar mr-2 text-emerald-600"></i>Kuitansi Perjalanan
+      </h1>
+    </div>
+    <a href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+      <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+  </div>
 
-	{{-- Alert jika tidak ada bendahara pengeluaran --}}
-	@if (!$hasBendahara)
-		<div class="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm flex items-start gap-3">
-			<svg class="w-5 h-5 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-				<path fill-rule="evenodd"
-					d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-					clip-rule="evenodd" />
-			</svg>
-			<div>
-				<p class="font-bold">Bendahara Pengeluaran Belum Ditetapkan</p>
-				<p class="mt-1">Untuk dapat mencetak <strong>Kuitansi Rampung</strong>, instansi
-					<strong>{{ $sppd->user->department->name ?? '-' }}</strong> harus memiliki pegawai dengan role
-					<strong>"Bendahara Pengeluaran"</strong> yang aktif. Silakan hubungi Administrator untuk menambahkan data bendahara
-					pengeluaran.
-				</p>
-			</div>
-		</div>
-	@endif
+  @php
+    $people = collect([['id' => $sppd->user->id, 'name' => $sppd->user->name, 'label' => 'Pelaksana']]);
+    foreach ($sppd->followers as $f) {
+        $people->push(['id' => $f->user->id, 'name' => $f->user->name, 'label' => 'Pengikut']);
+    }
+    $hasExpenses = $sppd->actualExpenses->count() > 0 || $sppd->costDetails->count() > 0;
+    $hasBendahara = $bendahara !== null;
+  @endphp
 
-	<div class="space-y-4">
-		@foreach ($people as $person)
-			@php
-				$receipt = $sppd->advanceReceipts->where('user_id', $person['id'])->first();
-				// Cetak aktif selama ada data biaya dan ada bendahara; panjar opsional
-				$canPrint = $hasExpenses && $hasBendahara;
-			@endphp
-			<div class="card p-4 border-slate-200">
-				<div class="flex items-center justify-between flex-wrap gap-4">
-					<div>
-						<p class="text-sm font-medium text-slate-700">{{ $person['label'] }} : <span
-								class="font-bold uppercase">{{ $person['name'] }}</span></p>
-						@if ($receipt && $receipt->amount > 0)
-							<p class="text-xs text-slate-500 mt-1">No. Kuitansi: {{ $receipt->receipt_number }} — Panjar: <span
-									class="font-bold text-emerald-600">Rp {{ number_format($receipt->amount, 0, ',', '.') }}</span></p>
-						@endif
-					</div>
-					<div class="flex gap-2">
-						{{-- Input/Edit Panjar --}}
-						<button onclick="openPanjarModal('{{ $person['id'] }}', '{{ $person['name'] }}', '{{ $receipt?->amount ?? 0 }}')"
-							class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-							</svg>
-							{{ ($receipt && $receipt->amount > 0) ? 'Edit Panjar' : 'Input Kuitansi Panjar' }}
-						</button>
+  {{-- Alert Bendahara --}}
+  @if (!$hasBendahara)
+    <div class="rounded-lg border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-800 text-xs font-medium">
+      <p class="font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Bendahara Belum Ditetapkan</p>
+      <p class="mt-1">Instansi <strong>{{ $sppd->user->department->name ?? '-' }}</strong> memerlukan pegawai dengan role "Bendahara Pengeluaran" untuk mencetak kuitansi.</p>
+    </div>
+  @endif
 
-						{{-- Cetak Kuitansi Panjar --}}
-						@if ($receipt && $receipt->amount > 0 && $hasBendahara)
-							<a href="{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
-								target="_blank"
-								class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
-								<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-								</svg>
-								Cetak Kuitansi Panjar
-							</a>
-						@endif
+  {{-- Daftar Personel --}}
+  <div class="space-y-4">
+    @foreach ($people as $person)
+      @php
+        $receipt = $sppd->advanceReceipts->where('user_id', $person['id'])->first();
+        $canPrint = $hasExpenses && $hasBendahara;
+      @endphp
 
-						{{-- Cetak Kuitansi Rampung --}}
-						@if ($canPrint)
-							<a href="{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
-								target="_blank"
-								class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-1">
-								<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-								</svg>
-								Cetak Kuitansi Rampung
-							</a>
-						@else
-							<button disabled
-								title="{{ !$hasBendahara ? 'Bendahara Pengeluaran belum ditetapkan' : (!$receipt ? 'Input Kuitansi Panjar terlebih dahulu' : 'Input data Pengeluaran Riil atau Rincian Biaya terlebih dahulu') }}"
-								class="bg-slate-100 border border-slate-300 text-slate-400 px-4 py-1.5 rounded text-sm font-semibold cursor-not-allowed flex items-center gap-1">
-								<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-								</svg>
-								Cetak Kuitansi Rampung
-							</button>
-						@endif
-					</div>
-				</div>
-			</div>
-		@endforeach
-	</div>
+      <div class="rounded border border-slate-200 bg-white p-5 shadow-md transition hover:border-slate-300">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p class="text-[10px] font-bold uppercase text-slate-400">{{ $person['label'] }}</p>
+            <p class="text-sm font-bold text-slate-800 uppercase mt-0.5">{{ $person['name'] }}</p>
+            @if ($receipt && $receipt->amount > 0)
+              <div class="mt-2 flex items-center gap-3 text-xs bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                <span class="text-slate-500"><i class="fa-solid fa-hashtag"></i> {{ $receipt->receipt_number }}</span>
+                <span class="font-bold text-emerald-600"><i class="fa-solid fa-money-bill-wave"></i> Rp {{ number_format($receipt->amount, 0, ',', '.') }}</span>
+              </div>
+            @endif
+          </div>
 
-	<div class="p-4 bg-white border border-slate-200 rounded-lg italic text-slate-600 text-sm mt-4">
-		*Catatan : Untuk mencetak kuitansi rampung Wajib Mengisi data Laporan Pengeluaran Rill, Rincian Biaya Perjalanan Dinas,
-		dan memiliki Bendahara Pengeluaran yang aktif.
-	</div>
+          <div class="flex flex-wrap gap-2">
+            {{-- Tombol Panjar --}}
+            <button onclick="openPanjarModal('{{ $person['id'] }}', '{{ $person['name'] }}', '{{ $receipt?->amount ?? 0 }}')"
+              class="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-2 text-[10px] font-bold text-white hover:bg-emerald-700 transition">
+              <i class="fa-solid {{ ($receipt && $receipt->amount > 0) ? 'fa-pen-to-square' : 'fa-plus' }}"></i>
+              {{ ($receipt && $receipt->amount > 0) ? 'Edit Panjar' : 'Input Panjar' }}
+            </button>
 
-	{{-- Modal Input Panjar --}}
-	<div id="panjarModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
-		<div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-			<h3 class="text-lg font-bold text-slate-800 mb-1">Input Kuitansi Panjar</h3>
-			<p id="panjarUserName" class="text-sm text-slate-500 mb-4"></p>
+            {{-- Cetak Panjar --}}
+            @if ($receipt && $receipt->amount > 0 && $hasBendahara)
+              <a href="{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
+                class="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-2 text-[10px] font-bold text-white hover:bg-amber-700 transition">
+                <i class="fa-solid fa-print"></i> Cetak Panjar
+              </a>
+            @endif
 
-			<form id="panjarForm" method="POST" action="{{ route('sppd.advance-receipts.store', $sppd) }}">
-				@csrf
-				<input type="hidden" name="user_id" id="panjarUserId">
+            {{-- Cetak Rampung --}}
+            @if ($canPrint)
+              <a href="{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
+                class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-2 text-[10px] font-bold text-white hover:bg-cyan-700 transition">
+                <i class="fa-solid fa-file-invoice"></i> Cetak Rampung
+              </a>
+            @else
+              <button disabled class="inline-flex items-center gap-1.5 rounded bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-400 cursor-not-allowed border border-slate-200">
+                <i class="fa-solid fa-lock"></i> Cetak Rampung
+              </button>
+            @endif
+          </div>
+        </div>
+      </div>
+    @endforeach
+  </div>
 
-				<div class="mb-4">
-					<x-form.input
-						type="number"
-						name="amount"
-						id="panjarAmount"
-						label="Jumlah Panjar (Rp)"
-						min="0"
-						:step="1"
-						placeholder="0"
-						required
-					/>
-				</div>
+  <div class="flex items-start gap-4 rounded-lg border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+      <i class="fa-solid fa-circle-info text-lg"></i>
+    </div>
+    <div>
+      <h4 class="text-xs font-bold uppercase text-cyan-900">Informasi Penting</h4>
+      <p class="mt-1 text-[11px] font-medium text-cyan-800 leading-relaxed">
+        Untuk dapat mencetak <strong>Kuitansi Rampung</strong>, pastikan seluruh data berikut telah dilengkapi:
+      </p>
+      <ul class="mt-2 flex flex-wrap gap-2 text-[11px] text-cyan-700">
+        <li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Laporan Pengeluaran Rill</li>
+        <li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Rincian Biaya Perjalanan</li>
+        <li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Bendahara Pengeluaran Aktif</li>
+      </ul>
+    </div>
+  </div>
 
-				<div class="flex justify-end gap-2">
-					<x-ui.button type="button" variant="secondary" onclick="closePanjarModal()">Batal</x-ui.button>
-					<x-ui.button type="submit">Simpan</x-ui.button>
-				</div>
-			</form>
-		</div>
-	</div>
+  {{-- Modal Panjar --}}
+  <div id="panjarModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+      <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Input Kuitansi Panjar</h3>
+      <p id="panjarUserName" class="text-[11px] text-slate-500 mt-1"></p>
+
+      <form id="panjarForm" method="POST" action="{{ route('sppd.advance-receipts.store', $sppd) }}" class="mt-4">
+        @csrf
+        <input type="hidden" name="user_id" id="panjarUserId">
+        <div class="mb-4">
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Jumlah Panjar (Rp)</label>
+          <input type="number" name="amount" id="panjarAmount" class="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="0" required>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closePanjarModal()" class="rounded border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+          <button type="submit" class="rounded bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
-	<script>
-		function openPanjarModal(userId, userName, currentAmount) {
-			document.getElementById('panjarUserId').value = userId;
-			document.getElementById('panjarUserName').textContent = userName;
-			document.getElementById('panjarAmount').value = currentAmount > 0 ? currentAmount : '';
-			document.getElementById('panjarModal').classList.remove('hidden');
-			document.getElementById('panjarModal').classList.add('flex');
-		}
-
-		function closePanjarModal() {
-			document.getElementById('panjarModal').classList.add('hidden');
-			document.getElementById('panjarModal').classList.remove('flex');
-		}
-	</script>
+  <script>
+    function openPanjarModal(userId, userName, currentAmount) {
+      document.getElementById('panjarUserId').value = userId;
+      document.getElementById('panjarUserName').textContent = userName;
+      document.getElementById('panjarAmount').value = currentAmount > 0 ? currentAmount : '';
+      document.getElementById('panjarModal').classList.replace('hidden', 'flex');
+    }
+    function closePanjarModal() {
+      document.getElementById('panjarModal').classList.replace('flex', 'hidden');
+    }
+  </script>
 @endpush

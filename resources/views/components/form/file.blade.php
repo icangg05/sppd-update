@@ -7,21 +7,19 @@
     'class' => '',
     'labelClass' => '',
     'wrapperClass' => '',
-    'accept' => null,
+    'accept' => '.pdf,.docx,.jpg,.jpeg,.png',
 ])
 
 @php
 $id = $id ?? $name;
-$resolvedClass = trim('form-input file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 file:transition file:hover:bg-slate-200 ' . $class);
+$resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 file:mr-3 file:rounded-sm file:border-0 file:bg-cyan-50 file:px-3 file:py-1 file:text-xs file:font-bold file:uppercase file:tracking-wide file:text-cyan-700 file:transition file:hover:bg-cyan-100 ' . $class);
 @endphp
 
 <div class="{{ $wrapperClass }}">
     @if ($label)
-        <label for="{{ $id }}" class="form-label {{ $labelClass }}">
+        <label for="{{ $id }}" class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase {{ $labelClass }}">
             {{ $label }}
-            @if ($required)
-                <span class="text-rose-500">*</span>
-            @endif
+            @if ($required) <span class="text-rose-500">*</span> @endif
         </label>
     @endif
 
@@ -35,10 +33,10 @@ $resolvedClass = trim('form-input file:mr-3 file:rounded-lg file:border-0 file:b
     >
 
     @if ($hint)
-        <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-slate-400">{{ $hint }}</p>
     @endif
 
     @error($name)
-        <p class="form-error">{{ $message }}</p>
+        <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
     @enderror
 </div>

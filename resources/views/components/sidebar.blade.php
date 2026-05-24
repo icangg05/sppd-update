@@ -1,87 +1,93 @@
-{{-- Sidebar Navigation --}}
-<aside id="sidebar" class="sidebar -translate-x-full lg:translate-x-0">
-	<div class="sidebar-top">
-		<div class="sidebar-logo">
-			<div class="sidebar-logo-badge">SPPD</div>
-			<div>
-				<p class="sidebar-logo-title">SPPD</p>
-				<p class="sidebar-logo-subtitle">Sistem Perjalanan Dinas</p>
-			</div>
-		</div>
+<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-800 bg-slate-900 text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full">
+  <!-- Bagian Atas: Logo Aplikasi -->
+  <div class="flex h-16 items-center gap-3 border-b border-slate-800 px-4">
+    <img src="{{ asset('img/logo-sppd.png') }}" alt="logo" class="size-8">
+    <div class="leading-tight">
+      <p class="text-sm font-bold tracking-wide text-white">SPPD SYSTEM</p>
+      <p class="text-xs text-slate-400">Sistem Perjalanan Dinas</p>
+    </div>
+  </div>
 
-		<div class="sidebar-profile">
-			<div class="sidebar-avatar">
-				<span>{{ strtoupper(substr(auth()->user()->username ?? 'U', 0, 2)) }}</span>
-			</div>
-			<div>
-				<p class="sidebar-profile-name">{{ auth()->user()->username ?? '-' }}</p>
-				<p class="sidebar-profile-role">{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</p>
-			</div>
-		</div>
-	</div>
+  <!-- Bagian Profil Pengguna -->
+  <div class="border-b border-slate-800 p-4">
+    <div class="flex items-center gap-3 rounded border border-slate-800/60 bg-slate-950/40 p-3">
+      <div class="flex size-9 shrink-0 items-center justify-center rounded border border-slate-700 bg-slate-800 text-xs font-bold tracking-wider text-cyan-400">
+        {{ strtoupper(substr(auth()->user()->username ?? 'U', 0, 2)) }}
+      </div>
+      <div class="overflow-hidden leading-tight">
+        <p class="truncate text-sm font-semibold text-slate-200">{{ auth()->user()->username ?? '-' }}</p>
+        <p class="truncate text-xs text-slate-400">{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</p>
+      </div>
+    </div>
+  </div>
 
-	<nav class="sidebar-nav">
-		<div class="sidebar-section">Menu utama</div>
+  <!-- Konten Navigasi Menu -->
+  <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+    <div class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
-		<a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-			<span class="icon-wrap">
-				<i class="fa-solid fa-house fa-fw"></i>
-			</span>
-			<span>Beranda</span>
-		</a>
+    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('dashboard') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-house fa-fw"></i></span>
+      <span>Beranda</span>
+    </a>
 
-		<div class="sidebar-group">
-			<button type="button"
-				class="sidebar-link sidebar-link-toggle {{ request()->routeIs('sppd.*') ? 'active' : '' }}"
-				data-sidebar-toggle="sppd-menu"
-				aria-expanded="{{ request()->routeIs('sppd.*') ? 'true' : 'false' }}">
-				<span class="icon-wrap">
-					<i class="fa-solid fa-file-lines fa-fw"></i>
-				</span>
-				<span class="flex-1 text-left">List Telaah</span>
-				<i class="fa-solid fa-chevron-down sidebar-chevron"></i>
-			</button>
-			<div id="sppd-menu" class="sidebar-submenu {{ request()->routeIs('sppd.*') ? '' : 'hidden' }}">
-				<a href="{{ route('sppd.index') }}" class="sidebar-sublink {{ request()->routeIs('sppd.index') && !request('filter') ? 'active' : '' }}">
-					<span class="sidebar-subdot"></span>
-					Kepala OPD
-				</a>
-				<a href="{{ route('sppd.index', ['filter' => 'staff']) }}" class="sidebar-sublink {{ request('filter') === 'staff' ? 'active' : '' }}">
-					<span class="sidebar-subdot"></span>
-					Eselon III, IV & Staf
-				</a>
-			</div>
-		</div>
+    <div class="space-y-1">
+      <button type="button"
+        class="sidebar-toggle-btn flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('sppd.*') ? 'text-slate-100' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}"
+        data-target="sppd-menu">
+        <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-file-lines fa-fw"></i></span>
+        <span class="flex-1 text-left">List Telaah</span>
+        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 {{ request()->routeIs('sppd.*') ? 'rotate-180' : '' }}"></i>
+      </button>
 
-		@can('sppd.approve')
-			<a href="{{ route('sppd.index', ['filter' => 'approval']) }}" class="sidebar-link {{ request('filter') === 'approval' ? 'active' : '' }}">
-				<span class="icon-wrap">
-					<i class="fa-solid fa-circle-check fa-fw"></i>
-				</span>
-				<span>Persetujuan</span>
-			</a>
-		@endcan
+      <div id="sppd-menu" class="space-y-1 py-1 pl-8 pr-1 {{ request()->routeIs('sppd.*') ? '' : 'hidden' }}">
+        <a href="{{ route('sppd.index') }}" class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.index') && !request('filter') ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+          <span class="size-1 rounded-sm bg-current"></span>
+          Kepala OPD
+        </a>
+        <a href="{{ route('sppd.index', ['filter' => 'staff']) }}" class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'staff' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+          <span class="size-1 rounded-sm bg-current"></span>
+          Eselon III, IV & Staf
+        </a>
+      </div>
+    </div>
 
-		<a href="#" class="sidebar-link">
-			<span class="icon-wrap">
-				<i class="fa-solid fa-calendar-days fa-fw"></i>
-			</span>
-			<span>Kalender</span>
-		</a>
+    @can('sppd.approve')
+      <a href="{{ route('sppd.index', ['filter' => 'approval']) }}" class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request('filter') === 'approval' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+        <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-circle-check fa-fw"></i></span>
+        <span>Persetujuan</span>
+      </a>
+    @endcan
 
-		<div class="sidebar-section">Pengaturan</div>
-		<a href="{{ route('master.users.index') }}" class="sidebar-link {{ request()->routeIs('master.users.*') ? 'active' : '' }}">
-			<span class="icon-wrap">
-				<i class="fa-solid fa-gear fa-fw"></i>
-			</span>
-			<span>Setting</span>
-		</a>
-	</nav>
+    <a href="#" class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100">
+      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-calendar-days fa-fw"></i></span>
+      <span>Kalender</span>
+    </a>
 
-	<div class="sidebar-footer">
-		<button onclick="toggleSidebar()" type="button" class="sidebar-toggle-btn">
-			<i class="fa-solid fa-chevron-left fa-fw"></i>
-			<span>Tutup Sidebar</span>
-		</button>
-	</div>
+    <div class="px-3 py-1.5 pt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Pengaturan</div>
+
+    <a href="{{ route('master.users.index') }}" class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-gear fa-fw"></i></span>
+      <span>Setting</span>
+    </a>
+  </nav>
+
+  <div class="border-t border-slate-800 p-3 lg:hidden">
+    <button type="button" onclick="toggleSidebar()" class="flex w-full items-center justify-center gap-2 rounded border border-slate-800 bg-slate-950/20 py-2 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200">
+      <i class="fa-solid fa-chevron-left text-[10px]"></i>
+      <span>Tutup Sidebar</span>
+    </button>
+  </div>
 </aside>
+
+<script>
+  $(document).ready(function() {
+    $('.sidebar-toggle-btn').on('click', function() {
+      const targetId = $(this).data('target');
+      const $submenu = $('#' + targetId);
+      const $chevron = $(this).find('.fa-chevron-down');
+
+      $submenu.slideToggle(200);
+      $chevron.toggleClass('rotate-180');
+    });
+  });
+</script>

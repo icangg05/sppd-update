@@ -4,234 +4,249 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
-{{-- Welcome Hero Banner --}}
-<div class="dashboard-hero">
-  <div class="dashboard-hero-content">
-    <p class="dashboard-hero-label">SELAMAT DATANG KEMBALI</p>
-    <h1 class="dashboard-hero-title">Dashboard SPPD {{ auth()->user()->department?->name ?? 'Sistem' }}</h1>
-    <p class="dashboard-hero-desc">
-      Pantau seluruh proses telaah, realisasi, dan laporan perjalanan dinas secara real-time.
-      Total anggaran tahun berjalan: <strong>Rp {{ number_format($totalBudget, 0, ',', '.') }}</strong>.
-    </p>
-  </div>
-  <div class="dashboard-hero-actions">
-    @can('sppd.create')
-    <a href="{{ route('sppd.create') }}" class="btn-hero-primary">
-      <i class="fa-solid fa-plus"></i>
-      Pengajuan Baru
-    </a>
-    @endcan
-    <a href="{{ route('sppd.index') }}" class="btn-hero-secondary">
-      Lihat Laporan
-      <i class="fa-solid fa-arrow-right"></i>
-    </a>
-  </div>
-</div>
+<div class="flex flex-col gap-5 p-1 max-w-7xl mx-auto">
 
-{{-- Stat Cards --}}
-<div class="dashboard-stats">
-  {{-- Total SPPD --}}
-  <div class="stat-card-new">
-    <div class="stat-card-icon stat-icon-blue">
-      <i class="fa-solid fa-file-lines fa-lg"></i>
+  {{-- Welcome Hero Banner --}}
+  <div class="flex flex-col justify-between gap-4 rounded border border-cyan-200 bg-linear-to-r from-cyan-50 to-white p-5 shadow-md md:flex-row md:items-center">
+    <div class="flex flex-col gap-1.5">
+      <p class="text-xs font-bold tracking-wider text-cyan-700 uppercase">Selamat Datang Kembali</p>
+      <h1 class="text-lg font-bold text-slate-800">Dashboard SPPD {{ auth()->user()->department?->name ?? 'Sistem' }}</h1>
+      <p class="text-sm text-slate-600">
+        Pantau seluruh proses telaah, realisasi, dan laporan perjalanan dinas secara real-time.
+        Total anggaran: <strong class="text-slate-800 font-semibold">Rp {{ number_format($totalBudget, 0, ',', '.') }}</strong>.
+      </p>
     </div>
-    <div class="stat-card-body">
-      <div class="stat-card-trend stat-trend-up">
-        <i class="fa-solid fa-arrow-trend-up"></i>
-        +12.5%
-      </div>
-      <p class="stat-card-label">TOTAL SPPD</p>
-      <p class="stat-card-value">{{ $stats['total'] }}</p>
-    </div>
-  </div>
-
-  {{-- Telaah Masuk --}}
-  <div class="stat-card-new">
-    <div class="stat-card-icon stat-icon-green">
-      <i class="fa-solid fa-envelope-open-text fa-lg"></i>
-    </div>
-    <div class="stat-card-body">
-      <div class="stat-card-trend stat-trend-up">
-        <i class="fa-solid fa-arrow-trend-up"></i>
-        +4 baru
-      </div>
-      <p class="stat-card-label">TELAAH MASUK</p>
-      <p class="stat-card-value">{{ $stats['draft'] }}</p>
-    </div>
-  </div>
-
-  {{-- Di Proses --}}
-  <div class="stat-card-new">
-    <div class="stat-card-icon stat-icon-orange">
-      <i class="fa-solid fa-hourglass-half fa-lg"></i>
-    </div>
-    <div class="stat-card-body">
-      <div class="stat-card-trend stat-trend-neutral">
-        <i class="fa-solid fa-clock"></i>
-        menunggu review
-      </div>
-      <p class="stat-card-label">DI PROSES</p>
-      <p class="stat-card-value">{{ $stats['in_progress'] }}</p>
-    </div>
-  </div>
-
-  {{-- Selesai --}}
-  <div class="stat-card-new">
-    <div class="stat-card-icon stat-icon-teal">
-      <i class="fa-solid fa-circle-check fa-lg"></i>
-    </div>
-    <div class="stat-card-body">
-      <div class="stat-card-trend stat-trend-up">
-        <i class="fa-solid fa-arrow-trend-up"></i>
-        +8 minggu ini
-      </div>
-      <p class="stat-card-label">SELESAI</p>
-      <p class="stat-card-value">{{ $stats['completed'] }}</p>
-    </div>
-  </div>
-</div>
-
-{{-- Charts Row: Trend + Status Distribution --}}
-<div class="dashboard-charts">
-  {{-- Trend Chart --}}
-  <div class="dashboard-chart-main">
-    <div class="chart-header">
-      <div>
-        <h3 class="chart-title">Tren Pengajuan SPPD</h3>
-        <p class="chart-subtitle">Perbandingan telaah masuk vs selesai 12 bulan terakhir</p>
-      </div>
-      <div class="chart-legend">
-        <div class="chart-legend-item">
-          <span class="chart-legend-dot" style="background: #3b82f6;"></span>
-          Masuk
-        </div>
-        <div class="chart-legend-item">
-          <span class="chart-legend-dot" style="background: #10b981;"></span>
-          Selesai
-        </div>
-      </div>
-    </div>
-    <div class="chart-body">
-      <canvas id="trendChart"></canvas>
-    </div>
-  </div>
-
-  {{-- Donut Chart --}}
-  <div class="dashboard-chart-side">
-    <div class="chart-header">
-      <div>
-        <h3 class="chart-title">Distribusi Status</h3>
-        <p class="chart-subtitle">Sebaran status seluruh SPPD</p>
-      </div>
-    </div>
-    <div class="chart-body-donut">
-      <canvas id="statusDonutChart"></canvas>
-    </div>
-    <div class="donut-legend">
-      @foreach($statusDistribution as $item)
-        @if($item['count'] > 0)
-        <div class="donut-legend-item">
-          <div class="donut-legend-left">
-            <span class="donut-legend-dot" style="background: {{ $item['color'] }};"></span>
-            <span>{{ $item['label'] }}</span>
-          </div>
-          <span class="donut-legend-value">{{ $item['count'] }}</span>
-        </div>
-        @endif
-      @endforeach
-    </div>
-  </div>
-</div>
-
-{{-- Bottom Row: Top OPD + Telaah Terbaru --}}
-<div class="dashboard-bottom">
-  {{-- Top OPD Chart --}}
-  <div class="dashboard-bottom-left">
-    <div class="chart-header">
-      <div>
-        <h3 class="chart-title">Top 6 OPD Pengaju SPPD</h3>
-        <p class="chart-subtitle">Berdasarkan jumlah pengajuan</p>
-      </div>
-    </div>
-    <div class="chart-body">
-      <canvas id="topOpdChart"></canvas>
-    </div>
-  </div>
-
-  {{-- Telaah Terbaru --}}
-  <div class="dashboard-bottom-right">
-    <div class="chart-header">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-star text-blue-500"></i>
-        <div>
-          <h3 class="chart-title">Telaah Terbaru</h3>
-          <p class="chart-subtitle">{{ $recentSppd->count() }} pengajuan SPPD terakhir</p>
-        </div>
-      </div>
-      <a href="{{ route('sppd.index') }}" class="telaah-link">
-        Lihat Semua
-        <i class="fa-solid fa-arrow-right"></i>
+    <div class="flex shrink-0 items-center gap-3">
+      @can('sppd.create')
+      <a href="{{ route('sppd.create') }}" class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 focus:ring-1 focus:ring-cyan-500">
+        <i class="fa-solid fa-plus"></i>
+        Pengajuan Baru
+      </a>
+      @endcan
+      <a href="{{ route('sppd.index') }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:ring-1 focus:ring-slate-300">
+        Lihat Laporan
+        <i class="fa-solid fa-arrow-right text-xs"></i>
       </a>
     </div>
-    <div class="telaah-list">
-      @forelse($recentSppd as $item)
-        <a href="{{ route('sppd.show', $item) }}" class="telaah-item">
-          <div class="telaah-item-content">
-            <p class="telaah-item-title">{{ Str::limit($item->purpose, 55) }}</p>
-            <div class="telaah-item-meta">
-              <span>{{ $item->user->name }}</span>
-              <span class="telaah-dot">·</span>
-              <span>{{ $item->destinations->first()?->regency?->name ?? '-' }}</span>
-              <span class="telaah-dot">·</span>
-              <span>Rp {{ number_format($item->costDetails->sum('total'), 0, ',', '.') }}</span>
-            </div>
+  </div>
+
+  {{-- Stat Cards --}}
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {{-- Total SPPD --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white p-4 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded bg-blue-50 text-blue-600">
+            <i class="fa-solid fa-file-lines text-lg"></i>
           </div>
           <div>
-            @php
-              $statusClass = match($item->status->value) {
-                'draft' => 'telaah-badge-yellow',
-                'in_progress' => 'telaah-badge-blue',
-                'approved' => 'telaah-badge-green',
-                'completed' => 'telaah-badge-green',
-                'rejected' => 'telaah-badge-red',
-                default => 'telaah-badge-gray',
-              };
-              $statusLabels = [
-                'draft' => 'Telaah Masuk',
-                'in_progress' => 'Sedang Di Proses',
-                'approved' => 'Perjalanan Selesai & Masukkan Laporan',
-                'completed' => 'Perjalanan Selesai & Masukkan Laporan',
-                'rejected' => 'Ditolak',
-              ];
-            @endphp
-            <span class="telaah-badge {{ $statusClass }}">{{ $statusLabels[$item->status->value] ?? $item->status->label() }}</span>
+            <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Total SPPD</p>
+            <p class="text-lg font-bold text-slate-800">{{ $stats['total'] }}</p>
           </div>
-        </a>
-      @empty
-        <div class="telaah-empty">
-          <i class="fa-solid fa-file-lines fa-2x text-slate-300 mx-auto mb-2 block"></i>
-          Belum ada data SPPD
         </div>
-      @endforelse
+        <div class="flex items-center gap-1 rounded bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+          <i class="fa-solid fa-arrow-trend-up"></i> +12%
+        </div>
+      </div>
+    </div>
+
+    {{-- Telaah Masuk --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white p-4 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded bg-emerald-50 text-emerald-600">
+            <i class="fa-solid fa-envelope-open-text text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Telaah Masuk</p>
+            <p class="text-lg font-bold text-slate-800">{{ $stats['draft'] }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+          <i class="fa-solid fa-arrow-trend-up"></i> +4
+        </div>
+      </div>
+    </div>
+
+    {{-- Di Proses --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white p-4 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded bg-amber-50 text-amber-600">
+            <i class="fa-solid fa-hourglass-half text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Di Proses</p>
+            <p class="text-lg font-bold text-slate-800">{{ $stats['in_progress'] }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+          <i class="fa-regular fa-clock"></i> wait
+        </div>
+      </div>
+    </div>
+
+    {{-- Selesai --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white p-4 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded bg-teal-50 text-teal-600">
+            <i class="fa-solid fa-circle-check text-lg"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Selesai</p>
+            <p class="text-lg font-bold text-slate-800">{{ $stats['completed'] }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 rounded bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+          <i class="fa-solid fa-arrow-trend-up"></i> +8
+        </div>
+      </div>
     </div>
   </div>
+
+  {{-- Charts Row: Trend + Status Distribution --}}
+  <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+    {{-- Trend Chart --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md lg:col-span-2">
+      <div class="flex items-center justify-between border-b border-slate-100 p-4">
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">Tren Pengajuan SPPD</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Telaah masuk vs selesai 12 bulan terakhir</p>
+        </div>
+        <div class="flex gap-4 text-xs font-medium text-slate-600">
+          <div class="flex items-center gap-1.5"><span class="size-2.5 rounded-sm bg-blue-500"></span> Masuk</div>
+          <div class="flex items-center gap-1.5"><span class="size-2.5 rounded-sm bg-emerald-500"></span> Selesai</div>
+        </div>
+      </div>
+      <div class="relative h-60 w-full p-4">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    {{-- Donut Chart --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+      <div class="border-b border-slate-100 p-4">
+        <h3 class="text-sm font-bold text-slate-800">Distribusi Status</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Sebaran status seluruh SPPD</p>
+      </div>
+      <div class="relative h-40 w-full p-4">
+        <canvas id="statusDonutChart"></canvas>
+      </div>
+      <div class="grid grid-cols-1 gap-2 px-5 pb-4 mt-2">
+        @foreach($statusDistribution as $item)
+          @if($item['count'] > 0)
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5">
+              <span class="size-3 rounded-sm" style="background: {{ $item['color'] }};"></span>
+              <span class="text-slate-600">{{ $item['label'] }}</span>
+            </div>
+            <span class="font-bold text-slate-800">{{ $item['count'] }}</span>
+          </div>
+          @endif
+        @endforeach
+      </div>
+    </div>
+  </div>
+
+  {{-- Bottom Row: Top OPD + Telaah Terbaru --}}
+  <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    {{-- Top OPD Chart --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+      <div class="border-b border-slate-100 p-4">
+        <h3 class="text-sm font-bold text-slate-800">Top 6 OPD Pengaju SPPD</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Berdasarkan jumlah pengajuan</p>
+      </div>
+      <div class="relative h-72 w-full p-4">
+        <canvas id="topOpdChart"></canvas>
+      </div>
+    </div>
+
+    {{-- Telaah Terbaru --}}
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+      <div class="flex items-center justify-between border-b border-slate-100 p-4">
+        <div class="flex items-center gap-2.5">
+          <div class="flex size-7 items-center justify-center rounded bg-blue-50 text-blue-500">
+            <i class="fa-solid fa-star text-xs"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Telaah Terbaru</h3>
+            <p class="text-xs text-slate-500">{{ $recentSppd->count() }} pengajuan SPPD terakhir</p>
+          </div>
+        </div>
+        <a href="{{ route('sppd.index') }}" class="text-xs font-medium text-cyan-600 transition hover:text-cyan-800 hover:underline">
+          Lihat Semua <i class="fa-solid fa-arrow-right ml-1"></i>
+        </a>
+      </div>
+
+      <div class="flex max-h-72 flex-col gap-2 overflow-y-auto p-3">
+        @forelse($recentSppd as $item)
+          <a href="{{ route('sppd.show', $item) }}" class="flex flex-col gap-2 rounded border border-transparent p-2.5 transition hover:bg-slate-50 hover:border-slate-100">
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-sm font-medium leading-snug text-slate-800">{{ Str::limit($item->purpose, 60) }}</p>
+              @php
+                $statusClass = match($item->status->value) {
+                  'draft' => 'bg-amber-50 text-amber-700 border-amber-200',
+                  'in_progress' => 'bg-blue-50 text-blue-700 border-blue-200',
+                  'approved', 'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                  'rejected' => 'bg-red-50 text-red-700 border-red-200',
+                  default => 'bg-slate-50 text-slate-700 border-slate-200',
+                };
+                $statusLabels = [
+                  'draft' => 'Masuk',
+                  'in_progress' => 'Proses',
+                  'approved' => 'Selesai',
+                  'completed' => 'Selesai',
+                  'rejected' => 'Ditolak',
+                ];
+              @endphp
+              <span class="shrink-0 rounded-[3px] border px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase {{ $statusClass }}">
+                {{ $statusLabels[$item->status->value] ?? $item->status->label() }}
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $item->user->name }}</span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i> {{ $item->destinations->first()?->regency?->name ?? '-' }}</span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="font-semibold text-slate-700">Rp {{ number_format($item->costDetails->sum('total'), 0, ',', '.') }}</span>
+            </div>
+          </a>
+        @empty
+          <div class="flex flex-col items-center justify-center p-8 text-slate-400">
+            <i class="fa-solid fa-file-lines text-3xl mb-3 text-slate-200"></i>
+            <p class="text-sm">Belum ada data SPPD</p>
+          </div>
+        @endforelse
+      </div>
+    </div>
+  </div>
+
 </div>
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // ── Trend Chart (Area/Line) ──
+
+    // Set default font to normal/medium sizes
+    Chart.defaults.font.size = 12;
+    Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // ── Trend Chart ──
     const trendCtx = document.getElementById('trendChart');
     if (trendCtx) {
       const trendData = @json($monthlyTrend);
       const trendGradient = trendCtx.getContext('2d');
-      const gradient = trendGradient.createLinearGradient(0, 0, 0, 300);
-      gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
-      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.01)');
 
-      const gradientGreen = trendGradient.createLinearGradient(0, 0, 0, 300);
+      const gradient = trendGradient.createLinearGradient(0, 0, 0, 200);
+      gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+      gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+      const gradientGreen = trendGradient.createLinearGradient(0, 0, 0, 200);
       gradientGreen.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-      gradientGreen.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+      gradientGreen.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
       new Chart(trendCtx, {
         type: 'line',
@@ -244,11 +259,10 @@
               borderColor: '#3b82f6',
               backgroundColor: gradient,
               fill: true,
-              tension: 0.4,
+              tension: 0.3,
               borderWidth: 2.5,
               pointRadius: 0,
               pointHoverRadius: 5,
-              pointHoverBackgroundColor: '#3b82f6',
             },
             {
               label: 'Selesai',
@@ -256,11 +270,10 @@
               borderColor: '#10b981',
               backgroundColor: gradientGreen,
               fill: true,
-              tension: 0.4,
+              tension: 0.3,
               borderWidth: 2.5,
               pointRadius: 0,
               pointHoverRadius: 5,
-              pointHoverBackgroundColor: '#10b981',
             }
           ]
         },
@@ -273,24 +286,19 @@
               mode: 'index',
               intersect: false,
               backgroundColor: '#1e293b',
-              titleColor: '#f8fafc',
-              bodyColor: '#e2e8f0',
-              borderColor: '#334155',
-              borderWidth: 1,
-              cornerRadius: 8,
-              padding: 12,
+              titleFont: { size: 13 },
+              bodyFont: { size: 12 },
+              cornerRadius: 4,
+              padding: 10,
             }
           },
           interaction: { mode: 'index', intersect: false },
           scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94a3b8', font: { size: 12 } }
-            },
+            x: { grid: { display: false } },
             y: {
               beginAtZero: true,
               grid: { color: '#f1f5f9' },
-              ticks: { color: '#94a3b8', font: { size: 12 }, stepSize: 15 }
+              border: { display: false }
             }
           }
         }
@@ -311,28 +319,27 @@
             data: filtered.map(s => s.count),
             backgroundColor: filtered.map(s => s.color),
             borderWidth: 0,
-            hoverOffset: 8,
+            hoverOffset: 4,
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '65%',
+          cutout: '70%',
           plugins: {
             legend: { display: false },
             tooltip: {
               backgroundColor: '#1e293b',
-              titleColor: '#f8fafc',
-              bodyColor: '#e2e8f0',
-              cornerRadius: 8,
-              padding: 12,
+              bodyFont: { size: 12 },
+              cornerRadius: 4,
+              padding: 10,
             }
           }
         }
       });
     }
 
-    // ── Top OPD Horizontal Bar Chart ──
+    // ── Top OPD Chart ──
     const opdCtx = document.getElementById('topOpdChart');
     if (opdCtx) {
       const opdData = @json($topDepartments);
@@ -342,14 +349,10 @@
         data: {
           labels: opdData.map(d => d.name.length > 20 ? d.name.substring(0, 20) + '...' : d.name),
           datasets: [{
-            label: 'Pengajuan',
             data: opdData.map(d => d.total),
-            backgroundColor: (ctx) => {
-              const colors = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-              return colors[ctx.dataIndex % colors.length];
-            },
-            borderRadius: 6,
-            barPercentage: 0.7,
+            backgroundColor: ['#0ea5e9', '#14b8a6', '#8b5cf6', '#f59e0b', '#f43f5e', '#64748b'],
+            borderRadius: 2,
+            barPercentage: 0.6,
           }]
         },
         options: {
@@ -360,21 +363,22 @@
             legend: { display: false },
             tooltip: {
               backgroundColor: '#1e293b',
-              titleColor: '#f8fafc',
-              bodyColor: '#e2e8f0',
-              cornerRadius: 8,
-              padding: 12,
+              titleFont: { size: 13 },
+              bodyFont: { size: 12 },
+              cornerRadius: 4,
+              padding: 10
             }
           },
           scales: {
             x: {
               beginAtZero: true,
               grid: { color: '#f1f5f9' },
-              ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 15 }
+              border: { display: false }
             },
             y: {
               grid: { display: false },
-              ticks: { color: '#334155', font: { size: 12, weight: '500' } }
+              border: { display: false },
+              ticks: { font: { size: 11, weight: '500' }, color: '#475569' }
             }
           }
         }

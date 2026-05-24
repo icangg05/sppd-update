@@ -3,293 +3,351 @@
 @section('page-title', 'Detail SPPD')
 
 @section('content')
-	<div class="page-header">
-		<div>
-			<h1 class="page-title">Detail SPPD</h1>
-			<p class="page-subtitle">{{ $sppd->document_number ?? 'Belum bernomor' }}</p>
-		</div>
-		<div class="flex gap-2">
-			@if ($sppd->status->value === 'in_progress' && (auth()->id() === $sppd->creator_id || auth()->id() === $sppd->user_id))
-				<form action="{{ route('sppd.destroy', $sppd) }}" method="POST"
-					onsubmit="return confirm('Batalkan dan hapus pengajuan SPPD ini?')">
-					@csrf
-					@method('DELETE')
-					<button type="submit" class="btn-ghost text-red-500 hover:bg-red-50 flex items-center gap-1">
-						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round"
-								d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-						</svg>
-						Batalkan Pengajuan
-					</button>
-				</form>
-			@endif
-			@if(in_array($sppd->status->value, ['approved', 'completed']))
-			<a href="{{ route('sppd.next', $sppd) }}"
-				class="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition-colors flex items-center gap-2">
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-					<path stroke-linecap="round" stroke-linejoin="round"
-						d="M13 5l7 7m0 0l-7 7m7-7H3" />
-				</svg>
-				Portal Selanjutnya
-			</a>
-			@endif
-			<span class="badge-{{ $sppd->status->value }} text-sm px-3 py-1">{{ $sppd->status->label() }}</span>
-			<a href="{{ route('sppd.index') }}" class="btn-secondary">← Kembali</a>
-		</div>
-	</div>
+<div class="flex flex-col gap-6 p-1">
 
-	<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-		{{-- Left: Main info --}}
-		<div class="xl:col-span-2 space-y-6">
+  {{-- Header Halaman & Aksi --}}
+  <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <div class="leading-tight">
+      <h1 class="text-lg font-bold text-slate-800">Detail Surat Perjalanan Dinas</h1>
+      <p class="text-sm font-mono text-slate-500 mt-1">
+        <i class="fa-solid fa-hashtag text-xs text-slate-400 mr-1"></i>
+        {{ $sppd->document_number ?? 'Belum memiliki nomor seri' }}
+      </p>
+    </div>
 
-			{{-- Info Perjalanan --}}
-			<div class="card p-6">
-				<h3 class="font-semibold text-slate-900 mb-4">Informasi Perjalanan</h3>
-				<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-					<div>
-						<p class="text-xs text-slate-500">Pelaksana</p>
-						<p class="font-medium text-slate-900">{{ $sppd->user->name }}</p>
-						<p class="text-xs text-slate-400">{{ $sppd->user->nip ?? '-' }}</p>
-					</div>
-					<div>
-						<p class="text-xs text-slate-500">Instansi</p>
-						<p class="font-medium text-slate-900">{{ $sppd->budget?->department?->name ?? '-' }}</p>
-					</div>
-					<div>
-						<p class="text-xs text-slate-500">Kategori</p>
-						<p class="font-medium text-slate-900">{{ $sppd->category?->name ?? '-' }}</p>
-					</div>
-					<div>
-						<p class="text-xs text-slate-500">Domain</p>
-						<p class="font-medium text-slate-900">{{ $sppd->domain->label() }}</p>
-					</div>
-					<div>
-						<p class="text-xs text-slate-500">Tanggal</p>
-						<p class="font-medium text-slate-900">{{ $sppd->start_date->format('d M Y') }} —
-							{{ $sppd->end_date->format('d M Y') }}</p>
-						<p class="text-xs text-slate-400">{{ $sppd->duration_days }} hari</p>
-					</div>
-					<div>
-						<p class="text-xs text-slate-500">Pembuat</p>
-						<p class="font-medium text-slate-900">{{ $sppd->creator?->name ?? '-' }}</p>
-					</div>
-					<div class="sm:col-span-2">
-						<p class="text-xs text-slate-500">Maksud Perjalanan</p>
-						<p class="font-medium text-slate-900">{{ $sppd->purpose }}</p>
-					</div>
-					@if ($sppd->notes)
-						<div class="sm:col-span-2">
-							<p class="text-xs text-slate-500">Catatan</p>
-							<p class="text-slate-700">{{ $sppd->notes }}</p>
-						</div>
-					@endif
-				</div>
-			</div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      {{-- Tombol Batalkan Pengajuan --}}
+      @if ($sppd->status->value === 'in_progress' && (auth()->id() === $sppd->creator_id || auth()->id() === $sppd->user_id))
+        <form action="{{ route('sppd.destroy', $sppd) }}" method="POST"
+          onsubmit="return confirm('Batalkan dan hapus pengajuan SPPD ini secara permanen?')">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
+            <i class="fa-solid fa-trash-can"></i> Batalkan Pengajuan
+          </button>
+        </form>
+      @endif
 
-			{{-- Tujuan --}}
-			@if ($sppd->destinations->count())
-				<div class="card p-6">
-					<h3 class="font-semibold text-slate-900 mb-4">Lokasi Tujuan</h3>
-					<div class="space-y-3">
-						@foreach ($sppd->destinations as $dest)
-							<div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-								<div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-									<svg class="w-4 h-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-										stroke-width="1.5">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-										<path stroke-linecap="round" stroke-linejoin="round"
-											d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-									</svg>
-								</div>
-								<div>
-									<p class="font-medium text-slate-900">
-										{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}</p>
-									@if ($dest->address)
-										<p class="text-xs text-slate-500">{{ $dest->address }}</p>
-									@endif
-								</div>
-							</div>
-						@endforeach
-					</div>
-				</div>
-			@endif
+      {{-- Tombol Portal Selanjutnya --}}
+      @if(in_array($sppd->status->value, ['approved', 'completed']))
+        <a href="{{ route('sppd.next', $sppd) }}"
+          class="inline-flex items-center gap-1.5 rounded bg-amber-500 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600">
+          <i class="fa-solid fa-share-from-square"></i> Portal Selanjutnya
+        </a>
+      @endif
 
-			{{-- Pengikut --}}
-			@if ($sppd->followers->count())
-				<div class="card p-6">
-					<h3 class="font-semibold text-slate-900 mb-4">Pengikut</h3>
-					<div class="flex flex-wrap gap-2">
-						@foreach ($sppd->followers as $f)
-							<span class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg text-sm">
-								<span
-									class="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white">{{ strtoupper(substr($f->user->name, 0, 1)) }}</span>
-								{{ $f->user->name }}
-							</span>
-						@endforeach
-					</div>
-				</div>
-			@endif
+      {{-- Badge Status --}}
+      <span class="badge-{{ $sppd->status->value }} inline-block rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+        {{ $sppd->status->label() }}
+      </span>
 
-			{{-- Rincian Biaya --}}
-			@if ($sppd->costDetails->count())
-				<div class="card overflow-hidden">
-					<div class="px-6 py-4 border-b border-slate-200">
-						<h3 class="font-semibold text-slate-900">Rincian Biaya</h3>
-					</div>
-					<table class="data-table">
-						<thead>
-							<tr>
-								<th>Uraian</th>
-								<th class="text-right">Biaya Satuan</th>
-								<th class="text-right">Qty</th>
-								<th class="text-right">Subtotal</th>
-							</tr>
-						</thead>
-						<tbody>
-							@php $total = 0; @endphp
-							@foreach ($sppd->costDetails as $c)
-								@php
-									$sub = $c->unit_cost * $c->quantity;
-									$total += $sub;
-								@endphp
-								<tr>
-									<td>{{ $c->description }}</td>
-									<td class="text-right">Rp {{ number_format($c->unit_cost, 0, ',', '.') }}</td>
-									<td class="text-right">{{ $c->quantity }}</td>
-									<td class="text-right font-medium">Rp {{ number_format($sub, 0, ',', '.') }}</td>
-								</tr>
-							@endforeach
-							<tr class="bg-slate-50">
-								<td colspan="3" class="text-right font-semibold">Total</td>
-								<td class="text-right font-bold text-primary-600">Rp {{ number_format($total, 0, ',', '.') }}</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			@endif
-		</div>
+      {{-- Tombol Kembali --}}
+      <a href="{{ route('sppd.index') }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+        <i class="fa-solid fa-arrow-left text-slate-400"></i> Kembali
+      </a>
+    </div>
+  </div>
 
-		{{-- Right: Timeline --}}
-		<div class="space-y-6">
-			{{-- Approval Timeline --}}
-			<div class="card p-6">
-				<h3 class="font-semibold text-slate-900 mb-5">Timeline Persetujuan</h3>
-				@if ($sppd->approvals->count())
-					<div>
-						@foreach ($sppd->approvals->sortBy('step_order') as $ap)
-							<div class="timeline-step">
-								<div
-									class="timeline-dot {{ $ap->status->value === 'approved' ? 'bg-emerald-500' : ($ap->status->value === 'rejected' ? 'bg-red-500' : ($ap->status->value === 'revision' ? 'bg-orange-500' : 'bg-slate-300')) }}">
-									@if ($ap->status->value === 'approved')
-										<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-										</svg>
-									@elseif($ap->status->value === 'rejected')
-										<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-										</svg>
-									@else
-										{{ $ap->step_order }}
-									@endif
-								</div>
-								<div class="flex-1 min-w-0">
-									<p class="uppercase font-medium text-sm text-slate-900">{{ $ap->role_label }}</p>
-									<p class="text-xs text-slate-500">{{ $ap->approver->name }}</p>
-									<span class="badge-{{ $ap->status->value }} mt-1">{{ $ap->status->label() }}</span>
-									@if ($ap->notes)
-										<p class="text-xs text-slate-500 mt-1 italic">"{{ $ap->notes }}"</p>
-									@endif
-									@if ($ap->acted_at)
-										<p class="text-[11px] text-slate-400 mt-1">{{ $ap->acted_at->format('d M Y H:i') }}</p>
-									@endif
-								</div>
-							</div>
-						@endforeach
-					</div>
-				@else
-					<p class="text-sm text-slate-400">Belum ada alur persetujuan</p>
-				@endif
-			</div>
+  {{-- Konten Utama Grid --}}
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
-			{{-- Approve/Reject actions --}}
-			@php
-				$myApproval = $sppd->approvals
-				    ->where('approver_id', auth()->id())
-				    ->where('status', \App\Enums\ApprovalStatus::PENDING)
-				    ->first();
-				$lastApprovalStep = $sppd->approvals->max('step_order');
-				$isFinalApproval = $myApproval && $myApproval->step_order === $lastApprovalStep;
-			@endphp
-			@if ($myApproval)
-				<div class="card p-6 border-amber-200 bg-amber-50">
-					<h3 class="font-semibold text-amber-900 mb-3">Menunggu Keputusan Anda</h3>
-					<p class="text-sm text-amber-700 mb-4">Sebagai <strong>{{ $myApproval->role_label }}</strong> (Step
-						{{ $myApproval->step_order }})</p>
+    {{-- Kolom Kiri: Informasi Utama --}}
+    <div class="space-y-6 xl:col-span-2">
 
-					@if ($isFinalApproval)
-						<div class="p-3 mb-4 bg-slate-100 rounded-lg border border-slate-200">
-							<p class="text-sm font-medium text-slate-700">Langkah terakhir: masukkan passphrase TTE untuk mengirim permintaan penandatanganan elektronik.</p>
-						</div>
-					@endif
+      {{-- 1. Info Perjalanan --}}
+      <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+        <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <i class="fa-solid fa-address-card text-cyan-600"></i> Informasi Perjalanan
+          </h3>
+        </div>
+        <div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pelaksana</p>
+            <p class="text-sm font-bold text-slate-800">{{ $sppd->user->name }}</p>
+            <p class="text-xs font-mono text-slate-500">{{ $sppd->user->nip ?? '-' }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Instansi Pengusul</p>
+            <p class="text-sm font-semibold text-slate-800">{{ $sppd->budget?->department?->name ?? '-' }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Kategori Perjalanan</p>
+            <p class="text-sm font-semibold text-slate-800">{{ $sppd->category?->name ?? '-' }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Domain Wilayah</p>
+            <p class="text-sm font-semibold text-slate-800"><span class="bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-100 text-xs uppercase">{{ $sppd->domain->label() }}</span></p>
+          </div>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Tanggal Pelaksanaan</p>
+            <p class="text-sm font-semibold text-slate-800">{{ $sppd->start_date->format('d M Y') }} <i class="fa-solid fa-arrow-right text-[10px] text-slate-400 mx-1"></i> {{ $sppd->end_date->format('d M Y') }}</p>
+            <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock"></i> Durasi: {{ $sppd->duration_days }} hari</p>
+          </div>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pembuat Dokumen</p>
+            <p class="text-sm font-semibold text-slate-800">{{ $sppd->creator?->name ?? '-' }}</p>
+          </div>
+          <div class="sm:col-span-2 pt-3 border-t border-slate-100">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Maksud Perjalanan</p>
+            <p class="text-sm font-medium text-slate-800 leading-relaxed">{{ $sppd->purpose }}</p>
+          </div>
+          @if ($sppd->notes)
+            <div class="sm:col-span-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Catatan Tambahan</p>
+              <p class="text-sm text-slate-600 bg-amber-50 p-3 rounded border border-amber-200">{{ $sppd->notes }}</p>
+            </div>
+          @endif
+        </div>
+      </div>
 
-					<form action="{{ route('sppd.approve', $sppd) }}" method="POST" class="mb-3">
-						@csrf
-						<textarea name="notes" class="form-input mb-2 text-sm" rows="2" placeholder="Catatan (opsional)"></textarea>
-						@if ($isFinalApproval)
-							<label class="block text-sm font-medium text-slate-700 mb-2">Passphrase penandatangan</label>
-							<input type="password" name="passphrase" required minlength="4"
-								class="w-full rounded border border-slate-300 px-3 py-2 focus:border-primary-500 focus:outline-none mb-3" />
-						@endif
-						<button type="submit" class="btn-success w-full">
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-							</svg>
-							Setujui
-						</button>
-					</form>
-					<form action="{{ route('sppd.reject', $sppd) }}" method="POST">
-						@csrf
-						<input type="hidden" name="notes" id="reject-notes">
-						<button type="button" onclick="rejectSppd(this.form)" class="btn-danger w-full">
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-							Tolak
-						</button>
-					</form>
-				</div>
-			@endif
+      {{-- 2. Tujuan --}}
+      @if ($sppd->destinations->count())
+        <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+          <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-cyan-600"></i> Lokasi Tujuan
+            </h3>
+          </div>
+          <div class="p-5 space-y-3">
+            @foreach ($sppd->destinations as $dest)
+              <div class="flex items-start gap-3 rounded border border-slate-200 bg-slate-50 p-3 shadow-2xs">
+                <div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+                  <i class="fa-solid fa-location-dot text-sm"></i>
+                </div>
+                <div class="min-w-0 leading-tight">
+                  <p class="text-sm font-bold text-slate-800">{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}</p>
+                  @if ($dest->address)
+                    <p class="text-xs text-slate-500 mt-1">{{ $dest->address }}</p>
+                  @endif
+                </div>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
 
-			@php
-				$sppdSignature = $sppd->signatureFor('sppd');
-			@endphp
-			@if ($sppdSignature)
-				<div class="card p-4 mt-4 border-slate-200 bg-slate-50">
-					<p class="text-sm font-semibold text-slate-700">Status TTE SPPD</p>
-					<p class="text-sm text-slate-600">{{ $sppdSignature->status->label() }}</p>
-					@if ($sppdSignature->signed_file_path)
-						<a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
-							class="inline-block mt-3 bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded text-xs font-bold transition-all">
-							Download PDF TTE
-						</a>
-					@endif
-					@if ($sppdSignature->error_message)
-						<p class="text-xs mt-2 text-rose-600">Error TTE: {{ $sppdSignature->error_message }}</p>
-					@endif
-				</div>
-			@endif
-		</div>
-	</div>
+      {{-- 3. Pengikut --}}
+      @if ($sppd->followers->count())
+        <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+          <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <i class="fa-solid fa-users text-cyan-600"></i> Daftar Pengikut
+            </h3>
+          </div>
+          <div class="p-5 flex flex-wrap gap-2.5">
+            @foreach ($sppd->followers as $f)
+              <div class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 shadow-2xs">
+                <span class="flex size-6 shrink-0 items-center justify-center rounded bg-cyan-600 text-[10px] font-bold text-white shadow-2xs">
+                  {{ strtoupper(substr($f->user->name, 0, 1)) }}
+                </span>
+                <span class="text-sm font-semibold text-slate-700 pr-2">{{ $f->user->name }}</span>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      @endif
+
+      {{-- 4. Rincian Biaya --}}
+      @if ($sppd->costDetails->count())
+        <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+          <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice-dollar text-cyan-600"></i> Rincian Biaya Anggaran
+            </h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+              <thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
+                <tr>
+                  <th class="px-5 py-3">Uraian / Deskripsi</th>
+                  <th class="px-5 py-3 text-right">Biaya Satuan</th>
+                  <th class="px-5 py-3 text-center">Qty</th>
+                  <th class="px-5 py-3 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @php $total = 0; @endphp
+                @foreach ($sppd->costDetails as $c)
+                  @php
+                    $sub = $c->unit_cost * $c->quantity;
+                    $total += $sub;
+                  @endphp
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-5 py-3 font-medium text-slate-800">{{ $c->description }}</td>
+                    <td class="px-5 py-3 text-right">Rp {{ number_format($c->unit_cost, 0, ',', '.') }}</td>
+                    <td class="px-5 py-3 text-center bg-slate-50/50">{{ $c->quantity }}</td>
+                    <td class="px-5 py-3 text-right font-bold text-slate-800">Rp {{ number_format($sub, 0, ',', '.') }}</td>
+                  </tr>
+                @endforeach
+                <tr class="bg-cyan-50/50 border-t-2 border-slate-200">
+                  <td colspan="3" class="px-5 py-3 text-right font-bold text-slate-700 uppercase tracking-wider text-xs">Total Anggaran</td>
+                  <td class="px-5 py-3 text-right font-bold text-cyan-700">Rp {{ number_format($total, 0, ',', '.') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      @endif
+    </div>
+
+    {{-- Kolom Kanan: Timeline & Aksi --}}
+    <div class="space-y-6">
+
+      {{-- Timeline Persetujuan --}}
+      <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+        <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-cyan-600"></i> Alur Persetujuan
+          </h3>
+        </div>
+        <div class="p-5">
+          @if ($sppd->approvals->count())
+            <div class="relative border-l-2 border-slate-100 ml-3 space-y-6">
+              @foreach ($sppd->approvals->sortBy('step_order') as $ap)
+                <div class="relative pl-6">
+                  {{-- Titik Timeline --}}
+                  <span class="absolute -left-[13px] top-0.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ring-4 ring-white
+                    {{ $ap->status->value === 'approved' ? 'bg-emerald-500' : ($ap->status->value === 'rejected' ? 'bg-rose-500' : ($ap->status->value === 'revision' ? 'bg-amber-500' : 'bg-slate-300')) }}">
+                    @if ($ap->status->value === 'approved')
+                      <i class="fa-solid fa-check"></i>
+                    @elseif($ap->status->value === 'rejected')
+                      <i class="fa-solid fa-xmark"></i>
+                    @else
+                      {{ $ap->step_order }}
+                    @endif
+                  </span>
+
+                  {{-- Konten Timeline --}}
+                  <div class="min-w-0 leading-tight">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ $ap->role_label }}</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $ap->approver->name }}</p>
+                    <div class="mt-1.5">
+                      <span class="badge-{{ $ap->status->value }} px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">{{ $ap->status->label() }}</span>
+                    </div>
+                    @if ($ap->notes)
+                      <p class="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-xs italic text-slate-600">
+                        <i class="fa-solid fa-quote-left text-slate-300 mr-1"></i> {{ $ap->notes }}
+                      </p>
+                    @endif
+                    @if ($ap->acted_at)
+                      <p class="mt-1.5 text-[10px] font-mono text-slate-400">
+                        <i class="fa-regular fa-clock mr-0.5"></i> {{ $ap->acted_at->format('d M Y H:i') }}
+                      </p>
+                    @endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          @else
+            <p class="text-sm text-slate-400 italic text-center py-4">Belum ada alur persetujuan yang terbuat.</p>
+          @endif
+        </div>
+      </div>
+
+      {{-- Form Aksi (Approve/Reject) --}}
+      @php
+        $myApproval = $sppd->approvals
+            ->where('approver_id', auth()->id())
+            ->where('status', \App\Enums\ApprovalStatus::PENDING)
+            ->first();
+        $lastApprovalStep = $sppd->approvals->max('step_order');
+        $isFinalApproval = $myApproval && $myApproval->step_order === $lastApprovalStep;
+      @endphp
+
+      @if ($myApproval)
+        <div class="rounded border border-blue-200 bg-blue-50 shadow-md overflow-hidden">
+          <div class="bg-blue-100/50 px-5 py-3 border-b border-blue-200">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-2">
+              <i class="fa-solid fa-bell text-blue-600 animate-pulse"></i> Menunggu Keputusan Anda
+            </h3>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-blue-700 mb-4 bg-white p-2 rounded border border-blue-100 font-medium">
+              Anda bertindak sebagai <strong>{{ $myApproval->role_label }}</strong> (Langkah ke-{{ $myApproval->step_order }})
+            </p>
+
+            @if ($isFinalApproval)
+              <div class="mb-4 rounded border border-blue-200 bg-blue-100/50 p-3">
+                <p class="text-xs font-bold text-blue-800">
+                  <i class="fa-solid fa-file-signature mr-1"></i> Langkah Terakhir TTE
+                </p>
+                <p class="text-xs text-blue-700 mt-1">Masukkan passphrase TTE Anda untuk menyetujui sekaligus mengirim permintaan penandatanganan elektronik SPPD.</p>
+              </div>
+            @endif
+
+            <form action="{{ route('sppd.approve', $sppd) }}" method="POST" class="mb-3 space-y-3">
+              @csrf
+              <textarea name="notes" class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 min-h-[60px]" placeholder="Tambahkan catatan persetujuan (opsional)..."></textarea>
+
+              @if ($isFinalApproval)
+                <div>
+                  <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase Penandatangan</label>
+                  <input type="password" name="passphrase" required minlength="4" class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500" placeholder="••••••••">
+                </div>
+              @endif
+
+              <button type="submit" class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
+                <i class="fa-solid fa-check-double"></i> Setujui Dokumen
+              </button>
+            </form>
+
+            <form action="{{ route('sppd.reject', $sppd) }}" method="POST">
+              @csrf
+              <input type="hidden" name="notes" id="reject-notes">
+              <button type="button" onclick="rejectSppd(this.form)" class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
+                <i class="fa-solid fa-ban"></i> Tolak Dokumen
+              </button>
+            </form>
+          </div>
+        </div>
+      @endif
+
+      {{-- Status Penandatanganan Elektronik (TTE) --}}
+      @php
+        $sppdSignature = $sppd->signatureFor('sppd');
+      @endphp
+      @if ($sppdSignature)
+        <div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+          <div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <i class="fa-solid fa-file-shield text-cyan-600"></i> Status TTE Dokumen
+            </h3>
+          </div>
+          <div class="p-5">
+            <span class="badge-{{ $sppdSignature->status->value }} px-2 py-1 rounded text-xs font-bold uppercase tracking-wide inline-block mb-3">
+              {{ $sppdSignature->status->label() }}
+            </span>
+
+            @if ($sppdSignature->signed_file_path)
+              <a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
+                class="flex items-center justify-center gap-2 w-full rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700">
+                <i class="fa-solid fa-file-pdf"></i> Unduh PDF Ter-TTE
+              </a>
+            @endif
+
+            @if ($sppdSignature->error_message)
+              <div class="mt-3 rounded border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error TTE:</strong> {{ $sppdSignature->error_message }}
+              </div>
+            @endif
+          </div>
+        </div>
+      @endif
+
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
-	<script>
-		function rejectSppd(form) {
-			const reason = prompt('Alasan penolakan (wajib):');
-			if (reason && reason.trim()) {
-				form.querySelector('#reject-notes').value = reason;
-				form.submit();
-			}
-		}
-	</script>
+  <script>
+    function rejectSppd(form) {
+      const reason = prompt('Masukkan alasan penolakan (Wajib diisi):');
+      if (reason && reason.trim()) {
+        form.querySelector('#reject-notes').value = reason;
+        form.submit();
+      }
+    }
+  </script>
 @endpush
