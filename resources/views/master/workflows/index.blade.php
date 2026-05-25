@@ -3,93 +3,139 @@
 @section('page-title', 'Workflow SPPD')
 
 @section('content')
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Workflow SPPD</h1>
-    <p class="page-subtitle">Atur alur persetujuan SPPD secara dinamis</p>
-  </div>
-  <a href="{{ route('master.workflows.create') }}" class="btn-primary">
-    <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-    Tambah Workflow
-  </a>
-</div>
+<div class="p-1 space-y-4">
 
-<div class="table-container">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Nama Workflow</th>
-        <th>Instansi & Jabatan</th>
-        <th>Tujuan</th>
-        <th>Alur Persetujuan (Steps)</th>
-        <th>Status</th>
-        <th class="text-right">Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse($workflows as $i => $w)
-        <tr>
-          <td class="text-slate-400">{{ $i + 1 }}</td>
-          <td>
-            <p class="font-medium text-slate-900">{{ $w->name }}</p>
-          </td>
-          <td class="text-sm">
-            <span class="block text-slate-700">Tipe: {{ $w->department_type?->label() ?? 'Semua' }}</span>
-            <span class="block text-slate-500">Pemohon: {{ $w->applicant_role ?? 'Semua' }}</span>
-          </td>
-          <td>
-            @if(is_array($w->destination) && count($w->destination) > 0)
-              <div class="flex flex-wrap gap-1">
-                @foreach($w->destination as $d)
-                  <span class="badge bg-blue-50 text-blue-700 border border-blue-100 text-[10px]">
-                    {{ \App\Enums\SppdDomain::tryFrom($d)?->label() ?? $d }}
+  {{-- Header Halaman Compact --}}
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+    <div class="flex items-center gap-2.5">
+      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+        <i class="fa-solid fa-route text-base"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Workflow SPPD</h1>
+        <p class="text-[11px] text-slate-500 font-medium">Atur alur dan tahapan persetujuan dokumen SPPD secara dinamis</p>
+      </div>
+    </div>
+
+    <a href="{{ route('master.workflows.create') }}"
+      class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+      <i class="fa-solid fa-plus text-[10px]"></i>
+      Tambah Workflow
+    </a>
+  </div>
+
+  {{-- Table Container --}}
+  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left whitespace-nowrap border-collapse">
+        <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+          <tr>
+            <th class="py-2.5 px-3 w-12 text-center">No</th>
+            <th class="py-2.5 px-4">Nama Workflow</th>
+            <th class="py-2.5 px-4">Instansi & Jabatan</th>
+            <th class="py-2.5 px-4">Tujuan Wilayah</th>
+            <th class="py-2.5 px-4">Alur Tahapan Persetujuan (Steps)</th>
+            <th class="py-2.5 px-4 w-20 text-center">Status</th>
+            <th class="py-2.5 px-4 w-24 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
+          @forelse($workflows as $i => $w)
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+                {{ $i + 1 }}
+              </td>
+
+              <td class="py-2.5 px-4">
+                <span class="font-bold text-slate-900 tracking-wide">{{ $w->name }}</span>
+              </td>
+
+              <td class="py-2.5 px-4">
+                <div class="space-y-0.5 text-[11px]">
+                  <span class="block text-slate-700 font-medium">
+                    <i class="fa-solid fa-building text-slate-400 mr-1 text-[10px]"></i>Tipe: {{ $w->department_type?->label() ?? 'Semua' }}
                   </span>
-                @endforeach
-              </div>
-            @else
-              <span class="badge bg-slate-100 text-slate-500">Semua</span>
-            @endif
-          </td>
-          <td>
-            <div class="flex flex-wrap gap-1.5 items-center">
-              @foreach($w->steps as $idx => $role)
-                <span class="badge bg-slate-100 border border-slate-200 text-slate-700">{{ $idx + 1 }}. {{ $role }}</span>
-                @if(!$loop->last)
-                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  <span class="block text-slate-500">
+                    <i class="fa-solid fa-user-tag text-slate-400 mr-1 text-[10px]"></i>Pemohon: {{ $w->applicant_role ?? 'Semua' }}
+                  </span>
+                </div>
+              </td>
+
+              <td class="py-2.5 px-4">
+                @if(is_array($w->destination) && count($w->destination) > 0)
+                  <div class="flex flex-wrap gap-1">
+                    @foreach($w->destination as $d)
+                      <span class="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100/70 uppercase">
+                        {{ \App\Enums\SppdDomain::tryFrom($d)?->label() ?? $d }}
+                      </span>
+                    @endforeach
+                  </div>
+                @else
+                  <span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200">
+                    Semua
+                  </span>
                 @endif
-              @endforeach
-            </div>
-          </td>
-          <td>
-            @if ($w->is_active)
-              <span class="badge bg-emerald-100 text-emerald-800">Aktif</span>
-            @else
-              <span class="badge bg-red-100 text-red-800">Nonaktif</span>
-            @endif
-          </td>
-          <td class="text-right">
-            <div class="flex justify-end gap-2 items-center">
-              <a href="{{ route('master.workflows.edit', $w->id) }}" class="btn-ghost p-1.5 text-amber-600 hover:bg-amber-50" title="Edit">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
-              </a>
-              <form action="{{ route('master.workflows.destroy', $w->id) }}" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus workflow ini?')">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn-ghost p-1.5 text-rose-600 hover:bg-rose-50" title="Hapus">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                </button>
-              </form>
-            </div>
-          </td>
-        </tr>
-      @empty
-        <tr>
-          <td colspan="7" class="text-center py-12 text-slate-400">Belum ada pengaturan workflow</td>
-        </tr>
-      @endforelse
-    </tbody>
-  </table>
+              </td>
+
+              <td class="py-2.5 px-4">
+                <div class="flex flex-wrap gap-1 items-center">
+                  @foreach($w->steps as $idx => $role)
+                    <span class="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] text-slate-700 font-medium">
+                      <span class="text-cyan-600 font-bold mr-1">{{ $idx + 1 }}.</span> {{ $role }}
+                    </span>
+                    @if(!$loop->last)
+                      <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mx-0.5"></i>
+                    @endif
+                  @endforeach
+                </div>
+              </td>
+
+              <td class="py-2.5 px-4 text-center">
+                @if ($w->is_active)
+                  <span class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 uppercase">
+                    Aktif
+                  </span>
+                @else
+                  <span class="inline-flex items-center rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 uppercase">
+                    Nonaktif
+                  </span>
+                @endif
+              </td>
+
+              <td class="py-2.5 px-4 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  {{-- Tombol Edit --}}
+                  <a href="{{ route('master.workflows.edit', $w->id) }}"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors" title="Edit">
+                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                  </a>
+
+                  {{-- Tombol Hapus Form --}}
+                  <form action="{{ route('master.workflows.destroy', $w->id) }}" method="POST" class="inline m-0"
+                    onsubmit="return confirm('Yakin ingin menghapus pengaturan workflow ini?')">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors" title="Hapus">
+                      <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="7" class="py-10 text-center text-slate-400">
+                <div class="flex flex-col items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-diagram-project text-2xl opacity-40"></i>
+                  <p class="font-medium">Belum ada pengaturan alur urutan workflow yang tersimpan</p>
+                </div>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 @endsection

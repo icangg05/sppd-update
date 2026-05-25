@@ -10,103 +10,103 @@ use Spatie\Permission\Models\Role;
 
 class SppdWorkflowController extends Controller
 {
-    public function index()
-    {
-        $workflows = SppdWorkflow::orderBy('id')->get();
-        return view('master.workflows.index', compact('workflows'));
-    }
+  public function index()
+  {
+    $workflows = SppdWorkflow::orderBy('id')->get();
+    return view('master.workflows.index', compact('workflows'));
+  }
 
-    public function preview(\App\Services\SppdWorkflowService $workflowService)
-    {
-        $user = auth()->user();
-        $workflows = SppdWorkflow::where('is_active', true)->orderBy('id')->get();
-        
-        // Resolve approver names for the current user's context
-        $roleMapping = [];
-        
-        // Get all unique roles needed in the workflows
-        $neededRoles = [];
-        foreach ($workflows as $w) {
-            foreach ($w->steps as $step) {
-                $neededRoles[] = $step;
-            }
-        }
-        $neededRoles = array_unique($neededRoles);
+  // public function preview(\App\Services\SppdWorkflowService $workflowService)
+  // {
+  //   $user = auth()->user();
+  //   $workflows = SppdWorkflow::where('is_active', true)->orderBy('id')->get();
 
-        foreach ($neededRoles as $role) {
-            $approver = $workflowService->resolveApprover($role, $user);
-            if ($approver) {
-                $roleMapping[$role] = $approver->name;
-            }
-        }
+  //   // Resolve approver names for the current user's context
+  //   $roleMapping = [];
 
-        return view('workflows.preview', compact('workflows', 'roleMapping', 'user'));
-    }
+  //   // Get all unique roles needed in the workflows
+  //   $neededRoles = [];
+  //   foreach ($workflows as $w) {
+  //     foreach ($w->steps as $step) {
+  //       $neededRoles[] = $step;
+  //     }
+  //   }
+  //   $neededRoles = array_unique($neededRoles);
 
-    public function create()
-    {
-        $departmentTypes = DepartmentType::cases();
-        $domains = SppdDomain::cases();
-        $roles = Role::orderBy('name')->get();
+  //   foreach ($neededRoles as $role) {
+  //     $approver = $workflowService->resolveApprover($role, $user);
+  //     if ($approver) {
+  //       $roleMapping[$role] = $approver->name;
+  //     }
+  //   }
 
-        return view('master.workflows.create', compact('departmentTypes', 'domains', 'roles'));
-    }
+  //   return view('workflows.preview', compact('workflows', 'roleMapping', 'user'));
+  // }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'department_type' => 'nullable|string',
-            'applicant_role'  => 'nullable|string',
-            'destination'     => 'nullable|array',
-            'destination.*'   => 'required|string',
-            'steps'           => 'required|array|min:1',
-            'steps.*'         => 'required|string',
-            'is_active'       => 'nullable',
-        ]);
+  public function create()
+  {
+    $departmentTypes = DepartmentType::cases();
+    $domains = SppdDomain::cases();
+    $roles = Role::orderBy('name')->get();
 
-        $validated['is_active'] = $request->has('is_active');
+    return view('master.workflows.create', compact('departmentTypes', 'domains', 'roles'));
+  }
 
-        SppdWorkflow::create($validated);
+  public function store(Request $request)
+  {
+    $validated = $request->validate([
+      'name'            => 'required|string|max:255',
+      'department_type' => 'nullable|string',
+      'applicant_role'  => 'nullable|string',
+      'destination'     => 'nullable|array',
+      'destination.*'   => 'required|string',
+      'steps'           => 'required|array|min:1',
+      'steps.*'         => 'required|string',
+      'is_active'       => 'nullable',
+    ]);
 
-        return redirect()->route('master.workflows.index')
-            ->with('success', 'Workflow SPPD berhasil ditambahkan.');
-    }
+    $validated['is_active'] = $request->has('is_active');
 
-    public function edit(SppdWorkflow $workflow)
-    {
-        $departmentTypes = DepartmentType::cases();
-        $domains = SppdDomain::cases();
-        $roles = Role::orderBy('name')->get();
+    SppdWorkflow::create($validated);
 
-        return view('master.workflows.edit', compact('workflow', 'departmentTypes', 'domains', 'roles'));
-    }
+    return redirect()->route('master.workflows.index')
+      ->with('success', 'Workflow SPPD berhasil ditambahkan.');
+  }
 
-    public function update(Request $request, SppdWorkflow $workflow)
-    {
-        $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'department_type' => 'nullable|string',
-            'applicant_role'  => 'nullable|string',
-            'destination'     => 'nullable|array',
-            'destination.*'   => 'required|string',
-            'steps'           => 'required|array|min:1',
-            'steps.*'         => 'required|string',
-            'is_active'       => 'nullable',
-        ]);
+  public function edit(SppdWorkflow $workflow)
+  {
+    $departmentTypes = DepartmentType::cases();
+    $domains = SppdDomain::cases();
+    $roles = Role::orderBy('name')->get();
 
-        $validated['is_active'] = $request->has('is_active');
+    return view('master.workflows.edit', compact('workflow', 'departmentTypes', 'domains', 'roles'));
+  }
 
-        $workflow->update($validated);
+  public function update(Request $request, SppdWorkflow $workflow)
+  {
+    $validated = $request->validate([
+      'name'            => 'required|string|max:255',
+      'department_type' => 'nullable|string',
+      'applicant_role'  => 'nullable|string',
+      'destination'     => 'nullable|array',
+      'destination.*'   => 'required|string',
+      'steps'           => 'required|array|min:1',
+      'steps.*'         => 'required|string',
+      'is_active'       => 'nullable',
+    ]);
 
-        return redirect()->route('master.workflows.index')
-            ->with('success', 'Workflow SPPD berhasil diperbarui.');
-    }
+    $validated['is_active'] = $request->has('is_active');
 
-    public function destroy(SppdWorkflow $workflow)
-    {
-        $workflow->delete();
-        return redirect()->route('master.workflows.index')
-            ->with('success', 'Workflow SPPD berhasil dihapus.');
-    }
+    $workflow->update($validated);
+
+    return redirect()->route('master.workflows.index')
+      ->with('success', 'Workflow SPPD berhasil diperbarui.');
+  }
+
+  public function destroy(SppdWorkflow $workflow)
+  {
+    $workflow->delete();
+    return redirect()->route('master.workflows.index')
+      ->with('success', 'Workflow SPPD berhasil dihapus.');
+  }
 }

@@ -36,6 +36,16 @@
         </a>
       @endif
 
+      {{-- Dokumen SPT / SPPD dengan Warna yang Disesuaikan --}}
+      <button type="button" id="document-modal-open"
+        class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
+        <i class="fa-solid fa-file-pdf text-cyan-600 text-[13px]"></i>
+        Lihat Dokumen
+      </button>
+
+      {{-- Garis Pemisah Vertikal (Separator) --}}
+      <div class="hidden sm:block border-l border-slate-300 h-5 self-center mx-0.5"></div>
+
       {{-- Badge Status --}}
       <span class="badge-{{ $sppd->status->value }} inline-block rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
         {{ $sppd->status->label() }}
@@ -81,7 +91,7 @@
           </div>
           <div>
             <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Tanggal Pelaksanaan</p>
-            <p class="text-sm font-semibold text-slate-800">{{ $sppd->start_date->format('d M Y') }} <i class="fa-solid fa-arrow-right text-[10px] text-slate-400 mx-1"></i> {{ $sppd->end_date->format('d M Y') }}</p>
+            <p class="text-sm font-semibold text-slate-800">{{ $sppd->start_date->translatedFormat('d M Y') }} <i class="fa-solid fa-arrow-right text-[10px] text-slate-400 mx-1"></i> {{ $sppd->end_date->translatedFormat('d M Y') }}</p>
             <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock"></i> Durasi: {{ $sppd->duration_days }} hari</p>
           </div>
           <div>
@@ -207,7 +217,7 @@
               @foreach ($sppd->approvals->sortBy('step_order') as $ap)
                 <div class="relative pl-6">
                   {{-- Titik Timeline --}}
-                  <span class="absolute -left-[13px] top-0.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ring-4 ring-white
+                  <span class="absolute -left-3.25 top-0.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ring-4 ring-white
                     {{ $ap->status->value === 'approved' ? 'bg-emerald-500' : ($ap->status->value === 'rejected' ? 'bg-rose-500' : ($ap->status->value === 'revision' ? 'bg-amber-500' : 'bg-slate-300')) }}">
                     @if ($ap->status->value === 'approved')
                       <i class="fa-solid fa-check"></i>
@@ -232,7 +242,7 @@
                     @endif
                     @if ($ap->acted_at)
                       <p class="mt-1.5 text-[10px] font-mono text-slate-400">
-                        <i class="fa-regular fa-clock mr-0.5"></i> {{ $ap->acted_at->format('d M Y H:i') }}
+                        <i class="fa-regular fa-clock mr-0.5"></i> {{ $ap->acted_at->translatedFormat('d M Y H:i') }}
                       </p>
                     @endif
                   </div>
@@ -337,6 +347,56 @@
 
     </div>
   </div>
+
+  {{-- Modal Dokumen Tersembunyi --}}
+  <div id="document-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 opacity-0 transition-opacity duration-200 backdrop-blur-2xs">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-folder-open text-cyan-600"></i>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Dokumen SPPD</h3>
+            <p class="text-[11px] text-slate-500">Pilih dokumen yang ingin dibuka</p>
+          </div>
+        </div>
+        <button type="button" id="document-modal-close"
+          class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2 p-4">
+        <a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
+          class="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>SPT</span>
+        </a>
+
+        <a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => $sppd->user_id]) }}" target="_blank"
+          class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+          <i class="fa-solid fa-file-lines"></i>
+          <span>SPPD Pelaksana</span>
+        </a>
+
+        @foreach ($sppd->followers as $follower)
+          <a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => $follower->user_id]) }}" target="_blank"
+            class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+            <i class="fa-solid fa-user-group"></i>
+            <span>SPPD {{ $follower->user->name }}</span>
+          </a>
+        @endforeach
+      </div>
+
+      <div class="border-t border-slate-100 px-4 py-3">
+        <button type="button" id="document-modal-close-btn"
+          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
 @endsection
 
@@ -349,5 +409,44 @@
         form.submit();
       }
     }
+
+    const documentModalOpen = document.getElementById('document-modal-open');
+    const documentModal = document.getElementById('document-modal');
+    const documentModalClose = document.getElementById('document-modal-close');
+    const documentModalCloseBtn = document.getElementById('document-modal-close-btn');
+
+    function openDocumentModal() {
+      if (!documentModal) return;
+      documentModal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        documentModal.classList.remove('opacity-0');
+        documentModal.classList.add('flex');
+      });
+    }
+
+    function closeDocumentModal() {
+      if (!documentModal) return;
+      documentModal.classList.add('opacity-0');
+      setTimeout(() => {
+        documentModal.classList.add('hidden');
+        documentModal.classList.remove('flex');
+      }, 200);
+    }
+
+    documentModalOpen?.addEventListener('click', openDocumentModal);
+    documentModalClose?.addEventListener('click', closeDocumentModal);
+    documentModalCloseBtn?.addEventListener('click', closeDocumentModal);
+
+    documentModal?.addEventListener('click', (event) => {
+      if (event.target === documentModal) {
+        closeDocumentModal();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && documentModal && !documentModal.classList.contains('hidden')) {
+        closeDocumentModal();
+      }
+    });
   </script>
 @endpush

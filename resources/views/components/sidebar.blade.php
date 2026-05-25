@@ -80,15 +80,21 @@
     </a>
 
     <a href="{{ route('master.budgets.index') }}"
-      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('budgets.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
       <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-coins fa-fw"></i></span>
       <span>DPA</span>
     </a>
 
     <a href="{{ route('master.departments.index') }}"
-      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('departments.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
       <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-building fa-fw"></i></span>
       <span>Unit Kerja</span>
+    </a>
+
+    <a href="{{ route('master.workflows.index') }}"
+      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-diagram-project fa-fw"></i></span>
+      <span>Workflow</span>
     </a>
   </nav>
 

@@ -14,7 +14,7 @@
       <p class="mt-1 text-xs text-slate-500 font-medium">Tambahkan entitas pegawai baru beserta hak akses sistemnya</p>
     </div>
     <x-ui.button href="{{ route('master.users.index') }}" variant="secondary"
-      class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+      class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <x-slot name="icon">
         <i class="fa-solid fa-arrow-left text-xs"></i>
       </x-slot>
@@ -142,12 +142,12 @@
     {{-- Form Actions --}}
     <div class="flex justify-end gap-3">
       <x-ui.button href="{{ route('master.users.index') }}" variant="secondary"
-        class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+        class="inline-flex items-center rounded border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
         Batal
       </x-ui.button>
 
       <x-ui.button type="submit"
-        class="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+        class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
         <x-slot name="icon">
           <i class="fa-solid fa-floppy-disk text-xs"></i>
         </x-slot>

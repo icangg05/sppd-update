@@ -59,7 +59,7 @@
               id="parent_id"
               label="Instansi Induk Pengampu"
               onchange="toggleFields()"
-              @disabled(!$isSuperAdmin)
+              :disabled="!$isSuperAdmin"
               class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500">
               <option value="" data-type="">— Tidak ada (Top-level) —</option>
               @foreach ($parents as $p)
@@ -90,7 +90,7 @@
               id="type_select"
               label="Tipe Entitas Wilayah"
               required
-              @disabled(!$isSuperAdmin)
+              :disabled="!$isSuperAdmin"
               class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500">
               @foreach ($types as $t)
                 <option

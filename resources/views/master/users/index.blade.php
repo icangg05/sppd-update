@@ -76,7 +76,6 @@
             <tr>
               <th class="py-3 px-4 w-12 text-center">No</th>
               <th class="py-3 px-4">Pegawai</th>
-              <th class="py-3 px-4">NIP</th>
               @if (auth()->user()->hasRole('super_admin'))
                 <th class="py-3 px-4">Instansi</th>
               @endif
@@ -102,13 +101,11 @@
                     <div>
                       <p class="text-sm font-bold text-slate-900">{{ $user->name }}</p>
                       <div class="flex items-center gap-2 mt-0.5">
-                        <span class="text-xs text-slate-400">{{ $user->username }}</span>
+                        <span class="text-xs text-slate-400">NIP: {{ $user->nip ?? '-' }}</span>
                       </div>
                     </div>
                   </div>
                 </td>
-
-                <td class="py-3 px-4 text-xs font-mono text-slate-500">{{ $user->nip ?? '-' }}</td>
 
                 @if (auth()->user()->hasRole('super_admin'))
                   <td class="py-3 px-4 text-sm text-slate-600">{{ $user->department?->name ?? '-' }}</td>
