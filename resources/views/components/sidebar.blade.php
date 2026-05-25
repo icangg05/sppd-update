@@ -3,8 +3,8 @@
   <div class="flex h-16 items-center gap-3 border-b border-slate-800 px-4">
     <img src="{{ asset('img/logo-sppd.png') }}" alt="logo" class="size-8">
     <div class="leading-tight">
-      <p class="text-sm font-bold tracking-wide text-white">SPPD SYSTEM</p>
-      <p class="text-xs text-slate-400">Sistem Perjalanan Dinas</p>
+      <p class="text-sm font-bold tracking-wide text-white">SPPD PEMERINTAH</p>
+      <p class="text-xs text-slate-400">Kota Kendari</p>
     </div>
   </div>
 
