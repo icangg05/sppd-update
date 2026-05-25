@@ -3,115 +3,207 @@
 @section('page-title', $isSuperAdmin ? 'Data Instansi' : 'Kelola Unit Kerja')
 
 @section('content')
-<div class="page-header">
-  <div>
-    <h1 class="page-title">{{ $isSuperAdmin ? 'Data Instansi' : 'Manajemen Unit Kerja' }}</h1>
-    <p class="page-subtitle">
-        {{ $isSuperAdmin ? 'Kelola OPD, kecamatan, kelurahan, dan unit kerja' : 'Kelola Bidang dan Seksi di lingkup ' . auth()->user()->department?->name }}
-    </p>
-  </div>
-  <a href="{{ route('master.departments.create') }}" class="btn-primary">
-    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-    {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Bidang/Seksi' }}
-  </a>
-</div>
+  <div class="p-1 space-y-4">
 
-{{-- Filters --}}
-<div class="card p-4 mb-4">
-  <form method="GET" action="{{ route('master.departments.index') }}" class="flex flex-col sm:flex-row gap-3">
-    <div class="flex-1">
-      <input type="text" name="search" value="{{ request('search') }}" class="form-input" placeholder="Cari nama atau kode unit...">
+    {{-- Header Halaman Compact --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+          <i class="fa-solid fa-sitemap text-base"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
+            {{ $isSuperAdmin ? 'Data Instansi' : 'Manajemen Unit Kerja' }}
+          </h1>
+          <p class="text-[11px] text-slate-500 font-medium">
+            {{ $isSuperAdmin ? 'Kelola OPD, kecamatan, kelurahan, dan unit kerja induk' : 'Kelola struktur Bidang & Seksi di lingkup ' . auth()->user()->department?->name }}
+          </p>
+        </div>
+      </div>
+
+      <x-ui.button href="{{ route('master.departments.create') }}"
+        class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+        {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Struktur' }}
+      </x-ui.button>
     </div>
-    @if($isSuperAdmin)
-    <select name="type" class="form-select w-full sm:w-44">
-      <option value="">Semua Tipe</option>
-      @foreach($types as $t)
-        <option value="{{ $t->value }}" {{ request('type') === $t->value ? 'selected' : '' }}>{{ $t->label() }}</option>
-      @endforeach
-    </select>
-    @endif
-    <button type="submit" class="btn-secondary">Cari</button>
-    @if(request()->hasAny(['search', 'type']))
-      <a href="{{ route('master.departments.index') }}" class="btn-ghost">Reset</a>
-    @endif
-  </form>
-</div>
 
-{{-- Table --}}
-<div class="table-container">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th class="w-12">No</th>
-        <th>Nama Unit Kerja</th>
-        <th>Kode</th>
-        <th>Pimpinan</th>
+    {{-- Filter Header Compact Grid --}}
+    <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
+      <form method="GET" action="{{ route('master.departments.index') }}"
+        class="flex flex-col sm:flex-row items-center gap-2">
+
+        {{-- Input Pencarian --}}
+        <div class="relative flex-1 w-full">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+          </div>
+          <input type="text" name="search" value="{{ request('search') }}"
+            class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-3 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+            placeholder="Cari nama unit kerja atau kode urusan...">
+        </div>
+
+        {{-- Dropdown Tipe (Khusus Super Admin) --}}
         @if($isSuperAdmin)
-            <th>Tipe</th>
-            <th>Induk</th>
-            <th class="text-center">Pegawai</th>
-            <th class="text-center">Sub-Unit</th>
+          <div class="relative w-full sm:w-44">
+            <select name="type"
+              class="block w-full appearance-none rounded border border-slate-300 bg-slate-50 py-1.5 pl-3 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition">
+              <option value="">Semua Tipe</option>
+              @foreach($types as $t)
+                <option value="{{ $t->value }}" {{ request('type') === $t->value ? 'selected' : '' }}>{{ $t->label() }}</option>
+              @endforeach
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+              <i class="fa-solid fa-chevron-down text-[10px]"></i>
+            </div>
+          </div>
         @endif
-        <th class="text-right">Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse($departments as $i => $dept)
-        <tr class="{{ !$isSuperAdmin && $dept->id == auth()->user()->department_id ? 'bg-slate-50 font-bold' : '' }}">
-          <td class="text-slate-400">{{ ($departments instanceof \Illuminate\Pagination\LengthAwarePaginator) ? $departments->firstItem() + $i : $i + 1 }}</td>
-          <td>
-            <div class="flex items-center">
-                @if(!$isSuperAdmin)
-                    @for($j = 0; $j < $dept->level - 1; $j++)
-                        <span class="w-6 h-px bg-slate-200 inline-block mr-2 last:bg-slate-400"></span>
-                    @endfor
-                @endif
-                <span class="{{ $dept->id == auth()->user()->department_id ? 'text-primary-700' : 'text-slate-900' }}">
-                    {{ $dept->name }}
-                </span>
-            </div>
-          </td>
-          <td class="text-xs font-mono text-slate-500">{{ $dept->code ?? '—' }}</td>
-          <td class="text-sm text-slate-600">{{ $dept->head?->name ?? '—' }}</td>
-          @if($isSuperAdmin)
-            <td>
-                <span class="badge bg-slate-100 text-slate-700">{{ $dept->type->label() }}</span>
-            </td>
-            <td class="text-sm text-slate-500">{{ $dept->parent?->name ?? '—' }}</td>
-            <td class="text-center">
-                <span class="text-sm font-medium text-slate-700">{{ $dept->users_count }}</span>
-            </td>
-            <td class="text-center">
-                <span class="text-sm font-medium text-slate-700">{{ $dept->children_count }}</span>
-            </td>
+
+        {{-- Tombol Submit & Reset --}}
+        <div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
+          <button type="submit"
+            class="w-full sm:w-auto inline-flex items-center justify-center rounded bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
+            Cari
+          </button>
+          @if(request()->hasAny(['search', 'type']))
+            <a href="{{ route('master.departments.index') }}"
+              class="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
+              Reset
+            </a>
           @endif
-          <td class="text-right">
-            <div class="flex justify-end gap-2">
-              <a href="{{ route('master.departments.show', $dept->id) }}" class="btn-ghost p-2 text-primary-600 hover:bg-primary-50" title="Detail">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              </a>
-              <a href="{{ route('master.departments.edit', $dept->id) }}" class="btn-ghost p-2 text-amber-600 hover:bg-amber-50" title="Edit">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
-              </a>
-              @if($isSuperAdmin || $dept->parent_id !== null)
-              <form action="{{ route('master.departments.destroy', $dept->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus data ini?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn-ghost p-2 text-rose-600 hover:bg-rose-50" title="Hapus">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                </button>
-              </form>
+        </div>
+      </form>
+    </div>
+
+    {{-- Table Container --}}
+    <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left whitespace-nowrap border-collapse">
+          <thead
+            class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3 w-12 text-center">No</th>
+              <th class="py-2.5 px-4">Nama Unit Kerja / Struktur</th>
+              <th class="py-2.5 px-4 w-28">Kode Unit</th>
+              <th class="py-2.5 px-4">Pimpinan Kepala</th>
+              @if($isSuperAdmin)
+                <th class="py-2.5 px-4 w-28">Tipe</th>
+                <th class="py-2.5 px-4">Unit Induk</th>
+                <th class="py-2.5 px-3 w-20 text-center">Pegawai</th>
+                <th class="py-2.5 px-3 w-20 text-center">Sub-Unit</th>
               @endif
-            </div>
-          </td>
-        </tr>
-      @empty
-        <tr><td colspan="10" class="text-center py-12 text-slate-400">Belum ada data instansi</td></tr>
-      @endforelse
-    </tbody>
-  </table>
-  @if($departments instanceof \Illuminate\Pagination\LengthAwarePaginator && $departments->hasPages())
-    <div class="px-4 py-3 border-t border-slate-200">{{ $departments->links() }}</div>
-  @endif
-</div>
+              <th class="py-2.5 px-4 w-24 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
+            @forelse($departments as $i => $dept)
+              {{-- Deteksi baris aktif instansi pengguna login --}}
+              @php
+                $isOwnDept = !$isSuperAdmin && $dept->id == auth()->user()->department_id;
+              @endphp
+              <tr class="transition-colors {{ $isOwnDept ? 'bg-cyan-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
+                <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+                  {{ ($departments instanceof \Illuminate\Pagination\LengthAwarePaginator) ? $departments->firstItem() + $i : $i + 1 }}
+                </td>
+
+                <td class="py-2.5 px-4">
+                  <div class="flex items-center">
+                    {{-- Indentasi Pohon Struktur Non-Superadmin --}}
+                    @if(!$isSuperAdmin)
+                      @for($j = 0; $j < $dept->level - 1; $j++)
+                        <span class="w-4 h-px bg-slate-300 inline-block mr-1.5 last:bg-slate-400"></span>
+                      @endfor
+                      @if($dept->level > 1)
+                        <i class="fa-solid fa-angles-right text-[10px] text-slate-300 mr-2"></i>
+                      @endif
+                    @endif
+                    <span class="{{ $isOwnDept ? 'text-cyan-700 font-bold' : 'text-slate-900' }}">
+                      {{ $dept->name }}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="py-2.5 px-4">
+                  <span
+                    class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 border border-slate-200/50">
+                    {{ $dept->code ?? '—' }}
+                  </span>
+                </td>
+
+                <td class="py-2.5 px-4 text-slate-600 font-medium">
+                  {{ $dept->head?->name ?? '—' }}
+                </td>
+
+                @if($isSuperAdmin)
+                  <td class="py-2.5 px-4">
+                    <span
+                      class="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">
+                      {{ $dept->type->label() }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-4 text-slate-500 text-[11px] truncate max-w-[160px]">
+                    {{ $dept->parent?->name ?? '—' }}
+                  </td>
+                  <td class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
+                    {{ $dept->users_count }}
+                  </td>
+                  <td class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
+                    {{ $dept->children_count }}
+                  </td>
+                @endif
+
+                <td class="py-2.5 px-4 text-center">
+                  <div class="flex items-center justify-center gap-1">
+                    {{-- Tombol Detail --}}
+                    <a href="{{ route('master.departments.show', $dept->id) }}"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
+                      title="Detail">
+                      <i class="fa-solid fa-eye text-[10px]"></i>
+                    </a>
+
+                    {{-- Tombol Edit --}}
+                    <a href="{{ route('master.departments.edit', $dept->id) }}"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                      title="Edit">
+                      <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                    </a>
+
+                    {{-- Tombol Hapus Form kondisional --}}
+                    @if($isSuperAdmin || $dept->parent_id !== null)
+                      <form action="{{ route('master.departments.destroy', $dept->id) }}" method="POST" class="inline m-0"
+                        onsubmit="return confirm('Yakin ingin menghapus data unit kerja ini?')">
+                        @csrf @method('DELETE')
+                        <button type="submit"
+                          class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          title="Hapus">
+                          <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
+                      </form>
+                    @endif
+                  </div>
+                </td>
+              </tr>
+            @empty
+              <tr>
+                <td colspan="{{ $isSuperAdmin ? '9' : '5' }}" class="py-10 text-center text-slate-400">
+                  <div class="flex flex-col items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-folder-tree text-2xl opacity-40"></i>
+                    <p class="font-medium">Belum ada data unit kerja yang ditemukan</p>
+                  </div>
+                </td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+
+      {{-- Pagination Ringkas --}}
+      @if($departments instanceof \Illuminate\Pagination\LengthAwarePaginator && $departments->hasPages())
+        <div class="px-4 py-2.5 border-t border-slate-200 bg-slate-50/50">
+          {{ $departments->links() }}
+        </div>
+      @endif
+    </div>
+
+  </div>
 @endsection
