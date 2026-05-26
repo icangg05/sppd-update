@@ -56,7 +56,8 @@
             </div>
 
             @if ($sptSignature)
-              <form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'spt']) }}" method="POST">
+              <form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'spt']) }}" method="POST"
+                onsubmit="return confirm('\u26a0\ufe0f PERINGATAN RESET TTE SPT\n\nTindakan ini akan:\n\u2022 Menghapus tanda tangan elektronik SPT yang sudah di-TTE\n\u2022 Menghapus file PDF yang sudah bertanda tangan\n\u2022 Status SPT akan dikembalikan ke antrian persetujuan\n\n Pejabat penandatangan harus mengulang proses TTE dari awal.\n\nApakah Anda yakin ingin melanjutkan?')">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-rose-100 px-3 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-200 transition">
                   <i class="fa-solid fa-rotate-left"></i> Reset TTE

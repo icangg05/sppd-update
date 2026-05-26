@@ -69,7 +69,8 @@
             </div>
 
             @if ($sppdSignature)
-              <form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'sppd']) }}" method="POST">
+              <form action="{{ route('sppd.reset-tte', ['sppd' => $sppd->id, 'type' => 'sppd']) }}" method="POST"
+                onsubmit="return confirm('\u26a0\ufe0f PERINGATAN RESET TTE SPPD\n\nTindakan ini akan:\n\u2022 Menghapus SEMUA tanda tangan elektronik pada dokumen SPPD (Pelaksana + seluruh Pengikut)\n\u2022 Menghapus semua file PDF yang sudah bertanda tangan\n\u2022 Status SPPD akan dikembalikan ke antrian persetujuan\n\n Pejabat penandatangan harus mengulang proses TTE dari awal untuk semua dokumen.\n\nApakah Anda yakin ingin melanjutkan?')">
                 @csrf
                 <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-rose-100 px-3 py-1.5 text-[10px] font-bold text-rose-700 hover:bg-rose-200 transition">
                   <i class="fa-solid fa-rotate-left"></i> RESET TTE

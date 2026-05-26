@@ -352,11 +352,24 @@ class SppdController extends Controller
       })
       ->get();
 
+    $ttesDisk = \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'));
+    $draftDir  = config('tte.storage.paths.draft');
+
     foreach ($signatures as $sig) {
-      if ($sig->signed_file_path) {
-        \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'))->delete($sig->signed_file_path);
+      // Hapus file TTE yang sudah ditandatangani
+      if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
+        $ttesDisk->delete($sig->signed_file_path);
       }
       $sig->delete();
+    }
+
+    // Hapus semua file draft yang mungkin masih tersisa
+    if ($ttesDisk->exists($draftDir)) {
+      foreach ($ttesDisk->files($draftDir) as $file) {
+        if (str_contains(basename($file), strtoupper($type))) {
+          $ttesDisk->delete($file);
+        }
+      }
     }
 
     // Set final approval step to pending
@@ -372,7 +385,7 @@ class SppdController extends Controller
     // Set SPPD status to IN_PROGRESS so it can be approved again
     $sppd->update(['status' => SppdStatus::IN_PROGRESS]);
 
-    return back()->with('success', "TTE untuk " . strtoupper($type) . " berhasil di-reset dan status dikembalikan untuk disetujui ulang oleh pejabat terakhir.");
+    return back()->with('success', 'TTE untuk ' . strtoupper($type) . ' berhasil di-reset. File tanda tangan dihapus dan status dikembalikan untuk disetujui ulang oleh pejabat terakhir.');
   }
 
   /**
@@ -814,6 +827,26 @@ class SppdController extends Controller
 
     if ($sppd->status !== SppdStatus::DRAFT && $sppd->status !== SppdStatus::IN_PROGRESS) {
       return back()->with('error', 'SPPD yang sudah disetujui penuh atau selesai tidak dapat dihapus.');
+    }
+
+    // Poin 4: Hapus semua file doc_dummy (draft) dan doc_tte (signed) dari storage
+    $signatures = $sppd->digitalSignatures()->get();
+    $ttesDisk = \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'));
+    $draftDir  = config('tte.storage.paths.draft');
+
+    foreach ($signatures as $sig) {
+      // Hapus file TTE yang sudah ditandatangani
+      if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
+        $ttesDisk->delete($sig->signed_file_path);
+      }
+    }
+
+    // Hapus semua file draft yang mungkin masih tersisa untuk SPPD ini
+    $draftPattern = $draftDir . '/*-' . $sppd->id . '-*.pdf';
+    foreach ($ttesDisk->files($draftDir) as $file) {
+      if (str_contains($file, (string) $sppd->id)) {
+        $ttesDisk->delete($file);
+      }
     }
 
     $sppd->delete();

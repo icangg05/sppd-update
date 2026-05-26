@@ -281,7 +281,6 @@
 		<div style="font-style: italic; margin-bottom: 10px;">Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama
 			Pelaksanaan Tugas</div>
 		<div style="border-top: 1px solid #000; margin: 5px 0"></div>
-		<div style="text-align: right">Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE</div>
 	</footer>
 </body>
 
