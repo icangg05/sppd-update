@@ -32,19 +32,17 @@ class PdfGeneratorService
 
     protected function renderDraftPdf(SppdRequest $sppd, string $documentType): string
     {
-        $viewData = match ($documentType) {
-            SignatureDocumentType::SPPD->value => $this->buildSppdData($sppd),
-            SignatureDocumentType::SPT->value => $this->buildSptData($sppd),
-            default => $this->buildSppdData($sppd),
-        };
+        if ($documentType === SignatureDocumentType::SPT->value) {
+            $viewData = $this->buildSptData($sppd);
+        } else {
+            $viewData = $this->buildSppdData($sppd, $documentType);
+        }
 
         $pdf = Pdf::loadView($viewData['view'], $viewData['data']);
 
-        if ($documentType === SignatureDocumentType::SPPD->value) {
+        if ($documentType !== SignatureDocumentType::SPT->value) {
             $pdf->setPaper([0, 0, 935.43, 684.45]);
-        }
-
-        if ($documentType === SignatureDocumentType::SPT->value) {
+        } else {
             $pdf->setPaper('f4', 'portrait');
         }
 
@@ -57,13 +55,26 @@ class PdfGeneratorService
         return strtoupper($documentType) . '-' . $slug . '-' . now()->format('YmdHis') . '.pdf';
     }
 
-    protected function buildSppdData(SppdRequest $sppd): array
+    protected function buildSppdData(SppdRequest $sppd, string $documentType): array
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank', 'approvals.approver']);
         $duration = $sppd->start_date->diffInDays($sppd->end_date) + 1;
 
+        // Parse target user from document_type
         $targetUser = $sppd->user;
-        $isMain = true;
+        if (preg_match('/^sppd_(\d+)$/', $documentType, $matches)) {
+            $userId = (int)$matches[1];
+            if ($userId !== $sppd->user_id) {
+                $follower = $sppd->followers->first(fn($f) => $f->user_id === $userId);
+                if ($follower) {
+                    $targetUser = $follower->user;
+                } else {
+                    $targetUser = \App\Models\User::find($userId) ?? $sppd->user;
+                }
+            }
+        }
+
+        $isMain = $targetUser->id === $sppd->user_id;
 
         $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
         $opdHeadApproval = $sppd->approvals()
@@ -85,15 +96,13 @@ class PdfGeneratorService
             'approver_rank' => $approver?->rank?->name ?? '',
             'approver_group' => $approver?->rank?->group ?? '',
             'is_walikota' => false,
-            'is_approved' => in_array($sppd->status->value, ['approved', 'completed']),
+            'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,
         ];
 
-        if ($pdfData['is_approved']) {
-            $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
-            $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 50);
-        }
+        $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
+        $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 50);
 
         return [
             'view' => 'exports.sppd',
@@ -122,15 +131,13 @@ class PdfGeneratorService
             'approver_rank' => $approver->rank->name ?? '',
             'approver_group' => $approver->rank->group ?? '',
             'is_walikota' => $approver && $approver->hasRole('walikota'),
-            'is_approved' => in_array($sppd->status->value, ['approved', 'completed']),
+            'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,
         ];
 
-        if ($pdfData['is_approved']) {
-            $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
-            $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
-        }
+        $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
+        $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
 
         return [
             'view' => 'exports.spt',

@@ -341,10 +341,38 @@ class SppdController extends Controller
    */
   public function resetTte(SppdRequest $sppd, $type)
   {
-    // Logic to clear existing digital signatures for this document type
-    $sppd->digitalSignatures()->where('document_type', $type)->delete();
+    $signatures = $sppd->digitalSignatures()
+      ->where(function ($q) use ($type) {
+        if ($type === 'sppd') {
+          $q->where('document_type', 'sppd')
+            ->orWhere('document_type', 'like', 'sppd_%');
+        } else {
+          $q->where('document_type', $type);
+        }
+      })
+      ->get();
 
-    return back()->with('success', "TTE untuk " . strtoupper($type) . " berhasil di-reset.");
+    foreach ($signatures as $sig) {
+      if ($sig->signed_file_path) {
+        \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'))->delete($sig->signed_file_path);
+      }
+      $sig->delete();
+    }
+
+    // Set final approval step to pending
+    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    if ($lastApproval) {
+      $lastApproval->update([
+        'status' => \App\Enums\ApprovalStatus::PENDING,
+        'acted_at' => null,
+        'notes' => null,
+      ]);
+    }
+
+    // Set SPPD status to IN_PROGRESS so it can be approved again
+    $sppd->update(['status' => SppdStatus::IN_PROGRESS]);
+
+    return back()->with('success', "TTE untuk " . strtoupper($type) . " berhasil di-reset dan status dikembalikan untuk disetujui ulang oleh pejabat terakhir.");
   }
 
   /**
@@ -472,6 +500,16 @@ class SppdController extends Controller
       return back()->with('error', 'Anda tidak memiliki hak untuk menyetujui SPPD ini.');
     }
 
+    // Check if previous steps are all approved
+    $hasUnapprovedPreviousSteps = $sppd->approvals()
+      ->where('step_order', '<', $approval->step_order)
+      ->where('status', '!=', ApprovalStatus::APPROVED->value)
+      ->exists();
+
+    if ($hasUnapprovedPreviousSteps) {
+      return back()->with('error', 'Anda belum dapat menyetujui dokumen ini karena langkah persetujuan sebelumnya belum selesai.');
+    }
+
     $isFinalApproval = $this->isFinalApprovalStep($sppd, $approval);
 
     if ($isFinalApproval && !Auth::user()?->nik) {
@@ -486,32 +524,57 @@ class SppdController extends Controller
     $validated = $request->validate($rules);
 
     if ($isFinalApproval) {
-      $signature = $sppd->digitalSignatures()->updateOrCreate(
-        [
-          'signer_id' => Auth::id(),
-          'document_type' => SignatureDocumentType::SPPD->value,
-        ],
-        array_merge(
-          [
-            'sppd_request_id' => $sppd->id,
-            'signer_id' => Auth::id(),
-            'document_type' => SignatureDocumentType::SPPD->value,
-            'status' => SignatureStatus::PENDING,
-            'error_message' => null,
-            'signed_file_path' => null,
-            'provider_name' => config('tte.default_provider'),
-          ],
-          $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
-        )
-      );
+      $documentsToSign = [];
+
+      // 1. SPT (type 'spt')
+      $documentsToSign[] = [
+        'type' => 'spt',
+        'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPT)
+      ];
+
+      // 2. SPPD Pelaksana (type 'sppd_{user_id}')
+      $documentsToSign[] = [
+        'type' => 'sppd_' . $sppd->user_id,
+        'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
+      ];
+
+      // 3. SPPD Followers (type 'sppd_{user_id}')
+      foreach ($sppd->followers as $follower) {
+        $documentsToSign[] = [
+          'type' => 'sppd_' . $follower->user_id,
+          'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
+        ];
+      }
 
       $signatureService = app(SignatureService::class);
-      $signResult = $signatureService->sign($signature, $validated['passphrase']);
 
-      if ($signResult !== true) {
-        return back()
-          ->with('error', 'Error: ' . ($signature->error_message ?? 'Terjadi kesalahan saat memproses tanda tangan elektronik.'))
-          ->with('error_details', is_array($signResult) && array_key_exists('details', $signResult) ? $signResult['details'] : $signature->toArray());
+      foreach ($documentsToSign as $doc) {
+        $signature = $sppd->digitalSignatures()->updateOrCreate(
+          [
+            'signer_id' => Auth::id(),
+            'document_type' => $doc['type'],
+          ],
+          array_merge(
+            [
+              'sppd_request_id' => $sppd->id,
+              'signer_id' => Auth::id(),
+              'document_type' => $doc['type'],
+              'status' => SignatureStatus::PENDING,
+              'error_message' => null,
+              'signed_file_path' => null,
+              'provider_name' => config('tte.default_provider'),
+            ],
+            $doc['coords']
+          )
+        );
+
+        $signResult = $signatureService->sign($signature, $validated['passphrase']);
+
+        if ($signResult !== true) {
+          return back()
+            ->with('error', 'Error TTE (' . strtoupper(str_replace('_', ' ', $doc['type'])) . '): ' . ($signature->error_message ?? 'Terjadi kesalahan saat memproses tanda tangan elektronik.'))
+            ->with('error_details', is_array($signResult) && array_key_exists('details', $signResult) ? $signResult['details'] : $signature->toArray());
+        }
       }
 
       $approval->approve($validated['notes'] ?? null);
@@ -520,7 +583,7 @@ class SppdController extends Controller
         $sppd->update(['status' => SppdStatus::APPROVED]);
       }
 
-      return back()->with('success', 'SPPD berhasil disetujui dan TTE berhasil.');
+      return back()->with('success', 'SPPD berhasil disetujui dan seluruh dokumen (SPT & SPPD) telah di-TTE dengan sukses.');
     }
 
     $approval->approve($validated['notes'] ?? null);
@@ -619,6 +682,18 @@ class SppdController extends Controller
   }
   public function streamSpt(SppdRequest $sppd)
   {
+    // Check if already TTE signed, if so stream the signed file
+    $signature = $sppd->signatureFor('spt');
+    if ($signature && $signature->status->value === SignatureStatus::SIGNED->value && $signature->signed_file_path) {
+      $filePath = storage_path('app/public/' . $signature->signed_file_path);
+      if (file_exists($filePath)) {
+        return response()->file($filePath, [
+          'Content-Type' => 'application/pdf',
+          'Content-Disposition' => 'inline; filename="SPT-' . Str::slug($sppd->document_number ?: $sppd->id) . '.pdf"'
+        ]);
+      }
+    }
+
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
     $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
     $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
@@ -651,17 +726,34 @@ class SppdController extends Controller
       ->stream('SPT-' . \Illuminate\Support\Str::slug($sppd->document_number ?: $sppd->id) . '.pdf');
   }
 
-  public function streamSppd(SppdRequest $sppd, User $user = null)
+  public function streamSppd(SppdRequest $sppd, ?User $user = null)
   {
-    $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
-
     // Jika user_id dikirim lewat request (untuk pengikut)
     if (request()->has('user_id')) {
       $targetUser = User::findOrFail(request()->user_id);
     } else {
       $targetUser = ($user && $user->id) ? $user : $sppd->user;
     }
+
+    // Check if already TTE signed for this target user, if so stream the signed file
+    $signatureType = 'sppd_' . $targetUser->id;
+    $signature = $sppd->digitalSignatures()
+      ->where('document_type', $signatureType)
+      ->where('status', SignatureStatus::SIGNED)
+      ->first();
+
+    if ($signature && $signature->signed_file_path) {
+      $filePath = storage_path('app/public/' . $signature->signed_file_path);
+      if (file_exists($filePath)) {
+        return response()->file($filePath, [
+          'Content-Type' => 'application/pdf',
+          'Content-Disposition' => 'inline; filename="SPPD-' . Str::slug($targetUser->name) . '.pdf"'
+        ]);
+      }
+    }
+
+    $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
+    $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
 
     $isMain = $targetUser->id === $sppd->user_id;
 

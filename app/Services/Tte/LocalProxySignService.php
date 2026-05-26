@@ -26,12 +26,13 @@ class LocalProxySignService implements SignatureProviderInterface
         int $yAxis,
         int $width,
         int $height,
-        string $linkQr
+        string $linkQr,
+        string $tampilan = 'visible'
     ): array|string {
         $query = http_build_query([
             'nik' => $nik,
             'passphrase' => $passphrase,
-            'tampilan' => 'visible',
+            'tampilan' => $tampilan,
             'halaman' => $page === 1 ? 'pertama' : 'terakhir',
             'image' => 'false',
             'linkQR' => $linkQr,

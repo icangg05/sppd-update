@@ -293,7 +293,12 @@
               @if ($isFinalApproval)
                 <div>
                   <label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase Penandatangan</label>
-                  <input type="password" name="passphrase" required minlength="4" class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500" placeholder="••••••••">
+                  <div class="relative">
+                    <input type="password" name="passphrase" id="passphrase-input" required minlength="4" class="w-full rounded border border-slate-300 bg-white pl-3 pr-10 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500" placeholder="••••••••">
+                    <button type="button" onclick="togglePassphraseVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                      <i id="passphrase-eye-icon" class="fa-solid fa-eye text-sm"></i>
+                    </button>
+                  </div>
                 </div>
               @endif
 
@@ -402,6 +407,22 @@
 
 @push('scripts')
   <script>
+    function togglePassphraseVisibility() {
+      const input = document.getElementById('passphrase-input');
+      const icon = document.getElementById('passphrase-eye-icon');
+      if (input && icon) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          input.type = 'password';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      }
+    }
+
     function rejectSppd(form) {
       const reason = prompt('Masukkan alasan penolakan (Wajib diisi):');
       if (reason && reason.trim()) {

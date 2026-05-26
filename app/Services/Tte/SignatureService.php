@@ -25,6 +25,11 @@ class SignatureService
         $draftFile = $this->pdfGenerator->generateDraft($signature);
         $linkQr = url('/verify/' . $signature->document_type . '/' . $signature->sppdRequest->id . '/' . md5($signature->sppdRequest->document_number . $signature->sppdRequest->id));
 
+        $tampilan = 'visible';
+        if (str_starts_with($signature->document_type, 'sppd')) {
+            $tampilan = 'invisible';
+        }
+
         $result = $this->provider->requestSign(
             $draftFile,
             $signature->signer->nik,
@@ -34,7 +39,8 @@ class SignatureService
             $signature->sign_y,
             $signature->sign_width,
             $signature->sign_height,
-            $linkQr
+            $linkQr,
+            $tampilan
         );
 
         if (is_array($result) && isset($result['error'])) {

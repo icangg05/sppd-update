@@ -16,7 +16,8 @@ interface SignatureProviderInterface
         int $yAxis,
         int $width,
         int $height,
-        string $linkQr
+        string $linkQr,
+        string $tampilan = 'visible'
     ): array|string;
 
     /**

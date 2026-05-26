@@ -136,10 +136,25 @@ class SppdRequest extends Model
 
   public function signatureFor(string $documentType): ?SppdDigitalSignature
   {
-    return $this->digitalSignatures()
-      ->where('document_type', $documentType)
+    $type = $documentType;
+    if ($type === 'sppd') {
+      $type = 'sppd_' . $this->user_id;
+    }
+
+    $sig = $this->digitalSignatures()
+      ->where('document_type', $type)
       ->orderBy('created_at', 'desc')
       ->first();
+
+    if (!$sig && $documentType === 'sppd') {
+      // Fallback to legacy 'sppd' document_type
+      $sig = $this->digitalSignatures()
+        ->where('document_type', 'sppd')
+        ->orderBy('created_at', 'desc')
+        ->first();
+    }
+
+    return $sig;
   }
 
   public function isSigned(string $documentType): bool
