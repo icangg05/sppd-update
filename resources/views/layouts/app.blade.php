@@ -4,13 +4,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <title>@yield('title', 'Dashboard') - {{ config('app.name', 'SPPD') }}</title>
 
   <link rel="preconnect" href="https://fonts.bunny.net">
   <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <script src="{{ asset('js/jquery-4.0.0.min.js') }}"></script>
 
@@ -35,28 +37,33 @@
     <main class="flex-1 p-4 sm:p-5 lg:p-6">
 
       @if (session('success'))
-        <div class="mb-4 flex items-center gap-2.5 rounded border border-emerald-200 bg-emerald-50 p-3.5 text-sm font-medium text-emerald-800 shadow-sm">
+        <div
+          class="mb-4 flex items-center gap-2.5 rounded border border-emerald-200 bg-emerald-50 p-3.5 text-sm font-medium text-emerald-800 shadow-sm">
           <i class="fa-solid fa-circle-check fa-fw text-emerald-600"></i>
           {{ session('success') }}
         </div>
       @endif
 
       @if (session('error'))
-        <div class="mb-4 flex items-center gap-2.5 rounded border border-red-200 bg-red-50 p-3.5 text-sm font-medium text-red-800 shadow-sm">
+        <div
+          class="mb-4 flex items-center gap-2.5 rounded border border-red-200 bg-red-50 p-3.5 text-sm font-medium text-red-800 shadow-sm">
           <i class="fa-solid fa-circle-exclamation fa-fw text-red-600"></i>
           {{ session('error') }}
         </div>
       @endif
 
       @if (session('error_details'))
-        <script>console.log('TTE error details:', @json(session('error_details')));</script>
+        <script>
+          console.log('TTE error details:', @json(session('error_details')));
+        </script>
       @endif
 
       @yield('content')
     </main>
 
     {{-- Footer dengan Font Sedang & Blur Tipis --}}
-    <footer class="border-t border-slate-200 bg-white/80 px-6 py-4 text-center text-xs font-normal text-slate-500 backdrop-blur-sm">
+    <footer
+      class="border-t border-slate-200 bg-white/80 px-6 py-4 text-center text-xs font-normal text-slate-500 backdrop-blur-sm">
       &copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} — Sistem Perjalanan Dinas v4.0
     </footer>
   </div>
@@ -71,14 +78,14 @@
       overlay.classList.toggle('hidden');
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const submenuToggles = document.querySelectorAll('[data-sidebar-toggle]');
       submenuToggles.forEach((toggle) => {
         const submenuId = toggle.getAttribute('data-sidebar-toggle');
         const submenu = document.getElementById(submenuId);
         if (!submenu) return;
 
-        toggle.addEventListener('click', function() {
+        toggle.addEventListener('click', function () {
           const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
           toggle.setAttribute('aria-expanded', String(!isExpanded));
           submenu.classList.toggle('hidden', isExpanded);
@@ -89,4 +96,5 @@
 
   @stack('scripts')
 </body>
+
 </html>

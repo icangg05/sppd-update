@@ -53,11 +53,9 @@ class PositionAndRankSeeder extends Seeder
       'Staf',
       'Fungsional Umum',
       'Analis Kebijakan',
-      'Perencana',
       'Pranata Komputer',
       'Auditor',
-      'Bendahara',
-      'PPTK',
+      'Bendahara Pengeluaran',
     ];
 
     foreach ($positions as $pos) {

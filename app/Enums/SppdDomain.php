@@ -20,7 +20,7 @@ enum SppdDomain: string
   public function shortLabel(): string
   {
     return match ($this) {
-      self::DALAM_DAERAH => 'DD',
+      self::DALAM_DAERAH => 'Dalam Daerah',
       self::LDDP         => 'LDDP',
       self::LDLP         => 'LDLP',
     };

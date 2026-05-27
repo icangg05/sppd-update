@@ -47,7 +47,7 @@ class UserController extends Controller
   {
     $departments = $this->getHierarchicalDepartments();
     $ranks = Rank::orderBy('group')->get();
-    $positions = Position::orderBy('level')->get();
+    $positions = Position::orderBy('name')->get();
 
     return view('master.users.create', compact('departments', 'ranks', 'positions'));
   }
@@ -99,7 +99,7 @@ class UserController extends Controller
     ]);
 
     if (!auth()->user()->hasRole('super_admin')) {
-        $validated['department_id'] = auth()->user()->department_id;
+      $validated['department_id'] = auth()->user()->department_id;
     }
 
     $user = User::create([
@@ -146,14 +146,14 @@ class UserController extends Controller
     ]);
 
     if (!auth()->user()->hasRole('super_admin')) {
-        $validated['department_id'] = auth()->user()->department_id;
+      $validated['department_id'] = auth()->user()->department_id;
     }
 
     $data = $validated;
     if (!empty($data['password'])) {
-        $data['password'] = Hash::make($data['password']);
+      $data['password'] = Hash::make($data['password']);
     } else {
-        unset($data['password']);
+      unset($data['password']);
     }
 
     $user->update($data);

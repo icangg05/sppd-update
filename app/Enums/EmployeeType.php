@@ -7,8 +7,8 @@ enum EmployeeType: string
   case PNS      = 'pns';
   case PPPK     = 'pppk';
   case HONORER  = 'honorer';
-  case PIMPINAN = 'pimpinan';
   case DPRD     = 'dprd';
+  case LAINNYA  = 'lainnya';
 
   public function label(): string
   {
@@ -16,8 +16,8 @@ enum EmployeeType: string
       self::PNS      => 'PNS',
       self::PPPK     => 'PPPK',
       self::HONORER  => 'Honorer',
-      self::PIMPINAN => 'Pimpinan',
       self::DPRD     => 'Anggota DPRD',
+      self::LAINNYA  => 'Lainnya',
     };
   }
 }
