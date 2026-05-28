@@ -38,9 +38,13 @@
 			text-transform: uppercase;
 		}
 
-		.subtitle {
+		.subtitle-left {
 			text-align: left;
 			margin-left: 179px;
+		}
+
+		.subtitle-center {
+			text-align: center;
 		}
 
 		.content-table {
@@ -75,7 +79,7 @@
 
 		.signature-wrap {
 			float: right;
-			width: 250px;
+			width: 270px;
 			text-align: left;
 		}
 
@@ -135,7 +139,9 @@
 	</div>
 
 	<div class="title">SURAT PERINTAH TUGAS</div>
-	<div class="subtitle">No : {{ $sppd->document_number ?? '' }}</div>
+	<div class="{{ $sppd->document_number ? 'subtitle-center' : 'subtitle-left' }}">
+		No : {{ $sppd->document_number ?? '' }}
+	</div>
 
 	<table class="content-table">
 		<tr>
@@ -211,7 +217,7 @@
 							<td style="padding: 0 0;">Jabatan</td>
 							<td style="padding: 0 0;">:</td>
 							<td style="padding: 0 0; text-transform: uppercase;">
-								{{ $follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-') }}
+								{{ $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')) }}
 							</td>
 						</tr>
 					@endforeach

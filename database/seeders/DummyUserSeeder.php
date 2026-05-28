@@ -15,15 +15,19 @@ class DummyUserSeeder extends Seeder
   {
     $password = Hash::make('admin');
 
-    $rankIId = Rank::where('group', 'II/d')->first();
-    $rankIVa = Rank::where('group', 'IV/a')->first();
-    $rankIVb = Rank::where('group', 'IV/b')->first();
-    $rankIVd = Rank::where('group', 'IV/d')->first();
+    $rankIId  = Rank::where('group', 'II/d')->first();
+    $rankIIIa = Rank::where('group', 'III/a')->first();
+    $rankIVa  = Rank::where('group', 'IV/a')->first();
+    $rankIVb  = Rank::where('group', 'IV/b')->first();
+    $rankIVc  = Rank::where('group', 'IV/c')->first();
+    $rankIVd  = Rank::where('group', 'IV/d')->first();
 
     $kadin                = Position::where('name', 'Kepala Dinas')->first();
     $sekdin               = Position::where('name', 'Sekretaris Dinas')->first();
     $bendaharaPengeluaran = Position::where('name', 'Bendahara Pengeluaran')->first();
     $staf                 = Position::where('name', 'Staf')->first();
+    $inspektur            = Position::where('name', 'Inspektur')->first();
+    $sekrin               = Position::where('name', 'Sekretaris Inspektur')->first();
 
     // ─── Pejabat Seeder ───
     $users = [
@@ -92,7 +96,7 @@ class DummyUserSeeder extends Seeder
         'position_id'   => $sekdin?->id,
         'role'          => 'sekretaris_opd',
       ],
-      // BendaharaKominfo
+      // Bendahara Kominfo
       [
         'name'          => 'HARTINI, A.Md. Komp',
         'username'      => 'bendahara_kominfo',
@@ -114,6 +118,58 @@ class DummyUserSeeder extends Seeder
         'employee_type' => EmployeeType::HONORER,
         'department_id' => 36,
         'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
+      ],
+
+      // Inspektur
+      [
+        'name'          => 'Dr. Sri Yusnita, ST., MM., CGCAE., CGRE.',
+        'username'      => 'inspektur',
+        'email'         => null,
+        'nik'           => '7471075808760001',
+        'nip'           => '197608182002122007',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 48,
+        'rank_id'       => $rankIVc?->id,
+        'position_id'   => $inspektur?->id,
+        'role'          => 'kepala_opd',
+      ],
+      // Sekretaris Inspektorat
+      [
+        'name'          => 'Hj. Sennatang, SE.,MM',
+        'username'      => 'sekretaris_inspektorat',
+        'email'         => null,
+        'nik'           => '7471040607780032',
+        'nip'           => '196812071993032011',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 48,
+        'rank_id'       => $rankIVa?->id,
+        'position_id'   => $sekrin?->id,
+        'role'          => 'sekretaris_opd',
+      ],
+      // Bendahara Inspektorat
+      [
+        'name'          => 'Gusti Ayu Putu Putri Satriadani, S.Tr.IP',
+        'username'      => 'bendahara_inspektorat',
+        'email'         => null,
+        'nik'           => '7471041007020002',
+        'nip'           => '199907242022082002',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 48,
+        'rank_id'       => $rankIIIa?->id,
+        'position_id'   => $bendaharaPengeluaran?->id,
+        'role'          => 'staf',
+      ],
+      // Admin Inspektorat
+      [
+        'name'          => 'Innayah Maghfirah Patola, S.H',
+        'username'      => 'admin_inspektorat',
+        'email'         => null,
+        'nip'           => '199912282025062006',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 48,
+        'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
         'role'          => 'admin_opd',
       ],

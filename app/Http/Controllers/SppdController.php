@@ -157,7 +157,10 @@ class SppdController extends Controller
       ->unique()
       ->toArray();
 
-    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps', 'activeFollowerIds'));
+    // Deteksi apakah unit kerja pelaksana adalah Inspektorat
+    $isInspektorat = str_contains(strtolower($pelaksana->department?->name ?? ''), 'inspektorat');
+
+    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps', 'activeFollowerIds', 'isInspektorat'));
   }
 
   public function store(Request $request)
@@ -180,6 +183,7 @@ class SppdController extends Controller
       'sppd_date'       => 'nullable|date',
       'spt_date'        => 'nullable|date',
       'notes'           => 'nullable|string|max:1000',
+      'document_number' => 'nullable|string|max:255',
       // Destinations
       'destinations'            => 'required|array|min:1',
       'destinations.*.province_id' => 'required_if:domain,lddp,ldlp|exists:provinces,id',
@@ -187,8 +191,10 @@ class SppdController extends Controller
       'destinations.*.address'     => 'required_if:domain,lddp,ldlp|string|max:500',
       'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
       // Followers
-      'followers'     => 'nullable|array',
-      'followers.*'   => 'exists:users,id',
+      'followers'              => 'nullable|array',
+      'followers.*'            => 'exists:users,id',
+      'follower_positions'     => 'nullable|array',
+      'follower_positions.*'   => 'nullable|string|max:100',
       // Cost details
       'costs'                => 'nullable|array',
       'costs.*.description'  => 'required_with:costs|string|max:255',
@@ -238,6 +244,7 @@ class SppdController extends Controller
           'spt_date'        => $validated['spt_date'],
           'status'          => SppdStatus::IN_PROGRESS,
           'notes'           => $validated['notes'] ?? null,
+          'document_number' => $validated['document_number'] ?? null,
           'attachment'      => $attachmentPath,
         ]);
 
@@ -263,8 +270,12 @@ class SppdController extends Controller
 
         // Save followers
         if (!empty($validated['followers'])) {
+          $followerPositions = $validated['follower_positions'] ?? [];
           foreach ($validated['followers'] as $userId) {
-            $sppd->followers()->create(['user_id' => $userId]);
+            $sppd->followers()->create([
+              'user_id'        => $userId,
+              'travel_position' => $followerPositions[$userId] ?? null,
+            ]);
           }
         }
 
@@ -792,6 +803,7 @@ class SppdController extends Controller
       ?? $sppdApproval?->role_label
       ?? 'Kepala Dinas';
 
+    $follower = $sppd->followers->where('user_id', $targetUser->id)->first();
     $pdfData = [
       'approver_name' => $approver?->name ?? '................................',
       'approver_role' => $approverRole,
@@ -801,7 +813,9 @@ class SppdController extends Controller
       'is_walikota'   => false,
       'is_approved'   => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image'      => null,
-      'duration'      => $duration
+      'duration'      => $duration,
+      'is_follower'   => !$isMain,
+      'travel_position' => $follower?->travel_position,
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('sppd')) {
@@ -825,7 +839,7 @@ class SppdController extends Controller
       return back()->with('error', 'Anda tidak memiliki akses untuk menghapus SPPD ini.');
     }
 
-    if ($sppd->status !== SppdStatus::DRAFT && $sppd->status !== SppdStatus::IN_PROGRESS) {
+    if ($sppd->status !== SppdStatus::IN_PROGRESS) {
       return back()->with('error', 'SPPD yang sudah disetujui penuh atau selesai tidak dapat dihapus.');
     }
 

@@ -12,7 +12,7 @@ class BudgetSeeder extends Seeder
   {
     $year = (int) date('Y');
 
-    $programs = [
+    $programsKominfo = [
       [
         'program'  => 'Program Penunjang Urusan Pemerintahan Daerah Kabupaten/Kota',
         'kegiatan' => 'Administrasi Kepegawaian Perangkat Daerah',
@@ -31,22 +31,51 @@ class BudgetSeeder extends Seeder
       ],
     ];
 
-    foreach ($programs as $p) {
-      Budget::updateOrCreate(
-        [
-          'department_id' => 36, // kominfo
-          'account_code'  => $p['kode'],
-          'year'          => $year,
-          'type'          => $p['type'],
-          'source'        => $p['source']
-        ],
-        [
-          'program'      => $p['program'],
-          'activity'     => $p['kegiatan'],
-          'description'  => $p['uraian'],
-          'total_amount' => rand(50, 500) * 1_000_000
-        ]
-      );
+    foreach ($programsKominfo as $p) {
+      Budget::create([
+        'department_id' => 36,
+        'account_code'  => $p['kode'],
+        'year'          => $year,
+        'type'          => $p['type'],
+        'source'        => $p['source'],
+        'program'       => $p['program'],
+        'activity'      => $p['kegiatan'],
+        'description'   => $p['uraian'],
+        'total_amount'  => rand(50, 500) * 1_000_000
+      ]);
+    }
+
+    $progamInspektorat = [
+      [
+        'program'  => 'Sosialisasi Pencegahan Korupsi (IRVES)',
+        'kegiatan' => 'Pendampingan, Asistensi dan Verifikasi Penegakan Integritas',
+        'kode'     => '6.01.03.2.02.04',
+        'uraian'   => 'Belanja Perjalanan Dinas Dalam Daerah',
+        'type'     => 'Perjalanan Dinas Dalam Daerah',
+        'source'   => 'APBD'
+      ],
+      [
+        'program'  => 'Sosialisasi SPI',
+        'kegiatan' => 'Pendampingan, Asistensi dan Verifikasi Penegakan Integritas ',
+        'kode'     => '6.01.03.2.02.04',
+        'uraian'   => 'Belanja Perjalanan Dinas Dalam Daerah',
+        'type'     => 'Perjalanan Dinas Dalam Daerah',
+        'source'   => 'APBD'
+      ],
+    ];
+
+    foreach ($progamInspektorat as $p) {
+      Budget::create([
+        'department_id' => 48,
+        'account_code'  => $p['kode'],
+        'year'          => $year,
+        'type'          => $p['type'],
+        'source'        => $p['source'],
+        'program'       => $p['program'],
+        'activity'      => $p['kegiatan'],
+        'description'   => $p['uraian'],
+        'total_amount'  => rand(50, 500) * 1_000_000
+      ]);
     }
   }
 }

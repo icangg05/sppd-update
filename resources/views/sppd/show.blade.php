@@ -161,7 +161,14 @@
 										class="flex size-6 shrink-0 items-center justify-center rounded bg-cyan-600 text-[10px] font-bold text-white shadow-2xs">
 										{{ strtoupper(substr($f->user->name, 0, 1)) }}
 									</span>
-									<span class="text-sm font-semibold text-slate-700 pr-2">{{ $f->user->name }}</span>
+									<div class="leading-tight pr-1">
+										<span class="block text-sm font-semibold text-slate-700">{{ $f->user->name }}</span>
+										@if ($f->travel_position)
+											<span class="block text-[10px] font-bold uppercase tracking-wide text-indigo-600 mt-0.5">
+												<i class="fa-solid fa-id-badge mr-0.5"></i>{{ $f->travel_position }}
+											</span>
+										@endif
+									</div>
 								</div>
 							@endforeach
 						</div>

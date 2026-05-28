@@ -16,11 +16,16 @@ return new class extends Migration
       $table->id();
       $table->foreignId('sppd_request_id')->constrained()->cascadeOnDelete();
       $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+      $table->string('cost_category')->default('lainnya');
       $table->string('description')->comment('Uraian biaya, misal: Tiket pesawat, Uang harian');
+      $table->string('airline_name')->nullable();
+      $table->string('ticket_number')->nullable();
       $table->decimal('unit_cost', 15, 2)->default(0);
       $table->unsignedInteger('quantity')->default(1);
       $table->decimal('total', 15, 2)->default(0)->comment('unit_cost * quantity');
+      $table->string('receipt_photo')->nullable();
       $table->timestamps();
+
     });
 
     // Pengeluaran riil (setelah pulang)

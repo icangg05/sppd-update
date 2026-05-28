@@ -19,7 +19,6 @@ class DashboardController extends Controller
     // Stats - match design: Total SPPD, Telaah Masuk, Di Proses, Selesai
     $stats = [
       'total'       => SppdRequest::count(),
-      'draft'       => SppdRequest::where('status', SppdStatus::DRAFT)->count(),
       'in_progress' => SppdRequest::where('status', SppdStatus::IN_PROGRESS)->count(),
       'approved'    => SppdRequest::where('status', SppdStatus::APPROVED)->count(),
       'completed'   => SppdRequest::where('status', SppdStatus::COMPLETED)->count(),
@@ -77,7 +76,7 @@ class DashboardController extends Controller
     $statusDistribution = [
       ['label' => 'Selesai', 'count' => $stats['completed'], 'color' => '#10b981'],
       ['label' => 'Di Proses', 'count' => $stats['in_progress'], 'color' => '#3b82f6'],
-      ['label' => 'Masuk', 'count' => $stats['draft'], 'color' => '#f59e0b'],
+      ['label' => 'Masuk', 'count' => $stats['in_progress'], 'color' => '#f59e0b'],
       ['label' => 'Perbaikan', 'count' => $stats['rejected'], 'color' => '#8b5cf6'],
       ['label' => 'Tidak Diterima', 'count' => 0, 'color' => '#ef4444'],
     ];

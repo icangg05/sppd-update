@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('department_type')->nullable();
             $table->string('applicant_role')->nullable();
-            $table->string('destination')->nullable();
+            $table->json('destination')->nullable();
             $table->json('steps');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

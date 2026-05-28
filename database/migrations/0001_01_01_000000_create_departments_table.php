@@ -12,6 +12,7 @@ return new class extends Migration
       $table->id();
       $table->foreignId('parent_id')->nullable()->constrained('departments')->nullOnDelete();
       $table->string('name');
+      $table->text('letterhead')->nullable();
       $table->string('code')->nullable();
       $table->string('type')->default('opd');
       $table->unsignedTinyInteger('level')->default(0)->comment('0=root, 1=dinas, 2=bidang, 3=seksi');

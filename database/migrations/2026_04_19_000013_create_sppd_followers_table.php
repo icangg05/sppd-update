@@ -12,7 +12,9 @@ return new class extends Migration
       $table->id();
       $table->foreignId('sppd_request_id')->constrained()->cascadeOnDelete();
       $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+      $table->string('sppd_path')->nullable()->comment('Path file SPPD Pengikut PDF');
       $table->text('notes')->nullable();
+      $table->string('travel_position')->nullable()->comment('Jabatan dalam perjalanan (khusus Inspektorat)');
       $table->timestamps();
 
       $table->unique(['sppd_request_id', 'user_id']);

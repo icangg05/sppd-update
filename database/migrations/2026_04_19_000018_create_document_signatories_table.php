@@ -14,8 +14,12 @@ return new class extends Migration
       $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('position_id')->constrained();
       $table->string('name');
+      $table->string('nik')->nullable()->comment('NIK untuk mapping ke e-sign provider');
       $table->string('title')->comment('Jabatan yang tercetak di dokumen');
       $table->string('signature_image')->nullable()->comment('Path gambar tanda tangan basah');
+      $table->string('signature_image_path')->nullable()->comment('Path file gambar tanda tangan digital atau cache tanda tangan');
+      $table->text('signature_image_notes')->nullable()->comment('Catatan tentang gambar tanda tangan');
+      $table->boolean('requires_passphrase')->default(true)->comment('Apakah memerlukan passphrase saat sign');
       $table->boolean('is_active')->default(true);
       $table->timestamps();
     });

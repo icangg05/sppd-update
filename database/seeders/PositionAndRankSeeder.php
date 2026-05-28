@@ -49,6 +49,7 @@ class PositionAndRankSeeder extends Seeder
       'Kepala Puskesmas',
       'Kepala Badan',
       'Inspektur',
+      'Sekretaris Inspektur',
       'Sekretaris Dewan',
       'Staf',
       'Fungsional Umum',

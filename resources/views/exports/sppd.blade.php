@@ -172,7 +172,7 @@
 				@endif
 			</div>
 
-			<div style="float: right; width: 150px; font-size: 7pt; margin-top: 10px;">
+			<div style="float: right; width: {{ $sppd->document_number ? '195' : '150' }}px; font-size: 7pt; margin-top: 10px;">
 				<table style="width: 100%;">
 					<tr>
 						<td style="padding: 0 0; width: 60px;">Lampiran</td>
@@ -225,7 +225,7 @@
 					<td style="border-top: none; border-bottom: none;">b. &nbsp;Jabatan / Instansi</td>
 					<td style="border-top: none; border-bottom: none;">
 						b. <span style="text-transform: uppercase">
-							{{ $user->position->name ?? ($user->roles->first()->name ?? '-') }}</span>
+							{{ $pdfData['is_follower'] && $pdfData['travel_position'] ? $pdfData['travel_position'] : $user->position->name ?? ($user->roles->first()->name ?? '-') }}</span>
 					</td>
 				</tr>
 				<tr>

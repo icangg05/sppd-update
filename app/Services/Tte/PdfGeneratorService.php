@@ -62,12 +62,13 @@ class PdfGeneratorService
 
         // Parse target user from document_type
         $targetUser = $sppd->user;
+        $followerRecord = null;
         if (preg_match('/^sppd_(\d+)$/', $documentType, $matches)) {
             $userId = (int)$matches[1];
             if ($userId !== $sppd->user_id) {
-                $follower = $sppd->followers->first(fn($f) => $f->user_id === $userId);
-                if ($follower) {
-                    $targetUser = $follower->user;
+                $followerRecord = $sppd->followers->first(fn($f) => $f->user_id === $userId);
+                if ($followerRecord) {
+                    $targetUser = $followerRecord->user;
                 } else {
                     $targetUser = \App\Models\User::find($userId) ?? $sppd->user;
                 }
@@ -99,6 +100,8 @@ class PdfGeneratorService
             'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,
+            'is_follower' => !$isMain,
+            'travel_position' => $followerRecord?->travel_position,
         ];
 
         $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));

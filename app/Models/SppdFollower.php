@@ -11,6 +11,7 @@ class SppdFollower extends Model
     'sppd_request_id',
     'user_id',
     'notes',
+    'travel_position',
   ];
 
   public function sppdRequest(): BelongsTo

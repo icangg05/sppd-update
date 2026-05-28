@@ -59,7 +59,7 @@
           </div>
           <div>
             <p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">Telaah Masuk</p>
-            <p class="text-lg font-bold text-slate-800">{{ $stats['draft'] }}</p>
+            <p class="text-lg font-bold text-slate-800">{{ $stats['in_progress'] }}</p>
           </div>
         </div>
         <div class="flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
@@ -183,7 +183,7 @@
         @forelse($recentSppd as $item)
           <a href="{{ route('sppd.show', $item) }}" class="flex flex-col gap-2 rounded border border-transparent p-2.5 transition hover:bg-slate-50 hover:border-slate-100">
             <div class="flex items-start justify-between gap-3">
-              <p class="text-sm font-medium leading-snug text-slate-800">{{ Str::limit($item->purpose, 60) }}</p>
+              <p class="line-clamp-2 lg:line-clamp-1 text-sm font-medium leading-snug text-slate-800">{{ $item->purpose }}</p>
               @php
                 $statusClass = match($item->status->value) {
                   'draft' => 'bg-amber-50 text-amber-700 border-amber-200',

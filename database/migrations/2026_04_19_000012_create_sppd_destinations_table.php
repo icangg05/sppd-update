@@ -11,7 +11,7 @@ return new class extends Migration
     Schema::create('sppd_destinations', function (Blueprint $table) {
       $table->id();
       $table->foreignId('sppd_request_id')->constrained()->cascadeOnDelete();
-      $table->foreignId('province_id')->constrained();
+      $table->foreignId('province_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('regency_id')->nullable()->constrained()->nullOnDelete();
       $table->text('address')->nullable()->comment('Alamat detail tujuan');
       $table->timestamps();

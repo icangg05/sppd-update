@@ -11,6 +11,7 @@ return new class extends Migration
     Schema::create('positions', function (Blueprint $table) {
       $table->id();
       $table->string('name');
+      $table->integer('level')->default(1000)->comment('Urutan jabatan, semakin kecil semakin tinggi');
       $table->timestamps();
     });
   }

@@ -133,7 +133,7 @@ class UserController extends Controller
     $validated = $request->validate([
       'name'          => 'required|string|max:255',
       'username'      => 'required|string|max:255|unique:users,username,' . $user->id,
-      'nik'           => 'required|string|max:20|unique:users,nik,' . $user->id,
+      'nik'           => 'required|string|max:20',
       'email'         => 'required|email|unique:users,email,' . $user->id,
       'password'      => 'nullable|string|min:6',
       'nip'           => 'nullable|string|max:20',
