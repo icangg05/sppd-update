@@ -24,10 +24,10 @@ class DatabaseSeeder extends Seeder
     ]);
 
     // Create default super admin
-    $admin = User::factory()->create([
+    $admin = User::create([
       'name'          => 'Super Admin',
       'username'      => 'super_admin',
-      'email'         => 'admin@sppd.test',
+      'email'         => 'superadmin@gmail.com',
       'password'      => Hash::make('password'),
       'employee_type' => 'pns',
       'is_active'     => true,

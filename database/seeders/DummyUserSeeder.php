@@ -109,7 +109,7 @@ class DummyUserSeeder extends Seeder
       [
         'name'          => 'ILMI FAIZAN, S.T.',
         'username'      => 'admin_kominfo',
-        'email'         => null,
+        'email'         => 'ilmifaizan1112@gmail.com',
         'nip'           => null,
         'employee_type' => EmployeeType::HONORER,
         'department_id' => 36,
