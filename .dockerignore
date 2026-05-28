@@ -1,0 +1,11 @@
+/node_modules
+/vendor
+/storage
+/docker
+
+.git
+.pnpm-store
+
+docker-compose.dev.yml
+docker-compose.prod.yml
+Dockerfile

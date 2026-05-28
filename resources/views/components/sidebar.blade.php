@@ -17,8 +17,8 @@
         {{ strtoupper(substr(auth()->user()->username ?? 'U', 0, 2)) }}
       </div>
       <div class="overflow-hidden leading-tight">
-        <p class="truncate text-sm font-semibold text-slate-200">{{ auth()->user()->username ?? '-' }}</p>
-        <p class="truncate text-xs text-slate-400">{{ auth()->user()->getRoleNames()->first() ?? 'User' }}</p>
+        <p class="truncate text-sm font-semibold text-slate-200" title="{{ auth()->user()->username ?? '-' }}">{{ auth()->user()->username ?? '-' }}</p>
+        <p class="truncate text-xs text-slate-400">{{ auth()->user()->roles->first()?->label ?? 'Undefined role' }}</p>
       </div>
     </div>
   </div>

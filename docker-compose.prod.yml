@@ -27,12 +27,12 @@ services:
   db:
     image: mysql:8.0
     container_name: sppd_update_mysql
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_DATABASE: db_sppd_update
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: icangg05@2002
       MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_PASSWORD: icangg05@2002
     volumes:
       - dbdata:/var/lib/mysql
     networks:
@@ -45,8 +45,6 @@ services:
       - "8084:80"
     environment:
       - PMA_HOST=db
-      - PMA_USER=root
-      - PMA_PASSWORD=root
     depends_on:
       - db
     networks:
@@ -54,7 +52,6 @@ services:
 
 networks:
   app_net:
-
 
 volumes:
   dbdata:

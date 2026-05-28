@@ -25,4 +25,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-.pnpm-store/
+/.pnpm-store

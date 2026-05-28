@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\DepartmentType;
+use App\Helpers\SmartTitle;
 use App\Models\Department;
 use Illuminate\Database\Seeder;
 
@@ -32,13 +33,13 @@ class DepartmentSeeder extends Seeder
     // );
 
     // ── Dinas-Dinas (OPD) ──
-    $json = file_get_contents(storage_path('app/public/table_skpd.json'));
+    $json = file_get_contents(storage_path('app/public/json/table_skpd.json'));
     $data = json_decode($json, true);
 
     // Pass 1: Insert all departments
     foreach ($data as $item) {
       $typeValue = $item['type'] ?? 'opd';
-      $name = ucwords(strtolower($item['name']));
+      $name = SmartTitle::convert($item['name']);
 
       Department::updateOrCreate(
         ['name' => $name],
