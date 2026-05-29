@@ -12,6 +12,8 @@ class BudgetSeeder extends Seeder
   {
     $year = (int) date('Y');
 
+
+    // Kominfo
     $programsKominfo = [
       [
         'program'  => 'Program Penunjang Urusan Pemerintahan Daerah Kabupaten/Kota',
@@ -45,6 +47,8 @@ class BudgetSeeder extends Seeder
       ]);
     }
 
+
+    // Inspektorat
     $progamInspektorat = [
       [
         'program'  => 'Sosialisasi Pencegahan Korupsi (IRVES)',
@@ -67,6 +71,33 @@ class BudgetSeeder extends Seeder
     foreach ($progamInspektorat as $p) {
       Budget::create([
         'department_id' => 48,
+        'account_code'  => $p['kode'],
+        'year'          => $year,
+        'type'          => $p['type'],
+        'source'        => $p['source'],
+        'program'       => $p['program'],
+        'activity'      => $p['kegiatan'],
+        'description'   => $p['uraian'],
+        'total_amount'  => rand(50, 500) * 1_000_000
+      ]);
+    }
+
+
+    // DPRD
+    $programDprd = [
+      [
+        'program'  => 'Program Dukungan Pelaksanaan Tugas dan Fungsi DPRD',
+        'kegiatan' => 'Penyerapan dan Penghimpunan Aspirasi Masyarakat',
+        'kode'     => '5.1.02.04.01.0003',
+        'uraian'   => 'Pelaksanaan Reses',
+        'type'     => 'Perjalanan Dinas Dalam Daerah',
+        'source'   => 'APBD'
+      ],
+    ];
+
+    foreach ($programDprd as $p) {
+      Budget::create([
+        'department_id' => 2,
         'account_code'  => $p['kode'],
         'year'          => $year,
         'type'          => $p['type'],

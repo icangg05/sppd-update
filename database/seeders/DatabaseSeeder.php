@@ -24,14 +24,16 @@ class DatabaseSeeder extends Seeder
     ]);
 
     // Create default super admin
-    $admin = User::create([
-      'name'          => 'Super Admin',
-      'username'      => 'super_admin',
-      'email'         => 'superadmin@gmail.com',
-      'password'      => Hash::make('admin'),
-      'employee_type' => 'lainnya',
-      'is_active'     => true,
-    ]);
+    $admin = User::updateOrCreate(
+      ['username' => 'super_admin'],
+      [
+        'name'          => 'Super Admin',
+        'email'         => 'superadmin@gmail.com',
+        'password'      => Hash::make('admin'),
+        'employee_type' => 'lainnya',
+        'is_active'     => true,
+      ]
+    );
     $admin->assignRole('super_admin');
 
     // Create dummy users with various roles

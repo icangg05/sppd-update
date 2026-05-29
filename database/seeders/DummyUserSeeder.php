@@ -29,6 +29,8 @@ class DummyUserSeeder extends Seeder
     $staf                 = Position::where('name', 'Staf')->first();
     $inspektur            = Position::where('name', 'Inspektur')->first();
     $sekrin               = Position::where('name', 'Sekretaris Inspektur')->first();
+    $sekwan               = Position::where('name', 'Sekretaris Dewan')->first();
+
 
     // ─── Pejabat Seeder ───
     $users = [
@@ -175,21 +177,9 @@ class DummyUserSeeder extends Seeder
         'role'          => 'admin_opd',
       ],
 
-      // Admin DPRD
+      // Ketua DPRD
       [
-        'name'          => 'ILHAM WIJAYA SAPUTRA LAPAI',
-        'username'      => 'admin_dprd',
-        'email'         => null,
-        'nip'           => '198208072009011010',
-        'employee_type' => EmployeeType::PNS,
-        'department_id' => 2,
-        'rank_id'       => $rankIIb?->id,
-        'position_id'   => $staf?->id,
-        'role'          => 'admin_opd',
-      ],
-      // Anggota DPRD
-      [
-        'name'          => 'IRMAWATI, SE.,S.H.,M.H.,M.Kn',
+        'name'          => 'LAODE MUH. INARTO, ST',
         'username'      => 'ketua_dprd',
         'email'         => null,
         'nip'           => null,
@@ -197,10 +187,11 @@ class DummyUserSeeder extends Seeder
         'department_id' => 2,
         'rank_id'       => null,
         'position_id'   => null,
-        'role'          => 'kepala_opd',
-        'dprd_jabatan'  => 'Ketua DPRD',
+        'role'          => 'pimpinan_dprd',
+        'dprd_jabatan'  => 'Ketua DPRD KOTA KENDARI',
         'partai'        => 'F. NASDEM',
       ],
+      // Anggota DPRD
       [
         'name'          => 'H. ISHAK ISMAIL,S.H',
         'username'      => 'anggota_dprd',
@@ -213,6 +204,31 @@ class DummyUserSeeder extends Seeder
         'role'          => 'anggota_dprd',
         'dprd_jabatan'  => 'ANGGOTA KOMISI III',
         'partai'        => 'F. PDI-P',
+      ],
+      // Sekwan
+      [
+        'name'          => 'M. IBRAHIM MUIS, S.Sos',
+        'username'      => 'sekwan',
+        'email'         => null,
+        'nik'           => '7471021011700001',
+        'nip'           => '197011162000031004',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIVb?->id,
+        'position_id'   => $sekwan?->id,
+        'role'          => 'sekwan',
+      ],
+      // Admin DPRD
+      [
+        'name'          => 'ILHAM WIJAYA SAPUTRA LAPAI',
+        'username'      => 'admin_dprd',
+        'email'         => null,
+        'nip'           => '198208072009011010',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIIb?->id,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
       ],
     ];
 

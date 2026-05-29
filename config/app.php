@@ -13,6 +13,8 @@ return [
     |
     */
 
+  'sppd_version' => '4.0',
+
   'name' => env('APP_NAME', 'Laravel'),
 
   /*

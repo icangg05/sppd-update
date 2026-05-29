@@ -81,7 +81,8 @@
 					<div class="mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
 						<p>
 							<span class="inline lg:hidden font-bold text-sky-100">SPPD Elektronik</span>
-							<span class="font-bold text-sky-100">V 4.0</span> • &copy; <?= date('Y') ?> Pemerintah Kota Kendari
+							<span class="font-bold text-sky-100">V {{ config('app.sppd_version') }}</span> • &copy; <?= date('Y') ?>
+							Pemerintah Kota Kendari
 						</p>
 					</div>
 				</div>

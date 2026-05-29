@@ -13,7 +13,8 @@ class SppdWorkflowController extends Controller
   public function index()
   {
     $workflows = SppdWorkflow::orderBy('id')->get();
-    return view('master.workflows.index', compact('workflows'));
+    $roleLabels = Role::pluck('label', 'name')->all();
+    return view('master.workflows.index', compact('workflows', 'roleLabels'));
   }
 
   // public function preview(\App\Services\SppdWorkflowService $workflowService)
