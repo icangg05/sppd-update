@@ -253,6 +253,17 @@ class RoleAndPermissionSeeder extends Seeder
       'report.view',
     ]);
 
+    // Anggota DPRD
+    Role::firstOrCreate(
+      ['name' => 'anggota_dprd'],
+      ['label' => 'Anggota DPRD', 'guard_name' => 'web']
+    )->givePermissionTo([
+      'sppd.create',
+      'sppd.view',
+      'report.create',
+      'report.view',
+    ]);
+
     //  Staf — pengguna biasa
     Role::firstOrCreate(
       ['name' => 'staf'],

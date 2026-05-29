@@ -46,6 +46,32 @@ class SppdController extends Controller
       $query->whereIn('id', $pendingSppdIds);
     }
 
+    // Filter by Jabatan/Eselon
+    if ($request->filled('jabatan')) {
+      $jabatan = $request->jabatan;
+      $query->whereHas('user', function ($q) use ($jabatan) {
+        if ($jabatan === 'kepala_opd') {
+          $q->role('kepala_opd');
+        } elseif ($jabatan === 'eselon_ii') {
+          $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);
+        } elseif ($jabatan === 'eselon_iii') {
+          $q->role(['sekretaris_opd', 'kabid_irban_kabag', 'camat']);
+        } elseif ($jabatan === 'eselon_iv') {
+          $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
+        } elseif ($jabatan === 'staf') {
+          $q->role('staf');
+        } elseif ($jabatan === 'anggota_dprd') {
+          $q->where('employee_type', 'dprd');
+        } elseif ($jabatan === 'staff_dprd') {
+          $q->role('staf')->whereHas('department', function ($d) {
+            $d->where('type', \App\Enums\DepartmentType::DPRD);
+          });
+        } elseif ($jabatan === 'sekwan') {
+          $q->role('sekwan');
+        }
+      });
+    }
+
     // Search
     if ($request->filled('search')) {
       $search = $request->search;
@@ -737,7 +763,10 @@ class SppdController extends Controller
       'is_walikota'    => $approver && $approver->hasRole('walikota'),
       'is_approved'    => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image'       => null,
-      'duration'       => $duration
+      'duration'       => $duration,
+      'letterhead_url' => $sppd->user->isDprdMember() 
+          ? $sppd->user->department->letterhead_second 
+          : $sppd->user->department->letterhead
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('spt')) {
@@ -745,7 +774,12 @@ class SppdController extends Controller
       $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
     }
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt', compact('sppd', 'pdfData'))
+    $isDprd = $sppd->user->department?->type === \App\Enums\DepartmentType::DPRD
+      || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
+
+    $viewName = $isDprd ? 'exports.spt_dprd' : 'exports.spt';
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, compact('sppd', 'pdfData'))
       ->setPaper('f4', 'portrait')
       ->stream('SPT-' . \Illuminate\Support\Str::slug($sppd->document_number ?: $sppd->id) . '.pdf');
   }

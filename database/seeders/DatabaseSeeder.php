@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
       'name'          => 'Super Admin',
       'username'      => 'super_admin',
       'email'         => 'superadmin@gmail.com',
-      'password'      => Hash::make('password'),
-      'employee_type' => 'pns',
+      'password'      => Hash::make('admin'),
+      'employee_type' => 'lainnya',
       'is_active'     => true,
     ]);
     $admin->assignRole('super_admin');

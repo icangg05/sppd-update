@@ -12,15 +12,37 @@
 				<h1 class="text-lg font-bold text-slate-800">Daftar SPPD</h1>
 				<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
 			</div>
-			@can('sppd.create')
-				<x-ui.button href="{{ route('sppd.create') }}"
-					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700">
-					<x-slot name="icon">
-						<i class="fa-solid fa-plus text-xs"></i>
-					</x-slot>
-					Buat SPPD
-				</x-ui.button>
-			@endcan
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<div class="relative shrink-0">
+					<select id="filter-jabatan" onchange="filterByJabatan(this.value)" class="w-full sm:w-48 appearance-none rounded border border-slate-300 bg-white px-3 py-2 pr-8 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+						<option value="">Semua Jabatan</option>
+						@if (auth()->user()->department?->type === \App\Enums\DepartmentType::DPRD || auth()->user()->department?->parent?->type === \App\Enums\DepartmentType::DPRD)
+							<option value="anggota_dprd" {{ request('jabatan') === 'anggota_dprd' ? 'selected' : '' }}>Anggota DPRD</option>
+							<option value="staff_dprd" {{ request('jabatan') === 'staff_dprd' ? 'selected' : '' }}>Staff DPRD</option>
+							<option value="sekwan" {{ request('jabatan') === 'sekwan' ? 'selected' : '' }}>Sekwan</option>
+						@else
+							<option value="kepala_opd" {{ request('jabatan') === 'kepala_opd' ? 'selected' : '' }}>Kepala OPD</option>
+							<option value="eselon_ii" {{ request('jabatan') === 'eselon_ii' ? 'selected' : '' }}>Eselon II</option>
+							<option value="eselon_iii" {{ request('jabatan') === 'eselon_iii' ? 'selected' : '' }}>Eselon III</option>
+							<option value="eselon_iv" {{ request('jabatan') === 'eselon_iv' ? 'selected' : '' }}>Eselon IV</option>
+							<option value="staf" {{ request('jabatan') === 'staf' ? 'selected' : '' }}>Staf</option>
+						@endif
+					</select>
+					<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-500">
+						<i class="fa-solid fa-chevron-down text-xs"></i>
+					</div>
+				</div>
+
+				@can('sppd.create')
+					<x-ui.button href="{{ route('sppd.create') }}"
+						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
+						<x-slot name="icon">
+							<i class="fa-solid fa-plus text-xs"></i>
+						</x-slot>
+						Buat SPPD
+					</x-ui.button>
+				@endcan
+			</div>
 		</div>
 
 		{{-- Bar Filter --}}
@@ -58,7 +80,7 @@
 						</x-slot>
 						Filter
 					</x-ui.button>
-					@if (request()->hasAny(['search', 'status', 'domain']))
+					@if (request()->hasAny(['search', 'status', 'domain', 'jabatan']))
 						<x-ui.button href="{{ route('sppd.index') }}" variant="ghost"
 							class="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-2">Reset</x-ui.button>
 					@endif
@@ -221,4 +243,18 @@
 		</div>
 
 	</div>
+
+	<script>
+		function filterByJabatan(value) {
+			const url = new URL(window.location.href);
+			if (value) {
+				url.searchParams.set('jabatan', value);
+			} else {
+				url.searchParams.delete('jabatan');
+			}
+			// Reset to page 1 on filter change to avoid empty pages
+			url.searchParams.delete('page');
+			window.location.href = url.toString();
+		}
+	</script>
 @endsection

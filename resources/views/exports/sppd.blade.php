@@ -225,7 +225,7 @@
 					<td style="border-top: none; border-bottom: none;">b. &nbsp;Jabatan / Instansi</td>
 					<td style="border-top: none; border-bottom: none;">
 						b. <span style="text-transform: uppercase">
-							{{ $pdfData['is_follower'] && $pdfData['travel_position'] ? $pdfData['travel_position'] : $user->position->name ?? ($user->roles->first()->name ?? '-') }}</span>
+							{{ $user->isDprdMember() ? $user->dprd_jabatan ?? 'ANGGOTA DPRD' : ($pdfData['is_follower'] && $pdfData['travel_position'] ? $pdfData['travel_position'] : $user->position->name ?? ($user->roles->first()->name ?? '-')) }}</span>
 					</td>
 				</tr>
 				<tr>

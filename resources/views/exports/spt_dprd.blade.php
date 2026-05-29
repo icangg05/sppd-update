@@ -74,11 +74,15 @@
 	@endphp
 
 	<div style="text-align: center; margin-bottom: 16px;">
-		<img src="{{ public_path('img/SEKRETARIAT_DPRD2.jpg') }}" style="width: 103%; height: auto;">
+		@if ($pdfData['letterhead_url'])
+			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
+		@else
+			<img src="{{ public_path('img/SEKRETARIAT_DPRD2.jpg') }}" style="width: 103%; height: auto;">
+		@endif
 	</div>
 
 	<div class="title">SURAT PERINTAH TUGAS</div>
-	<div class="subtitle-left">NOMOR :</div>
+	<div class="subtitle-left">NOMOR : {{ $sppd->document_number ?? '' }}</div>
 
 	<div style="margin-top: 15px; line-height: 1.7;">
 		<ol style="padding-left: 1.2rem; margin: 0;">
@@ -105,18 +109,29 @@
 					<tbody>
 						<tr>
 							<td style="text-align: center;">1.</td>
-							<td>IRMAWATI, SE.,S.H.,M.H.,M.Kn</td>
-							<td>WAKIL KETUA II DPRD KOTA KENDARI</td>
+							<td>{{ $sppd->user->name }}</td>
+							<td style="text-transform: uppercase;">
+								{{ $sppd->user->isDprdMember() ? $sppd->user->dprd_jabatan ?? 'ANGGOTA DPRD' : $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-') }}
+							</td>
 							<td></td>
 						</tr>
+						@foreach ($sppd->followers as $index => $follower)
+							<tr>
+								<td style="text-align: center;">{{ $index + 2 }}.</td>
+								<td>{{ $follower->user->name }}</td>
+								<td style="text-transform: uppercase;">
+									{{ $follower->user->isDprdMember() ? $follower->user->dprd_jabatan ?? 'ANGGOTA DPRD' : $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')) }}
+								</td>
+								<td></td>
+							</tr>
+						@endforeach
 					</tbody>
 				</table>
 			</li>
 
 			<li style="margin-bottom: 15px;">
 				Tujuan Perintah Tugas :<br />
-				Melakukan Studi Banding pada Dinas Ketahanan Pangan Kabupaten Konawe Mengenai Optimalisasi Program
-				Pekarangan Pangan Lestari Dalam Mendukung Ketahanan Pangan Keluarga di Kabupaten Konawe.
+				{{ $sppd->purpose }}
 			</li>
 
 			<li style="margin-bottom: 15px;">
@@ -125,12 +140,18 @@
 					<tr>
 						<td style="width: 90px;">Hari/Tanggal</td>
 						<td style="padding: 0 10px;">:</td>
-						<td>Rabu, 20 Mei 2026 s/d Sabtu, 23 Mei 2026.</td>
+						<td>Selama {{ $pdfData['duration'] }} hari dari tanggal
+							{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }} s/d
+							{{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}.</td>
 					</tr>
 					<tr>
 						<td style="width: 90px;">Tempat</td>
 						<td style="padding: 0 10px;">:</td>
-						<td>Dinas Ketahanan Pangan Kabupaten Konawe.</td>
+						<td>
+							@foreach ($sppd->destinations as $dest)
+								{{ $dest->regency->name }}{{ !$loop->last ? ', ' : '' }}
+							@endforeach
+						</td>
 					</tr>
 				</table>
 			</li>
@@ -146,11 +167,28 @@
 
 	<div style="margin-top: 25px;">
 		<div style="float: right; width: 270px; text-align: left;">
-			<div>Kendari, 20 Mei 2026</div>
-			<div style="text-transform: uppercase;">KETUA DPRD KOTA KENDARI</div>
-			<div style="height: 70px;"></div>
+			<div>Kendari,
+				{{ $sppd->spt_date ? $sppd->spt_date->translatedFormat('d F Y') : \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+			</div>
+			<div style="text-transform: uppercase;">{{ $pdfData['approver_role'] ?? 'KETUA DPRD KOTA KENDARI' }}</div>
+			@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+				<div style="margin-top: 11px;">
+					<img src="{{ $pdfData['qr_image'] }}" style="width: 65px;">
+				</div>
+			@else
+				<div style="height: 70px;"></div>
+			@endif
 			<p style="margin-top: 3px; line-height: 1.8;">
-				<span style="font-weight: bold; text-decoration: underline;">LAODE MUH. INARTO, ST</span>
+				<span style="font-weight: bold; text-decoration: underline;">{{ $pdfData['approver_name'] }}</span>
+				@if ($pdfData['approver_nip'])
+					<br>
+					<span>
+						{{ $pdfData['approver_rank'] ?? '-' }}, Gol. {{ $pdfData['approver_group'] ?? '-' }} <br>
+					</span>
+					<span>
+						NIP. {{ $pdfData['approver_nip'] }}
+					</span>
+				@endif
 			</p>
 		</div>
 	</div>

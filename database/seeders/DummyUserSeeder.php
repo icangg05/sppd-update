@@ -15,6 +15,7 @@ class DummyUserSeeder extends Seeder
   {
     $password = Hash::make('admin');
 
+    $rankIIb  = Rank::where('group', 'II/b')->first();
     $rankIId  = Rank::where('group', 'II/d')->first();
     $rankIIIa = Rank::where('group', 'III/a')->first();
     $rankIVa  = Rank::where('group', 'IV/a')->first();
@@ -172,6 +173,46 @@ class DummyUserSeeder extends Seeder
         'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
         'role'          => 'admin_opd',
+      ],
+
+      // Admin DPRD
+      [
+        'name'          => 'ILHAM WIJAYA SAPUTRA LAPAI',
+        'username'      => 'admin_dprd',
+        'email'         => null,
+        'nip'           => '198208072009011010',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIIb?->id,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
+      ],
+      // Anggota DPRD
+      [
+        'name'          => 'IRMAWATI, SE.,S.H.,M.H.,M.Kn',
+        'username'      => 'ketua_dprd',
+        'email'         => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 2,
+        'rank_id'       => null,
+        'position_id'   => null,
+        'role'          => 'kepala_opd',
+        'dprd_jabatan'  => 'Ketua DPRD',
+        'partai'        => 'F. NASDEM',
+      ],
+      [
+        'name'          => 'H. ISHAK ISMAIL,S.H',
+        'username'      => 'anggota_dprd',
+        'email'         => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 2,
+        'rank_id'       => null,
+        'position_id'   => null,
+        'role'          => 'anggota_dprd',
+        'dprd_jabatan'  => 'ANGGOTA KOMISI III',
+        'partai'        => 'F. PDI-P',
       ],
     ];
 

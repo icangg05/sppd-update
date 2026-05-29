@@ -30,6 +30,8 @@ class User extends Authenticatable
     'department_id',
     'rank_id',
     'position_id',
+    'dprd_jabatan',
+    'partai',
     'photo',
     'is_active',
   ];
@@ -108,5 +110,10 @@ class User extends Authenticatable
   public function digitalSignatures(): HasMany
   {
     return $this->hasMany(SppdDigitalSignature::class, 'signer_id');
+  }
+
+  public function isDprdMember(): bool
+  {
+    return $this->employee_type === EmployeeType::DPRD;
   }
 }

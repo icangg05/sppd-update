@@ -35,48 +35,49 @@
 
     <div class="space-y-1">
       <button type="button"
-        class="sidebar-toggle-btn flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('sppd.*') ? 'text-slate-100' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}"
+        class="sidebar-toggle-btn flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors text-slate-100"
         data-target="sppd-menu">
         <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-file-lines fa-fw"></i></span>
         <span class="flex-1 text-left">List Telaah</span>
         <i
-          class="fa-solid fa-chevron-down text-xs transition-transform duration-200 {{ request()->routeIs('sppd.*') ? 'rotate-180' : '' }}"></i>
+          class="fa-solid fa-chevron-down text-xs transition-transform duration-200 rotate-180"></i>
       </button>
 
-      <div id="sppd-menu" class="space-y-1 py-1 pl-8 pr-1 {{ request()->routeIs('sppd.*') ? '' : 'hidden' }}">
+      <div id="sppd-menu" class="space-y-1 py-1 pl-8 pr-1">
         <a href="{{ route('sppd.index') }}"
-          class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.index') && !request('filter') ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+          class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.index') && request('filter') !== 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
           <span class="size-1 rounded-sm bg-current"></span>
-          Kepala OPD
+          Daftar SPPD
         </a>
-        <a href="{{ route('sppd.index', ['filter' => 'staff']) }}"
-          class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'staff' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+
+        @can('sppd.approve')
+          <a href="{{ route('sppd.index', ['filter' => 'approval']) }}"
+            class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+            <span class="size-1 rounded-sm bg-current"></span>
+            Persetujuan
+          </a>
+        @endcan
+
+        <a href="#"
+          class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors text-slate-400 hover:text-slate-100 hover:bg-slate-800/20">
           <span class="size-1 rounded-sm bg-current"></span>
-          Eselon III, IV & Staf
+          Kalender
         </a>
       </div>
     </div>
 
-    @can('sppd.approve')
-      <a href="{{ route('sppd.index', ['filter' => 'approval']) }}"
-        class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request('filter') === 'approval' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
-        <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-circle-check fa-fw"></i></span>
-        <span>Persetujuan</span>
-      </a>
-    @endcan
-
-    <a href="#"
-      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100">
-      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-calendar-days fa-fw"></i></span>
-      <span>Kalender</span>
-    </a>
-
     <div class="px-3 py-1.5 pt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Pengaturan</div>
 
     <a href="{{ route('master.users.index') }}"
-      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
       <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-users fa-fw"></i></span>
       <span>Pegawai</span>
+    </a>
+
+    <a href="{{ route('master.users.index', ['type' => 'dprd']) }}"
+      class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+      <span class="flex w-5 justify-center text-base"><i class="fa-solid fa-user-tie fa-fw"></i></span>
+      <span>Anggota DPRD</span>
     </a>
 
     <a href="{{ route('master.budgets.index') }}"

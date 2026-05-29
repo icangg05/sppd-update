@@ -15,6 +15,7 @@ class Department extends Model
     'name',
     'code',
     'letterhead',
+    'letterhead_second',
     'type',
     'level',
   ];

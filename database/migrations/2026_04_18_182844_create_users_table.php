@@ -25,6 +25,8 @@ return new class extends Migration
       $table->string('employee_type')->default('pns');
       $table->foreignId('rank_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('position_id')->nullable()->constrained()->nullOnDelete();
+      $table->string('dprd_jabatan')->nullable();
+      $table->string('partai')->nullable();
       $table->string('photo')->nullable();
       $table->boolean('is_active')->default(true);
       $table->rememberToken();

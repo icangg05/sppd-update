@@ -20,6 +20,20 @@ class UserController extends Controller
       $query->where('department_id', auth()->user()->department_id);
     }
 
+    if ($request->type === 'dprd') {
+      $query->where(function ($q) {
+          $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
+            ->orWhere('employee_type', 'dprd')
+            ->orWhereNotNull('dprd_jabatan');
+      });
+    } else {
+      $query->where(function ($q) {
+          $q->whereDoesntHave('roles', fn($r) => $r->where('name', 'anggota_dprd'))
+            ->where('employee_type', '!=', 'dprd')
+            ->whereNull('dprd_jabatan');
+      });
+    }
+
     if ($request->filled('search')) {
       $s = $request->search;
       $query->where(function ($q) use ($s) {

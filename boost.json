@@ -1,0 +1,19 @@
+{
+    "agents": [
+        "gemini"
+    ],
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "packages": [
+        "spatie/laravel-permission",
+        "spatie/laravel-activitylog"
+    ],
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "tailwindcss-development",
+        "laravel-permission-development"
+    ]
+}
