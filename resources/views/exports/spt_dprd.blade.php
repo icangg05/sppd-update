@@ -75,11 +75,7 @@
 	@endphp
 
 	<div style="text-align: center; margin-bottom: 16px;">
-		@if ($pdfData['letterhead_url'])
-			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
-		@else
-			<img src="{{ public_path('img/SEKRETARIAT_DPRD2.jpg') }}" style="width: 103%; height: auto;">
-		@endif
+		<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
 	</div>
 
 	<div class="title">SURAT PERINTAH TUGAS</div>

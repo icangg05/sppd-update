@@ -18,12 +18,14 @@ class DummyUserSeeder extends Seeder
     $rankIIb  = Rank::where('group', 'II/b')->first();
     $rankIId  = Rank::where('group', 'II/d')->first();
     $rankIIIa = Rank::where('group', 'III/a')->first();
+    $rankIIId = Rank::where('group', 'III/d')->first();
     $rankIVa  = Rank::where('group', 'IV/a')->first();
     $rankIVb  = Rank::where('group', 'IV/b')->first();
     $rankIVc  = Rank::where('group', 'IV/c')->first();
     $rankIVd  = Rank::where('group', 'IV/d')->first();
 
     $kadin                = Position::where('name', 'Kepala Dinas')->first();
+    $kabag                = Position::where('name', 'Kepala Bagian')->first();
     $sekdin               = Position::where('name', 'Sekretaris Dinas')->first();
     $bendaharaPengeluaran = Position::where('name', 'Bendahara Pengeluaran')->first();
     $staf                 = Position::where('name', 'Staf')->first();
@@ -218,15 +220,65 @@ class DummyUserSeeder extends Seeder
         'position_id'   => $sekwan?->id,
         'role'          => 'sekwan',
       ],
-      // Admin DPRD
+      // Kabag Umum DPRD
+      [
+        'name'          => 'DASRIL, S.STP',
+        'username'      => 'kabag_dprd',
+        'email'         => null,
+        'nik'           => '7471050706830005',
+        'nip'           => '198306072003121002',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIVa?->id,
+        'position_id'   => $kabag?->id,
+        'role'          => 'kabid_irban_kabag',
+      ],
+      // Kabag Keuangan DPRD
+      [
+        'name'          => "Drs. ASMAN SA'ABY",
+        'username'      => 'kabag2_dprd',
+        'email'         => null,
+        'nik'           => '7471060503020011',
+        'nip'           => '196803011988101001',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIVa?->id,
+        'position_id'   => $kabag?->id,
+        'role'          => 'kabid_irban_kabag',
+      ],
+      // Bendahara DPRD
+      [
+        'name'          => 'KARTIKA PRATIWI, SE',
+        'username'      => 'bendahara_dprd',
+        'email'         => null,
+        'nip'           => '198605122011012020',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIIId?->id,
+        'position_id'   => $bendaharaPengeluaran?->id,
+        'role'          => 'staf',
+      ],
+      // Staff DPRD
       [
         'name'          => 'ILHAM WIJAYA SAPUTRA LAPAI',
-        'username'      => 'admin_dprd',
+        'username'      => 'staf_dprd',
         'email'         => null,
         'nip'           => '198208072009011010',
         'employee_type' => EmployeeType::PNS,
         'department_id' => 2,
         'rank_id'       => $rankIIb?->id,
+        'position_id'   => $staf?->id,
+        'role'          => 'staf',
+      ],
+      [
+        'name'          => 'DIVANTI PRISILYA PUNARA, S.Ak',
+        'username'      => 'admin_dprd',
+        'email'         => null,
+        'nik'           => '7471016003990001',
+        'nip'           => '200003282025212006',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 2,
+        'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
         'role'          => 'admin_opd',
       ],

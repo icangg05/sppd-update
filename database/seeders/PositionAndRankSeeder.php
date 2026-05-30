@@ -39,6 +39,7 @@ class PositionAndRankSeeder extends Seeder
     $positions = [
       'Kepala Dinas',
       'Sekretaris Dinas',
+      'Kepala Bagian',
       'Kepala Bidang',
       'Kepala Seksi',
       'Kepala Sub Bagian',

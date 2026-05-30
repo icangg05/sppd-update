@@ -71,6 +71,45 @@ class Department extends Model
   }
 
   /**
+   * Get all descendant department IDs (children, grandchildren, etc.)
+   *
+   * @return \Illuminate\Support\Collection<int, int>
+   */
+  public function getDescendantIds(): \Illuminate\Support\Collection
+  {
+    $ids = collect();
+    foreach ($this->children as $child) {
+      $ids->push($child->id);
+      $ids = $ids->merge($child->getDescendantIds());
+    }
+
+    return $ids;
+  }
+
+  /**
+   * Get this department's ID plus all descendant IDs.
+   *
+   * @return \Illuminate\Support\Collection<int, int>
+   */
+  public function getAllRelatedIds(): \Illuminate\Support\Collection
+  {
+    return collect([$this->id])->merge($this->getDescendantIds());
+  }
+
+  /**
+   * Get the root OPD for this department (walk up to topmost parent).
+   */
+  public function getRootDepartment(): self
+  {
+    $dept = $this;
+    while ($dept->parent_id !== null) {
+      $dept = $dept->parent;
+    }
+
+    return $dept;
+  }
+
+  /**
    * Get the letterhead for this department.
    * If not set, recursively search up the hierarchy to find a parent's letterhead.
    */

@@ -49,7 +49,7 @@
 						</div>
 
 						<div class="space-y-1">
-							<x-form.input type="email" name="email" label="Email Resmi" :value="old('email')" required
+							<x-form.input type="email" name="email" label="Email Resmi" :value="old('email')"
 								class="focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
@@ -65,7 +65,6 @@
 
 						<div class="space-y-1">
 							<x-form.input name="nik" label="NIK (Nomor Induk Kependudukan)" :value="old('nik')" placeholder="16 digit angka"
-								required
 								class="font-mono focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
@@ -95,7 +94,7 @@
 								<option value="">— Pilih Instansi —</option>
 								@foreach ($departments as $d)
 									<option value="{{ $d->id }}"
-										{{ old('department_id', auth()->user()->hasRole('super_admin') ? '' : auth()->user()->department_id) == $d->id ? 'selected' : '' }}>
+										{{ old('department_id') == $d->id ? 'selected' : '' }}>
 										{{ $d->display_name }}
 									</option>
 								@endforeach

@@ -16,21 +16,29 @@ class UserController extends Controller
     $query = User::with(['department', 'rank', 'position', 'roles']);
 
     // Filter berdasarkan instansi user jika bukan super admin
+    // Termasuk semua pegawai di sub-department (bidang/subbidang)
     if (!auth()->user()->hasRole('super_admin')) {
-      $query->where('department_id', auth()->user()->department_id);
+      $dept = auth()->user()->department;
+      if ($dept) {
+        $rootDept = $dept->getRootDepartment();
+        $relatedIds = $rootDept->getAllRelatedIds();
+        $query->whereIn('department_id', $relatedIds);
+      } else {
+        $query->where('department_id', auth()->user()->department_id);
+      }
     }
 
     if ($request->type === 'dprd') {
       $query->where(function ($q) {
-          $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
-            ->orWhere('employee_type', 'dprd')
-            ->orWhereNotNull('dprd_jabatan');
+        $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
+          ->orWhere('employee_type', 'dprd')
+          ->orWhereNotNull('dprd_jabatan');
       });
     } else {
       $query->where(function ($q) {
-          $q->whereDoesntHave('roles', fn($r) => $r->where('name', 'anggota_dprd'))
-            ->where('employee_type', '!=', 'dprd')
-            ->whereNull('dprd_jabatan');
+        $q->whereDoesntHave('roles', fn($r) => $r->where('name', 'anggota_dprd'))
+          ->where('employee_type', '!=', 'dprd')
+          ->whereNull('dprd_jabatan');
       });
     }
 
@@ -73,8 +81,10 @@ class UserController extends Controller
     if ($user->hasRole('super_admin')) {
       $roots = Department::whereNull('parent_id')->orderBy('name')->get();
     } else {
-      // Admin OPD hanya bisa melihat departemennya sendiri dan semua di bawahnya
-      $roots = Department::where('id', $user->department_id)->get();
+      // Admin OPD bisa melihat OPD induknya dan semua sub-department di bawahnya
+      $dept = $user->department;
+      $rootDept = $dept ? $dept->getRootDepartment() : $dept;
+      $roots = $rootDept ? Department::where('id', $rootDept->id)->get() : collect();
     }
 
     $list = [];
@@ -100,8 +110,8 @@ class UserController extends Controller
     $validated = $request->validate([
       'name'          => 'required|string|max:255',
       'username'      => 'required|string|max:255|unique:users,username',
-      'nik'           => 'required|string|max:20|unique:users,nik',
-      'email'         => 'required|email|unique:users,email',
+      'nik'           => 'nullable|string|max:20|unique:users,nik',
+      'email'         => 'nullable|email|unique:users,email',
       'password'      => 'required|string|min:6',
       'nip'           => 'nullable|string|max:20',
       'phone'         => 'nullable|string|max:20',
@@ -113,7 +123,17 @@ class UserController extends Controller
     ]);
 
     if (!auth()->user()->hasRole('super_admin')) {
-      $validated['department_id'] = auth()->user()->department_id;
+      // Pastikan department yang dipilih berada dalam hierarki OPD admin
+      $dept = auth()->user()->department;
+      if ($dept && !empty($validated['department_id'])) {
+        $rootDept = $dept->getRootDepartment();
+        $allowedIds = $rootDept->getAllRelatedIds();
+        if (!$allowedIds->contains($validated['department_id'])) {
+          $validated['department_id'] = auth()->user()->department_id;
+        }
+      } else {
+        $validated['department_id'] = auth()->user()->department_id;
+      }
     }
 
     $user = User::create([
@@ -147,8 +167,8 @@ class UserController extends Controller
     $validated = $request->validate([
       'name'          => 'required|string|max:255',
       'username'      => 'required|string|max:255|unique:users,username,' . $user->id,
-      'nik'           => 'required|string|max:20',
-      'email'         => 'required|email|unique:users,email,' . $user->id,
+      'nik'           => 'nullable|string|max:20',
+      'email'         => 'nullable',
       'password'      => 'nullable|string|min:6',
       'nip'           => 'nullable|string|max:20',
       'phone'         => 'nullable|string|max:20',
@@ -160,7 +180,17 @@ class UserController extends Controller
     ]);
 
     if (!auth()->user()->hasRole('super_admin')) {
-      $validated['department_id'] = auth()->user()->department_id;
+      // Pastikan department yang dipilih berada dalam hierarki OPD admin
+      $dept = auth()->user()->department;
+      if ($dept && !empty($validated['department_id'])) {
+        $rootDept = $dept->getRootDepartment();
+        $allowedIds = $rootDept->getAllRelatedIds();
+        if (!$allowedIds->contains($validated['department_id'])) {
+          $validated['department_id'] = auth()->user()->department_id;
+        }
+      } else {
+        $validated['department_id'] = auth()->user()->department_id;
+      }
     }
 
     $data = $validated;

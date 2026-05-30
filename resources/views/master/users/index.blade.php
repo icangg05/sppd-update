@@ -111,7 +111,10 @@
 									<td class="py-3 px-4 text-sm text-slate-600">{{ $user->department?->name ?? '-' }}</td>
 								@endif
 
-								<td class="py-3 px-4 text-sm text-slate-600">{{ $user->position?->name ?? '-' }}</td>
+								<td class="py-3 px-4">
+									<div class="text-sm text-slate-600">{{ $user->position?->name ?? '-' }}</div>
+									<div class="text-[11px] text-cyan-600 mt-0.5 font-medium">{{ $user->department?->name ?? '-' }}</div>
+								</td>
 
 								<td class="py-3 px-4">
 									@if ($user->rank)

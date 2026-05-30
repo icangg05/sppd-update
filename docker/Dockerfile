@@ -25,6 +25,8 @@ FROM php:8.4-fpm AS php_dev
 RUN apt-get update && apt-get install -y \
   libpng-dev \
   libjpeg-dev \
+  libwebp-dev \
+  libfreetype6-dev \
   libonig-dev \
   libxml2-dev \
   libicu-dev \
@@ -34,6 +36,7 @@ RUN apt-get update && apt-get install -y \
   curl
 
 RUN docker-php-ext-configure intl
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 
 COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
@@ -61,6 +64,8 @@ FROM php:8.4-fpm AS production
 RUN apt-get update && apt-get install -y \
   libpng-dev \
   libjpeg-dev \
+  libwebp-dev \
+  libfreetype6-dev \
   libonig-dev \
   libxml2-dev \
   libicu-dev \
@@ -70,6 +75,7 @@ RUN apt-get update && apt-get install -y \
   curl
 
 RUN docker-php-ext-configure intl
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 
 COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer

@@ -39,14 +39,23 @@ class DepartmentController extends Controller
       $query->where('type', $request->type);
     }
 
-    // Untuk Admin OPD, kita tampilkan secara hierarki tanpa pagination agar tree-nya terlihat
-    if (!$isSuperAdmin) {
-        $root = Department::find($user->department_id);
-        $list = [];
+    // Tampilkan secara hierarki tanpa pagination agar tree-nya terlihat
+    $list = [];
+    if ($isSuperAdmin) {
+        // Jika ada pencarian, kita tampilkan hasil pencarian secara flat
+        if ($request->filled('search') || $request->filled('type')) {
+            $departments = $query->orderBy('name')->get();
+        } else {
+            $roots = (clone $query)->whereNull('parent_id')->orderBy('name')->get();
+            foreach ($roots as $root) {
+                $this->flattenDepartment($root, 0, $list);
+            }
+            $departments = $list;
+        }
+    } else {
+        $root = (clone $query)->find($user->department_id);
         $this->flattenDepartment($root, 0, $list);
         $departments = $list;
-    } else {
-        $departments = $query->orderBy('name')->paginate(20)->withQueryString();
     }
     
     $types = DepartmentType::cases();
@@ -97,6 +106,7 @@ class DepartmentController extends Controller
     if ($excludeId && $dept->id == $excludeId) return;
 
     $dept->display_name = str_repeat('— ', $level) . $dept->name;
+    $dept->tree_level = $level;
     $list[] = $dept;
 
     foreach ($dept->children()->orderBy('name')->get() as $child) {

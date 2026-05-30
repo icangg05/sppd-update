@@ -101,9 +101,15 @@ class SppdController extends Controller
   {
     $query = User::where('is_active', true);
 
-    // Filter: Admin OPD hanya bisa melihat pegawai di instansinya sendiri
+    // Filter: Admin OPD bisa melihat pegawai di instansinya + sub-department (bidang/subbidang)
     if (!Auth::user()->hasRole('super_admin')) {
-      $query->where('department_id', Auth::user()->department_id);
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $rootDept = $dept->getRootDepartment();
+        $query->whereIn('department_id', $rootDept->getAllRelatedIds());
+      } else {
+        $query->where('department_id', Auth::user()->department_id);
+      }
     }
 
     $users = $query->orderBy('name')->get();
@@ -120,8 +126,17 @@ class SppdController extends Controller
     $pelaksana = User::with('department')->findOrFail($request->user_id);
 
     // Keamanan tambahan: Pastikan Admin OPD tidak menembak user_id dari OPD lain lewat URL
-    if (!Auth::user()->hasRole('super_admin') && $pelaksana->department_id !== Auth::user()->department_id) {
-      return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
+    if (!Auth::user()->hasRole('super_admin')) {
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $rootDept = $dept->getRootDepartment();
+        $allowedIds = $rootDept->getAllRelatedIds();
+        if (!$allowedIds->contains($pelaksana->department_id)) {
+          return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
+        }
+      } elseif ($pelaksana->department_id !== Auth::user()->department_id) {
+        return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
+      }
     }
 
     $domain = $request->domain;
@@ -160,19 +175,31 @@ class SppdController extends Controller
       }
     }
 
-    // Filter Anggaran: Hanya yang milik instansi user login
+    // Filter Anggaran: Milik instansi OPD induk (root) user login
     $budgetQuery = Budget::with('department');
     if (!Auth::user()->hasRole('super_admin')) {
-      $budgetQuery->where('department_id', Auth::user()->department_id);
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $rootDept = $dept->getRootDepartment();
+        $budgetQuery->whereIn('department_id', $rootDept->getAllRelatedIds());
+      } else {
+        $budgetQuery->where('department_id', Auth::user()->department_id);
+      }
     }
     $budgets = $budgetQuery->get();
 
     $categories = SppdCategory::all();
 
-    // Filter Pengikut: Hanya yang satu instansi
+    // Filter Pengikut: Satu OPD induk (termasuk sub-department)
     $userQuery = User::where('is_active', true);
     if (!Auth::user()->hasRole('super_admin')) {
-      $userQuery->where('department_id', Auth::user()->department_id);
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $rootDept = $dept->getRootDepartment();
+        $userQuery->whereIn('department_id', $rootDept->getAllRelatedIds());
+      } else {
+        $userQuery->where('department_id', Auth::user()->department_id);
+      }
     }
     $users = $userQuery->orderBy('name')->get();
 

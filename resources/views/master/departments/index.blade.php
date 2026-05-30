@@ -109,13 +109,12 @@
                 <td class="py-2.5 px-4">
                   <div class="flex items-center">
                     {{-- Indentasi Pohon Struktur Non-Superadmin --}}
-                    @if(!$isSuperAdmin)
-                      @for($j = 0; $j < $dept->level - 1; $j++)
+                    {{-- Indentasi Pohon Struktur --}}
+                    @if(isset($dept->tree_level) && $dept->tree_level > 0)
+                      @for($j = 0; $j < $dept->tree_level; $j++)
                         <span class="w-4 h-px bg-slate-300 inline-block mr-1.5 last:bg-slate-400"></span>
                       @endfor
-                      @if($dept->level > 1)
-                        <i class="fa-solid fa-angles-right text-[10px] text-slate-300 mr-2"></i>
-                      @endif
+                      <i class="fa-solid fa-angles-right text-[10px] text-slate-300 mr-2"></i>
                     @endif
                     <span class="{{ $isOwnDept ? 'text-cyan-700 font-bold' : 'text-slate-900' }}">
                       {{ $dept->name }}
@@ -169,7 +168,7 @@
                     </a>
 
                     {{-- Tombol Hapus Form kondisional --}}
-                    @if($isSuperAdmin || $dept->parent_id !== null)
+                    @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
                       <form action="{{ route('master.departments.destroy', $dept->id) }}" method="POST" class="inline m-0"
                         onsubmit="return confirm('Yakin ingin menghapus data unit kerja ini?')">
                         @csrf @method('DELETE')
