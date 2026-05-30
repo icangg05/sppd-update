@@ -36,7 +36,13 @@
 						</td>
 						<td class="text-sm">
 							<span class="block text-slate-700">Tipe Instansi: {{ $w->department_type?->label() ?? 'Semua' }}</span>
-							<span class="block text-slate-500">Jabatan Pemohon: {{ $w->applicant_role ?? 'Semua' }}</span>
+							<span class="block text-slate-500">Jabatan Pemohon: 
+								@if (is_array($w->applicant_role) && count($w->applicant_role) > 0)
+									{{ implode(', ', $w->applicant_role) }}
+								@else
+									Semua
+								@endif
+							</span>
 						</td>
 						<td>
 							@if(is_array($w->destination) && count($w->destination) > 0)

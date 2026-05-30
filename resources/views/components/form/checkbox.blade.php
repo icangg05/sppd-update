@@ -11,7 +11,7 @@
 ])
 
 @php
-$id = $id ?? $name;
+$id = $id ?? (str_contains($name, '[') ? str_replace(['[', ']'], '', $name) . '_' . str_replace([' ', '/'], '_', $value) : $name);
 @endphp
 
 <div class="{{ $wrapperClass }}">

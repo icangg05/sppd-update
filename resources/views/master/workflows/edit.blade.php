@@ -36,48 +36,48 @@
       </div>
 
       <div class="p-4 space-y-3">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+        <div class="grid grid-cols-1 gap-x-4 gap-y-3">
 
           {{-- Nama Workflow --}}
-          <div class="md:col-span-2 space-y-0.5">
+          <div class="space-y-0.5">
             <x-form.input name="name" label="Nama Skema Workflow" :value="old('name', $workflow->name)" placeholder="Misal: Alur Staf Reguler Luar Daerah" required class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
           </div>
 
-          {{-- Filter Tipe Instansi --}}
-          <div class="space-y-0.5">
-            <x-form.select name="department_type" label="Berlaku Untuk Tipe Instansi (Opsional)" class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500">
-              <option value="">-- Semua Tipe Instansi --</option>
+          {{-- Filter Tipe Instansi (multi-checkbox) --}}
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Tipe Instansi (Opsional)</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
               @foreach($departmentTypes as $type)
-                <option value="{{ $type->value }}" {{ old('department_type', $workflow->department_type?->value) === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                <x-form.checkbox name="department_type[]" :id="'dept_' . $type->value" :value="$type->value" :checked="is_array(old('department_type', $workflow->department_type)) && in_array($type->value, old('department_type', $workflow->department_type))" label="{{ $type->label() }}" wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
-            </x-form.select>
-            <p class="text-[10px] text-slate-400 font-medium">Kosongkan jika aturan ini bersifat universal bagi semua OPD.</p>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu tipe instansi. Kosongkan jika berlaku untuk semua OPD.</p>
           </div>
 
-          {{-- Filter Peran Pemohon --}}
-          <div class="space-y-0.5">
-            <x-form.select name="applicant_role" label="Berlaku Untuk Peran Pemohon (Opsional)" class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500">
-              <option value="">-- Semua Role --</option>
+          {{-- Filter Peran Pemohon (multi-checkbox dengan label) --}}
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Peran Pemohon (Opsional)</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
               @foreach($roles as $role)
-                <option value="{{ $role->name }}" {{ old('applicant_role', $workflow->applicant_role) === $role->name ? 'selected' : '' }}>{{ $role->name }}</option>
+                <x-form.checkbox name="applicant_role[]" :id="'role_' . $role->name" :value="$role->name" :checked="is_array(old('applicant_role', $workflow->applicant_role)) && in_array($role->name, old('applicant_role', $workflow->applicant_role))" label="{{ $role->label ?? $role->name }}" wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
-            </x-form.select>
-            <p class="text-[10px] text-slate-400 font-medium">Kosongkan jika berlaku untuk semua tingkat golongan pemohon.</p>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu peran pemohon. Kosongkan jika berlaku untuk semua tingkat peran.</p>
           </div>
 
           {{-- Pilihan Ruang Lingkup Wilayah Tujuan --}}
-          <div class="md:col-span-2 space-y-1.5">
+          <div class="space-y-1.5">
             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Cakupan Wilayah Tujuan (Opsional)</label>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
               @foreach($domains as $domain)
-                <x-form.checkbox name="destination[]" :value="$domain->value" :checked="is_array(old('destination', $workflow->destination)) && in_array($domain->value, old('destination', $workflow->destination))" label="{{ $domain->label() }}" wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
+                <x-form.checkbox name="destination[]" :id="'destination_' . $domain->value" :value="$domain->value" :checked="is_array(old('destination', $workflow->destination)) && in_array($domain->value, old('destination', $workflow->destination))" label="{{ $domain->label() }}" wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
             <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu cakupan wilayah. Jika dikosongkan, sistem menganggap sah untuk semua destinasi.</p>
           </div>
 
           {{-- Status Keaktifan Aturan --}}
-          <div class="md:col-span-2 pt-1">
+          <div class="pt-1">
             <x-form.checkbox name="is_active" label="Aktifkan Aturan Perubahan Workflow Langsung" :checked="old('is_active', $workflow->is_active)" wrapper-class="flex items-center gap-2 font-bold text-xs text-slate-800 cursor-pointer" />
           </div>
         </div>
@@ -91,7 +91,7 @@
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
             <i class="fa-solid fa-diagram-next text-cyan-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
           </h3>
-          <p class="text-[10px] text-slate-400 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir.</p>
+          <p class="text-[10px] text-slate-400 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. <span class="text-cyan-600 font-semibold"><i class="fa-solid fa-grip-vertical mr-0.5"></i>Drag baris untuk mengubah urutan.</span></p>
         </div>
 
         <button type="button" id="add-step-btn"
@@ -129,14 +129,18 @@
 
 {{-- Template Item Alur Dinamis --}}
 <template id="step-template">
-  <div class="step-item flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded transition-all duration-150 animate-fade-in">
+  <div class="step-item flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded transition-all duration-150 cursor-grab active:cursor-grabbing"
+       draggable="true">
+    <div class="drag-handle flex flex-col gap-0.5 px-1 text-slate-300 hover:text-slate-500 shrink-0 cursor-grab active:cursor-grabbing" title="Drag untuk ubah urutan">
+      <i class="fa-solid fa-grip-vertical text-sm"></i>
+    </div>
     <div class="step-number w-6 h-6 flex items-center justify-center bg-slate-200 border border-slate-300 text-slate-700 font-black rounded text-[11px] shrink-0 shadow-inner">1</div>
 
     <div class="flex-1">
       <select name="steps[]" class="block w-full rounded border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
         <option value="">-- Pilih Role Approver --</option>
         @foreach($roles as $role)
-          <option value="{{ $role->name }}">{{ $role->name }}</option>
+          <option value="{{ $role->name }}">{{ $role->label ?? $role->name }}</option>
         @endforeach
       </select>
     </div>
@@ -147,7 +151,7 @@
   </div>
 </template>
 
-{{-- Script Pengendali Operasi Baris --}}
+{{-- Script Pengendali Operasi Baris dengan Drag & Drop --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('steps-container');
@@ -183,8 +187,63 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
+    // Drag & drop events
+    initDragDrop(stepEl);
+
     container.appendChild(stepEl);
     updateNumbers();
+  }
+
+  function initDragDrop(el) {
+    el.addEventListener('dragstart', onDragStart);
+    el.addEventListener('dragend', onDragEnd);
+    el.addEventListener('dragover', onDragOver);
+    el.addEventListener('drop', onDrop);
+    el.addEventListener('dragleave', onDragLeave);
+  }
+
+  let dragSrc = null;
+
+  function onDragStart(e) {
+    dragSrc = this;
+    this.classList.add('opacity-50', 'ring-2', 'ring-cyan-400');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function onDragEnd(e) {
+    this.classList.remove('opacity-50', 'ring-2', 'ring-cyan-400');
+    document.querySelectorAll('.step-item').forEach(el => el.classList.remove('border-cyan-400', 'border-dashed', 'bg-cyan-50'));
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (this !== dragSrc) {
+      this.classList.add('border-cyan-400', 'border-dashed', 'bg-cyan-50');
+    }
+    return false;
+  }
+
+  function onDragLeave(e) {
+    this.classList.remove('border-cyan-400', 'border-dashed', 'bg-cyan-50');
+  }
+
+  function onDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (dragSrc !== this) {
+      const allItems = [...container.querySelectorAll('.step-item')];
+      const srcIdx = allItems.indexOf(dragSrc);
+      const tgtIdx = allItems.indexOf(this);
+      if (srcIdx < tgtIdx) {
+        container.insertBefore(dragSrc, this.nextSibling);
+      } else {
+        container.insertBefore(dragSrc, this);
+      }
+      updateNumbers();
+    }
+    this.classList.remove('border-cyan-400', 'border-dashed', 'bg-cyan-50');
+    return false;
   }
 
   function updateNumbers() {

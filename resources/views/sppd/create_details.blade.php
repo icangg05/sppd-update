@@ -276,8 +276,8 @@
 											<span class="block text-xs font-semibold text-slate-700 truncate follower-name">{{ $u->name }}</span>
 											<span class="block text-[10px] text-slate-400 font-mono mt-0.5">{{ $u->nip }}</span>
 											@if ($isActive)
-												<span class="inline-block text-[10px] text-rose-600 font-semibold mt-0.5"><i
-														class="fa-solid fa-circle-exclamation"></i> Dinas Aktif</span>
+												<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
+														class="fa-solid fa-route"></i> Sedang dalam perjalanan dinas</span>
 											@endif
 										</div>
 									</label>

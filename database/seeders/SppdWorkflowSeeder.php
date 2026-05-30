@@ -10,19 +10,11 @@ class SppdWorkflowSeeder extends Seeder
   public function run(): void
   {
     $workflows = [
-      // Ketua DPRD
-      [
-        'name'            => 'Ketua DPRD',
-        'department_type' => 'dprd',
-        'applicant_role'  => 'pimpinan_dprd',
-        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
-        'steps'           => ['sekwan', 'pimpinan_dprd'],
-      ],
       // Anggota DPRD
       [
         'name'            => 'Anggota DPRD',
-        'department_type' => 'dprd',
-        'applicant_role'  => 'anggota_dprd',
+        'department_type' => ['dprd'],
+        'applicant_role'  => ['anggota_dprd', 'pimpinan_dprd'],
         'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
         'steps'           => ['sekwan', 'pimpinan_dprd'],
       ],
@@ -30,8 +22,8 @@ class SppdWorkflowSeeder extends Seeder
       // Staff DPRD
       [
         'name'            => 'Staff DPRD',
-        'department_type' => 'dprd',
-        'applicant_role'  => 'staf',
+        'department_type' => ['dprd'],
+        'applicant_role'  => ['staf'],
         'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
         'steps'           => ['kabid_irban_kabag', 'sekwan'],
       ],
@@ -39,15 +31,15 @@ class SppdWorkflowSeeder extends Seeder
       // Sekwan
       [
         'name'            => 'Sekwan',
-        'department_type' => 'dprd',
-        'applicant_role'  => 'sekwan',
+        'department_type' => ['dprd'],
+        'applicant_role'  => ['sekwan'],
         'destination'     => ['dalam_daerah'],
         'steps'           => ['sekwan', 'sekda'],
       ],
       [
         'name'            => 'Sekwan',
-        'department_type' => 'dprd',
-        'applicant_role'  => 'sekwan',
+        'department_type' => ['dprd'],
+        'applicant_role'  => ['sekwan'],
         'destination'     => ['lddp', 'ldlp'],
         'steps'           => ['sekwan', 'sekda', 'walikota'],
       ],
@@ -55,15 +47,15 @@ class SppdWorkflowSeeder extends Seeder
       // Kepala OPD
       [
         'name'            => 'Kepala OPD',
-        'department_type' => 'opd',
-        'applicant_role'  => 'kepala_opd',
+        'department_type' => ['opd'],
+        'applicant_role'  => ['kepala_opd'],
         'destination'     => ['dalam_daerah'],
         'steps'           => ['sekretaris_opd', 'kepala_opd'],
       ],
       [
         'name'            => 'Kepala OPD',
-        'department_type' => 'opd',
-        'applicant_role'  => 'kepala_opd',
+        'department_type' => ['opd'],
+        'applicant_role'  => ['kepala_opd'],
         'destination'     => ['lddp', 'ldlp'],
         'steps'           => ['sekretaris_opd', 'kepala_opd', 'sekda', 'walikota'],
       ],

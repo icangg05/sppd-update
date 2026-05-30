@@ -30,7 +30,7 @@
 				<table class="w-full text-left whitespace-nowrap border-collapse">
 					<thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
 						<tr>
-							<th class="py-2.5 px-3 w-12 text-center">No</th>
+							<th class="py-2.5 px-3 w-12 text-center">No.</th>
 							<th class="py-2.5 px-4">Nama Workflow</th>
 							<th class="py-2.5 px-4">Instansi & Jabatan</th>
 							<th class="py-2.5 px-4">Tujuan Wilayah</th>
@@ -43,7 +43,7 @@
 						@forelse($workflows as $i => $w)
 							<tr class="hover:bg-slate-50/50 transition-colors">
 								<td class="py-2.5 px-3 text-center text-slate-400 font-medium">
-									{{ $i + 1 }}
+									{{ $i + 1 }}.
 								</td>
 
 								<td class="py-2.5 px-4">
@@ -51,14 +51,36 @@
 								</td>
 
 								<td class="py-2.5 px-4">
-									<div class="space-y-0.5 text-[11px]">
+									<div class="space-y-1 text-[11px]">
 										<span class="block text-slate-700 font-medium">
-											<i class="fa-solid fa-building text-slate-400 mr-1 text-[10px]"></i>Tipe:
-											{{ $w->department_type?->label() ?? 'Semua' }}
+											<i class="fa-solid fa-building text-slate-400 mr-1 text-[10px]"></i>Tipe Instansi:
+											@if (is_array($w->department_type) && count($w->department_type) > 0)
+												<div class="flex flex-wrap gap-1 mt-0.5 ml-4">
+													@foreach ($w->department_type as $dt)
+														<span
+															class="inline-flex items-center rounded bg-slate-100 px-1 py-0.5 text-[9px] font-bold text-slate-600 border border-slate-200">
+															{{ \App\Enums\DepartmentType::tryFrom($dt)?->label() ?? $dt }}
+														</span>
+													@endforeach
+												</div>
+											@else
+												Semua
+											@endif
 										</span>
 										<span class="block text-slate-500">
 											<i class="fa-solid fa-user-tag text-slate-400 mr-1 text-[10px]"></i>Pemohon:
-											{{ $roleLabels[$w->applicant_role] ?? $w->applicant_role ?? 'Semua' }}
+											@if (is_array($w->applicant_role) && count($w->applicant_role) > 0)
+												<div class="flex flex-wrap gap-1 mt-0.5 ml-4">
+													@foreach ($w->applicant_role as $role)
+														<span
+															class="inline-flex items-center rounded bg-cyan-50 px-1 py-0.5 text-[9px] font-bold text-cyan-700 border border-cyan-100/70">
+															{{ $roleLabels[$role] ?? $role }}
+														</span>
+													@endforeach
+												</div>
+											@else
+												Semua
+											@endif
 										</span>
 									</div>
 								</td>

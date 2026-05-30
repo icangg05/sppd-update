@@ -57,8 +57,10 @@ class SppdWorkflowController extends Controller
   {
     $validated = $request->validate([
       'name'            => 'required|string|max:255',
-      'department_type' => 'nullable|string',
-      'applicant_role'  => 'nullable|string',
+      'department_type' => 'nullable|array',
+      'department_type.*'=> 'required|string',
+      'applicant_role'  => 'nullable|array',
+      'applicant_role.*'=> 'required|string',
       'destination'     => 'nullable|array',
       'destination.*'   => 'required|string',
       'steps'           => 'required|array|min:1',
@@ -87,8 +89,10 @@ class SppdWorkflowController extends Controller
   {
     $validated = $request->validate([
       'name'            => 'required|string|max:255',
-      'department_type' => 'nullable|string',
-      'applicant_role'  => 'nullable|string',
+      'department_type' => 'nullable|array',
+      'department_type.*'=> 'required|string',
+      'applicant_role'  => 'nullable|array',
+      'applicant_role.*'=> 'required|string',
       'destination'     => 'nullable|array',
       'destination.*'   => 'required|string',
       'steps'           => 'required|array|min:1',

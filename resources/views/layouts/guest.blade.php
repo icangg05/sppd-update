@@ -15,7 +15,7 @@
 	@vite(['resources/css/app.css'])
 </head>
 
-<body class="min-h-screen bg-sky-950 font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
+<body class="min-h-dvh lg:min-h-screen bg-sky-950 font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
 	<div class="relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
 
 		<div

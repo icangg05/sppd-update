@@ -26,10 +26,10 @@ class SppdWorkflowService
     // Order by most specific (least nulls) first
     $workflow = SppdWorkflow::where('is_active', true)
       ->where(function ($q) use ($departmentType) {
-        $q->whereNull('department_type')->orWhere('department_type', $departmentType);
+        $q->whereNull('department_type')->orWhereJsonContains('department_type', $departmentType);
       })
       ->where(function ($q) use ($role) {
-        $q->whereNull('applicant_role')->orWhere('applicant_role', $role);
+        $q->whereNull('applicant_role')->orWhereJsonContains('applicant_role', $role);
       })
       ->where(function ($q) use ($destination) {
         $q->whereNull('destination')->orWhereJsonContains('destination', $destination);
@@ -91,10 +91,10 @@ class SppdWorkflowService
 
     $workflow = SppdWorkflow::where('is_active', true)
       ->where(function ($q) use ($departmentType) {
-        $q->whereNull('department_type')->orWhere('department_type', $departmentType);
+        $q->whereNull('department_type')->orWhereJsonContains('department_type', $departmentType);
       })
       ->where(function ($q) use ($role) {
-        $q->whereNull('applicant_role')->orWhere('applicant_role', $role);
+        $q->whereNull('applicant_role')->orWhereJsonContains('applicant_role', $role);
       })
       ->where(function ($q) use ($destination) {
         if ($destination) {

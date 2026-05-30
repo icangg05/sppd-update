@@ -6,28 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('sppd_workflows', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('department_type')->nullable();
-            $table->string('applicant_role')->nullable();
-            $table->json('destination')->nullable();
-            $table->json('steps');
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
-    }
+  /**
+   * Run the migrations.
+   */
+  public function up(): void
+  {
+    Schema::create('sppd_workflows', function (Blueprint $table) {
+      $table->id();
+      $table->string('name');
+      $table->json('department_type')->nullable();
+      $table->json('applicant_role')->nullable();
+      $table->json('destination')->nullable();
+      $table->json('steps');
+      $table->boolean('is_active')->default(true);
+      $table->timestamps();
+    });
+  }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('sppd_workflows');
-    }
+  /**
+   * Reverse the migrations.
+   */
+  public function down(): void
+  {
+    Schema::dropIfExists('sppd_workflows');
+  }
 };
