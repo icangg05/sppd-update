@@ -164,8 +164,8 @@
 							</td>
 							<td style="text-align: center;">
 								<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-								<div style="font-size: 20pt; font-weight: bold; text-transform: uppercase;">{{ $user->department?->name }}</div>
-								<div style="font-size: 7pt;">{{ $user->department?->address ?? 'Jl. Drs. H. Abd Silondae No. 8 Kendari' }}</div>
+								<div style="font-size: 20pt; font-weight: bold; text-transform: uppercase;">{{ $user->department?->getRootDepartment()?->name }}</div>
+								<div style="font-size: 7pt;">{{ $user->department?->getRootDepartment()?->address ?? 'Jl. Drs. H. Abd Silondae No. 8 Kendari' }}</div>
 							</td>
 						</tr>
 					</table>

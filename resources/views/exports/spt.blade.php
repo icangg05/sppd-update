@@ -126,16 +126,19 @@
 			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
 		@elseif (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
 			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
-		@elseif ($sppd->user->department?->parent_id == null)
+		@elseif (
+			$sppd->user->department?->getRootDepartment()?->parent_id == null &&
+				$sppd->user->department?->getRootDepartment()?->name === 'WALIKOTA KENDARI')
 			{{-- Jika level OPD/Walikota --}}
 			<img src="{{ public_path('img/aruda.png') }}" class="logo">
 			<div style="font-size: 26pt; font-weight: bold;">WALIKOTA KENDARI</div>
 		@else
 			{{-- Jika level dinas --}}
 			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department?->name }}
+			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">
+				{{ $sppd->user->department?->getRootDepartment()?->name }}
 			</div>
-			<div style="font-size: 10pt;">{{ $sppd->user->department?->address ?? '' }}</div>
+			<div style="font-size: 10pt;">{{ $sppd->user->department?->getRootDepartment()?->address ?? '' }}</div>
 		@endif
 	</div>
 
@@ -245,8 +248,13 @@
 
 	<div class="footer">
 		<div class="signature-wrap">
-			<div>Ditetapkan di Kendari</div>
-			<div>Pada Tanggal : {{ $sppd->spt_date->translatedFormat('d F Y') }}</div>
+			@if ($sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD)
+				<div>Ditetapkan di Kendari</div>
+			@endif
+			<div>
+				{{ $sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD ? 'Pada Tanggal :' : 'Kendari,' }}
+				{{ $sppd->spt_date->translatedFormat('d F Y') }}
+			</div>
 			<div style="margin-top: 10px; text-transform: uppercase;">
 				{{ $pdfData['approver_role'] ?? 'Walikota Kendari' }}
 			</div>
@@ -276,13 +284,15 @@
 
 	<div class="clear"></div>
 
-	<div class="tembusan">
-		<div>Tembusan Yth:</div>
-		<ol class="ordered-list">
-			<li>Kepala Badan Kepegawaian dan Pengembangan SDM Kota Kendari</li>
-			<li>Bagian Organisasi dan Pemberdayaan Aparatur Kota Kendari</li>
-		</ol>
-	</div>
+	@if ($sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD)
+		<div class="tembusan">
+			<div>Tembusan Yth:</div>
+			<ol class="ordered-list">
+				<li>Kepala Badan Kepegawaian dan Pengembangan SDM Kota Kendari</li>
+				<li>Bagian Organisasi dan Pemberdayaan Aparatur Kota Kendari</li>
+			</ol>
+		</div>
+	@endif
 
 	<footer
 		style="font-size: 9pt; position: absolute; bottom: -10px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">

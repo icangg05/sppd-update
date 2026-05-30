@@ -761,7 +761,7 @@ class SppdController extends Controller
         'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
         'role' => $user->getRoleNames()->first() ?? 'Tanpa Role',
       ],
-      'has_header' => (bool) ($user->department?->letterhead && \Illuminate\Support\Str::contains($user->department->letterhead, '/')),
+      'has_header' => (bool) ($user->department?->getInheritedLetterhead() && \Illuminate\Support\Str::contains($user->department->getInheritedLetterhead(), '/')),
       'steps' => $steps
     ]);
   }
@@ -801,7 +801,7 @@ class SppdController extends Controller
       'is_approved'    => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image'       => null,
       'duration'       => $duration,
-      'letterhead_url' => ($sppd->user->department?->type === \App\Enums\DepartmentType::DPRD || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD)
+      'letterhead_url' => ($sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD && $sppd->user->isDprdMember())
         ? $sppd->user->department->getInheritedLetterheadSecond()
         : $sppd->user->department?->getInheritedLetterhead()
     ];
@@ -811,10 +811,9 @@ class SppdController extends Controller
       $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
     }
 
-    $isDprd = $sppd->user->department?->type === \App\Enums\DepartmentType::DPRD
-      || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
+    $isDprdMember = $sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD && $sppd->user->isDprdMember();
 
-    $viewName = $isDprd ? 'exports.spt_dprd' : 'exports.spt';
+    $viewName = $isDprdMember ? 'exports.spt_dprd' : 'exports.spt';
 
     return \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, compact('sppd', 'pdfData'))
       ->setPaper('f4', 'portrait')

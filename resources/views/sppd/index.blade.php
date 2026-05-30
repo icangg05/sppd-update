@@ -167,9 +167,15 @@
 									{{ $sppd->user->name }}
 								</p>
 
-								<p class="mt-0.5 text-xs text-slate-400">
-									{{ $sppd->budget?->department?->name ?? '-' }}
-								</p>
+								@if(!auth()->user()->hasRole('super_admin'))
+									<p class="text-[11px] text-cyan-600 mt-0.5 font-medium">
+										{{ $sppd->user->department?->name ?? '-' }}
+									</p>
+								@else
+									<p class="mt-0.5 text-xs text-slate-400">
+										{{ $sppd->budget?->department?->name ?? '-' }}
+									</p>
+								@endif
 							</td>
 
 							<td class="max-w-xs">
