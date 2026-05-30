@@ -15,8 +15,8 @@
 	@vite(['resources/css/app.css'])
 </head>
 
-<body class="min-h-dvh lg:min-h-screen bg-sky-950 font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
-	<div class="relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
+<body class="h-dvh lg:min-h-screen bg-sky-950 font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
+	<div class="relative h-dvh lg:min-h-screen overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
 
 		<div
 			class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(186,230,253,0.28),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(125,211,252,0.22),transparent_20%),linear-gradient(135deg,rgba(12,74,110,0.96),rgba(8,47,73,0.98),rgba(3,105,161,0.94))]">
