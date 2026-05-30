@@ -114,6 +114,7 @@ class User extends Authenticatable
 
   public function isDprdMember(): bool
   {
-    return $this->employee_type === EmployeeType::DPRD;
+    return $this->employee_type === EmployeeType::DPRD
+      || $this->hasRole(['anggota_dprd', 'pimpinan_dprd']);
   }
 }

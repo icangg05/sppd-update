@@ -118,23 +118,24 @@
 
 <body>
 	<div class="header"
-		style="{{ $pdfData['is_walikota'] || ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/')) ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
+		style="{{ $pdfData['is_walikota'] || (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/')) ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
 		@if ($pdfData['is_walikota'])
 			<div style="text-align: center; margin-bottom: 10px;">
 				<img src="{{ public_path('img/garuda.png') }}" style="width: 110px; height: auto;">
 			</div>
 			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
-		@elseif ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/'))
-			<img src="{{ storage_path('app/public/' . $sppd->user->department->letterhead) }}" style="width: 103%; height: auto;">
-		@elseif ($sppd->user->department->parent_id == null)
+		@elseif (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
+			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
+		@elseif ($sppd->user->department?->parent_id == null)
 			{{-- Jika level OPD/Walikota --}}
 			<img src="{{ public_path('img/aruda.png') }}" class="logo">
 			<div style="font-size: 26pt; font-weight: bold;">WALIKOTA KENDARI</div>
 		@else
 			{{-- Jika level dinas --}}
 			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department->name }}</div>
-			<div style="font-size: 10pt;">{{ $sppd->user->department->address ?? '' }}</div>
+			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department?->name }}
+			</div>
+			<div style="font-size: 10pt;">{{ $sppd->user->department?->address ?? '' }}</div>
 		@endif
 	</div>
 
@@ -283,7 +284,8 @@
 		</ol>
 	</div>
 
-	<footer style="position: absolute; bottom: -10px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
+	<footer
+		style="font-size: 9pt; position: absolute; bottom: -10px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
 		<div style="font-style: italic; margin-bottom: 10px;">
 			Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
 		</div>

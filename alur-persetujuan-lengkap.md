@@ -5,7 +5,7 @@
 ## Anggota DPRD
 
 ```text
-Role            : anggota_dprd
+Role            : anggota_dprd, pimpinan_dprd
 Tipe OPD   : dprd
 ```
 

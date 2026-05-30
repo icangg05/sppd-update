@@ -123,25 +123,34 @@
 						</p>
 					</div>
 
-					{{-- Sektor Unggah & Pratinjau Kop Surat (Penuh 2 Kolom) --}}
-					<div class="md:col-span-2 space-y-1.5" id="letterhead_field">
-						<x-form.file name="letterhead" label="Unggah Berkas Kop Resmi Surat Kedinasan (PNG/JPG)" accept="image/*"
+					{{-- Sektor Unggah & Pratinjau Kop Surat Utama (SPPD) --}}
+					<div class="{{ $department->type->value === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }} space-y-1.5"
+						id="letterhead_field">
+						<x-form.file name="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG)" accept="image/*"
 							class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
-							hint="Rekomendasi ukuran cetak 1000x200 pixel. Gunakan ekstensi berkas PNG latar transparan." />
+							hint="Rekomendasi ukuran cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD." />
 
 						{{-- Blok Pratinjau Kop Eksisting --}}
 						@if ($department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
-							<div class="p-2.5 bg-slate-50 border border-slate-200 rounded max-w-xl">
-								<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Lampiran Aktif Saat Ini:</p>
+							<div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
+								<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPPD):</p>
 								<img src="{{ asset('storage/' . $department->letterhead) }}"
-									class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm">
+									class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
 							</div>
-						@else
-							<div
-								class="p-2.5 bg-amber-50 border border-amber-200 rounded text-amber-700 text-[11px] font-medium flex items-start gap-2 max-w-xl">
-								<i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 shrink-0"></i>
-								<span>Peringatan: Struktur kop instansi saat ini masih berupa data teks usang. Sistem akan otomatis
-									menggantinya menjadi format gambar jika Anda mengunggah berkas baru.</span>
+						@endif
+					</div>
+
+					{{-- Kop Surat Kedua — Khusus DPRD (SPT) --}}
+					<div class="md:col-span-1 space-y-1.5" id="letterhead_second_field"
+						style="display: {{ $department->type->value === 'dprd' ? 'block' : 'none' }}">
+						<x-form.file name="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
+							class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
+							hint="Digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
+						@if ($department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
+							<div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
+								<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPT):</p>
+								<img src="{{ asset('storage/' . $department->letterhead_second) }}"
+									class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
 							</div>
 						@endif
 					</div>
@@ -178,10 +187,12 @@
 			const typeField = document.getElementById('type_field');
 			const typeSelect = document.getElementById('type_select');
 			const letterheadField = document.getElementById('letterhead_field');
+			const letterheadSecondField = document.getElementById('letterhead_second_field');
 
 			if (parentId) {
 				if (codeField) codeField.style.display = 'none';
 				if (letterheadField) letterheadField.style.display = 'none';
+				if (letterheadSecondField) letterheadSecondField.style.display = 'none';
 
 				if (parentType && typeSelect) {
 					typeSelect.value = parentType;
@@ -191,9 +202,41 @@
 				if (codeField) codeField.style.display = 'block';
 				if (letterheadField) letterheadField.style.display = 'block';
 				if (typeField) typeField.style.display = 'block';
+				toggleDprdFields();
 			}
 		}
 
-		document.addEventListener('DOMContentLoaded', toggleFields);
+		function toggleDprdFields() {
+			const typeSelect = document.getElementById('type_select');
+			const letterheadField = document.getElementById('letterhead_field');
+			const letterheadSecondField = document.getElementById('letterhead_second_field');
+			if (!typeSelect) return;
+
+			if (typeSelect.value === 'dprd') {
+				if (letterheadField) {
+					letterheadField.classList.remove('md:col-span-2');
+					letterheadField.classList.add('md:col-span-1');
+				}
+				if (letterheadSecondField) {
+					letterheadSecondField.style.display = 'block';
+				}
+			} else {
+				if (letterheadField) {
+					letterheadField.classList.remove('md:col-span-1');
+					letterheadField.classList.add('md:col-span-2');
+				}
+				if (letterheadSecondField) {
+					letterheadSecondField.style.display = 'none';
+				}
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', function() {
+			toggleFields();
+			const typeSelect = document.getElementById('type_select');
+			if (typeSelect) {
+				typeSelect.addEventListener('change', toggleFields);
+			}
+		});
 	</script>
 @endsection

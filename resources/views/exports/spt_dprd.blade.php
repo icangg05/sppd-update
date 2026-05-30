@@ -58,6 +58,7 @@
 			bottom: -10px;
 			left: 0;
 			right: 0;
+			font-size: 9pt;
 			font-family: Arial, Helvetica, sans-serif;
 		}
 	</style>
@@ -168,7 +169,7 @@
 	<div style="margin-top: 25px;">
 		<div style="float: right; width: 270px; text-align: left;">
 			<div>Kendari,
-				{{ $sppd->spt_date ? $sppd->spt_date->translatedFormat('d F Y') : \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+				{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}
 			</div>
 			<div style="text-transform: uppercase;">{{ $pdfData['approver_role'] ?? 'KETUA DPRD KOTA KENDARI' }}</div>
 			@if ($pdfData['is_approved'] && $pdfData['qr_image'])

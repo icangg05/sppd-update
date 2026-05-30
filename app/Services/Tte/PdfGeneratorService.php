@@ -77,16 +77,32 @@ class PdfGeneratorService
 
         $isMain = $targetUser->id === $sppd->user_id;
 
-        $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
-        $opdHeadApproval = $sppd->approvals()
-            ->with('approver.roles')
-            ->reorder('step_order', 'desc')
-            ->get()
-            ->first(function ($approval) use ($cityWideRoles) {
-                return $approval->approver && !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
-            });
+        $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
+            || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
-        $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
+        $sppdApproval = null;
+        if ($isDprd) {
+            $sppdApproval = $sppd->approvals()
+                ->with('approver.roles')
+                ->get()
+                ->first(function ($approval) {
+                    return $approval->approver && $approval->approver->hasRole('sekwan');
+                });
+        }
+
+        if (!$sppdApproval) {
+            $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+            $opdHeadApproval = $sppd->approvals()
+                ->with('approver.roles')
+                ->reorder('step_order', 'desc')
+                ->get()
+                ->first(function ($approval) use ($cityWideRoles) {
+                    return $approval->approver && !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
+                });
+
+            $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
+        }
+
         $approver = $sppdApproval?->approver;
         $approverRole = $approver?->position_name ?? $approver?->position?->name ?? $sppdApproval?->role_label ?? 'Kepala Dinas';
 
@@ -102,6 +118,7 @@ class PdfGeneratorService
             'duration' => $duration,
             'is_follower' => !$isMain,
             'travel_position' => $followerRecord?->travel_position,
+            'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
         ];
 
         $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
@@ -125,7 +142,12 @@ class PdfGeneratorService
         $duration = $sppd->start_date->diffInDays($sppd->end_date) + 1;
 
         $approver = $lastApproval?->approver;
-        $approverRole = $approver?->position_name ?? $approver?->position?->name ?? $lastApproval?->role_label ?? 'Kepala Dinas';
+        $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
+            ? $approver->dprd_jabatan
+            : ($approver?->position_name ?? $approver?->position?->name ?? $lastApproval?->role_label ?? 'Kepala Dinas');
+
+        $isDprd = $sppd->user->department?->type === \App\Enums\DepartmentType::DPRD
+            || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
         $pdfData = [
             'approver_name' => $approver->name ?? '................................',
@@ -137,13 +159,18 @@ class PdfGeneratorService
             'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,
+            'letterhead_url' => $isDprd
+                ? $sppd->user->department?->getInheritedLetterheadSecond()
+                : $sppd->user->department?->getInheritedLetterhead()
         ];
 
         $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
         $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
 
+        $viewName = $isDprd ? 'exports.spt_dprd' : 'exports.spt';
+
         return [
-            'view' => 'exports.spt',
+            'view' => $viewName,
             'data' => [
                 'sppd' => $sppd,
                 'pdfData' => $pdfData,

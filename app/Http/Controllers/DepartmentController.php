@@ -131,6 +131,10 @@ class DepartmentController extends Controller
         $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
     }
 
+    if ($request->hasFile('letterhead_second')) {
+        $validated['letterhead_second'] = $request->file('letterhead_second')->store('departments/headers', 'public');
+    }
+
     Department::create($validated);
 
     return redirect()->route('master.departments.index')->with('success', "Instansi {$validated['name']} berhasil ditambahkan.");
@@ -204,6 +208,13 @@ class DepartmentController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead);
         }
         $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
+    }
+
+    if ($request->hasFile('letterhead_second')) {
+        if ($department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead_second);
+        }
+        $validated['letterhead_second'] = $request->file('letterhead_second')->store('departments/headers', 'public');
     }
 
     $department->update($validated);

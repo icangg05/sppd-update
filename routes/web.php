@@ -13,11 +13,6 @@ use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/spt-dprd', function () {
-  return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.spt_dprd')
-    ->setPaper('f4', 'portrait')
-    ->stream('SPT-DPRD.pdf');
-})->name('spt-dprd');
 
 // Guest routes
 Route::middleware('guest')->group(function () {

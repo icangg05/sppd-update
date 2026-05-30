@@ -61,10 +61,18 @@ class SppdController extends Controller
         } elseif ($jabatan === 'staf') {
           $q->role('staf');
         } elseif ($jabatan === 'anggota_dprd') {
-          $q->where('employee_type', 'dprd');
+          $q->where(function ($sub) {
+            $sub->role(['anggota_dprd', 'pimpinan_dprd'])
+              ->orWhere('employee_type', \App\Enums\EmployeeType::DPRD);
+          });
         } elseif ($jabatan === 'staff_dprd') {
           $q->role('staf')->whereHas('department', function ($d) {
-            $d->where('type', \App\Enums\DepartmentType::DPRD);
+            $d->where(function ($sub) {
+              $sub->where('type', \App\Enums\DepartmentType::DPRD)
+                ->orWhereHas('parent', function ($p) {
+                  $p->where('type', \App\Enums\DepartmentType::DPRD);
+                });
+            });
           });
         } elseif ($jabatan === 'sekwan') {
           $q->role('sekwan');
@@ -749,10 +757,12 @@ class SppdController extends Controller
     $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
 
     $approver = $lastApproval->approver;
-    $approverRole = $approver->position_name
-      ?? $approver->position?->name
-      ?? $lastApproval->role_label
-      ?? 'Kepala Dinas';
+    $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
+      ? $approver->dprd_jabatan
+      : ($approver->position_name
+        ?? $approver->position?->name
+        ?? $lastApproval->role_label
+        ?? 'Kepala Dinas');
 
     $pdfData = [
       'approver_name'  => $approver->name ?? '................................',
@@ -764,9 +774,9 @@ class SppdController extends Controller
       'is_approved'    => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image'       => null,
       'duration'       => $duration,
-      'letterhead_url' => $sppd->user->isDprdMember() 
-          ? $sppd->user->department->letterhead_second 
-          : $sppd->user->department->letterhead
+      'letterhead_url' => ($sppd->user->department?->type === \App\Enums\DepartmentType::DPRD || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD)
+        ? $sppd->user->department->getInheritedLetterheadSecond()
+        : $sppd->user->department?->getInheritedLetterhead()
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('spt')) {
@@ -815,21 +825,36 @@ class SppdController extends Controller
 
     $isMain = $targetUser->id === $sppd->user_id;
 
-    // Untuk SPPD: penandatangan adalah pimpinan OPD (bukan Walikota/Sekda/Kepala Daerah).
-    // Ambil approval step terakhir yang BUKAN dari role kepala daerah/sekda/walikota.
-    $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+    $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
+      || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
-    $opdHeadApproval = $sppd->approvals()
-      ->with('approver.roles')
-      ->reorder('step_order', 'desc')
-      ->get()
-      ->first(function ($approval) use ($cityWideRoles) {
-        return $approval->approver &&
-          !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
-      });
+    $sppdApproval = null;
+    if ($isDprd) {
+      // Untuk DPRD: penandatangan SPPD adalah Sekwan (Sekretaris DPRD).
+      // Cari approval dari user yang memiliki role 'sekwan'.
+      $sppdApproval = $sppd->approvals()
+        ->with('approver.roles')
+        ->get()
+        ->first(function ($approval) {
+          return $approval->approver && $approval->approver->hasRole('sekwan');
+        });
+    }
 
-    // Fallback ke step pertama jika semua approver adalah pejabat kota
-    $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
+    // Jika bukan DPRD atau Sekwan tidak ditemukan, gunakan logic default
+    if (!$sppdApproval) {
+      $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+
+      $opdHeadApproval = $sppd->approvals()
+        ->with('approver.roles')
+        ->reorder('step_order', 'desc')
+        ->get()
+        ->first(function ($approval) use ($cityWideRoles) {
+          return $approval->approver &&
+            !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
+        });
+
+      $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
+    }
 
     $approver = $sppdApproval?->approver;
     $approverRole = $approver?->position_name
@@ -850,6 +875,7 @@ class SppdController extends Controller
       'duration'      => $duration,
       'is_follower'   => !$isMain,
       'travel_position' => $follower?->travel_position,
+      'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('sppd')) {

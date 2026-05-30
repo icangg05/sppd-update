@@ -153,9 +153,9 @@
 		<!-- FRONT PAGE (LEFT COLUMN) -->
 		<div class="left-column">
 			<div class="header-container"
-				style="{{ $user->department->letterhead && \Illuminate\Support\Str::contains($user->department->letterhead, '/') ? 'border-bottom: none; margin-bottom: 0;' : 'border-bottom: 2px solid #000; padding-bottom: 3px; margin-bottom: 8px;' }}">
-				@if ($user->department->letterhead && \Illuminate\Support\Str::contains($user->department->letterhead, '/'))
-					<img src="{{ storage_path('app/public/' . $user->department->letterhead) }}" style="width: 103%; height: auto;">
+				style="{{ !empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/') ? 'border-bottom: none; margin-bottom: 0;' : 'border-bottom: 2px solid #000; padding-bottom: 3px; margin-bottom: 8px;' }}">
+				@if (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
+					<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 100%; height: auto;">
 				@else
 					<table class="header-table" style="border-bottom: none; margin-bottom: 0;">
 						<tr>
@@ -164,8 +164,8 @@
 							</td>
 							<td style="text-align: center;">
 								<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-								<div style="font-size: 20pt; font-weight: bold; text-transform: uppercase;">{{ $user->department->name }}</div>
-								<div style="font-size: 7pt;">{{ $user->department->address ?? 'Jl. Drs. H. Abd Silondae No. 8 Kendari' }}</div>
+								<div style="font-size: 20pt; font-weight: bold; text-transform: uppercase;">{{ $user->department?->name }}</div>
+								<div style="font-size: 7pt;">{{ $user->department?->address ?? 'Jl. Drs. H. Abd Silondae No. 8 Kendari' }}</div>
 							</td>
 						</tr>
 					</table>
@@ -204,7 +204,8 @@
 				<tr>
 					<td style="width: 1%; text-align: center;">1.</td>
 					<td style="width: 46%">Pejabat berwenang yang memberi perintah</td>
-					<td style="width: 54%">{{ $pdfData['approver_role'] ?? 'Kepala Dinas' }}</td>
+					<td style="width: 54%">
+						{{ App\Helpers\SmartTitle::convert($pdfData['approver_role'] ?? 'Kepala Dinas') }}</td>
 				</tr>
 				<tr>
 					<td style="width: 1%; text-align: center;">2.</td>
@@ -307,7 +308,7 @@
 						</tr>
 						<tr>
 							<td style="padding: 0.5px 0; width: 120px;">Tanggal</td>
-							<td style="padding: 0.5px 0;">: {{ $sppd->sppd_date->translatedFormat('d F Y') }}</td>
+							<td style="padding: 0.5px 0;">: {{ $sppd->start_date->translatedFormat('d F Y') }}</td>
 						</tr>
 						<tr>
 							<td style="padding: 3px 0; text-transform: uppercase;" colspan="2">

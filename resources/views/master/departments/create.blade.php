@@ -84,7 +84,12 @@
         {{-- Unggah Kop Surat Khusus Super Admin --}}
         @if(auth()->user()->hasRole('super_admin'))
           <div class="md:col-span-2 space-y-0.5" id="letterhead_field">
-            <x-form.file name="letterhead" label="Unggah Berkas Kop Resmi Surat Kedinasan (PNG/JPG)" accept="image/*" class="text-xs focus:border-cyan-500 focus:ring-cyan-500" hint="Rekomendasi rasio cetak 1000x200 pixel. Hanya diwajibkan untuk level OPD utama." />
+            <x-form.file name="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG)" accept="image/*" class="text-xs focus:border-cyan-500 focus:ring-cyan-500" hint="Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD." />
+          </div>
+
+          {{-- Kop Surat Kedua — Khusus DPRD --}}
+          <div class="md:col-span-1 space-y-2" id="letterhead_second_field" style="display:none">
+            <x-form.file name="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*" class="text-xs focus:border-cyan-500 focus:ring-cyan-500" hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
           </div>
         @endif
       </div>
@@ -119,10 +124,12 @@
         const typeField = document.getElementById('type_field');
         const typeSelect = document.getElementById('type_select');
         const letterheadField = document.getElementById('letterhead_field');
+        const letterheadSecondField = document.getElementById('letterhead_second_field');
 
         if (parentId) {
             if (codeField) codeField.style.display = 'none';
             if (letterheadField) letterheadField.style.display = 'none';
+            if (letterheadSecondField) letterheadSecondField.style.display = 'none';
 
             if (parentType && typeSelect) {
                 typeSelect.value = parentType;
@@ -132,9 +139,43 @@
             if (codeField) codeField.style.display = 'block';
             if (letterheadField) letterheadField.style.display = 'block';
             if (typeField) typeField.style.display = 'block';
+
+            // Show second letterhead only for DPRD type
+            toggleDprdFields();
         }
     }
 
-    document.addEventListener('DOMContentLoaded', toggleFields);
+    function toggleDprdFields() {
+        const typeSelect = document.getElementById('type_select');
+        const letterheadField = document.getElementById('letterhead_field');
+        const letterheadSecondField = document.getElementById('letterhead_second_field');
+        if (!typeSelect) return;
+
+        if (typeSelect.value === 'dprd') {
+            if (letterheadField) {
+                letterheadField.classList.remove('md:col-span-2');
+                letterheadField.classList.add('md:col-span-1');
+            }
+            if (letterheadSecondField) {
+                letterheadSecondField.style.display = 'block';
+            }
+        } else {
+            if (letterheadField) {
+                letterheadField.classList.remove('md:col-span-1');
+                letterheadField.classList.add('md:col-span-2');
+            }
+            if (letterheadSecondField) {
+                letterheadSecondField.style.display = 'none';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleFields();
+        const typeSelect = document.getElementById('type_select');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', toggleFields);
+        }
+    });
 </script>
 @endsection

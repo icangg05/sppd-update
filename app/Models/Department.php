@@ -86,4 +86,21 @@ class Department extends Model
 
     return null;
   }
+
+  /**
+   * Get the second letterhead for this department.
+   * If not set, recursively search up the hierarchy to find a parent's second letterhead.
+   */
+  public function getInheritedLetterheadSecond(): ?string
+  {
+    if (!empty($this->letterhead_second)) {
+      return $this->letterhead_second;
+    }
+
+    if ($this->parent) {
+      return $this->parent->getInheritedLetterheadSecond();
+    }
+
+    return null;
+  }
 }
