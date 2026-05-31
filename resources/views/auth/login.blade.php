@@ -4,10 +4,25 @@
 
 @section('content')
 	@if ($errors->any())
-		<div class="rounded-2xl border border-rose-200/80 bg-rose-100/80 px-4 py-3 text-sm text-rose-700 backdrop-blur-md">
-			@foreach ($errors->all() as $error)
-				<p>{{ $error }}</p>
-			@endforeach
+		<div class="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm shadow-sm" role="alert">
+			<!-- Icon Gembok / Peringatan Keamanan -->
+			<svg class="h-5 w-5 shrink-0 text-red-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+				stroke-width="2" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round"
+					d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
+			</svg>
+
+			<div>
+				<h3 class="font-bold text-red-900 text-xs md:text-sm mb-1">Gagal Melakukan Autentikasi</h3>
+				<ul class="list-none space-y-1 text-red-700 text-xs md:text-sm font-medium">
+					@foreach ($errors->all() as $error)
+						<li class="flex items-center gap-1.5">
+							<span class="inline-block h-1 w-1 rounded-full bg-red-600"></span>
+							{{ $error }}
+						</li>
+					@endforeach
+				</ul>
+			</div>
 		</div>
 	@endif
 
