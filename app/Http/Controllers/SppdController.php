@@ -378,7 +378,24 @@ class SppdController extends Controller
       'digitalSignatures.signer',
     ]);
 
-    return view('sppd.show', compact('sppd'));
+    // Determine if current user's pending approval step needs TTE
+    $needsTte = false;
+    $myApproval = $sppd->approvals
+      ->where('approver_id', Auth::id())
+      ->where('status', \App\Enums\ApprovalStatus::PENDING)
+      ->first();
+
+    if ($myApproval) {
+      $stepConfig = $this->getApprovalStepConfig($sppd, $myApproval);
+      if ($stepConfig) {
+        $needsTte = (bool)($stepConfig['signs_spt'] ?? false) || (bool)($stepConfig['signs_sppd'] ?? false);
+      } else {
+        // Fallback: final step signs everything
+        $needsTte = $myApproval->step_order === $sppd->approvals->max('step_order');
+      }
+    }
+
+    return view('sppd.show', compact('sppd', 'needsTte'));
   }
 
   /**
@@ -597,38 +614,58 @@ class SppdController extends Controller
 
     $isFinalApproval = $this->isFinalApprovalStep($sppd, $approval);
 
-    if ($isFinalApproval && !Auth::user()?->nik) {
+    $stepConfig = $this->getApprovalStepConfig($sppd, $approval);
+    $shouldSignSpt = false;
+    $shouldSignSppd = false;
+
+    if ($stepConfig) {
+      $shouldSignSpt = (bool)($stepConfig['signs_spt'] ?? false);
+      $shouldSignSppd = (bool)($stepConfig['signs_sppd'] ?? false);
+    } else {
+      // Fallback for old/string format
+      if ($isFinalApproval) {
+        $shouldSignSpt = true;
+        $shouldSignSppd = true;
+      }
+    }
+
+    $needsTte = $shouldSignSpt || $shouldSignSppd;
+
+    if ($needsTte && !Auth::user()?->nik) {
       return back()->with('error', 'NIK penandatangan belum tersedia. Silakan lengkapi profil Anda terlebih dahulu.');
     }
 
     $rules = ['notes' => 'nullable|string|max:500'];
-    if ($isFinalApproval) {
+    if ($needsTte) {
       $rules['passphrase'] = 'required|string|min:4|max:255';
     }
 
     $validated = $request->validate($rules);
 
-    if ($isFinalApproval) {
+    if ($needsTte) {
       $documentsToSign = [];
 
       // 1. SPT (type 'spt')
-      $documentsToSign[] = [
-        'type' => 'spt',
-        'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPT)
-      ];
-
-      // 2. SPPD Pelaksana (type 'sppd_{user_id}')
-      $documentsToSign[] = [
-        'type' => 'sppd_' . $sppd->user_id,
-        'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
-      ];
-
-      // 3. SPPD Followers (type 'sppd_{user_id}')
-      foreach ($sppd->followers as $follower) {
+      if ($shouldSignSpt) {
         $documentsToSign[] = [
-          'type' => 'sppd_' . $follower->user_id,
+          'type' => 'spt',
+          'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPT)
+        ];
+      }
+
+      // 2. SPPD Pelaksana & Followers (type 'sppd_{user_id}')
+      if ($shouldSignSppd) {
+        $documentsToSign[] = [
+          'type' => 'sppd_' . $sppd->user_id,
           'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
         ];
+
+        foreach ($sppd->followers as $follower) {
+          $documentsToSign[] = [
+            'type' => 'sppd_' . $follower->user_id,
+            'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD)
+          ];
+        }
       }
 
       $signatureService = app(SignatureService::class);
@@ -668,7 +705,7 @@ class SppdController extends Controller
         $sppd->update(['status' => SppdStatus::APPROVED]);
       }
 
-      return back()->with('success', 'SPPD berhasil disetujui dan seluruh dokumen (SPT & SPPD) telah di-TTE dengan sukses.');
+      return back()->with('success', 'SPPD berhasil disetujui dan dokumen (' . ($shouldSignSpt && $shouldSignSppd ? 'SPT & SPPD' : ($shouldSignSpt ? 'SPT' : 'SPPD')) . ') telah di-TTE dengan sukses.');
     }
 
     $approval->approve($validated['notes'] ?? null);
@@ -684,6 +721,90 @@ class SppdController extends Controller
   private function isFinalApprovalStep(SppdRequest $sppd, SppdApproval $approval): bool
   {
     return $approval->step_order === $sppd->approvals()->max('step_order');
+  }
+
+  private function getApprovalStepConfig(SppdRequest $sppd, SppdApproval $approval): ?array
+  {
+    $pelaksana = $sppd->user;
+    $departmentType = $pelaksana->department?->type?->value;
+    $role = $pelaksana->roles->first()?->name;
+    $destination = $sppd->domain?->value;
+
+    $workflow = \App\Models\SppdWorkflow::where('is_active', true)
+      ->where(function ($q) use ($departmentType) {
+        $q->whereNull('department_type')->orWhereJsonContains('department_type', $departmentType);
+      })
+      ->where(function ($q) use ($role) {
+        $q->whereNull('applicant_role')->orWhereJsonContains('applicant_role', $role);
+      })
+      ->where(function ($q) use ($destination) {
+        $q->whereNull('destination')->orWhereJsonContains('destination', $destination);
+      })
+      ->orderByRaw('
+                (department_type IS NOT NULL) +
+                (applicant_role IS NOT NULL) +
+                (destination IS NOT NULL) DESC
+            ')
+      ->first();
+
+    if (!$workflow || empty($workflow->steps)) {
+      return null;
+    }
+
+    $step = $workflow->steps[$approval->step_order - 1] ?? null;
+    if (is_array($step)) {
+      return $step;
+    }
+
+    return null;
+  }
+
+  private function resolveSptApproval(SppdRequest $sppd)
+  {
+    $approval = $sppd->approvals()->where('signs_spt', true)->first();
+    if ($approval) {
+      return $approval;
+    }
+
+    // Fallback: last step
+    return $sppd->approvals()->reorder('step_order', 'desc')->first();
+  }
+
+  private function resolveSppdApproval(SppdRequest $sppd, ?User $targetUser = null)
+  {
+    $approval = $sppd->approvals()->where('signs_sppd', true)->first();
+    if ($approval) {
+      return $approval;
+    }
+
+    // Fallback: existing custom logic
+    $targetUser = $targetUser ?? $sppd->user;
+    $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
+      || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
+
+    if ($isDprd) {
+      $sppdApproval = $sppd->approvals()
+        ->with('approver.roles')
+        ->get()
+        ->first(function ($approval) {
+          return $approval->approver && $approval->approver->hasRole('sekwan');
+        });
+      if ($sppdApproval) {
+        return $sppdApproval;
+      }
+    }
+
+    $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+    $opdHeadApproval = $sppd->approvals()
+      ->with('approver.roles')
+      ->reorder('step_order', 'desc')
+      ->get()
+      ->first(function ($approval) use ($cityWideRoles) {
+        return $approval->approver &&
+          !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
+      });
+
+    return $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
   }
 
   private function defaultSignatureCoordinates(SignatureDocumentType $documentType): array
@@ -780,15 +901,15 @@ class SppdController extends Controller
     }
 
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+    $sptApproval = $this->resolveSptApproval($sppd);
     $duration = \Carbon\Carbon::parse($sppd->start_date)->diffInDays(\Carbon\Carbon::parse($sppd->end_date)) + 1;
 
-    $approver = $lastApproval->approver;
+    $approver = $sptApproval?->approver;
     $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
       ? $approver->dprd_jabatan
-      : ($approver->position_name
-        ?? $approver->position?->name
-        ?? $lastApproval->role_label
+      : ($approver?->position_name
+        ?? $approver?->position?->name
+        ?? $sptApproval?->role_label
         ?? 'Kepala Dinas');
 
     $pdfData = [
@@ -854,33 +975,7 @@ class SppdController extends Controller
     $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
       || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
-    $sppdApproval = null;
-    if ($isDprd) {
-      // Untuk DPRD: penandatangan SPPD adalah Sekwan (Sekretaris DPRD).
-      // Cari approval dari user yang memiliki role 'sekwan'.
-      $sppdApproval = $sppd->approvals()
-        ->with('approver.roles')
-        ->get()
-        ->first(function ($approval) {
-          return $approval->approver && $approval->approver->hasRole('sekwan');
-        });
-    }
-
-    // Jika bukan DPRD atau Sekwan tidak ditemukan, gunakan logic default
-    if (!$sppdApproval) {
-      $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
-
-      $opdHeadApproval = $sppd->approvals()
-        ->with('approver.roles')
-        ->reorder('step_order', 'desc')
-        ->get()
-        ->first(function ($approval) use ($cityWideRoles) {
-          return $approval->approver &&
-            !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
-        });
-
-      $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
-    }
+    $sppdApproval = $this->resolveSppdApproval($sppd, $targetUser);
 
     $approver = $sppdApproval?->approver;
     $approverRole = $approver?->position_name

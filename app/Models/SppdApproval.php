@@ -16,14 +16,18 @@ class SppdApproval extends Model
     'status',
     'acted_at',
     'notes',
+    'signs_spt',
+    'signs_sppd',
   ];
 
   protected function casts(): array
   {
     return [
       'step_order' => 'integer',
-      'status' => ApprovalStatus::class,
-      'acted_at' => 'datetime',
+      'status'     => ApprovalStatus::class,
+      'acted_at'   => 'datetime',
+      'signs_spt'  => 'boolean',
+      'signs_sppd' => 'boolean',
     ];
   }
 
@@ -43,9 +47,9 @@ class SppdApproval extends Model
   public function approve(?string $notes = null): void
   {
     $this->update([
-      'status' => ApprovalStatus::APPROVED,
+      'status'   => ApprovalStatus::APPROVED,
       'acted_at' => now(),
-      'notes' => $notes,
+      'notes'    => $notes,
     ]);
   }
 
@@ -55,9 +59,9 @@ class SppdApproval extends Model
   public function reject(?string $notes = null): void
   {
     $this->update([
-      'status' => ApprovalStatus::REJECTED,
+      'status'   => ApprovalStatus::REJECTED,
       'acted_at' => now(),
-      'notes' => $notes,
+      'notes'    => $notes,
     ]);
   }
 }

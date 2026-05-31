@@ -120,25 +120,22 @@
 	<div class="header"
 		style="{{ $pdfData['is_walikota'] || (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/')) ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
 		@if ($pdfData['is_walikota'])
+			{{-- Saat Walikota penandatangannya, selalu gunakan KOP GARUDA --}}
 			<div style="text-align: center; margin-bottom: 10px;">
 				<img src="{{ public_path('img/garuda.png') }}" style="width: 110px; height: auto;">
 			</div>
 			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
-		@elseif (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
-			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
-		@elseif (
-			$sppd->user->department?->getRootDepartment()?->parent_id == null &&
-				$sppd->user->department?->getRootDepartment()?->name === 'WALIKOTA KENDARI')
-			{{-- Jika level OPD/Walikota --}}
-			<img src="{{ public_path('img/aruda.png') }}" class="logo">
-			<div style="font-size: 26pt; font-weight: bold;">WALIKOTA KENDARI</div>
 		@else
-			{{-- Jika level dinas --}}
-			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">
-				{{ $sppd->user->department?->getRootDepartment()?->name }}
-			</div>
-			<div style="font-size: 10pt;">{{ $sppd->user->department?->getRootDepartment()?->address ?? '' }}</div>
+			{{-- Jika penandatangan BUKAN Walikota, selalu gunakan KOP DARI INSTANSI --}}
+			@if (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
+				<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 103%; height: auto;">
+			@else
+				<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
+				<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">
+					{{ $sppd->user->department?->getRootDepartment()?->name }}
+				</div>
+				<div style="font-size: 10pt;">{{ $sppd->user->department?->getRootDepartment()?->address ?? '' }}</div>
+			@endif
 		@endif
 	</div>
 
@@ -284,7 +281,11 @@
 
 	<div class="clear"></div>
 
-	@if ($sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD)
+	@php
+		$isDprdDepartment = $sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD;
+		$isAnggotaDprd    = $sppd->user->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+	@endphp
+	@if (!($isDprdDepartment && $isAnggotaDprd))
 		<div class="tembusan">
 			<div>Tembusan Yth:</div>
 			<ol class="ordered-list">

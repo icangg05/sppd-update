@@ -104,15 +104,30 @@
 								</td>
 
 								<td class="py-2.5 px-4">
-									<div class="flex flex-wrap gap-1 items-center">
-										@foreach ($w->steps as $idx => $role)
-											<span
-												class="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] text-slate-700 font-medium">
-												<span class="text-cyan-600 font-bold mr-1">{{ $idx + 1 }}.</span>
-												{{ $roleLabels[$role] ?? ucwords(str_replace('_', ' ', $role)) }}
-											</span>
+									<div class="flex flex-wrap gap-1.5 items-center">
+										@foreach ($w->steps as $idx => $step)
+											@php
+												$roleName = is_array($step) ? ($step['role'] ?? '') : $step;
+												$signsSpt = is_array($step) ? (bool)($step['signs_spt'] ?? false) : false;
+												$signsSppd = is_array($step) ? (bool)($step['signs_sppd'] ?? false) : false;
+												$roleLabel = $roleLabels[$roleName] ?? ucwords(str_replace('_', ' ', $roleName));
+											@endphp
+											<div class="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm">
+												<span class="text-cyan-600 font-black">{{ $idx + 1 }}.</span>
+												<span>{{ $roleLabel }}</span>
+												@if ($signsSpt || $signsSppd)
+													<div class="flex items-center gap-0.5 ml-1 select-none">
+														@if ($signsSpt)
+															<span class="inline-flex items-center rounded bg-amber-100 px-1 py-0.25 text-[8px] font-black text-amber-700 uppercase tracking-tight scale-90" title="Menandatangani Dokumen SPT">SPT</span>
+														@endif
+														@if ($signsSppd)
+															<span class="inline-flex items-center rounded bg-teal-100 px-1 py-0.25 text-[8px] font-black text-teal-700 uppercase tracking-tight scale-90" title="Menandatangani Dokumen SPPD">SPPD</span>
+														@endif
+													</div>
+												@endif
+											</div>
 											@if (!$loop->last)
-												<i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mx-0.5"></i>
+												<i class="fa-solid fa-chevron-right text-[10px] text-slate-300 mx-0.5 shrink-0"></i>
 											@endif
 										@endforeach
 									</div>

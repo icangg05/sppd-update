@@ -281,8 +281,7 @@
 					    ->where('approver_id', auth()->id())
 					    ->where('status', \App\Enums\ApprovalStatus::PENDING)
 					    ->first();
-					$lastApprovalStep = $sppd->approvals->max('step_order');
-					$isFinalApproval = $myApproval && $myApproval->step_order === $lastApprovalStep;
+
 
 					// Cek apakah ada step sebelumnya yang belum disetujui
 					$hasUnapprovedPrevious = $myApproval
@@ -317,13 +316,13 @@
 									</p>
 								</div>
 							@else
-								@if ($isFinalApproval)
+								@if ($needsTte)
 									<div class="mb-4 rounded border border-blue-200 bg-blue-100/50 p-3">
 										<p class="text-xs font-bold text-blue-800">
-											<i class="fa-solid fa-file-signature mr-1"></i> Langkah Terakhir TTE
+											<i class="fa-solid fa-file-signature mr-1"></i> Penandatanganan Elektronik (TTE)
 										</p>
 										<p class="text-xs text-blue-700 mt-1">Masukkan passphrase TTE Anda untuk menyetujui sekaligus mengirim
-											permintaan penandatanganan elektronik SPPD.</p>
+											permintaan penandatanganan elektronik dokumen.</p>
 									</div>
 								@endif
 
@@ -333,7 +332,7 @@
 									 class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 min-h-[60px]"
 									 placeholder="Tambahkan catatan persetujuan (opsional)..."></textarea>
 
-									@if ($isFinalApproval)
+									@if ($needsTte)
 										<div>
 											<label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase
 												Penandatangan</label>

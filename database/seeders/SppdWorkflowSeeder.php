@@ -16,7 +16,10 @@ class SppdWorkflowSeeder extends Seeder
         'department_type' => ['dprd'],
         'applicant_role'  => ['anggota_dprd', 'pimpinan_dprd'],
         'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
-        'steps'           => ['sekwan', 'pimpinan_dprd'],
+        'steps'           => [
+          ['role' => 'sekwan', 'signs_spt' => false, 'signs_sppd' => true],
+          ['role' => 'pimpinan_dprd', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
       ],
 
       // Staff DPRD
@@ -25,7 +28,10 @@ class SppdWorkflowSeeder extends Seeder
         'department_type' => ['dprd'],
         'applicant_role'  => ['staf'],
         'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
-        'steps'           => ['kabid_irban_kabag', 'sekwan'],
+        'steps'           => [
+          ['role' => 'kabid_irban_kabag', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'sekwan', 'signs_spt' => true, 'signs_sppd' => true]
+        ],
       ],
 
       // Sekwan
@@ -34,14 +40,21 @@ class SppdWorkflowSeeder extends Seeder
         'department_type' => ['dprd'],
         'applicant_role'  => ['sekwan'],
         'destination'     => ['dalam_daerah'],
-        'steps'           => ['sekwan', 'sekda'],
+        'steps'           => [
+          ['role' => 'sekwan', 'signs_spt' => false, 'signs_sppd' => true],
+          ['role' => 'sekda', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
       ],
       [
         'name'            => 'Sekwan',
         'department_type' => ['dprd'],
         'applicant_role'  => ['sekwan'],
         'destination'     => ['lddp', 'ldlp'],
-        'steps'           => ['sekwan', 'sekda', 'walikota'],
+        'steps'           => [
+          ['role' => 'sekwan', 'signs_spt' => false, 'signs_sppd' => true],
+          ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'walikota', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
       ],
 
       // Kepala OPD
@@ -50,16 +63,26 @@ class SppdWorkflowSeeder extends Seeder
         'department_type' => ['opd'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['dalam_daerah'],
-        'steps'           => ['sekretaris_opd', 'kepala_opd'],
+        'steps'           => [
+          ['role' => 'sekretaris_opd', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'kepala_opd', 'signs_spt' => true, 'signs_sppd' => true]
+        ],
       ],
       [
         'name'            => 'Kepala OPD',
         'department_type' => ['opd'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['lddp', 'ldlp'],
-        'steps'           => ['sekretaris_opd', 'kepala_opd', 'sekda', 'walikota'],
+        'steps'           => [
+          ['role' => 'sekretaris_opd', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'kepala_opd', 'signs_spt' => false, 'signs_sppd' => true],
+          ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'walikota', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
       ],
     ];
+
+    SppdWorkflow::truncate();
 
     foreach ($workflows as $wf) {
       SppdWorkflow::create($wf);

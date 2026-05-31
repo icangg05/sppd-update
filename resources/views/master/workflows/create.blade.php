@@ -128,25 +128,41 @@
 
 {{-- Template Item Alur Dinamis --}}
 <template id="step-template">
-  <div class="step-item flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded transition-all duration-150 cursor-grab active:cursor-grabbing"
+  <div class="step-item flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm"
        draggable="true">
-    <div class="drag-handle flex flex-col gap-0.5 px-1 text-slate-300 hover:text-slate-500 shrink-0 cursor-grab active:cursor-grabbing" title="Drag untuk ubah urutan">
-      <i class="fa-solid fa-grip-vertical text-sm"></i>
-    </div>
-    <div class="step-number w-6 h-6 flex items-center justify-center bg-slate-200 border border-slate-300 text-slate-700 font-black rounded text-[11px] shrink-0 shadow-inner">1</div>
+    <div class="flex items-center gap-2 flex-1 w-full">
+      <div class="drag-handle flex flex-col gap-0.5 px-1 text-slate-300 hover:text-slate-500 shrink-0 cursor-grab active:cursor-grabbing" title="Drag untuk ubah urutan">
+        <i class="fa-solid fa-grip-vertical text-sm"></i>
+      </div>
+      <div class="step-number w-6 h-6 flex items-center justify-center bg-slate-200 border border-slate-300 text-slate-700 font-black rounded text-[11px] shrink-0 shadow-inner">1</div>
 
-    <div class="flex-1">
-      <select name="steps[]" class="block w-full rounded border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
-        <option value="">-- Pilih Role Approver --</option>
-        @foreach($roles as $role)
-          <option value="{{ $role->name }}">{{ $role->label ?? $role->name }}</option>
-        @endforeach
-      </select>
+      <div class="flex-1">
+        <select class="role-select block w-full rounded border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
+          <option value="">-- Pilih Role Approver --</option>
+          @foreach($roles as $role)
+            <option value="{{ $role->name }}">{{ $role->label ?? $role->name }}</option>
+          @endforeach
+        </select>
+      </div>
     </div>
 
-    <button type="button" class="remove-step-btn p-1.5 text-slate-400 border border-transparent rounded hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors shrink-0" title="Hapus Tahap">
-      <i class="fa-solid fa-trash-can text-xs"></i>
-    </button>
+    <div class="flex items-center justify-between sm:justify-start gap-4 px-2 sm:px-0 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+      <div class="flex items-center gap-4">
+        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-cyan-600 transition-colors">
+          <input type="checkbox" class="signs-spt-checkbox rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-4 h-4 transition-colors" value="1">
+          <span>TTD SPT</span>
+        </label>
+
+        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-cyan-600 transition-colors">
+          <input type="checkbox" class="signs-sppd-checkbox rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-4 h-4 transition-colors" value="1">
+          <span>TTD SPPD</span>
+        </label>
+      </div>
+
+      <button type="button" class="remove-step-btn p-1.5 text-slate-400 border border-transparent rounded hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors shrink-0" title="Hapus Tahap">
+        <i class="fa-solid fa-trash-can text-xs"></i>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -160,22 +176,55 @@ document.addEventListener('DOMContentLoaded', function() {
   const oldSteps = @json(old('steps', []));
 
   if (oldSteps.length > 0) {
-    oldSteps.forEach(role => addStep(role));
+    oldSteps.forEach(step => {
+      if (typeof step === 'object' && step !== null) {
+        addStep(step.role, step.signs_spt, step.signs_sppd);
+      } else {
+        addStep(step);
+      }
+    });
   } else {
     addStep();
   }
 
   addBtn.addEventListener('click', () => addStep());
 
-  function addStep(selectedRole = '') {
+  function addStep(selectedRole = '', signsSpt = false, signsSppd = false) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = template;
     const stepEl = tempDiv.firstElementChild;
 
     if (selectedRole) {
-      const select = stepEl.querySelector('select');
+      const select = stepEl.querySelector('.role-select');
       select.value = selectedRole;
     }
+
+    if (signsSpt) {
+      stepEl.querySelector('.signs-spt-checkbox').checked = true;
+    }
+
+    if (signsSppd) {
+      stepEl.querySelector('.signs-sppd-checkbox').checked = true;
+    }
+
+    const sptCheckbox = stepEl.querySelector('.signs-spt-checkbox');
+    const sppdCheckbox = stepEl.querySelector('.signs-sppd-checkbox');
+
+    sptCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        document.querySelectorAll('.signs-spt-checkbox').forEach(cb => {
+          if (cb !== this) cb.checked = false;
+        });
+      }
+    });
+
+    sppdCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        document.querySelectorAll('.signs-sppd-checkbox').forEach(cb => {
+          if (cb !== this) cb.checked = false;
+        });
+      }
+    });
 
     stepEl.querySelector('.remove-step-btn').addEventListener('click', function() {
       if (container.children.length > 1) {
@@ -249,6 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const items = container.querySelectorAll('.step-item');
     items.forEach((item, index) => {
       item.querySelector('.step-number').textContent = index + 1;
+      
+      // Update input names with contiguous index
+      item.querySelector('.role-select').name = `steps[${index}][role]`;
+      item.querySelector('.signs-spt-checkbox').name = `steps[${index}][signs_spt]`;
+      item.querySelector('.signs-sppd-checkbox').name = `steps[${index}][signs_sppd]`;
     });
   }
 });

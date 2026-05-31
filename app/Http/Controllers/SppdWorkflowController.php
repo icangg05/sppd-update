@@ -64,9 +64,29 @@ class SppdWorkflowController extends Controller
       'destination'     => 'nullable|array',
       'destination.*'   => 'required|string',
       'steps'           => 'required|array|min:1',
-      'steps.*'         => 'required|string',
+      'steps.*.role'    => 'required|string',
+      'steps.*.signs_spt'=> 'nullable',
+      'steps.*.signs_sppd'=> 'nullable',
       'is_active'       => 'nullable',
     ]);
+
+    $validated['steps'] = array_map(function ($step) {
+      return [
+        'role' => $step['role'],
+        'signs_spt' => filter_var($step['signs_spt'] ?? false, FILTER_VALIDATE_BOOLEAN),
+        'signs_sppd' => filter_var($step['signs_sppd'] ?? false, FILTER_VALIDATE_BOOLEAN),
+      ];
+    }, $request->steps);
+
+    $sptCount = collect($validated['steps'])->where('signs_spt', true)->count();
+    if ($sptCount !== 1) {
+      return back()->withInput()->withErrors(['steps' => 'Harus ada tepat satu langkah (step) yang ditugaskan untuk menandatangani SPT.']);
+    }
+
+    $sppdCount = collect($validated['steps'])->where('signs_sppd', true)->count();
+    if ($sppdCount !== 1) {
+      return back()->withInput()->withErrors(['steps' => 'Harus ada tepat satu langkah (step) yang ditugaskan untuk menandatangani SPPD.']);
+    }
 
     $validated['is_active'] = $request->has('is_active');
 
@@ -96,9 +116,29 @@ class SppdWorkflowController extends Controller
       'destination'     => 'nullable|array',
       'destination.*'   => 'required|string',
       'steps'           => 'required|array|min:1',
-      'steps.*'         => 'required|string',
+      'steps.*.role'    => 'required|string',
+      'steps.*.signs_spt'=> 'nullable',
+      'steps.*.signs_sppd'=> 'nullable',
       'is_active'       => 'nullable',
     ]);
+
+    $validated['steps'] = array_map(function ($step) {
+      return [
+        'role' => $step['role'],
+        'signs_spt' => filter_var($step['signs_spt'] ?? false, FILTER_VALIDATE_BOOLEAN),
+        'signs_sppd' => filter_var($step['signs_sppd'] ?? false, FILTER_VALIDATE_BOOLEAN),
+      ];
+    }, $request->steps);
+
+    $sptCount = collect($validated['steps'])->where('signs_spt', true)->count();
+    if ($sptCount !== 1) {
+      return back()->withInput()->withErrors(['steps' => 'Harus ada tepat satu langkah (step) yang ditugaskan untuk menandatangani SPT.']);
+    }
+
+    $sppdCount = collect($validated['steps'])->where('signs_sppd', true)->count();
+    if ($sppdCount !== 1) {
+      return back()->withInput()->withErrors(['steps' => 'Harus ada tepat satu langkah (step) yang ditugaskan untuk menandatangani SPPD.']);
+    }
 
     $validated['is_active'] = $request->has('is_active');
 

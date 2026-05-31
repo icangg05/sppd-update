@@ -49,18 +49,22 @@ class SppdWorkflowService
     $stepOrder = 1;
     $approvals = [];
 
-    foreach ($workflow->steps as $stepRole) {
+    foreach ($workflow->steps as $step) {
+      $stepRole = is_array($step) ? ($step['role'] ?? '') : $step;
+      if (empty($stepRole)) {
+        continue;
+      }
+
       $approver = $this->resolveApprover($stepRole, $pelaksana);
 
       if ($approver) {
         $approvals[] = [
-          'sppd_request_id' => $sppd->id,
           'approver_id'     => $approver->id,
           'role_label'      => $this->getApproverLabel($approver, $stepRole),
           'step_order'      => $stepOrder++,
           'status'          => 'pending',
-          'created_at'      => now(),
-          'updated_at'      => now(),
+          'signs_spt'       => is_array($step) && filter_var($step['signs_spt'] ?? false, FILTER_VALIDATE_BOOLEAN),
+          'signs_sppd'      => is_array($step) && filter_var($step['signs_sppd'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
       } else {
         Log::warning("Could not resolve approver for role '{$stepRole}' for SPPD {$sppd->id}");
@@ -76,7 +80,7 @@ class SppdWorkflowService
     if (!empty($approvals)) {
       // Delete existing just in case (e.g. if regenerating)
       $sppd->approvals()->delete();
-      $sppd->approvals()->insert($approvals);
+      $sppd->approvals()->createMany($approvals);
       return true;
     }
   }
@@ -115,13 +119,20 @@ class SppdWorkflowService
     }
 
     $simulatedSteps = [];
-    foreach ($workflow->steps as $stepRole) {
+    foreach ($workflow->steps as $step) {
+      $stepRole = is_array($step) ? ($step['role'] ?? '') : $step;
+      if (empty($stepRole)) {
+        continue;
+      }
+
       $approver = $this->resolveApprover($stepRole, $pelaksana);
       $simulatedSteps[] = [
         'role' => $stepRole,
         'role_label' => $this->getApproverLabel($approver ?? new User(), $stepRole),
         'approver_name' => $approver ? $approver->name : 'Pejabat tidak ditemukan',
-        'status' => $approver ? 'found' : 'not_found'
+        'status' => $approver ? 'found' : 'not_found',
+        'signs_spt' => is_array($step) ? ($step['signs_spt'] ?? false) : false,
+        'signs_sppd' => is_array($step) ? ($step['signs_sppd'] ?? false) : false,
       ];
     }
 

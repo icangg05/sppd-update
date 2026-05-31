@@ -80,28 +80,7 @@ class PdfGeneratorService
         $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
             || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
-        $sppdApproval = null;
-        if ($isDprd) {
-            $sppdApproval = $sppd->approvals()
-                ->with('approver.roles')
-                ->get()
-                ->first(function ($approval) {
-                    return $approval->approver && $approval->approver->hasRole('sekwan');
-                });
-        }
-
-        if (!$sppdApproval) {
-            $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
-            $opdHeadApproval = $sppd->approvals()
-                ->with('approver.roles')
-                ->reorder('step_order', 'desc')
-                ->get()
-                ->first(function ($approval) use ($cityWideRoles) {
-                    return $approval->approver && !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
-                });
-
-            $sppdApproval = $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
-        }
+        $sppdApproval = $this->resolveSppdApproval($sppd, $targetUser);
 
         $approver = $sppdApproval?->approver;
         $approverRole = $approver?->position_name ?? $approver?->position?->name ?? $sppdApproval?->role_label ?? 'Kepala Dinas';
@@ -138,23 +117,23 @@ class PdfGeneratorService
     protected function buildSptData(SppdRequest $sppd): array
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-        $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
+        $sptApproval = $this->resolveSptApproval($sppd);
         $duration = $sppd->start_date->diffInDays($sppd->end_date) + 1;
 
-        $approver = $lastApproval?->approver;
+        $approver = $sptApproval?->approver;
         $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
             ? $approver->dprd_jabatan
-            : ($approver?->position_name ?? $approver?->position?->name ?? $lastApproval?->role_label ?? 'Kepala Dinas');
+            : ($approver?->position_name ?? $approver?->position?->name ?? $sptApproval?->role_label ?? 'Kepala Dinas');
 
         $isDprd = $sppd->user->department?->type === \App\Enums\DepartmentType::DPRD
             || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
 
         $pdfData = [
-            'approver_name' => $approver->name ?? '................................',
+            'approver_name' => $approver?->name ?? '................................',
             'approver_role' => $approverRole,
-            'approver_nip' => $approver->nip ?? null,
-            'approver_rank' => $approver->rank->name ?? '',
-            'approver_group' => $approver->rank->group ?? '',
+            'approver_nip' => $approver?->nip ?? null,
+            'approver_rank' => $approver?->rank?->name ?? '',
+            'approver_group' => $approver?->rank?->group ?? '',
             'is_walikota' => $approver && $approver->hasRole('walikota'),
             'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
@@ -176,5 +155,53 @@ class PdfGeneratorService
                 'pdfData' => $pdfData,
             ],
         ];
+    }
+
+    private function resolveSptApproval(SppdRequest $sppd)
+    {
+        $approval = $sppd->approvals()->where('signs_spt', true)->first();
+        if ($approval) {
+            return $approval;
+        }
+
+        // Fallback: last step
+        return $sppd->approvals()->reorder('step_order', 'desc')->first();
+    }
+
+    private function resolveSppdApproval(SppdRequest $sppd, ?\App\Models\User $targetUser = null)
+    {
+        $approval = $sppd->approvals()->where('signs_sppd', true)->first();
+        if ($approval) {
+            return $approval;
+        }
+
+        // Fallback: existing custom logic
+        $targetUser = $targetUser ?? $sppd->user;
+        $isDprd = $targetUser->department?->type === \App\Enums\DepartmentType::DPRD
+            || $targetUser->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
+
+        if ($isDprd) {
+            $sppdApproval = $sppd->approvals()
+                ->with('approver.roles')
+                ->get()
+                ->first(function ($approval) {
+                    return $approval->approver && $approval->approver->hasRole('sekwan');
+                });
+            if ($sppdApproval) {
+                return $sppdApproval;
+            }
+        }
+
+        $cityWideRoles = ['walikota', 'sekda', 'kepala_daerah'];
+        $opdHeadApproval = $sppd->approvals()
+            ->with('approver.roles')
+            ->reorder('step_order', 'desc')
+            ->get()
+            ->first(function ($approval) use ($cityWideRoles) {
+                return $approval->approver &&
+                    !$approval->approver->roles->pluck('name')->intersect($cityWideRoles)->isNotEmpty();
+            });
+
+        return $opdHeadApproval ?? $sppd->approvals()->reorder('step_order', 'asc')->first();
     }
 }
