@@ -20,8 +20,7 @@ class UserController extends Controller
     if (!auth()->user()->hasRole('super_admin')) {
       $dept = auth()->user()->department;
       if ($dept) {
-        $rootDept = $dept->getRootDepartment();
-        $relatedIds = $rootDept->getAllRelatedIds();
+        $relatedIds = $dept->getAllRelatedIds();
         $query->whereIn('department_id', $relatedIds);
       } else {
         $query->where('department_id', auth()->user()->department_id);
@@ -83,8 +82,7 @@ class UserController extends Controller
     } else {
       // Admin OPD bisa melihat OPD induknya dan semua sub-department di bawahnya
       $dept = $user->department;
-      $rootDept = $dept ? $dept->getRootDepartment() : $dept;
-      $roots = $rootDept ? Department::where('id', $rootDept->id)->get() : collect();
+      $roots = $dept ? Department::where('id', $dept->id)->get() : collect();
     }
 
     $list = [];
@@ -126,8 +124,7 @@ class UserController extends Controller
       // Pastikan department yang dipilih berada dalam hierarki OPD admin
       $dept = auth()->user()->department;
       if ($dept && !empty($validated['department_id'])) {
-        $rootDept = $dept->getRootDepartment();
-        $allowedIds = $rootDept->getAllRelatedIds();
+        $allowedIds = $dept->getAllRelatedIds();
         if (!$allowedIds->contains($validated['department_id'])) {
           $validated['department_id'] = auth()->user()->department_id;
         }
@@ -183,8 +180,7 @@ class UserController extends Controller
       // Pastikan department yang dipilih berada dalam hierarki OPD admin
       $dept = auth()->user()->department;
       if ($dept && !empty($validated['department_id'])) {
-        $rootDept = $dept->getRootDepartment();
-        $allowedIds = $rootDept->getAllRelatedIds();
+        $allowedIds = $dept->getAllRelatedIds();
         if (!$allowedIds->contains($validated['department_id'])) {
           $validated['department_id'] = auth()->user()->department_id;
         }

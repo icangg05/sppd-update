@@ -36,6 +36,21 @@ class SppdController extends Controller
 
     $query = SppdRequest::with(['user', 'category', 'budget.department']);
 
+    // Filter by department hierarchy (Option B)
+    if (!Auth::user()->hasRole('super_admin')) {
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $allowedIds = $dept->getAllRelatedIds();
+        $query->whereHas('user', function ($q) use ($allowedIds) {
+          $q->whereIn('department_id', $allowedIds);
+        });
+      } else {
+        $query->whereHas('user', function ($q) {
+          $q->where('department_id', Auth::user()->department_id);
+        });
+      }
+    }
+
     // Filter by status
     if ($request->filled('status')) {
       $query->where('status', $request->status);
@@ -113,8 +128,7 @@ class SppdController extends Controller
     if (!Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $rootDept = $dept->getRootDepartment();
-        $query->whereIn('department_id', $rootDept->getAllRelatedIds());
+        $query->whereIn('department_id', $dept->getAllRelatedIds());
       } else {
         $query->where('department_id', Auth::user()->department_id);
       }
@@ -137,8 +151,7 @@ class SppdController extends Controller
     if (!Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $rootDept = $dept->getRootDepartment();
-        $allowedIds = $rootDept->getAllRelatedIds();
+        $allowedIds = $dept->getAllRelatedIds();
         if (!$allowedIds->contains($pelaksana->department_id)) {
           return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
         }
@@ -188,8 +201,7 @@ class SppdController extends Controller
     if (!Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $rootDept = $dept->getRootDepartment();
-        $budgetQuery->whereIn('department_id', $rootDept->getAllRelatedIds());
+        $budgetQuery->whereIn('department_id', $dept->getAllRelatedIds());
       } else {
         $budgetQuery->where('department_id', Auth::user()->department_id);
       }
@@ -203,8 +215,7 @@ class SppdController extends Controller
     if (!Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $rootDept = $dept->getRootDepartment();
-        $userQuery->whereIn('department_id', $rootDept->getAllRelatedIds());
+        $userQuery->whereIn('department_id', $dept->getAllRelatedIds());
       } else {
         $userQuery->where('department_id', Auth::user()->department_id);
       }

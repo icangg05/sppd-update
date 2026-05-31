@@ -38,7 +38,7 @@
 				<div
 					class="inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
 					<span class="inline-block h-2 w-2 rounded-full bg-sky-200"></span>
-					SPPD Kota Kendari
+					E-SPPD Kota Kendari
 				</div>
 
 				<div
