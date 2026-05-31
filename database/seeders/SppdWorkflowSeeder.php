@@ -10,6 +10,19 @@ class SppdWorkflowSeeder extends Seeder
   public function run(): void
   {
     $workflows = [
+      // Walikota & Wakil Walikota
+      [
+        'name'            => 'Walikota & Wakil Walikota',
+        'department_type' => ['opd'],
+        'applicant_role'  => ['walikota', 'wakil_walikota'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'steps'           => [
+          ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => true],
+          ['role' => 'walikota', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
+      ],
+
+
       // Anggota DPRD
       [
         'name'            => 'Anggota DPRD',

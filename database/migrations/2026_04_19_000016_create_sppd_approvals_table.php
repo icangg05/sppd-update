@@ -15,6 +15,8 @@ return new class extends Migration
       $table->string('role_label')->comment('Label jabatan penyetuju, misal: Kasubag, Sekda, Walikota');
       $table->unsignedTinyInteger('step_order')->comment('Urutan langkah persetujuan');
       $table->string('status')->default('pending')->comment('pending, approved, rejected, revision');
+      $table->boolean('signs_spt')->default(false);
+      $table->boolean('signs_sppd')->default(false);
       $table->timestamp('acted_at')->nullable();
       $table->text('notes')->nullable();
       $table->timestamps();

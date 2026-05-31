@@ -13,12 +13,15 @@
 				<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
 			</div>
 			<div class="flex flex-col gap-2 md:flex-row md:items-center">
+				@php
+					$isDprd =
+					    auth()->user()->department?->type?->value === 'dprd' ||
+					    auth()->user()->department?->parent?->type?->value === 'dprd';
+					$isSuperAdmin = auth()->user()->hasRole('super_admin');
+				@endphp
+
 				<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-					<button onclick="filterByJabatan('')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ !request('jabatan') ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Semua Jabatan
-					</button>
-					@if (auth()->user()->department?->type === \App\Enums\DepartmentType::DPRD || auth()->user()->department?->parent?->type === \App\Enums\DepartmentType::DPRD)
+					@if ($isSuperAdmin || $isDprd)
 						<button onclick="filterByJabatan('anggota_dprd')"
 							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'anggota_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 							Anggota DPRD
@@ -31,26 +34,16 @@
 							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'sekwan' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 							Sekwan
 						</button>
-					@else
+					@endif
+
+					@if ($isSuperAdmin || !$isDprd)
 						<button onclick="filterByJabatan('kepala_opd')"
 							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'kepala_opd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 							Kepala OPD
 						</button>
-						<button onclick="filterByJabatan('eselon_ii')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'eselon_ii' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Eselon II
-						</button>
 						<button onclick="filterByJabatan('eselon_iii')"
 							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'eselon_iii' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Eselon III
-						</button>
-						<button onclick="filterByJabatan('eselon_iv')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'eselon_iv' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Eselon IV
-						</button>
-						<button onclick="filterByJabatan('staf')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ request('jabatan') === 'staf' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Staf
+							Eselon III, IV & Staf
 						</button>
 					@endif
 				</div>
@@ -70,7 +63,7 @@
 		{{-- Bar Filter --}}
 		<div class="rounded border border-slate-200 bg-white p-4 shadow-md">
 			<form method="GET" action="{{ route('sppd.index') }}" class="flex flex-col gap-3 sm:flex-row">
-				@if(request('jabatan'))
+				@if (request('jabatan'))
 					<input type="hidden" name="jabatan" value="{{ request('jabatan') }}">
 				@endif
 				<div class="flex-1">
@@ -167,7 +160,7 @@
 									{{ $sppd->user->name }}
 								</p>
 
-								@if(!auth()->user()->hasRole('super_admin'))
+								@if (!auth()->user()->hasRole('super_admin'))
 									<p class="text-[11px] text-cyan-600 mt-0.5 font-medium">
 										{{ $sppd->user->department?->name ?? '-' }}
 									</p>

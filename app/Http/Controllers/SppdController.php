@@ -12,7 +12,6 @@ use App\Models\Budget;
 use App\Models\Province;
 use App\Models\SppdApproval;
 use App\Models\SppdCategory;
-use App\Models\SppdDigitalSignature;
 use App\Models\SppdRequest;
 use App\Models\User;
 use App\Services\SppdWorkflowService;
@@ -24,8 +23,17 @@ use Illuminate\Support\Str;
 
 class SppdController extends Controller
 {
-  public function index(Request $request)
+  public function index(Request $request): \Illuminate\View\View
   {
+    if (!$request->has('jabatan')) {
+      $user = Auth::user();
+      $isDprd = $user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd';
+      $isSuperAdmin = $user->hasRole('super_admin');
+
+      $defaultJabatan = ($isSuperAdmin || $isDprd) ? 'anggota_dprd' : 'kepala_opd';
+      $request->merge(['jabatan' => $defaultJabatan]);
+    }
+
     $query = SppdRequest::with(['user', 'category', 'budget.department']);
 
     // Filter by status

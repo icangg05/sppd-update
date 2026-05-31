@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Budget;
-use App\Models\Department;
 use Illuminate\Database\Seeder;
 
 class BudgetSeeder extends Seeder
@@ -11,6 +10,32 @@ class BudgetSeeder extends Seeder
   public function run(): void
   {
     $year = (int) date('Y');
+
+    // PEMERINTAH KOTA
+    $programPemerintahKota = [
+      [
+        'program'  => 'ADMINISTRASIAN TATA PEMERINTAHAN',
+        'kegiatan' => 'PENATAAN ADMINISTRASI PEMERINTAHAN 2026',
+        'kode'     => '5.1.02.04.001.00001',
+        'uraian'   => 'Pelaksanaan Reses',
+        'type'     => 'Perjalanan Dinas Luar Daerah',
+        'source'   => 'APBD'
+      ],
+    ];
+
+    foreach ($programPemerintahKota as $p) {
+      Budget::create([
+        'department_id' => 45,
+        'account_code'  => $p['kode'],
+        'year'          => $year,
+        'type'          => $p['type'],
+        'source'        => $p['source'],
+        'program'       => $p['program'],
+        'activity'      => $p['kegiatan'],
+        'description'   => $p['uraian'],
+        'total_amount'  => rand(50, 500) * 1_000_000
+      ]);
+    }
 
 
     // Kominfo

@@ -32,6 +32,10 @@ class DummyUserSeeder extends Seeder
     $inspektur            = Position::where('name', 'Inspektur')->first();
     $sekrin               = Position::where('name', 'Sekretaris Inspektur')->first();
     $sekwan               = Position::where('name', 'Sekretaris Dewan')->first();
+    $sekda                = Position::where('name', 'Sekretaris Daerah')->first();
+
+    $walikota             = Position::where('name', 'Walikota')->first();
+    $wakilWalikota        = Position::where('name', 'Wakil Walikota')->first();
 
 
     // ─── Pejabat Seeder ───
@@ -41,17 +45,18 @@ class DummyUserSeeder extends Seeder
         'name'          => 'dr. Hj. SISKA KARINA, SKM.',
         'username'      => 'walikota',
         'email'         => null,
-        'nik'           => null,
+        'nik'           => '7471086212880002',
         'nip'           => null,
         'employee_type' => EmployeeType::LAINNYA,
         'department_id' => 45,
         'rank_id'       => null,
+        'position_id'   => $walikota?->id,
         'role'          => 'walikota',
       ],
 
       // Wakil Walikota
       [
-        'name'          => 'SUDJIRMAN, S.I.Kom.',
+        'name'          => 'SUDIRMAN, S.I.Kom.',
         'username'      => 'wakil_walikota',
         'email'         => null,
         'nik'           => null,
@@ -59,7 +64,20 @@ class DummyUserSeeder extends Seeder
         'employee_type' => EmployeeType::LAINNYA,
         'department_id' => 45,
         'rank_id'       => null,
+        'position_id'   => $wakilWalikota?->id,
         'role'          => 'wakil_walikota',
+      ],
+      // Admin Pemkot
+      [
+        'name'          => 'Imam Saputra, S.H.',
+        'username'      => 'admin_pemkot',
+        'email'         => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 45,
+        'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
       ],
 
       // Sekda
@@ -72,6 +90,7 @@ class DummyUserSeeder extends Seeder
         'employee_type' => EmployeeType::PNS,
         'department_id' => 3,
         'rank_id'       => $rankIVd?->id,
+        'position_id'   => $sekda?->id,
         'role'          => 'sekda',
       ],
 

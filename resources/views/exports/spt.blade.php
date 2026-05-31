@@ -49,7 +49,7 @@
 
 		.content-table {
 			width: 100%;
-			margin-top: 35px;
+			margin-top: 20px;
 			vertical-align: top;
 		}
 
@@ -283,7 +283,7 @@
 
 	@php
 		$isDprdDepartment = $sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD;
-		$isAnggotaDprd    = $sppd->user->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+		$isAnggotaDprd = $sppd->user->hasRole(['anggota_dprd', 'pimpinan_dprd']);
 	@endphp
 	@if (!($isDprdDepartment && $isAnggotaDprd))
 		<div class="tembusan">

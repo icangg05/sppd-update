@@ -37,6 +37,10 @@ class PositionAndRankSeeder extends Seeder
 
     // ── Jabatan ──
     $positions = [
+      'Walikota',
+      'Wakil Walikota',
+      'Sekretaris Daerah',
+      'Staf Ahli',
       'Kepala Dinas',
       'Sekretaris Dinas',
       'Kepala Bagian',
