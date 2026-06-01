@@ -122,7 +122,7 @@
 		@if ($pdfData['is_walikota'])
 			{{-- Saat Walikota penandatangannya, selalu gunakan KOP GARUDA --}}
 			<div style="text-align: center; margin-bottom: 10px;">
-				<img src="{{ public_path('img/garuda.png') }}" style="width: 110px; height: auto;">
+				<img src="{{ public_path('img/garuda.webp') }}" style="width: 110px; height: auto;">
 			</div>
 			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
 		@else

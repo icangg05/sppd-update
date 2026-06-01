@@ -69,7 +69,7 @@
 
 		{{-- Table --}}
 		<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-			<div class="overflow-x-auto">
+			<div class="overflow-x-auto custom-scrollbar">
 				<table class="w-full text-left whitespace-nowrap">
 					<thead
 						class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
@@ -87,23 +87,44 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-100 text-slate-700">
+						@php $lastDeptId = null; @endphp
 						@forelse($users as $i => $user)
+							@php
+								$deptId = $user->department_id;
+								$depth = $deptDepthMap[$deptId] ?? 0;
+								$indent = $depth * 16;
+								$colCount = auth()->user()->hasRole('super_admin') ? 9 : 8;
+							@endphp
+
+							{{-- Department group header row when department changes --}}
+							@if ($deptId !== $lastDeptId)
+								@php $lastDeptId = $deptId; @endphp
+								<tr class="bg-slate-50/80 border-y border-slate-100">
+									<td colspan="{{ $colCount }}" class="py-1.5 px-4">
+										<div class="flex items-center gap-2" style="padding-left: {{ $indent }}px">
+											@if ($depth > 0)
+												<i class="fa-solid fa-sitemap text-[9px] text-slate-400"></i>
+											@else
+												<i class="fa-solid fa-building-columns text-[9px] text-cyan-500"></i>
+											@endif
+											<span
+												class="text-[10px] font-bold uppercase tracking-widest {{ $depth === 0 ? 'text-cyan-700' : ($depth === 1 ? 'text-slate-600' : 'text-slate-400') }}">
+												{{ $user->department?->name ?? '-' }}
+											</span>
+										</div>
+									</td>
+								</tr>
+							@endif
+
 							<tr class="hover:bg-slate-50/50 transition-colors">
 								<td class="py-3 px-4 text-center text-xs text-slate-400">{{ $users->firstItem() + $i }}</td>
 
-								<td class="py-3 px-4">
-									<div class="flex items-center gap-3">
-										{{-- Avatar Cyan --}}
-										<div
-											class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-cyan-700 ring-2 ring-white shadow-sm">
-											{{ strtoupper(substr($user->name, 0, 1)) }}
-										</div>
-										<div>
-											<p class="text-sm font-semibold text-slate-900">{{ $user->name }}</p>
-											<div class="flex items-center gap-2 mt-0.5">
-												<span class="text-xs text-slate-500">NIP: {{ $user->nip ?? '-' }}</span>
-											</div>
-										</div>
+								{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
+								<td class="py-2.5 px-4">
+									<div style="padding-left: {{ $indent + 12 }}px">
+										<p class="text-sm font-semibold text-slate-900 leading-snug">{{ $user->name }}</p>
+										<span
+											class="text-[12px] text-slate-500">{{ $user->nip ? 'NIP: ' . $user->nip : ($user->nik ? 'NIK: ' . $user->nik : 'NIP: -') }}</span>
 									</div>
 								</td>
 
@@ -113,7 +134,6 @@
 
 								<td class="py-3 px-4">
 									<div class="text-sm text-slate-600">{{ $user->position?->name ?? '-' }}</div>
-									<div class="text-[11px] text-cyan-600 mt-0.5 font-medium">{{ $user->department?->name ?? '-' }}</div>
 								</td>
 
 								<td class="py-3 px-4">
@@ -128,7 +148,6 @@
 								<td class="py-3 px-4">
 									<div class="flex flex-wrap gap-1">
 										@foreach ($user->roles as $role)
-											{{-- Badge Role disesuaikan ke rumpun warna Cyan / Sky agar selaras --}}
 											<span
 												class="inline-flex items-center rounded-md bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
 												{{ $role->name }}

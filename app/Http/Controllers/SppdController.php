@@ -503,11 +503,22 @@ class SppdController extends Controller
   {
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
 
-    // Cari bendahara pengeluaran di OPD terkait
-    $bendahara = User::role('bendahara')
-      ->where('department_id', $sppd->user->department_id)
-      ->where('is_active', true)
-      ->first();
+    // Cari bendahara pengeluaran di OPD terkait (dengan fallback ke induk jika di sub-unit)
+    $dept = $sppd->user->department;
+    $bendahara = null;
+    if ($dept) {
+      $bendahara = User::role('bendahara')
+        ->where('department_id', $dept->id)
+        ->where('is_active', true)
+        ->first();
+
+      if (!$bendahara && $dept->parent_id) {
+        $bendahara = User::role('bendahara')
+          ->where('department_id', $dept->parent_id)
+          ->where('is_active', true)
+          ->first();
+      }
+    }
 
     return view('sppd.costs.receipts', compact('sppd', 'bendahara'));
   }

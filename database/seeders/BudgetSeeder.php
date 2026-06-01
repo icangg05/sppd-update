@@ -37,6 +37,31 @@ class BudgetSeeder extends Seeder
       ]);
     }
 
+    // SEKRETARIAT DAERAH
+    $programSetda = [
+      [
+        'program'  => 'PROGRAM PEMERINTAHAN DAN KESEJAHTERAAN RAKYAT',
+        'kegiatan' => 'ADMINISTRASI TATA PEMERINTAHAN',
+        'kode'     => '5.1.02.04.01.0003',
+        'uraian'   => 'Pengelolaan Administrasi Kewilayahan',
+        'type'     => 'Perjalanan Dinas Dalam Daerah',
+        'source'   => 'APBD'
+      ],
+    ];
+
+    foreach ($programSetda as $p) {
+      Budget::create([
+        'department_id' => 3,
+        'account_code'  => $p['kode'],
+        'year'          => $year,
+        'type'          => $p['type'],
+        'source'        => $p['source'],
+        'program'       => $p['program'],
+        'activity'      => $p['kegiatan'],
+        'description'   => $p['uraian'],
+        'total_amount'  => rand(50, 500) * 1_000_000
+      ]);
+    }
 
     // Kominfo
     $programsKominfo = [

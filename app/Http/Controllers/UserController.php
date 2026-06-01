@@ -56,12 +56,43 @@ class UserController extends Controller
       $query->where('department_id', $request->department_id);
     }
 
+    // Order by department from root to descendants, then by name
+    $sortedDeptIds = Department::whereNull('parent_id')
+      ->with('children')
+      ->get()
+      ->flatMap(function ($dept) {
+        return $dept->getAllRelatedIds();
+      })
+      ->filter()
+      ->unique()
+      ->values()
+      ->toArray();
+
+    if (!empty($sortedDeptIds)) {
+      $idsString = implode(',', $sortedDeptIds);
+      $query->orderByRaw("FIELD(department_id, {$idsString}) = 0")
+        ->orderByRaw("FIELD(department_id, {$idsString})");
+    }
+
     $users = $query->orderBy('name')->paginate(20)->withQueryString();
+
+    // Build a depth map for department indentation — avoids N+1 by using in-memory lookup
+    $allDepts = Department::all()->keyBy('id');
+    $deptDepthMap = $allDepts->mapWithKeys(function ($dept) use ($allDepts) {
+      $depth   = 0;
+      $current = $dept;
+      while ($current->parent_id && $allDepts->has($current->parent_id)) {
+        $depth++;
+        $current = $allDepts->get($current->parent_id);
+      }
+
+      return [$dept->id => $depth];
+    });
 
     // Dropdown department hanya untuk super admin atau minimal tampilkan department sendiri
     $departments = $this->getHierarchicalDepartments();
 
-    return view('master.users.index', compact('users', 'departments'));
+    return view('master.users.index', compact('users', 'departments', 'deptDepthMap'));
   }
 
   public function create()

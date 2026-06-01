@@ -40,6 +40,9 @@ class PositionAndRankSeeder extends Seeder
       'Walikota',
       'Wakil Walikota',
       'Sekretaris Daerah',
+      'Asisten Pemerintahan dan Kesejahteraan Rakyat',
+      'Asisten Administrasi Umum',
+      'Asisten Perekonomian dan Pembangunan',
       'Staf Ahli',
       'Kepala Dinas',
       'Sekretaris Dinas',
@@ -62,6 +65,8 @@ class PositionAndRankSeeder extends Seeder
       'Pranata Komputer',
       'Auditor',
       'Bendahara Pengeluaran',
+      'Bendahara Penerimaan',
+      'Bendahara Pembantu',
     ];
 
     foreach ($positions as $pos) {

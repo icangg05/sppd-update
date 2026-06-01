@@ -29,6 +29,52 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Modern, sleek custom scrollbar styling globally for browser window */
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  /* slate-100 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(183, 183, 183);
+  /* sweet-spot medium gray */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8e9eab;
+  /* darker medium gray */
+}
+
+/* Specific styling for scrollable divs to look extra fine */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  /* slate-100 */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #b8c2cc;
+  /* sweet-spot medium gray */
+  border-radius: 10px;
+  transition: background 0.15s ease-in-out;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8e9eab;
+  /* darker medium gray */
+}
+
 /* ───── Sidebar ───── */
 .sidebar {
   position: fixed;

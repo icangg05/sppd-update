@@ -37,6 +37,10 @@ class DummyUserSeeder extends Seeder
     $walikota             = Position::where('name', 'Walikota')->first();
     $wakilWalikota        = Position::where('name', 'Wakil Walikota')->first();
 
+    $asisten1             = Position::where('name', 'Asisten Pemerintahan dan Kesejahteraan Rakyat')->first();
+    $asisten2             = Position::where('name', 'Asisten Administrasi Umum')->first();
+    $asisten3             = Position::where('name', 'Asisten Perekonomian dan Pembangunan')->first();
+
 
     // ─── Pejabat Seeder ───
     $users = [
@@ -48,12 +52,11 @@ class DummyUserSeeder extends Seeder
         'nik'           => '7471086212880002',
         'nip'           => null,
         'employee_type' => EmployeeType::LAINNYA,
-        'department_id' => 45,
+        'department_id' => 3,
         'rank_id'       => null,
         'position_id'   => $walikota?->id,
         'role'          => 'walikota',
       ],
-
       // Wakil Walikota
       [
         'name'          => 'SUDIRMAN, S.I.Kom.',
@@ -62,24 +65,11 @@ class DummyUserSeeder extends Seeder
         'nik'           => null,
         'nip'           => null,
         'employee_type' => EmployeeType::LAINNYA,
-        'department_id' => 45,
+        'department_id' => 3,
         'rank_id'       => null,
         'position_id'   => $wakilWalikota?->id,
         'role'          => 'wakil_walikota',
       ],
-      // Admin Pemkot
-      [
-        'name'          => 'Imam Saputra, S.H.',
-        'username'      => 'admin_pemkot',
-        'email'         => null,
-        'nip'           => null,
-        'employee_type' => EmployeeType::LAINNYA,
-        'department_id' => 45,
-        'rank_id'       => null,
-        'position_id'   => $staf?->id,
-        'role'          => 'admin_opd',
-      ],
-
       // Sekda
       [
         'name'          => 'AMIR HASAN, STP., SH., M.Si.',
@@ -92,6 +82,59 @@ class DummyUserSeeder extends Seeder
         'rank_id'       => $rankIVd?->id,
         'position_id'   => $sekda?->id,
         'role'          => 'sekda',
+      ],
+
+      // Asisten 1
+      [
+        'name'          => 'Adriana Musaruddin, S.Sos, M.Si.',
+        'username'      => 'asisten1',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => '197201031993131009',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 3,
+        'rank_id'       => $rankIVc?->id,
+        'position_id'   => $asisten1?->id,
+        'role'          => 'asisten',
+      ],
+      // Asisten 2
+      [
+        'name'          => 'La Ode Abd. Manas Salihin, S.Sos, M.Si.',
+        'username'      => 'asisten2',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => '197201031193031009',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 3,
+        'rank_id'       => $rankIVc?->id,
+        'position_id'   => $asisten2?->id,
+        'role'          => 'asisten',
+      ],
+      // Asisten 3
+      [
+        'name'          => 'Ir. Nismawati, M.Si.',
+        'username'      => 'asisten3',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => '197201031933031009',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 3,
+        'rank_id'       => $rankIVc?->id,
+        'position_id'   => $asisten3?->id,
+        'role'          => 'asisten',
+      ],
+      // Sekda
+      [
+        'name'          => 'Andri Irdas Pangeran, S.Kom.',
+        'username'      => 'admin_setda',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 3,
+        'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
       ],
 
       // Kepala Kominfo
@@ -300,6 +343,59 @@ class DummyUserSeeder extends Seeder
         'rank_id'       => $rankIIIa?->id,
         'position_id'   => $staf?->id,
         'role'          => 'admin_opd',
+      ],
+
+      // Kabag Bagian Adm. Pembangunan
+      [
+        'name'          => 'M. IBRAHIM MUIS, S.Sos',
+        'username'      => 'kabag_bagpembangunan',
+        'email'         => null,
+        'nik'           => '7471021011700001',
+        'nip'           => '197011162000031004',
+        'employee_type' => EmployeeType::PNS,
+        'department_id' => 153,
+        'rank_id'       => $rankIVb?->id,
+        'position_id'   => $kabag?->id,
+        'role'          => 'kabid_irban_kabag',
+      ],
+      // Admin Bagian Adm. Pembangunan
+      [
+        'name'          => 'ASRID S.Pd., M.M',
+        'username'      => 'admin_bagpembangunan',
+        'email'         => null,
+        'nik'           => '7471092303880003',
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 153,
+        'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'admin_opd',
+      ],
+      // Staf Bagian Adm. Pembangunan
+      [
+        'name'          => 'ASHIDAYAT FEBRIADHI.A',
+        'username'      => 'staf_bagpembangunan',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 153,
+        'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'staf',
+      ],
+      // Staf Sub Bagian Sosial Budaya
+      [
+        'name'          => 'IWAN EFENDI',
+        'username'      => 'iwan_efendi',
+        'email'         => null,
+        'nik'           => null,
+        'nip'           => null,
+        'employee_type' => EmployeeType::LAINNYA,
+        'department_id' => 161,
+        'rank_id'       => null,
+        'position_id'   => $staf?->id,
+        'role'          => 'staf',
       ],
     ];
 
