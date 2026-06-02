@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
   Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
   Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
   Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
+  Route::post('/sppd/{sppd}/revision', [SppdController::class, 'revision'])->name('sppd.revision');
   Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
 
   // Legacy Workflow Portal

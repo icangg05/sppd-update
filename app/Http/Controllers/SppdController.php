@@ -405,9 +405,9 @@ class SppdController extends Controller
       ->first();
 
     if ($myApproval) {
-      $stepConfig = $this->getApprovalStepConfig($sppd, $myApproval);
-      if ($stepConfig) {
-        $needsTte = (bool)($stepConfig['signs_spt'] ?? false) || (bool)($stepConfig['signs_sppd'] ?? false);
+      $hasAnyTteConfigured = $sppd->approvals->contains(fn($app) => $app->signs_spt || $app->signs_sppd);
+      if ($hasAnyTteConfigured) {
+        $needsTte = (bool)$myApproval->signs_spt || (bool)$myApproval->signs_sppd;
       } else {
         // Fallback: final step signs everything
         $needsTte = $myApproval->step_order === $sppd->approvals->max('step_order');
@@ -644,13 +644,19 @@ class SppdController extends Controller
 
     $isFinalApproval = $this->isFinalApprovalStep($sppd, $approval);
 
-    $stepConfig = $this->getApprovalStepConfig($sppd, $approval);
+    $hasAnyTteConfigured = $sppd->approvals()
+      ->where(function ($query) {
+        $query->where('signs_spt', true)
+              ->orWhere('signs_sppd', true);
+      })
+      ->exists();
+
     $shouldSignSpt = false;
     $shouldSignSppd = false;
 
-    if ($stepConfig) {
-      $shouldSignSpt = (bool)($stepConfig['signs_spt'] ?? false);
-      $shouldSignSppd = (bool)($stepConfig['signs_sppd'] ?? false);
+    if ($hasAnyTteConfigured) {
+      $shouldSignSpt = (bool)$approval->signs_spt;
+      $shouldSignSppd = (bool)$approval->signs_sppd;
     } else {
       // Fallback for old/string format
       if ($isFinalApproval) {
@@ -730,7 +736,7 @@ class SppdController extends Controller
       }
 
       $approval->approve($validated['notes'] ?? null);
-      $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED)->doesntExist();
+      $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
       if ($allApproved) {
         $sppd->update(['status' => SppdStatus::APPROVED]);
       }
@@ -740,7 +746,7 @@ class SppdController extends Controller
 
     $approval->approve($validated['notes'] ?? null);
 
-    $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED)->doesntExist();
+    $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
     if ($allApproved) {
       $sppd->update(['status' => SppdStatus::APPROVED]);
     }
@@ -881,6 +887,61 @@ class SppdController extends Controller
     $sppd->update(['status' => SppdStatus::REJECTED]);
 
     return back()->with('success', 'SPPD ditolak.');
+  }
+
+  public function revision(Request $request, SppdRequest $sppd)
+  {
+    $request->validate(['notes' => 'required|string|max:500']);
+
+    $approval = $sppd->approvals()
+      ->where('approver_id', Auth::id())
+      ->where('status', ApprovalStatus::PENDING)
+      ->first();
+
+    if (!$approval) {
+      return back()->with('error', 'Anda tidak memiliki hak untuk meminta revisi SPPD ini.');
+    }
+
+    \Illuminate\Support\Facades\DB::transaction(function () use ($sppd, $approval, $request) {
+      // 1. Set current step to revision
+      $approval->update([
+        'status' => ApprovalStatus::REVISION,
+        'acted_at' => now(),
+        'notes' => $request->notes,
+      ]);
+
+      // 2. Hapus semua digital signatures yang sudah ditandatangani
+      $signatures = $sppd->digitalSignatures()->get();
+      $ttesDisk = \Illuminate\Support\Facades\Storage::disk(config('tte.storage.disk'));
+      $draftDir = config('tte.storage.paths.draft');
+
+      foreach ($signatures as $sig) {
+        if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
+          $ttesDisk->delete($sig->signed_file_path);
+        }
+        $sig->delete();
+      }
+
+      // Hapus file draft di doc_dummy
+      if ($ttesDisk->exists($draftDir)) {
+        foreach ($ttesDisk->files($draftDir) as $file) {
+          $ttesDisk->delete($file);
+        }
+      }
+
+      // 3. Reset semua step persetujuan ke PENDING agar alur berjalan dari awal lagi setelah direvisi
+      $sppd->approvals()->update([
+        'status' => ApprovalStatus::PENDING,
+        'acted_at' => null,
+        'notes' => null,
+      ]);
+
+      // 4. Pastikan status SPPD tetap IN_PROGRESS agar bisa diedit dan diajukan ulang
+      $sppd->update(['status' => SppdStatus::IN_PROGRESS]);
+    });
+
+    return redirect()->route('sppd.show', $sppd->id)
+      ->with('success', 'SPPD berhasil dikembalikan kepada pemohon untuk direvisi.');
   }
 
   /**

@@ -354,14 +354,25 @@
 									</button>
 								</form>
 
-								<form action="{{ route('sppd.reject', $sppd) }}" method="POST">
-									@csrf
-									<input type="hidden" name="notes" id="reject-notes">
-									<button type="button" onclick="rejectSppd(this.form)"
-										class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
-										<i class="fa-solid fa-ban"></i> Tolak Dokumen
-									</button>
-								</form>
+								<div class="flex flex-col gap-2">
+									<form action="{{ route('sppd.reject', $sppd) }}" method="POST">
+										@csrf
+										<input type="hidden" name="notes" id="reject-notes">
+										<button type="button" onclick="rejectSppd(this.form)"
+											class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
+											<i class="fa-solid fa-ban"></i> Tolak Dokumen
+										</button>
+									</form>
+
+									<form action="{{ route('sppd.revision', $sppd) }}" method="POST">
+										@csrf
+										<input type="hidden" name="notes" id="revision-notes">
+										<button type="button" onclick="requestRevision(this.form)"
+											class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700">
+											<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
+										</button>
+									</form>
+								</div>
 							@endif
 						</div>
 					</div>
@@ -369,33 +380,89 @@
 
 				{{-- Status Penandatanganan Elektronik (TTE) --}}
 				@php
-					$sppdSignature = $sppd->signatureFor('sppd');
+					$hasAnyTteConfigured = $sppd->approvals->contains(fn($app) => $app->signs_spt || $app->signs_sppd);
+					$hasSppdSigner = $sppd->approvals->contains(fn($app) => $app->signs_sppd);
+					$hasSptSigner = $sppd->approvals->contains(fn($app) => $app->signs_spt);
+					
+					$showSppdStatus = !$hasAnyTteConfigured || $hasSppdSigner;
+					$showSptStatus = !$hasAnyTteConfigured || $hasSptSigner;
+					
+					$sppdSig = $sppd->signatureFor('sppd');
+					$sptSig = $sppd->signatureFor('spt');
 				@endphp
-				@if ($sppdSignature)
+
+				@if ($showSppdStatus || $showSptStatus)
 					<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
-						<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex justify-between items-center">
+						<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 							<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
 								<i class="fa-solid fa-file-shield text-cyan-600"></i> Status TTE Dokumen
 							</h3>
 						</div>
-						<div class="p-5">
-							<span
-								class="badge-{{ $sppdSignature->status->value }} px-2 py-1 rounded text-xs font-bold uppercase tracking-wide inline-block mb-3">
-								{{ $sppdSignature->status->label() }}
-							</span>
-
-							@if ($sppdSignature->error_message)
-								<div class="mt-3 rounded border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
-									<i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error TTE:</strong>
-									{{ $sppdSignature->error_message }}
+						<div class="p-5 space-y-4 divide-y divide-slate-100">
+							@if ($showSppdStatus)
+								<div class="pt-0">
+									<p class="text-xs font-bold text-slate-500 uppercase tracking-wide">TTE Dokumen SPPD</p>
+									<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+										@if ($sppdSig && $sppdSig->status->value === 'signed')
+											<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Sudah Ditandatangani
+											</span>
+										@elseif ($sppdSig && $sppdSig->status->value === 'rejected')
+											<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Gagal TTE
+											</span>
+										@else
+											<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Belum Ditandatangani
+											</span>
+										@endif
+										
+										@if ($sppdSig && $sppdSig->status->value === 'signed')
+											<span class="text-[10px] font-mono text-slate-400">
+												<i class="fa-regular fa-clock"></i> {{ $sppdSig->signed_at?->translatedFormat('d M Y H:i') }}
+											</span>
+										@endif
+									</div>
+									@if ($sppdSig && $sppdSig->error_message)
+										<div class="mt-2 rounded border border-rose-200 bg-rose-50 p-2.5 text-[10px] text-rose-700 leading-normal">
+											<i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error:</strong>
+											{{ $sppdSig->error_message }}
+										</div>
+									@endif
 								</div>
 							@endif
 
-							@if ($sppdSignature->status->value === 'signed')
-								<p class="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-2">
-									<i class="fa-solid fa-circle-check mr-1"></i> Dokumen telah ditandatangani. Gunakan tombol <strong>Lihat
-										Dokumen</strong> di atas untuk mengaksesnya.
-								</p>
+							@if ($showSptStatus)
+								<div class="pt-3">
+									<p class="text-xs font-bold text-slate-500 uppercase tracking-wide">TTE Dokumen SPT</p>
+									<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+										@if ($sptSig && $sptSig->status->value === 'signed')
+											<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Sudah Ditandatangani
+											</span>
+										@elseif ($sptSig && $sptSig->status->value === 'rejected')
+											<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Gagal TTE
+											</span>
+										@else
+											<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+												Belum Ditandatangani
+											</span>
+										@endif
+
+										@if ($sptSig && $sptSig->status->value === 'signed')
+											<span class="text-[10px] font-mono text-slate-400">
+												<i class="fa-regular fa-clock"></i> {{ $sptSig->signed_at?->translatedFormat('d M Y H:i') }}
+											</span>
+										@endif
+									</div>
+									@if ($sptSig && $sptSig->error_message)
+										<div class="mt-2 rounded border border-rose-200 bg-rose-50 p-2.5 text-[10px] text-rose-700 leading-normal">
+											<i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error:</strong>
+											{{ $sptSig->error_message }}
+										</div>
+									@endif
+								</div>
 							@endif
 						</div>
 					</div>
@@ -527,6 +594,14 @@
 			const reason = prompt('Masukkan alasan penolakan (Wajib diisi):');
 			if (reason && reason.trim()) {
 				form.querySelector('#reject-notes').value = reason;
+				form.submit();
+			}
+		}
+
+		function requestRevision(form) {
+			const reason = prompt('Masukkan alasan revisi (Wajib diisi):');
+			if (reason && reason.trim()) {
+				form.querySelector('#revision-notes').value = reason;
 				form.submit();
 			}
 		}

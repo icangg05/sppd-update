@@ -69,8 +69,10 @@ class SignatureService
 
     // Jika dokumen adalah SPPD, lakukan penandatanganan kedua (Halaman Belakang)
     if (str_starts_with($signature->document_type, 'sppd')) {
-      $tempFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sppd_first_' . uniqid() . '.pdf';
-      file_put_contents($tempFile, $signedPdf);
+      $tempRelPath = 'doc_dummy/sppd_first_' . uniqid() . '.pdf';
+      $disk = Storage::disk(config('tte.storage.disk'));
+      $disk->put($tempRelPath, $signedPdf);
+      $tempFile = $disk->path($tempRelPath);
 
       // Lakukan request signature kedua secara invisible di Halaman 2
       $result2 = $this->provider->requestSign(
@@ -86,7 +88,7 @@ class SignatureService
         'invisible'
       );
 
-      unlink($tempFile);
+      $disk->delete($tempRelPath);
 
       if (is_array($result2) && isset($result2['error'])) {
         $message = 'Provider second request failed: ' . json_encode($result2, JSON_UNESCAPED_UNICODE);
