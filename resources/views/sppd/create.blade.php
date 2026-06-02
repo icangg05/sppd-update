@@ -122,11 +122,11 @@
 					$stepsContainer.empty();
 					let isComplete = true;
 
-					if (data.steps.length === 0) {
+						if (data.steps.length === 0) {
 						$stepsContainer.html(
 							`<div class="col-span-full rounded border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
                             <i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i>
-                            Aturan alur untuk kategori ini belum dibuat oleh Admin (Role Pelaksana: <span class="font-bold underline">${data.user.role.toUpperCase()}</span>).
+                            Aturan alur untuk kategori ini belum dibuat oleh Admin (Role Pelaksana: <span class="font-bold underline">${data.user.role_label}</span>).
                           </div>`
 						);
 						isComplete = false;

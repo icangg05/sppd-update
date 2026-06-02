@@ -73,7 +73,7 @@
 							@foreach ($user->roles as $role)
 								<span
 									class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-inset ring-slate-500/10">
-									<i class="fa-solid fa-key text-[9px] mr-1 text-slate-400"></i>{{ $role->name }}
+									<i class="fa-solid fa-key text-[9px] mr-1 text-slate-400"></i>{{ $role->label }}
 								</span>
 							@endforeach
 						</div>

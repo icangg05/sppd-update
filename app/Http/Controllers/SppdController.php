@@ -911,6 +911,7 @@ class SppdController extends Controller
         'name' => $user->name,
         'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
         'role' => $user->getRoleNames()->first() ?? 'Tanpa Role',
+        'role_label' => $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role'),
       ],
       'has_header' => (bool) ($user->department?->getInheritedLetterhead() && \Illuminate\Support\Str::contains($user->department->getInheritedLetterhead(), '/')),
       'steps' => $steps

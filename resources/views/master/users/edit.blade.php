@@ -134,7 +134,7 @@
 								@foreach (\Spatie\Permission\Models\Role::all() as $role)
 									<option value="{{ $role->name }}"
 										{{ old('role', $user->roles->first()?->name) === $role->name ? 'selected' : '' }}>
-										{{ $role->name }}
+										{{ $role->label }}
 									</option>
 								@endforeach
 							</x-form.select>

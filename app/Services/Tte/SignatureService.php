@@ -25,10 +25,10 @@ class SignatureService
     $draftFile = $this->pdfGenerator->generateDraft($signature);
     $linkQr    = url('/verify/' . $signature->document_type . '/' . $signature->sppdRequest->id . '/' . md5($signature->sppdRequest->document_number . $signature->sppdRequest->id));
 
-    $tampilan = 'visible';
-    if (str_starts_with($signature->document_type, 'sppd')) {
-      $tampilan = 'invisible';
-    }
+    // Buat tampilan TTE dari provider selalu invisible untuk semua jenis dokumen
+    // agar tidak memunculkan QR Code duplikat kecil dari provider di bagian bawah.
+    // Dokumen akan sepenuhnya menggunakan QR Code yang di-render secara rapi lewat HTML.
+    $tampilan = 'invisible';
 
     $result = $this->provider->requestSign(
       $draftFile,
@@ -55,27 +55,7 @@ class SignatureService
       return ['details' => $result];
     }
 
-    $documentId = null;
-    if (is_array($result) && isset($result['id_dokumen'])) {
-      $documentId = $result['id_dokumen'];
-    }
-
-    $signedPdf = null;
-    if ($documentId) {
-      try {
-        $signedPdf = $this->provider->downloadSignedPdf($documentId);
-      } catch (\Throwable $e) {
-        $signature->update([
-          'status'        => SignatureStatus::REJECTED,
-          'error_message' => 'Provider download failed: ' . $e->getMessage(),
-        ]);
-        $this->deleteDraftFile($draftFile);
-
-        return ['details' => ['exception' => $e->getMessage()]];
-      }
-    } elseif (is_string($result) && str_contains($result, '%PDF')) {
-      $signedPdf = $result;
-    }
+    $signedPdf = $this->extractSignedPdf($result);
 
     if (empty($signedPdf)) {
       $signature->update([
@@ -87,12 +67,50 @@ class SignatureService
       return ['details' => 'Provider returned no PDF output.'];
     }
 
+    // Jika dokumen adalah SPPD, lakukan penandatanganan kedua (Halaman Belakang)
+    if (str_starts_with($signature->document_type, 'sppd')) {
+      $tempFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sppd_first_' . uniqid() . '.pdf';
+      file_put_contents($tempFile, $signedPdf);
+
+      // Lakukan request signature kedua secara invisible di Halaman 2
+      $result2 = $this->provider->requestSign(
+        $tempFile,
+        $signature->signer->nik,
+        $passphrase,
+        2, // Halaman 2
+        $signature->sign_x,
+        $signature->sign_y,
+        $signature->sign_width,
+        $signature->sign_height,
+        $linkQr,
+        'invisible'
+      );
+
+      unlink($tempFile);
+
+      if (is_array($result2) && isset($result2['error'])) {
+        $message = 'Provider second request failed: ' . json_encode($result2, JSON_UNESCAPED_UNICODE);
+        $signature->update([
+          'status'        => SignatureStatus::REJECTED,
+          'error_message' => $message,
+        ]);
+        $this->deleteDraftFile($draftFile);
+
+        return ['details' => $result2];
+      }
+
+      $secondSignedPdf = $this->extractSignedPdf($result2);
+      if (!empty($secondSignedPdf)) {
+        $signedPdf = $secondSignedPdf;
+      }
+    }
+
     $signedPath = $this->storeSignedPdf($signature, $signedPdf);
 
     $signature->update([
       'status'           => SignatureStatus::SIGNED,
       'signed_at'        => now(),
-      'provider_id'      => $documentId,
+      'provider_id'      => is_array($result) && isset($result['id_dokumen']) ? $result['id_dokumen'] : null,
       'signed_file_path' => $signedPath,
       'error_message'    => null,
     ]);
@@ -101,6 +119,30 @@ class SignatureService
     $this->deleteDraftFile($draftFile);
 
     return true;
+  }
+
+  /**
+   * Ekstrak konten PDF dari response provider.
+   */
+  private function extractSignedPdf(array|string $result): ?string
+  {
+    $documentId = null;
+    if (is_array($result) && isset($result['id_dokumen'])) {
+      $documentId = $result['id_dokumen'];
+    }
+
+    if ($documentId) {
+      try {
+        return $this->provider->downloadSignedPdf($documentId);
+      } catch (\Throwable $e) {
+        Log::error('SignatureService.extractSignedPdf download failed', ['exception' => $e]);
+        return null;
+      }
+    } elseif (is_string($result) && str_contains($result, '%PDF')) {
+      return $result;
+    }
+
+    return null;
   }
 
   private function deleteDraftFile(string $draftFile): void

@@ -13,12 +13,25 @@ class SppdWorkflowSeeder extends Seeder
       // Walikota, Wakil Walikota & Asisten
       [
         'name'            => 'Walikota, Wakil Walikota & Asisten',
-        'department_type' => ['opd', 'setda'],
+        'department_type' => ['setda', 'asisten'],
         'applicant_role'  => ['walikota', 'wakil_walikota', 'asisten'],
         'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
         'steps'           => [
           ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => true],
           ['role' => 'walikota', 'signs_spt' => true, 'signs_sppd' => false]
+        ],
+      ],
+
+      // Kasubag & Staff (Setda)
+      [
+        'name'            => 'Kasubag & Staf (Setda)',
+        'department_type' => ['setda', 'bagian', 'subbagian'],
+        'applicant_role'  => ['kabid_irban_kabag', 'kasubid_kasubag', 'staf'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'steps'           => [
+          ['role' => 'kabid_irban_kabag', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'asisten', 'signs_spt' => false, 'signs_sppd' => false],
+          ['role' => 'sekda', 'signs_spt' => true, 'signs_sppd' => true],
         ],
       ],
 
@@ -72,7 +85,7 @@ class SppdWorkflowSeeder extends Seeder
       // Kepala OPD
       [
         'name'            => 'Kepala OPD',
-        'department_type' => ['opd'],
+        'department_type' => ['opd', 'dinkes'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['dalam_daerah'],
         'steps'           => [
@@ -82,7 +95,7 @@ class SppdWorkflowSeeder extends Seeder
       ],
       [
         'name'            => 'Kepala OPD',
-        'department_type' => ['opd'],
+        'department_type' => ['opd', 'dinkes'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['lddp', 'ldlp'],
         'steps'           => [

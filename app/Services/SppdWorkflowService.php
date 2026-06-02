@@ -6,6 +6,7 @@ use App\Models\SppdRequest;
 use App\Models\SppdWorkflow;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class SppdWorkflowService
 {
@@ -184,12 +185,18 @@ class SppdWorkflowService
 
   private function getApproverLabel(User $approver, string $requestedRole): string
   {
-    // Try to get the actual role name from the user that matched the synonym
+    // Try to get the actual role label from the user that matched the synonym
     $synonyms = $this->getRoleSynonyms($requestedRole);
     $actualRole = $approver->roles->whereIn('name', $synonyms)->first();
 
     if ($actualRole) {
-      return ucwords(str_replace('_', ' ', $actualRole->name));
+      return $actualRole->label ?? ucwords(str_replace('_', ' ', $actualRole->name));
+    }
+
+    // Fallback: look up label from Role model directly
+    $roleModel = Role::where('name', $requestedRole)->first();
+    if ($roleModel && $roleModel->label) {
+      return $roleModel->label;
     }
 
     return ucwords(str_replace('_', ' ', $requestedRole));

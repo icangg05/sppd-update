@@ -74,7 +74,7 @@
 					<thead
 						class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
 						<tr>
-							<th class="py-3 px-4 w-12 text-center">No</th>
+							<th class="py-3 px-4 w-12 text-center">No.</th>
 							<th class="py-3 px-4">Pegawai</th>
 							@if (auth()->user()->hasRole('super_admin'))
 								<th class="py-3 px-4">Instansi</th>
@@ -117,7 +117,7 @@
 							@endif
 
 							<tr class="hover:bg-slate-50/50 transition-colors">
-								<td class="py-3 px-4 text-center text-xs text-slate-400">{{ $users->firstItem() + $i }}</td>
+								<td class="py-3 px-4 text-center text-xs text-slate-400">{{ $users->firstItem() + $i }}.</td>
 
 								{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
 								<td class="py-2.5 px-4">
@@ -133,12 +133,12 @@
 								@endif
 
 								<td class="py-3 px-4">
-									<div class="text-sm text-slate-600">{{ $user->position?->name ?? '-' }}</div>
+									<div class="text-[13px] text-slate-600 text-wrap">{{ $user->position?->name ?? '-' }}</div>
 								</td>
 
 								<td class="py-3 px-4">
 									@if ($user->rank)
-										<p class="text-sm text-slate-800">{{ $user->rank->name }}</p>
+										<p class="text-[13px] text-slate-800">{{ $user->rank->name }}</p>
 										<p class="text-xs text-slate-500">{{ $user->rank->group }}</p>
 									@else
 										<span class="text-sm text-slate-400">-</span>
@@ -149,8 +149,8 @@
 									<div class="flex flex-wrap gap-1">
 										@foreach ($user->roles as $role)
 											<span
-												class="inline-flex items-center rounded-md bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
-												{{ $role->name }}
+												class="inline-flex items-center rounded-md bg-cyan-50 px-2 py-1 text-[11px] font-medium text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
+												{{ $role->label }}
 											</span>
 										@endforeach
 									</div>
@@ -159,12 +159,12 @@
 								<td class="py-3 px-4 text-center">
 									@if ($user->is_active)
 										<span
-											class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+											class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
 											<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Aktif
 										</span>
 									@else
 										<span
-											class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
+											class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
 											<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Nonaktif
 										</span>
 									@endif
