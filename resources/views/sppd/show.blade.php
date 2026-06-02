@@ -233,31 +233,60 @@
 						@if ($sppd->approvals->count())
 							<div class="relative border-l-2 border-slate-100 ml-3 space-y-6">
 								@foreach ($sppd->approvals->sortBy('step_order') as $ap)
+									@php
+										$displayStatus = $ap->status->value;
+										// Jika SPPD ditolak dan step ini masih pending = tidak dilanjutkan
+										if ($sppd->status->value === 'rejected' && $displayStatus === 'pending') {
+											$displayStatus = 'skipped';
+										} elseif ($sppd->revision_note && $sppd->reviser_id === $ap->approver_id && $displayStatus === 'pending') {
+											$displayStatus = 'revision';
+										}
+									@endphp
 									<div class="relative pl-6">
 										{{-- Titik Timeline --}}
-										<span
-											class="absolute -left-3.25 top-0.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-2xs ring-4 ring-white
-                    {{ $ap->status->value === 'approved' ? 'bg-emerald-500' : ($ap->status->value === 'rejected' ? 'bg-rose-500' : ($ap->status->value === 'revision' ? 'bg-amber-500' : 'bg-slate-300')) }}">
-											@if ($ap->status->value === 'approved')
+										<span class="absolute -left-3.25 top-0.5 flex size-6 items-center justify-center rounded-full text-[10px] font-bold shadow-2xs ring-4 ring-white
+											@if ($displayStatus === 'approved') bg-emerald-500 text-white
+											@elseif ($displayStatus === 'rejected') bg-rose-500 text-white
+											@elseif ($displayStatus === 'revision') bg-amber-500 text-white
+											@elseif ($displayStatus === 'skipped') bg-slate-200 text-slate-400
+											@else bg-slate-300 text-white
+											@endif">
+											@if ($displayStatus === 'approved')
 												<i class="fa-solid fa-check"></i>
-											@elseif($ap->status->value === 'rejected')
+											@elseif ($displayStatus === 'rejected')
 												<i class="fa-solid fa-xmark"></i>
+											@elseif ($displayStatus === 'skipped')
+												<i class="fa-solid fa-minus text-[9px]"></i>
 											@else
 												{{ $ap->step_order }}
 											@endif
 										</span>
 
 										{{-- Konten Timeline --}}
-										<div class="min-w-0 leading-tight">
+										<div class="min-w-0 leading-tight {{ $displayStatus === 'skipped' ? 'opacity-50' : '' }}">
 											<p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ $ap->role_label }}</p>
 											<p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $ap->approver->name }}</p>
 											<div class="mt-1.5">
-												<span
-													class="badge-{{ $ap->status->value }} px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">{{ $ap->status->label() }}</span>
+												@if ($displayStatus === 'skipped')
+													<span class="bg-slate-100 text-slate-400 border border-slate-200 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">
+														Tidak Dilanjutkan
+													</span>
+												@else
+													<span class="badge-{{ $displayStatus }} px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">
+														@if ($displayStatus === 'rejected') Ditolak
+														@elseif ($displayStatus === 'revision') Revisi
+														@else {{ $ap->status->label() }}
+														@endif
+													</span>
+												@endif
 											</div>
 											@if ($ap->notes)
 												<p class="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-xs italic text-slate-600">
 													<i class="fa-solid fa-quote-left text-slate-300 mr-1"></i> {{ $ap->notes }}
+												</p>
+											@elseif ($displayStatus === 'revision')
+												<p class="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-xs italic text-slate-600">
+													<i class="fa-solid fa-quote-left text-slate-300 mr-1"></i> {{ $sppd->revision_note }}
 												</p>
 											@endif
 											@if ($ap->acted_at)
@@ -355,23 +384,15 @@
 								</form>
 
 								<div class="flex flex-col gap-2">
-									<form action="{{ route('sppd.reject', $sppd) }}" method="POST">
-										@csrf
-										<input type="hidden" name="notes" id="reject-notes">
-										<button type="button" onclick="rejectSppd(this.form)"
-											class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
-											<i class="fa-solid fa-ban"></i> Tolak Dokumen
-										</button>
-									</form>
+									<button type="button" onclick="openRejectModal()"
+										class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer">
+										<i class="fa-solid fa-ban"></i> Tolak Dokumen
+									</button>
 
-									<form action="{{ route('sppd.revision', $sppd) }}" method="POST">
-										@csrf
-										<input type="hidden" name="notes" id="revision-notes">
-										<button type="button" onclick="requestRevision(this.form)"
-											class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700">
-											<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
-										</button>
-									</form>
+									<button type="button" onclick="openRevisionModal()"
+										class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 cursor-pointer">
+										<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
+									</button>
 								</div>
 							@endif
 						</div>
@@ -569,6 +590,88 @@
 			</div>
 		</div>
 
+		{{-- Modal Tolak SPPD --}}
+		<div id="reject-modal-custom"
+			class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 opacity-0 transition-opacity duration-200 backdrop-blur-2xs">
+			<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+				<form action="{{ route('sppd.reject', $sppd) }}" method="POST" id="reject-form-modal">
+					@csrf
+					<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+						<div class="flex items-center gap-2">
+							<i class="fa-solid fa-ban text-rose-600 text-base"></i>
+							<div>
+								<h3 class="text-sm font-bold text-slate-800">Tolak Pengajuan SPPD</h3>
+								<p class="text-[11px] text-slate-500">Berikan alasan penolakan dokumen ini</p>
+							</div>
+						</div>
+						<button type="button" onclick="closeRejectModal()"
+							class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 cursor-pointer">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					</div>
+
+					<div class="p-4">
+						<label for="reject-notes-textarea" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Alasan Penolakan <span class="text-rose-500">*</span></label>
+						<textarea name="notes" id="reject-notes-textarea" required
+							class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 min-h-[100px]"
+							placeholder="Masukkan alasan penolakan secara jelas..."></textarea>
+					</div>
+
+					<div class="flex gap-2 border-t border-slate-100 px-4 py-3">
+						<button type="button" onclick="closeRejectModal()"
+							class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 cursor-pointer">
+							Batal
+						</button>
+						<button type="submit"
+							class="flex-1 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-700 shadow-sm cursor-pointer">
+							Tolak Dokumen
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		{{-- Modal Revisi SPPD --}}
+		<div id="revision-modal-custom"
+			class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 opacity-0 transition-opacity duration-200 backdrop-blur-2xs">
+			<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+				<form action="{{ route('sppd.revision', $sppd) }}" method="POST" id="revision-form-modal">
+					@csrf
+					<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+						<div class="flex items-center gap-2">
+							<i class="fa-solid fa-rotate-left text-amber-600 text-base"></i>
+							<div>
+								<h3 class="text-sm font-bold text-slate-800">Kembalikan untuk Revisi</h3>
+								<p class="text-[11px] text-slate-500">Berikan catatan perbaikan yang diperlukan</p>
+							</div>
+						</div>
+						<button type="button" onclick="closeRevisionModal()"
+							class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 cursor-pointer">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					</div>
+
+					<div class="p-4">
+						<label for="revision-notes-textarea" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Keterangan / Catatan Revisi <span class="text-rose-500">*</span></label>
+						<textarea name="notes" id="revision-notes-textarea" required
+							class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500 min-h-[100px]"
+							placeholder="Jelaskan bagian mana saja yang perlu diperbaiki..."></textarea>
+					</div>
+
+					<div class="flex gap-2 border-t border-slate-100 px-4 py-3">
+						<button type="button" onclick="closeRevisionModal()"
+							class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 cursor-pointer">
+							Batal
+						</button>
+						<button type="submit"
+							class="flex-1 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700 shadow-sm cursor-pointer">
+							Kembalikan
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
 	</div>
 @endsection
 
@@ -590,26 +693,13 @@
 			}
 		}
 
-		function rejectSppd(form) {
-			const reason = prompt('Masukkan alasan penolakan (Wajib diisi):');
-			if (reason && reason.trim()) {
-				form.querySelector('#reject-notes').value = reason;
-				form.submit();
-			}
-		}
-
-		function requestRevision(form) {
-			const reason = prompt('Masukkan alasan revisi (Wajib diisi):');
-			if (reason && reason.trim()) {
-				form.querySelector('#revision-notes').value = reason;
-				form.submit();
-			}
-		}
-
 		const documentModalOpen = document.getElementById('document-modal-open');
 		const documentModal = document.getElementById('document-modal');
 		const documentModalClose = document.getElementById('document-modal-close');
 		const documentModalCloseBtn = document.getElementById('document-modal-close-btn');
+
+		const rejectModal = document.getElementById('reject-modal-custom');
+		const revisionModal = document.getElementById('revision-modal-custom');
 
 		function openDocumentModal() {
 			if (!documentModal) return;
@@ -629,6 +719,42 @@
 			}, 200);
 		}
 
+		function openRejectModal() {
+			if (!rejectModal) return;
+			rejectModal.classList.remove('hidden');
+			requestAnimationFrame(() => {
+				rejectModal.classList.remove('opacity-0');
+				rejectModal.classList.add('flex');
+			});
+		}
+
+		function closeRejectModal() {
+			if (!rejectModal) return;
+			rejectModal.classList.add('opacity-0');
+			setTimeout(() => {
+				rejectModal.classList.add('hidden');
+				rejectModal.classList.remove('flex');
+			}, 200);
+		}
+
+		function openRevisionModal() {
+			if (!revisionModal) return;
+			revisionModal.classList.remove('hidden');
+			requestAnimationFrame(() => {
+				revisionModal.classList.remove('opacity-0');
+				revisionModal.classList.add('flex');
+			});
+		}
+
+		function closeRevisionModal() {
+			if (!revisionModal) return;
+			revisionModal.classList.add('opacity-0');
+			setTimeout(() => {
+				revisionModal.classList.add('hidden');
+				revisionModal.classList.remove('flex');
+			}, 200);
+		}
+
 		documentModalOpen?.addEventListener('click', openDocumentModal);
 		documentModalClose?.addEventListener('click', closeDocumentModal);
 		documentModalCloseBtn?.addEventListener('click', closeDocumentModal);
@@ -639,9 +765,29 @@
 			}
 		});
 
+		rejectModal?.addEventListener('click', (event) => {
+			if (event.target === rejectModal) {
+				closeRejectModal();
+			}
+		});
+
+		revisionModal?.addEventListener('click', (event) => {
+			if (event.target === revisionModal) {
+				closeRevisionModal();
+			}
+		});
+
 		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && documentModal && !documentModal.classList.contains('hidden')) {
-				closeDocumentModal();
+			if (event.key === 'Escape') {
+				if (documentModal && !documentModal.classList.contains('hidden')) {
+					closeDocumentModal();
+				}
+				if (rejectModal && !rejectModal.classList.contains('hidden')) {
+					closeRejectModal();
+				}
+				if (revisionModal && !revisionModal.classList.contains('hidden')) {
+					closeRevisionModal();
+				}
 			}
 		});
 	</script>

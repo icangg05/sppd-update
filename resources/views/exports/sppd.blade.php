@@ -308,7 +308,7 @@
 						</tr>
 						<tr>
 							<td style="padding: 0.5px 0; width: 120px;">Tanggal</td>
-							<td style="padding: 0.5px 0;">: {{ $sppd->start_date->translatedFormat('d F Y') }}</td>
+							<td style="padding: 0.5px 0;">: {{ $sppd->sppd_date->translatedFormat('d F Y') }}</td>
 						</tr>
 						<tr>
 							<td style="padding: 3px 0; text-transform: uppercase;" colspan="2">
