@@ -11,6 +11,7 @@ use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Helpers\QrSimulator;
 use App\Helpers\Terbilang;
+use App\Jobs\SendWhatsAppNotificationJob;
 use App\Models\Budget;
 use App\Models\Department;
 use App\Models\Province;
@@ -381,6 +382,18 @@ class SppdController extends Controller
                 // PDF generation is now handled on-the-fly via streaming to save storage.
                 // Files will only be saved permanently when the document is officially signed.
             });
+
+            // Dispatch notification to first approver
+            if (isset($sppd)) {
+                $firstApproval = $sppd->approvals()
+                    ->orderBy('step_order', 'asc')
+                    ->where('status', ApprovalStatus::PENDING)
+                    ->first();
+
+                if ($firstApproval) {
+                    $this->notifyApprover($sppd, $firstApproval);
+                }
+            }
 
             return redirect()->route('sppd.show', $sppd->id)
                 ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
@@ -759,6 +772,16 @@ class SppdController extends Controller
             $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
             if ($allApproved) {
                 $sppd->update(['status' => SppdStatus::APPROVED]);
+                $this->notifyApplicant($sppd, 'approved', $validated['notes'] ?? null, Auth::user());
+            } else {
+                $nextApproval = $sppd->approvals()
+                    ->where('step_order', '>', $approval->step_order)
+                    ->orderBy('step_order', 'asc')
+                    ->where('status', ApprovalStatus::PENDING)
+                    ->first();
+                if ($nextApproval) {
+                    $this->notifyApprover($sppd, $nextApproval);
+                }
             }
 
             return back()->with('success', 'SPPD berhasil disetujui dan dokumen ('.($shouldSignSpt && $shouldSignSppd ? 'SPT & SPPD' : ($shouldSignSpt ? 'SPT' : 'SPPD')).') telah di-TTE dengan sukses.');
@@ -769,6 +792,16 @@ class SppdController extends Controller
         $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
         if ($allApproved) {
             $sppd->update(['status' => SppdStatus::APPROVED]);
+            $this->notifyApplicant($sppd, 'approved', $validated['notes'] ?? null, Auth::user());
+        } else {
+            $nextApproval = $sppd->approvals()
+                ->where('step_order', '>', $approval->step_order)
+                ->orderBy('step_order', 'asc')
+                ->where('status', ApprovalStatus::PENDING)
+                ->first();
+            if ($nextApproval) {
+                $this->notifyApprover($sppd, $nextApproval);
+            }
         }
 
         return back()->with('success', 'SPPD berhasil disetujui.');
@@ -910,6 +943,8 @@ class SppdController extends Controller
             'revision_note' => null,
         ]);
 
+        $this->notifyApplicant($sppd, 'rejected', $request->notes, Auth::user());
+
         return back()->with('success', 'SPPD ditolak.');
     }
 
@@ -968,6 +1003,8 @@ class SppdController extends Controller
                 'reviser_id' => Auth::id(),
             ]);
         });
+
+        $this->notifyApplicant($sppd, 'revision', $request->notes, Auth::user());
 
         return redirect()->route('sppd.show', $sppd->id)
             ->with('success', 'SPPD berhasil dikembalikan kepada pemohon untuk direvisi.');
@@ -1493,5 +1530,78 @@ class SppdController extends Controller
         return Pdf::loadView('exports.rincian_biaya', compact('sppd', 'targetUser', 'costs', 'totalPengeluaranRiil', 'pdfData'))
             ->setPaper('f4', 'portrait')
             ->stream('RBPD-'.Str::slug($targetUser->name).'.pdf');
+    }
+
+    /**
+     * Dispatch WhatsApp notification to the next/first approver.
+     */
+    private function notifyApprover(SppdRequest $sppd, SppdApproval $approval): void
+    {
+        $approver = $approval->approver;
+        if (! $approver || ! $approver->phone) {
+            return;
+        }
+
+        $applicantName = $sppd->user?->name ?? 'Pegawai';
+        $purpose = $sppd->purpose;
+        $startDate = Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
+        $endDate = Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
+        $detailUrl = route('sppd.show', $sppd->id);
+
+        $message = "*PENGAJUAN SPPD BARU*\n\n"
+            ."Halo *{$approver->name}*,\n"
+            ."Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
+            ."• *Pengaju:* {$applicantName}\n"
+            ."• *Maksud Perjalanan:* {$purpose}\n"
+            ."• *Tanggal:* {$startDate} s/d {$endDate}\n"
+            ."• *Peran Anda:* {$approval->role_label}\n\n"
+            ."Silakan tinjau dan lakukan persetujuan melalui tautan berikut:\n"
+            ."{$detailUrl}\n\n"
+            .'Terima kasih.';
+
+        SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
+    }
+
+    /**
+     * Dispatch WhatsApp notification to the applicant.
+     */
+    private function notifyApplicant(SppdRequest $sppd, string $status, ?string $notes = null, ?User $actor = null): void
+    {
+        $applicant = $sppd->user;
+        if (! $applicant || ! $applicant->phone) {
+            return;
+        }
+
+        $purpose = $sppd->purpose;
+        $detailUrl = route('sppd.show', $sppd->id);
+        $actorName = $actor?->name ?? 'Pejabat';
+
+        $statusTitle = '';
+        $body = '';
+
+        if ($status === 'approved') {
+            $statusTitle = '*PENGUMUMAN: SPPD DISETUJUI*';
+            $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
+            if ($notes) {
+                $body .= "\n\n• *Catatan:* {$notes}";
+            }
+        } elseif ($status === 'rejected') {
+            $statusTitle = '*PENGUMUMAN: SPPD DITOLAK*';
+            $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
+                .'• *Alasan Penolakan:* '.($notes ?? 'Tidak ada catatan khusus.');
+        } elseif ($status === 'revision') {
+            $statusTitle = '*PENGUMUMAN: SPPD PERLU REVISI*';
+            $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
+                .'• *Catatan Revisi:* '.($notes ?? 'Harap tinjau kembali data pengajuan Anda.');
+        }
+
+        $message = "{$statusTitle}\n\n"
+            ."Halo *{$applicant->name}*,\n"
+            ."{$body}\n\n"
+            ."Silakan tinjau pengajuan Anda pada tautan berikut:\n"
+            ."{$detailUrl}\n\n"
+            .'Terima kasih.';
+
+        SendWhatsAppNotificationJob::dispatch($applicant->phone, $message);
     }
 }
