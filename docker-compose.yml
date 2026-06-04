@@ -3,32 +3,27 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: php_dev
+      target: production
     container_name: sppd_update_app
-    volumes:
-      - .:/app
-      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
+    restart: unless-stopped
     ports:
       - "8004:8000"
     depends_on:
       - db
-    command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
+    command: >
+      sh -c "
+        mkdir -p /app/storage/app/private /app/storage/app/public &&
+        chown -R www-data:www-data /app/storage &&
+        chmod -R 775 /app/storage &&
+        php artisan serve --host=0.0.0.0 --port=8000
+      "
     networks:
       - app_net
-
-  node:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      target: node_dev
-    container_name: sppd_update_node
+      - openwa_net
     volumes:
-      - .:/app
-    ports:
-      - "5176:5173"
-    command: sh -c "pnpm install && pnpm run dev --host 0.0.0.0"
-    networks:
-      - app_net
+      - ./storage/app:/app/storage/app
+      - .env:/app/.env
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
 
   db:
     image: mysql:8.0
@@ -58,7 +53,9 @@ services:
 
 networks:
   app_net:
-
+  openwa_net:
+    external: true
+    name: openwa-network
 
 volumes:
   dbdata:

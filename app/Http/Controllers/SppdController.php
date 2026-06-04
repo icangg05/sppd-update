@@ -1563,12 +1563,12 @@ class SppdController extends Controller
     }
 
     /**
-     * Dispatch WhatsApp notification to the applicant.
+     * Dispatch WhatsApp notification to the applicant (document creator).
      */
     private function notifyApplicant(SppdRequest $sppd, string $status, ?string $notes = null, ?User $actor = null): void
     {
-        $applicant = $sppd->user;
-        if (! $applicant || ! $applicant->phone) {
+        $recipient = $sppd->creator ?? $sppd->user;
+        if (! $recipient || ! $recipient->phone) {
             return;
         }
 
@@ -1596,12 +1596,12 @@ class SppdController extends Controller
         }
 
         $message = "{$statusTitle}\n\n"
-            ."Halo *{$applicant->name}*,\n"
+            ."Halo *{$recipient->name}*,\n"
             ."{$body}\n\n"
             ."Silakan tinjau pengajuan Anda pada tautan berikut:\n"
             ."{$detailUrl}\n\n"
             .'Terima kasih.';
 
-        SendWhatsAppNotificationJob::dispatch($applicant->phone, $message);
+        SendWhatsAppNotificationJob::dispatch($recipient->phone, $message);
     }
 }
