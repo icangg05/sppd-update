@@ -64,6 +64,33 @@ class SppdDigitalSignatureController extends Controller
     ]);
   }
 
+  public function batchStatus(SppdRequest $sppd)
+  {
+    $authId = auth()->id();
+    $signatures = $sppd->digitalSignatures()
+      ->get()
+      ->map(function ($sig) use ($authId) {
+        return [
+          'id' => $sig->id,
+          'document_type' => $sig->document_type,
+          'status' => $sig->status->value,
+          'status_label' => $sig->status->label(),
+          'signed_at' => $sig->signed_at?->translatedFormat('d M Y H:i'),
+          'error_message' => $sig->error_message,
+          'signed_file_path' => $sig->signed_file_path,
+          'signed_file_url' => $sig->signed_file_url,
+          'is_mine' => $sig->signer_id === $authId,
+        ];
+      });
+
+    return response()->json([
+      'signatures' => $signatures,
+      'is_all_signed' => $signatures->isNotEmpty() && $signatures->every(fn($sig) => $sig['status'] === SignatureStatus::SIGNED->value),
+      'has_errors' => $signatures->contains(fn($sig) => $sig['status'] === SignatureStatus::REJECTED->value),
+      'is_processing' => $signatures->contains(fn($sig) => $sig['status'] === SignatureStatus::PROCESSING->value),
+    ]);
+  }
+
   public function download(SppdRequest $sppd, SppdDigitalSignature $signature)
   {
     abort_if($signature->sppd_request_id !== $sppd->id, 404);

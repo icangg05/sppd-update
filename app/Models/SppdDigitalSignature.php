@@ -69,6 +69,25 @@ class SppdDigitalSignature extends Model
     ]);
   }
 
+  /**
+   * Scope a query to only include signatures that are processing.
+   */
+  public function scopeProcessing($query)
+  {
+    return $query->where('status', SignatureStatus::PROCESSING);
+  }
+
+  /**
+   * Mark this signature as processing.
+   */
+  public function markProcessing(): void
+  {
+    $this->update([
+      'status' => SignatureStatus::PROCESSING,
+      'error_message' => null,
+    ]);
+  }
+
   public function getSignedFileUrlAttribute(): ?string
   {
     if (! $this->signed_file_path) {

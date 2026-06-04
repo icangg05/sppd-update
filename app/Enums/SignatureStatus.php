@@ -5,6 +5,7 @@ namespace App\Enums;
 enum SignatureStatus: string
 {
     case PENDING = 'pending';
+    case PROCESSING = 'processing';
     case SIGNED = 'signed';
     case REJECTED = 'rejected';
 
@@ -12,6 +13,7 @@ enum SignatureStatus: string
     {
         return match ($this) {
             self::PENDING => 'Menunggu Tanda Tangan',
+            self::PROCESSING => 'Sedang Diproses',
             self::SIGNED => 'Sudah Ditandatangani',
             self::REJECTED => 'Ditolak',
         };

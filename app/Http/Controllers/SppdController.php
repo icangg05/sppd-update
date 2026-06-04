@@ -11,6 +11,7 @@ use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Helpers\QrSimulator;
 use App\Helpers\Terbilang;
+use App\Jobs\SendTteSignRequestJob;
 use App\Jobs\SendWhatsAppNotificationJob;
 use App\Models\Budget;
 use App\Models\Department;
@@ -27,10 +28,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Throwable;
 
 class SppdController extends Controller
 {
@@ -737,8 +740,7 @@ class SppdController extends Controller
         }
       }
 
-      $signatureService = app(SignatureService::class);
-
+      $jobs = [];
       foreach ($documentsToSign as $doc) {
         $signature = $sppd->digitalSignatures()->updateOrCreate(
           [
@@ -750,7 +752,7 @@ class SppdController extends Controller
               'sppd_request_id' => $sppd->id,
               'signer_id' => Auth::id(),
               'document_type' => $doc['type'],
-              'status' => SignatureStatus::PENDING,
+              'status' => SignatureStatus::PROCESSING,
               'error_message' => null,
               'signed_file_path' => null,
               'provider_name' => config('tte.default_provider'),
@@ -759,32 +761,27 @@ class SppdController extends Controller
           )
         );
 
-        $signResult = $signatureService->sign($signature, $validated['passphrase']);
-
-        if ($signResult !== true) {
-          return back()
-            ->with('error', 'Error TTE (' . strtoupper(str_replace('_', ' ', $doc['type'])) . '): ' . ($signature->error_message ?? 'Terjadi kesalahan saat memproses tanda tangan elektronik.'))
-            ->with('error_details', is_array($signResult) && array_key_exists('details', $signResult) ? $signResult['details'] : $signature->toArray());
-        }
+        $jobs[] = new SendTteSignRequestJob($signature, $validated['passphrase'], $validated['notes'] ?? null);
       }
 
-      $approval->approve($validated['notes'] ?? null);
-      $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
-      if ($allApproved) {
-        $sppd->update(['status' => SppdStatus::APPROVED]);
-        $this->notifyApplicant($sppd, 'approved', $validated['notes'] ?? null, Auth::user());
-      } else {
-        $nextApproval = $sppd->approvals()
-          ->where('step_order', '>', $approval->step_order)
-          ->orderBy('step_order', 'asc')
-          ->where('status', ApprovalStatus::PENDING)
-          ->first();
-        if ($nextApproval) {
-          $this->notifyApprover($sppd, $nextApproval);
-        }
-      }
+      // Chain jobs so if the first fails (e.g. wrong passphrase), subsequent jobs are skipped
+      $sppdId = $sppd->id;
+      $signerId = Auth::id();
+      Bus::chain($jobs)
+        ->catch(function (Throwable $e) use ($sppdId, $signerId) {
+          // Mark any remaining PROCESSING signatures as REJECTED so UI shows correct state
+          \App\Models\SppdDigitalSignature::where('sppd_request_id', $sppdId)
+            ->where('signer_id', $signerId)
+            ->where('status', SignatureStatus::PROCESSING)
+            ->update([
+              'status' => SignatureStatus::REJECTED,
+              'error_message' => $e->getMessage(),
+            ]);
+        })
+        ->dispatch();
 
-      return back()->with('success', 'SPPD berhasil disetujui dan dokumen (' . ($shouldSignSpt && $shouldSignSppd ? 'SPT & SPPD' : ($shouldSignSpt ? 'SPT' : 'SPPD')) . ') telah di-TTE dengan sukses.');
+      $docTypeLabel = ($shouldSignSpt && $shouldSignSppd ? 'SPT & SPPD' : ($shouldSignSpt ? 'SPT' : 'SPPD'));
+      return back()->with('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) untuk ' . $docTypeLabel . ' sedang diproses di background.');
     }
 
     $approval->approve($validated['notes'] ?? null);

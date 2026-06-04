@@ -46,13 +46,29 @@
         @php $sptSignature = $sppd->signatureFor('spt'); @endphp
 
         {{-- Status TTE --}}
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4" @if($sptSignature) data-tte-signature-id="{{ $sptSignature->id }}" @endif>
           <div class="flex justify-between items-start">
             <div>
               <p class="text-xs font-bold text-slate-500 uppercase">Status TTE</p>
-              <p class="text-sm font-bold text-slate-800 mt-1">
-                {{ $sptSignature ? $sptSignature->status->label() : 'Belum Diproses' }}
-              </p>
+              <div class="tte-badge-container mt-1.5">
+                @if ($sptSignature && $sptSignature->status->value === 'signed')
+                  <span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                    Sudah Ditandatangani
+                  </span>
+                @elseif ($sptSignature && $sptSignature->status->value === 'processing')
+                  <span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                    <i class="fa-solid fa-spinner animate-spin text-[10px]"></i> Sedang Diproses
+                  </span>
+                @elseif ($sptSignature && $sptSignature->status->value === 'rejected')
+                  <span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                    Gagal TTE
+                  </span>
+                @else
+                  <span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                    Belum Diproses
+                  </span>
+                @endif
+              </div>
             </div>
 
             @if ($sptSignature)
@@ -75,11 +91,11 @@
             </div>
           @endif
 
-          @if ($sptSignature?->error_message)
-            <p class="mt-2 text-[10px] text-rose-600 font-medium">
-              <i class="fa-solid fa-circle-exclamation mr-1"></i> Error: {{ $sptSignature->error_message }}
+          <div class="tte-error-container mt-2 {{ ($sptSignature && $sptSignature->error_message) ? '' : 'hidden' }}">
+            <p class="text-[10px] text-rose-600 font-medium">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i> Error: <span class="error-message-text">{{ $sptSignature?->error_message }}</span>
             </p>
-          @endif
+          </div>
         </div>
       </div>
     </div>
@@ -94,3 +110,56 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+  @if ($sptSignature && $sptSignature->status->value === 'processing')
+  <script>
+    (function() {
+      let pollInterval = setInterval(checkTteStatus, 5000);
+
+      function checkTteStatus() {
+        fetch("{{ route('sppd.sign.batch-status', $sppd) }}")
+          .then(response => response.json())
+          .then(data => {
+            if (data.signatures) {
+              const sig = data.signatures.find(s => s.id == "{{ $sptSignature->id }}");
+              if (sig) {
+                const container = document.querySelector(`[data-tte-signature-id="${sig.id}"]`);
+                if (container) {
+                  const badgeContainer = container.querySelector('.tte-badge-container');
+                  const errorContainer = container.querySelector('.tte-error-container');
+                  const errorMessageText = container.querySelector('.error-message-text');
+
+                  if (sig.status === 'signed') {
+                    badgeContainer.innerHTML = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Sudah Ditandatangani</span>`;
+                    errorContainer.classList.add('hidden');
+                  } else if (sig.status === 'processing') {
+                    badgeContainer.innerHTML = `<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse"><i class="fa-solid fa-spinner animate-spin text-[10px]"></i> Sedang Diproses</span>`;
+                    errorContainer.classList.add('hidden');
+                  } else if (sig.status === 'rejected') {
+                    badgeContainer.innerHTML = `<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Gagal TTE</span>`;
+                    if (sig.error_message) {
+                      errorMessageText.textContent = sig.error_message;
+                      errorContainer.classList.remove('hidden');
+                    }
+                  } else {
+                    badgeContainer.innerHTML = `<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Belum Diproses</span>`;
+                    errorContainer.classList.add('hidden');
+                  }
+                }
+              }
+            }
+
+            if (!data.is_processing) {
+              clearInterval(pollInterval);
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            }
+          })
+          .catch(err => console.error("Error polling TTE status:", err));
+      }
+    })();
+  </script>
+  @endif
+@endpush

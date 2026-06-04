@@ -322,78 +322,134 @@
 				@endphp
 
 				@if ($myApproval)
+					@php
+						$isSigningInProgress = $sppd->digitalSignatures()
+							->where('signer_id', auth()->id())
+							->where('status', \App\Enums\SignatureStatus::PROCESSING)
+							->exists();
+					@endphp
 					<div class="rounded border border-blue-200 bg-blue-50 shadow-md overflow-hidden">
 						<div class="bg-blue-100/50 px-5 py-3 border-b border-blue-200">
 							<h3 class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-2">
-								<i class="fa-solid fa-bell text-blue-600 animate-pulse"></i> Menunggu Keputusan Anda
+								<i class="fa-solid fa-bell text-blue-600 @if($isSigningInProgress) animate-spin @else animate-pulse @endif"></i>
+								@if($isSigningInProgress)
+									Proses TTE Sedang Berjalan
+								@else
+									Menunggu Keputusan Anda
+								@endif
 							</h3>
 						</div>
 						<div class="p-5">
-							<p class="text-xs text-blue-700 mb-4 bg-white p-2 rounded border border-blue-100 font-medium">
-								Anda bertindak sebagai <strong>{{ $myApproval->role_label }}</strong> (Langkah
-								ke-{{ $myApproval->step_order }})
-							</p>
-
-							@if ($hasUnapprovedPrevious)
-								{{-- Tampilkan keterangan, sembunyikan form --}}
+							@if ($isSigningInProgress)
 								<div class="rounded border border-amber-300 bg-amber-50 p-4 text-center">
-									<i class="fa-solid fa-clock-rotate-left text-amber-500 text-2xl mb-2"></i>
-									<p class="text-xs font-bold text-amber-800 mb-1">Menunggu Langkah Sebelumnya</p>
+									<i class="fa-solid fa-spinner animate-spin text-amber-500 text-2xl mb-2"></i>
+									<p class="text-xs font-bold text-amber-800 mb-1">TTE Sedang Diproses</p>
 									<p class="text-xs text-amber-700 leading-relaxed">
-										Formulir persetujuan belum dapat ditampilkan karena masih ada langkah persetujuan sebelumnya yang belum
-										selesai. Silakan tunggu hingga pejabat pada langkah sebelumnya menyelesaikan persetujuannya.
+										Proses tanda tangan elektronik dokumen Anda sedang diproses di background. Formulir persetujuan dikunci sementara hingga proses selesai. Halaman akan dimuat ulang otomatis setelah selesai.
 									</p>
 								</div>
 							@else
-								@if ($needsTte)
-									<div class="mb-4 rounded border border-blue-200 bg-blue-100/50 p-3">
-										<p class="text-xs font-bold text-blue-800">
-											<i class="fa-solid fa-file-signature mr-1"></i> Penandatanganan Elektronik (TTE)
+								<p class="text-xs text-blue-700 mb-4 bg-white p-2 rounded border border-blue-100 font-medium">
+									Anda bertindak sebagai <strong>{{ $myApproval->role_label }}</strong> (Langkah
+									ke-{{ $myApproval->step_order }})
+								</p>
+
+								@if ($hasUnapprovedPrevious)
+									{{-- Tampilkan keterangan, sembunyikan form --}}
+									<div class="rounded border border-amber-300 bg-amber-50 p-4 text-center">
+										<i class="fa-solid fa-clock-rotate-left text-amber-500 text-2xl mb-2"></i>
+										<p class="text-xs font-bold text-amber-800 mb-1">Menunggu Langkah Sebelumnya</p>
+										<p class="text-xs text-amber-700 leading-relaxed">
+											Formulir persetujuan belum dapat ditampilkan karena masih ada langkah persetujuan sebelumnya yang belum
+											selesai. Silakan tunggu hingga pejabat pada langkah sebelumnya menyelesaikan persetujuannya.
 										</p>
-										<p class="text-xs text-blue-700 mt-1">Masukkan passphrase TTE Anda untuk menyetujui sekaligus mengirim
-											permintaan penandatanganan elektronik dokumen.</p>
 									</div>
-								@endif
-
-								<form action="{{ route('sppd.approve', $sppd) }}" method="POST" class="mb-3 space-y-3">
-									@csrf
-									<textarea name="notes"
-									 class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 min-h-[60px]"
-									 placeholder="Tambahkan catatan persetujuan (opsional)..."></textarea>
-
+								@else
 									@if ($needsTte)
-										<div>
-											<label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase
-												Penandatangan</label>
-											<div class="relative">
-												<input type="password" name="passphrase" id="passphrase-input" required minlength="4"
-													class="w-full rounded border border-slate-300 bg-white pl-3 pr-10 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-													placeholder="••••••••">
-												<button type="button" onclick="togglePassphraseVisibility()"
-													class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
-													<i id="passphrase-eye-icon" class="fa-solid fa-eye text-sm"></i>
-												</button>
+										@if (!auth()->user()->nik)
+											<div class="mb-4 rounded border border-rose-200 bg-rose-50 p-3">
+												<p class="text-xs font-bold text-rose-800">
+													<i class="fa-solid fa-triangle-exclamation mr-1"></i> NIK Belum Terdaftar
+												</p>
+												<p class="text-xs text-rose-700 mt-1 leading-normal">
+													Profil Anda belum memiliki NIK. Untuk dapat menyetujui dokumen ini dengan TTE, silakan lengkapi NIK Anda terlebih dahulu melalui menu profil Anda.
+												</p>
 											</div>
-										</div>
+										@else
+											<div class="mb-4 rounded border border-blue-200 bg-blue-100/50 p-3">
+												<p class="text-xs font-bold text-blue-800">
+													<i class="fa-solid fa-file-signature mr-1"></i> Penandatanganan Elektronik (TTE)
+												</p>
+												<p class="text-xs text-blue-700 mt-1">Masukkan passphrase TTE Anda untuk menyetujui sekaligus mengirim
+													permintaan penandatanganan elektronik dokumen.</p>
+											</div>
+										@endif
 									@endif
 
-									<button type="submit"
-										class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
-										<i class="fa-solid fa-check-double"></i> Setujui Dokumen
-									</button>
-								</form>
+									{{-- Tampilkan error jika TTE sebelumnya gagal (juga dapat diupdate via JS polling) --}}
+									@php
+										$failedSig = $sppd->digitalSignatures()
+											->where('signer_id', auth()->id())
+											->where('status', \App\Enums\SignatureStatus::REJECTED)
+											->first();
+									@endphp
+									<div id="tte-form-error-container" class="mb-4 {{ ($failedSig && $failedSig->error_message) ? '' : 'hidden' }}">
+										<div class="rounded border border-rose-200 bg-rose-50 p-3">
+											<p class="text-xs font-bold text-rose-800">
+												<i class="fa-solid fa-circle-exclamation mr-1"></i> TTE Gagal
+											</p>
+											<p id="tte-form-error-message" class="text-xs text-rose-700 mt-1 leading-normal">{{ $failedSig?->error_message }}</p>
+											<p class="text-xs text-rose-600 mt-1">Silakan periksa kembali passphrase Anda dan coba kirim ulang formulir di bawah.</p>
+										</div>
+									</div>
 
-								<div class="flex flex-col gap-2">
-									<button type="button" onclick="openRejectModal()"
-										class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer">
-										<i class="fa-solid fa-ban"></i> Tolak Dokumen
-									</button>
+									<form action="{{ route('sppd.approve', $sppd) }}" method="POST" class="mb-3 space-y-3">
+										@csrf
+										<textarea name="notes"
+										 class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 min-h-[60px]"
+										 placeholder="Tambahkan catatan persetujuan (opsional)..."></textarea>
 
-									<button type="button" onclick="openRevisionModal()"
-										class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 cursor-pointer">
-										<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
-									</button>
-								</div>
+										@if ($needsTte && auth()->user()->nik)
+											<div>
+												<label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase
+													Penandatangan</label>
+												<div class="relative">
+													<input type="password" name="passphrase" id="passphrase-input" required minlength="4"
+														class="w-full rounded border border-slate-300 bg-white pl-3 pr-10 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+														placeholder="••••••••">
+													<button type="button" onclick="togglePassphraseVisibility()"
+														class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+														<i id="passphrase-eye-icon" class="fa-solid fa-eye text-sm"></i>
+													</button>
+												</div>
+											</div>
+										@endif
+
+										@if ($needsTte && !auth()->user()->nik)
+											<button type="button" disabled
+												class="flex w-full items-center justify-center gap-2 rounded bg-slate-200 px-4 py-2.5 text-sm font-bold text-slate-400 cursor-not-allowed border border-slate-300">
+												<i class="fa-solid fa-lock"></i> Setujui Dokumen (NIK Belum Ada)
+											</button>
+										@else
+											<button type="submit"
+												class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
+												<i class="fa-solid fa-check-double"></i> Setujui Dokumen
+											</button>
+										@endif
+									</form>
+
+									<div class="flex flex-col gap-2">
+										<button type="button" onclick="openRejectModal()"
+											class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer">
+											<i class="fa-solid fa-ban"></i> Tolak Dokumen
+										</button>
+
+										<button type="button" onclick="openRevisionModal()"
+											class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 cursor-pointer">
+											<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
+										</button>
+									</div>
+								@endif
 							@endif
 						</div>
 					</div>
@@ -414,77 +470,202 @@
 
 				@if ($showSppdStatus || $showSptStatus)
 					<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
-						<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+						<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex items-center justify-between">
 							<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
 								<i class="fa-solid fa-file-shield text-cyan-600"></i> Status TTE Dokumen
 							</h3>
+							@php
+								$totalSigs = ($showSptStatus ? 1 : 0) + ($showSppdStatus ? 1 : 0) + $sppd->followers->count();
+								$signedCount = 0;
+								$processingCount = 0;
+								$failedCount = 0;
+								$pendingCount = 0;
+
+								if ($showSptStatus) {
+									if ($sptSig) {
+										if ($sptSig->status->value === 'signed') $signedCount++;
+										elseif ($sptSig->status->value === 'processing') $processingCount++;
+										elseif ($sptSig->status->value === 'rejected') $failedCount++;
+										else $pendingCount++;
+									} else {
+										$pendingCount++;
+									}
+								}
+
+								if ($showSppdStatus) {
+									if ($sppdSig) {
+										if ($sppdSig->status->value === 'signed') $signedCount++;
+										elseif ($sppdSig->status->value === 'processing') $processingCount++;
+										elseif ($sppdSig->status->value === 'rejected') $failedCount++;
+										else $pendingCount++;
+									} else {
+										$pendingCount++;
+									}
+								}
+
+								foreach ($sppd->followers as $follower) {
+									$sig = $sppd->digitalSignatures->where('document_type', 'sppd_' . $follower->user_id)->first();
+									if ($sig) {
+										if ($sig->status->value === 'signed') $signedCount++;
+										elseif ($sig->status->value === 'processing') $processingCount++;
+										elseif ($sig->status->value === 'rejected') $failedCount++;
+										else $pendingCount++;
+									} else {
+										$pendingCount++;
+									}
+								}
+							@endphp
+							<span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">
+								{{ $totalSigs }} Dokumen
+							</span>
 						</div>
-						<div class="p-5 space-y-4 divide-y divide-slate-100">
+
+						{{-- Status Summary Grid for many items --}}
+						@if ($totalSigs > 4)
+							<div class="bg-slate-50 border-b border-slate-200/80 p-3 grid grid-cols-4 gap-1.5 text-center text-[9px] font-semibold">
+								<div class="bg-slate-100/80 border border-slate-200 rounded p-1">
+									<span class="block text-slate-500">Total</span>
+									<span class="block text-xs font-bold text-slate-800 mt-0.5">{{ $totalSigs }}</span>
+								</div>
+								<div class="bg-emerald-50 border border-emerald-100 rounded p-1">
+									<span class="block text-emerald-600">Signed</span>
+									<span class="block text-xs font-bold text-emerald-700 mt-0.5">{{ $signedCount }}</span>
+								</div>
+								<div class="bg-amber-50 border border-amber-100 rounded p-1">
+									<span class="block text-amber-600">Proc</span>
+									<span class="block text-xs font-bold text-amber-700 mt-0.5">{{ $processingCount }}</span>
+								</div>
+								<div class="bg-rose-50 border border-rose-100 rounded p-1">
+									<span class="block text-rose-600">Failed</span>
+									<span class="block text-xs font-bold text-rose-700 mt-0.5">{{ $failedCount }}</span>
+								</div>
+							</div>
+
+							{{-- Search Filter --}}
+							<div class="p-3 border-b border-slate-100 bg-white">
+								<div class="relative">
+									<input type="text" id="tte-search-input" placeholder="Cari nama atau tipe dokumen..."
+										class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500" />
+									<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-[10px]"></i>
+								</div>
+							</div>
+						@endif
+
+						<div class="p-4 divide-y divide-slate-100 max-h-[350px] overflow-y-auto scrollbar-thin" id="tte-signatures-list">
+							{{-- 1. SPPD --}}
 							@if ($showSppdStatus)
-								<div class="pt-0">
-									<p class="text-xs font-bold text-slate-500 uppercase tracking-wide">TTE Dokumen SPPD</p>
-									<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-										@if ($sppdSig && $sppdSig->status->value === 'signed')
-											<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Sudah Ditandatangani
-											</span>
-										@elseif ($sppdSig && $sppdSig->status->value === 'rejected')
-											<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Gagal TTE
-											</span>
-										@else
-											<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Belum Ditandatangani
-											</span>
-										@endif
-										
-										@if ($sppdSig && $sppdSig->status->value === 'signed')
-											<span class="text-[10px] font-mono text-slate-400">
-												<i class="fa-regular fa-clock"></i> {{ $sppdSig->signed_at?->translatedFormat('d M Y H:i') }}
-											</span>
-										@endif
+								@php $sig = $sppdSig; @endphp
+								<div class="py-2 flex items-center justify-between gap-3 text-xs" @if($sig) data-tte-signature-id="{{ $sig->id }}" @endif data-search-term="sppd pelaksana {{ strtolower($sppd->user->name) }}">
+									<div class="min-w-0 flex-1">
+										<span class="font-bold text-slate-700 block truncate text-[11px]">SPPD (Pelaksana)</span>
+										<span class="text-[10px] text-slate-500 block truncate mt-0.5">{{ $sppd->user->name }}</span>
 									</div>
-									@if ($sppdSig && $sppdSig->error_message)
-										<div class="mt-2 rounded border border-rose-200 bg-rose-50 p-2.5 text-[10px] text-rose-700 leading-normal">
-											<i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error:</strong>
-											{{ $sppdSig->error_message }}
+									<div class="flex items-center gap-2 shrink-0">
+										<div class="tte-badge-container">
+											@if ($sig && $sig->status->value === 'signed')
+												<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Sudah TTE
+												</span>
+											@elseif ($sig && $sig->status->value === 'processing')
+												<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 animate-pulse">
+													<i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Proses
+												</span>
+											@elseif ($sig && $sig->status->value === 'rejected')
+												<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Gagal TTE
+												</span>
+											@else
+												<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Belum TTE
+												</span>
+											@endif
 										</div>
-									@endif
+										<span class="tte-time-container text-[9px] font-mono text-slate-400">
+											@if ($sig && $sig->status->value === 'signed')
+												<i class="fa-regular fa-clock"></i> {{ $sig->signed_at?->translatedFormat('d/m H:i') }}
+											@endif
+										</span>
+									</div>
 								</div>
 							@endif
 
+							{{-- 2. SPT --}}
 							@if ($showSptStatus)
-								<div class="pt-3">
-									<p class="text-xs font-bold text-slate-500 uppercase tracking-wide">TTE Dokumen SPT</p>
-									<div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-										@if ($sptSig && $sptSig->status->value === 'signed')
-											<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Sudah Ditandatangani
-											</span>
-										@elseif ($sptSig && $sptSig->status->value === 'rejected')
-											<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Gagal TTE
-											</span>
-										@else
-											<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-												Belum Ditandatangani
-											</span>
-										@endif
-
-										@if ($sptSig && $sptSig->status->value === 'signed')
-											<span class="text-[10px] font-mono text-slate-400">
-												<i class="fa-regular fa-clock"></i> {{ $sptSig->signed_at?->translatedFormat('d M Y H:i') }}
-											</span>
-										@endif
+								@php $sig = $sptSig; @endphp
+								<div class="py-2 flex items-center justify-between gap-3 text-xs" @if($sig) data-tte-signature-id="{{ $sig->id }}" @endif data-search-term="spt tugas {{ strtolower($sppd->user->name) }}">
+									<div class="min-w-0 flex-1">
+										<span class="font-bold text-slate-700 block truncate text-[11px]">Dokumen SPT</span>
+										<span class="text-[10px] text-slate-500 block truncate mt-0.5">{{ $sppd->user->name }}</span>
 									</div>
-									@if ($sptSig && $sptSig->error_message)
-										<div class="mt-2 rounded border border-rose-200 bg-rose-50 p-2.5 text-[10px] text-rose-700 leading-normal">
-											<i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Error:</strong>
-											{{ $sptSig->error_message }}
+									<div class="flex items-center gap-2 shrink-0">
+										<div class="tte-badge-container">
+											@if ($sig && $sig->status->value === 'signed')
+												<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Sudah TTE
+												</span>
+											@elseif ($sig && $sig->status->value === 'processing')
+												<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 animate-pulse">
+													<i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Proses
+												</span>
+											@elseif ($sig && $sig->status->value === 'rejected')
+												<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Gagal TTE
+												</span>
+											@else
+												<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Belum TTE
+												</span>
+											@endif
 										</div>
-									@endif
+										<span class="tte-time-container text-[9px] font-mono text-slate-400">
+											@if ($sig && $sig->status->value === 'signed')
+												<i class="fa-regular fa-clock"></i> {{ $sig->signed_at?->translatedFormat('d/m H:i') }}
+											@endif
+										</span>
+									</div>
 								</div>
 							@endif
+
+							{{-- 3. Followers SPPD --}}
+							@foreach ($sppd->followers as $follower)
+								@php
+									$sig = $sppd->digitalSignatures
+										->where('document_type', 'sppd_' . $follower->user_id)
+										->first();
+								@endphp
+								<div class="py-2 flex items-center justify-between gap-3 text-xs" @if($sig) data-tte-signature-id="{{ $sig->id }}" @endif data-search-term="sppd pengikut {{ strtolower($follower->user->name) }}">
+									<div class="min-w-0 flex-1">
+										<span class="font-bold text-slate-700 block truncate text-[11px]">SPPD (Pengikut)</span>
+										<span class="text-[10px] text-slate-500 block truncate mt-0.5">{{ $follower->user->name }}</span>
+									</div>
+									<div class="flex items-center gap-2 shrink-0">
+										<div class="tte-badge-container">
+											@if ($sig && $sig->status->value === 'signed')
+												<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Sudah TTE
+												</span>
+											@elseif ($sig && $sig->status->value === 'processing')
+												<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 animate-pulse">
+													<i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Proses
+												</span>
+											@elseif ($sig && $sig->status->value === 'rejected')
+												<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Gagal TTE
+												</span>
+											@else
+												<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+													Belum TTE
+												</span>
+											@endif
+										</div>
+										<span class="tte-time-container text-[9px] font-mono text-slate-400">
+											@if ($sig && $sig->status->value === 'signed')
+												<i class="fa-regular fa-clock"></i> {{ $sig->signed_at?->translatedFormat('d/m H:i') }}
+											@endif
+										</span>
+									</div>
+								</div>
+							@endforeach
 						</div>
 					</div>
 				@endif
@@ -790,5 +971,78 @@
 				}
 			}
 		});
+
+		@if ($sppd->digitalSignatures->contains(fn($sig) => $sig->status->value === 'processing'))
+		(function() {
+			let pollInterval = setInterval(checkTteStatus, 5000);
+
+			function checkTteStatus() {
+				fetch("{{ route('sppd.sign.batch-status', $sppd) }}")
+					.then(response => response.json())
+					.then(data => {
+						if (data.signatures) {
+							data.signatures.forEach(sig => {
+								const container = document.querySelector(`[data-tte-signature-id="${sig.id}"]`);
+								if (container) {
+									const badgeContainer = container.querySelector('.tte-badge-container');
+									const timeContainer = container.querySelector('.tte-time-container');
+
+									if (sig.status === 'signed') {
+										badgeContainer.innerHTML = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Sudah TTE</span>`;
+										if (sig.signed_at) {
+											timeContainer.innerHTML = `<i class="fa-regular fa-clock"></i> ${sig.signed_at}`;
+										}
+									} else if (sig.status === 'processing') {
+										badgeContainer.innerHTML = `<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 animate-pulse"><i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Proses</span>`;
+										timeContainer.innerHTML = '';
+									} else if (sig.status === 'rejected') {
+										badgeContainer.innerHTML = `<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Gagal TTE</span>`;
+										timeContainer.innerHTML = '';
+										if (sig.error_message && sig.is_mine) {
+											const formErrorContainer = document.getElementById('tte-form-error-container');
+											const formErrorMessage = document.getElementById('tte-form-error-message');
+											if (formErrorContainer && formErrorMessage) {
+												formErrorMessage.textContent = sig.error_message;
+												formErrorContainer.classList.remove('hidden');
+											}
+										}
+									} else {
+										badgeContainer.innerHTML = `<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Belum TTE</span>`;
+										timeContainer.innerHTML = '';
+									}
+								}
+							});
+						}
+
+						if (!data.is_processing) {
+							clearInterval(pollInterval);
+							setTimeout(() => {
+								window.location.reload();
+							}, 1000);
+						}
+					})
+					.catch(err => console.error("Error polling TTE status:", err));
+			}
+		})();
+		@endif
+
+		// JavaScript search filter for digital signatures status card
+		(function() {
+			const tteSearchInput = document.getElementById('tte-search-input');
+			if (tteSearchInput) {
+				tteSearchInput.addEventListener('input', function() {
+					const query = this.value.toLowerCase().trim();
+					const items = document.querySelectorAll('#tte-signatures-list > div');
+					items.forEach(item => {
+						const searchTerm = item.getAttribute('data-search-term') || '';
+						if (searchTerm.includes(query)) {
+							item.style.display = '';
+						} else {
+							item.style.display = 'none';
+						}
+					});
+				});
+			}
+		})();
 	</script>
 @endpush
