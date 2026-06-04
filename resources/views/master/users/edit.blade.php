@@ -72,8 +72,40 @@
 						</div>
 
 						<div class="space-y-1">
-							<x-form.input name="phone" label="No. Telepon / WhatsApp" :value="old('phone', $user->phone)"
-								placeholder="Contoh: 08..." class="focus:border-cyan-500 focus:ring-cyan-500" />
+							{{-- Phone Field dengan tombol verifikasi --}}
+							<label for="phone" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
+								No. Telepon / WhatsApp
+							</label>
+							<div class="flex gap-2">
+								<input
+									type="tel"
+									id="phone"
+									name="phone"
+									value="{{ old('phone', $user->phone) }}"
+									placeholder="Contoh: 08123456789"
+									inputmode="numeric"
+									pattern="[0-9+]*"
+									class="flex-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @enderror"
+								/>
+								<button
+									type="button"
+									id="btn-test-wa"
+									onclick="testWhatsApp()"
+									title="Kirim pesan percobaan ke nomor ini"
+									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap"
+								>
+									<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim
+								</button>
+							</div>
+							<p class="text-xs text-slate-400 mt-1">
+								<i class="fa-solid fa-circle-info mr-1 text-cyan-500"></i>
+								Nomor ini akan digunakan untuk mengirim notifikasi WhatsApp terkait pengajuan SPPD.
+								Gunakan tombol <strong>Uji Kirim</strong> untuk memverifikasi nomor sebelum menyimpan.
+							</p>
+							@error('phone')
+								<p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
+							@enderror
+							<div id="wa-test-result" class="hidden mt-1 text-xs font-medium"></div>
 						</div>
 
 						<div class="space-y-1">
@@ -162,3 +194,97 @@
 		</form>
 	</div>
 @endsection
+
+@push('scripts')
+<script>
+  const WA_COOLDOWN_KEY = 'wa_cooldown_end_{{ auth()->id() }}';
+  const COOLDOWN_SECONDS = 60;
+  let countdownInterval = null;
+
+  function startCooldown(seconds) {
+    const btn = document.getElementById('btn-test-wa');
+    const endTime = Date.now() + seconds * 1000;
+    localStorage.setItem(WA_COOLDOWN_KEY, endTime.toString());
+
+    btn.disabled = true;
+
+    clearInterval(countdownInterval);
+    countdownInterval = setInterval(function () {
+      const remaining = Math.ceil((parseInt(localStorage.getItem(WA_COOLDOWN_KEY)) - Date.now()) / 1000);
+      if (remaining <= 0) {
+        clearInterval(countdownInterval);
+        localStorage.removeItem(WA_COOLDOWN_KEY);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin text-sm"></i> Kirim Ulang (' + remaining + ' d)';
+      }
+    }, 1000);
+  }
+
+  function testWhatsApp() {
+    const phone = document.getElementById('phone').value.trim();
+    const resultEl = document.getElementById('wa-test-result');
+    const btn = document.getElementById('btn-test-wa');
+
+    if (!phone) {
+      resultEl.textContent = '⚠️ Masukkan nomor telepon terlebih dahulu.';
+      resultEl.className = 'mt-1 text-xs font-medium text-amber-600';
+      resultEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Mengirim...';
+    resultEl.classList.add('hidden');
+
+    fetch('{{ route('master.users.test-wa') }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ phone }),
+    })
+    .then(function (r) { return r.json().then(function (data) { return { status: r.status, data }; }); })
+    .then(function ({ status, data }) {
+      if (data.success) {
+        resultEl.textContent = '✅ ' + data.message;
+        resultEl.className = 'mt-1 text-xs font-medium text-green-600';
+        startCooldown(COOLDOWN_SECONDS);
+      } else if (status === 429) {
+        resultEl.textContent = '⏳ ' + data.message;
+        resultEl.className = 'mt-1 text-xs font-medium text-amber-600';
+        startCooldown(data.remaining ?? COOLDOWN_SECONDS);
+      } else {
+        resultEl.textContent = '❌ ' + data.message;
+        resultEl.className = 'mt-1 text-xs font-medium text-red-600';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
+      }
+      resultEl.classList.remove('hidden');
+    })
+    .catch(function () {
+      resultEl.textContent = '❌ Terjadi kesalahan jaringan. Coba lagi.';
+      resultEl.className = 'mt-1 text-xs font-medium text-red-600';
+      resultEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
+    });
+  }
+
+  // Restore cooldown on page load
+  document.addEventListener('DOMContentLoaded', function () {
+    const savedEnd = localStorage.getItem(WA_COOLDOWN_KEY);
+    if (savedEnd) {
+      const remaining = Math.ceil((parseInt(savedEnd) - Date.now()) / 1000);
+      if (remaining > 0) {
+        startCooldown(remaining);
+      } else {
+        localStorage.removeItem(WA_COOLDOWN_KEY);
+      }
+    }
+  });
+</script>
+@endpush

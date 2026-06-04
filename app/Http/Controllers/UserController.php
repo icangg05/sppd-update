@@ -6,8 +6,10 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
 use App\Models\User;
+use App\Services\OpenWAService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 class UserController extends Controller
 {
@@ -247,5 +249,48 @@ class UserController extends Controller
     $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
     return back()->with('success', "Pegawai {$user->name} berhasil {$status}.");
+  }
+
+  /**
+   * Kirim pesan WhatsApp percobaan ke nomor tertentu untuk verifikasi.
+   *
+   * Dibatasi 1 kali per 60 detik per pengguna untuk mencegah spam.
+   */
+  public function testWhatsApp(Request $request, OpenWAService $openwa)
+  {
+    $request->validate([
+      'phone' => 'required|string|max:20',
+    ]);
+
+    $key = 'test-wa:user:' . auth()->id();
+    $maxAttempts = 1;
+    $decaySeconds = 60;
+
+    if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
+      $remaining = RateLimiter::availableIn($key);
+
+      return response()->json([
+        'success'   => false,
+        'message'   => "Harap tunggu {$remaining} detik sebelum mengirim pesan percobaan lagi.",
+        'remaining' => $remaining,
+      ], 429);
+    }
+
+    RateLimiter::hit($key, $decaySeconds);
+
+    $phone = $request->phone;
+    $message = "🔔 *TES NOTIFIKASI SPPD*\n"
+      . "*────────────────────────────────*\n\n"
+      . "Halo! Ini adalah pesan percobaan dari sistem *SPPD Elektronik Kota Kendari*.\n\n"
+      . "✅ Nomor WhatsApp Anda telah berhasil diverifikasi dan terdaftar sebagai penerima notifikasi.\n\n"
+      . "Terima kasih.";
+
+    $success = $openwa->send($phone, $message);
+
+    if ($success) {
+      return response()->json(['success' => true, 'message' => 'Pesan berhasil dikirim ke ' . $phone]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan. Pastikan nomor benar dan layanan OpenWA aktif.'], 422);
   }
 }
