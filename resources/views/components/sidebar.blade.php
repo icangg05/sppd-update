@@ -28,31 +28,29 @@
 	<nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
 		<div class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
-		<a href="{{ route('dashboard') }}"
+		<a href="{{ route('dashboard') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('dashboard') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-house fa-fw"></i></span>
 			<span>Beranda</span>
 		</a>
 
-		<div class="space-y-1">
-			<button type="button"
-				class="sidebar-toggle-btn flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors text-slate-100"
-				data-target="sppd-menu">
+		<div class="space-y-1" x-data="{ open: {{ request()->routeIs('sppd.*') ? 'true' : 'false' }} }">
+			<button type="button" @click="open = !open"
+				class="flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors text-slate-100">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-file-lines fa-fw"></i></span>
 				<span class="flex-1 text-left">List Telaah</span>
-				<i
-					class="fa-solid fa-chevron-down text-xs transition-transform duration-200 rotate-180"></i>
+				<i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
 			</button>
 
-			<div id="sppd-menu" class="space-y-1 py-1 pl-8 pr-1">
-				<a href="{{ route('sppd.index') }}"
+			<div id="sppd-menu" x-show="open" class="space-y-1 py-1 pl-8 pr-1" style="display: {{ request()->routeIs('sppd.*') ? 'block' : 'none' }};">
+				<a href="{{ route('sppd.index') }}" wire:navigate
 					class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.index') && request('filter') !== 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 					<span class="size-1 rounded-sm bg-current"></span>
 					Daftar SPPD
 				</a>
 
 				@can('sppd.approve')
-					<a href="{{ route('sppd.index', ['filter' => 'approval']) }}"
+					<a href="{{ route('sppd.index', ['filter' => 'approval']) }}" wire:navigate
 						class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 						<span class="size-1 rounded-sm bg-current"></span>
 						Persetujuan
@@ -69,7 +67,7 @@
 
 		<div class="px-3 py-1.5 pt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Pengaturan</div>
 
-		<a href="{{ route('master.users.index') }}"
+		<a href="{{ route('master.users.index') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-users fa-fw"></i></span>
 			<span>Pegawai</span>
@@ -77,26 +75,26 @@
 
 		@if (auth()->user()->department?->type?->value === 'dprd' ||
 				auth()->user()->department?->parent?->type?->value === 'dprd')
-			<a href="{{ route('master.users.index', ['type' => 'dprd']) }}"
+			<a href="{{ route('master.users.index', ['type' => 'dprd']) }}" wire:navigate
 				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-user-tie fa-fw"></i></span>
 				<span>Anggota DPRD</span>
 			</a>
 		@endif
 
-		<a href="{{ route('master.budgets.index') }}"
+		<a href="{{ route('master.budgets.index') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-coins fa-fw"></i></span>
 			<span>DPA</span>
 		</a>
 
-		<a href="{{ route('master.departments.index') }}"
+		<a href="{{ route('master.departments.index') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-building fa-fw"></i></span>
 			<span>Unit Kerja</span>
 		</a>
 
-		<a href="{{ route('master.workflows.index') }}"
+		<a href="{{ route('master.workflows.index') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-diagram-project fa-fw"></i></span>
 			<span>Workflow</span>
@@ -111,16 +109,3 @@
 		</button>
 	</div>
 </aside>
-
-<script>
-	$(document).ready(function() {
-		$('.sidebar-toggle-btn').on('click', function() {
-			const targetId = $(this).data('target');
-			const $submenu = $('#' + targetId);
-			const $chevron = $(this).find('.fa-chevron-down');
-
-			$submenu.slideToggle(200);
-			$chevron.toggleClass('rotate-180');
-		});
-	});
-</script>

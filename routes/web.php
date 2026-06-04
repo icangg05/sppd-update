@@ -11,6 +11,10 @@ use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\UserController;
+use App\Livewire\Sppd\SppdIndex;
+use App\Livewire\Sppd\SppdCreate;
+use App\Livewire\Sppd\SppdCreateDetails;
+use App\Livewire\Sppd\SppdShow;
 use Illuminate\Support\Facades\Route;
 
 
@@ -27,12 +31,12 @@ Route::middleware('auth')->group(function () {
   // Dashboard
   Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-  // SPPD
-  Route::get('/sppd', [SppdController::class, 'index'])->name('sppd.index');
-  Route::get('/sppd/create', [SppdController::class, 'create'])->name('sppd.create');
-  Route::get('/sppd/create/details', [SppdController::class, 'createDetails'])->name('sppd.create.details');
+  // SPPD — Livewire Full-Page Components
+  Route::get('/sppd', SppdIndex::class)->name('sppd.index');
+  Route::get('/sppd/create', SppdCreate::class)->name('sppd.create');
+  Route::get('/sppd/create/details', SppdCreateDetails::class)->name('sppd.create.details');
   Route::post('/sppd', [SppdController::class, 'store'])->name('sppd.store');
-  Route::get('/sppd/{sppd}', [SppdController::class, 'show'])->name('sppd.show');
+  Route::get('/sppd/{sppd}', SppdShow::class)->name('sppd.show');
   Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
   Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
   Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
