@@ -26,8 +26,7 @@ class SendTteSignRequestJob implements ShouldQueue
   public SppdDigitalSignature $signature;
   public string $passphrase;
   public ?string $notes;
-  public int $tries = 3;
-  public int $backoff = 300;
+  public int $tries = 1;
   public int $timeout = 120;
 
   public function __construct(SppdDigitalSignature $signature, string $passphrase, ?string $notes = null)
@@ -65,7 +64,10 @@ class SendTteSignRequestJob implements ShouldQueue
     } catch (Throwable $exception) {
       $signature->markError($exception->getMessage());
       Log::error('SendTteSignRequestJob failed', ['exception' => $exception, 'signature_id' => $signature->id]);
-      throw $exception;
+
+      // Immediately fail the job (no retries) — this triggers the chain catch handler
+      // so remaining documents in the chain get marked as rejected right away.
+      $this->fail($exception);
     }
   }
 

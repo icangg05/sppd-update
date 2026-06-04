@@ -505,10 +505,13 @@ class SppdShow extends Component
     }
 
     // Check if TTE is processing - auto-poll if so
-    $isProcessing = $sppd->digitalSignatures
-      ->contains(fn($sig) => $sig->status->value === 'processing');
+    $mySignatures = $sppd->digitalSignatures->where('signer_id', Auth::id());
+    $isProcessing = $mySignatures
+      ->contains(fn($sig) => $sig->status === SignatureStatus::PROCESSING);
+    $hasFailedSignatures = $mySignatures
+      ->contains(fn($sig) => $sig->status === SignatureStatus::REJECTED);
 
-    return view('livewire.sppd.show', compact('sppd', 'needsTte', 'isProcessing'))
+    return view('livewire.sppd.show', compact('sppd', 'needsTte', 'isProcessing', 'hasFailedSignatures'))
       ->title('Detail SPPD');
   }
 }

@@ -320,11 +320,7 @@
 
 			@if ($myApproval)
 				@php
-					$isSigningInProgress = $sppd
-					    ->digitalSignatures()
-					    ->where('signer_id', auth()->id())
-					    ->where('status', \App\Enums\SignatureStatus::PROCESSING)
-					    ->exists();
+					$isSigningInProgress = $isProcessing;
 					$myFailedSignature = $sppd->digitalSignatures
 					    ->where('signer_id', auth()->id())
 					    ->where('status', \App\Enums\SignatureStatus::REJECTED)
