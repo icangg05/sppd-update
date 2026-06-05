@@ -25,7 +25,7 @@
             <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
           </x-ui.button>
         @endif
-        <a href="{{ route('master.departments.edit', $department->id) }}"
+        <a wire:navigate href="{{ route('master.departments.edit', $department->id) }}"
           class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
           <i class="fa-solid fa-pen-to-square text-[11px]"></i> Edit Profil
         </a>
@@ -152,7 +152,7 @@
                 </div>
                 <div class="space-y-0.5">
                   <p class="font-medium text-slate-500">Pimpinan belum ditentukan</p>
-                  <a href="{{ route('master.departments.edit', $department->id) }}"
+                  <a wire:navigate href="{{ route('master.departments.edit', $department->id) }}"
                     class="inline-block text-[11px] font-bold text-cyan-600 hover:text-cyan-700">
                     Atur Pimpinan Sekarang &rarr;
                   </a>

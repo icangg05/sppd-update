@@ -12,7 +12,7 @@
           <i class="fa-solid fa-hand-holding-dollar mr-2 text-emerald-600"></i>Laporan Pengeluaran Rill
         </h1>
       </div>
-      <a href="{{ route('sppd.next', $sppd) }}"
+      <a wire:navigate href="{{ route('sppd.next', $sppd) }}"
         class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
         <i class="fa-solid fa-arrow-left"></i> Kembali
       </a>
@@ -80,7 +80,7 @@
             </button>
 
             @if ($expenses->count() > 0)
-              <a href="{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
+              <a wire:navigate href="{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
                 target="_blank"
                 class="inline-flex items-center gap-1.5 rounded bg-slate-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-slate-700 transition {{ !$sppd->pptk_id ? 'opacity-50 cursor-not-allowed' : '' }}">
                 <i class="fa-solid fa-print"></i> Cetak Data

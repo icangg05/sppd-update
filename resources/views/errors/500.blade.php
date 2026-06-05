@@ -9,7 +9,7 @@
     <h2 class="mb-3 text-xl font-bold text-slate-700">Terjadi Kesalahan Sistem</h2>
     <p class="mb-8 text-sm text-slate-600">Sistem kami sedang mengalami masalah teknis. Tim developer sedang berupaya untuk memperbaikinya secepat mungkin.</p>
 
-    <a href="{{ url('/') }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-slate-800/30 transition-all hover:-translate-y-1 hover:bg-slate-900 hover:shadow-xl">
+    <a wire:navigate href="{{ url('/') }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-slate-800/30 transition-all hover:-translate-y-1 hover:bg-slate-900 hover:shadow-xl">
         <i class="fa-solid fa-rotate-right"></i> Muat Ulang Halaman
     </a>
 @endsection

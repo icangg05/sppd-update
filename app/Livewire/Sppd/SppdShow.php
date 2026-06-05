@@ -232,8 +232,18 @@ class SppdShow extends Component
       }
     }
 
+    $existingSignatures = $sppd->digitalSignatures()
+      ->where('signer_id', Auth::id())
+      ->get()
+      ->keyBy('document_type');
+
     $jobs = [];
     foreach ($documentsToSign as $doc) {
+      $existing = $existingSignatures->get($doc['type']);
+      if ($existing && $existing->status === SignatureStatus::SIGNED) {
+        continue;
+      }
+
       $signature = $sppd->digitalSignatures()->updateOrCreate(
         [
           'signer_id' => Auth::id(),
@@ -256,6 +266,29 @@ class SppdShow extends Component
       $jobs[] = new SendTteSignRequestJob($signature, $this->passphrase, $this->approveNotes ?: null);
     }
 
+    if (empty($jobs)) {
+      // Semua dokumen sudah ditandatangani sebelumnya, langsung setujui langkah ini
+      $approval->approve($this->approveNotes ?: null);
+      $allApproved = $sppd->approvals()->where('status', '!=', ApprovalStatus::APPROVED->value)->doesntExist();
+      if ($allApproved) {
+        $sppd->update(['status' => SppdStatus::APPROVED]);
+        $this->notifyApplicant($sppd, 'approved', $this->approveNotes ?: null, Auth::user());
+      } else {
+        $nextApproval = $sppd->approvals()
+          ->where('step_order', '>', $approval->step_order)
+          ->orderBy('step_order', 'asc')
+          ->where('status', ApprovalStatus::PENDING)
+          ->first();
+        if ($nextApproval) {
+          $this->notifyApprover($sppd, $nextApproval);
+        }
+      }
+      $this->passphrase = '';
+      $this->approveNotes = '';
+      session()->flash('success', 'Seluruh dokumen telah berhasil ditandatangani.');
+      return;
+    }
+
     $sppdId = $sppd->id;
     $signerId = Auth::id();
     Bus::chain($jobs)
@@ -272,7 +305,7 @@ class SppdShow extends Component
 
     $this->passphrase = '';
     $this->approveNotes = '';
-    session()->flash('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) sedang diproses di background.');
+    session()->flash('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
   }
 
   protected function defaultSignatureCoordinates(SignatureDocumentType $type): array
@@ -301,7 +334,7 @@ class SppdShow extends Component
       $recipient = $sppd->creator ?? $sppd->user;
       if ($recipient && $recipient->phone) {
         $purpose = $sppd->purpose;
-        $detailUrl = route('sppd.show', $sppd->id);
+        $detailUrl = route('sppd.show', $sppd);
         $actorName = $actor?->name ?? 'Pejabat';
 
         $statusTitle = '';
@@ -345,7 +378,7 @@ class SppdShow extends Component
       if ($approver && $approver->phone) {
         $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
         $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-        $detailUrl = route('sppd.show', $sppd->id);
+        $detailUrl = route('sppd.show', $sppd);
 
         $message = "📝 *PENGAJUAN SPPD BARU*\n"
           . "*────────────────────────────────*\n\n"

@@ -14,11 +14,11 @@
 				<p class="mt-1 text-xs text-slate-500 font-medium">Detail informasi lengkap pegawai dan hak akses pengguna sistem</p>
 			</div>
 			<div class="flex items-center gap-2">
-				<a href="{{ route('master.users.index') }}"
+				<a wire:navigate href="{{ route('master.users.index') }}"
 					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 					<i class="fa-solid fa-arrow-left"></i> Kembali
 				</a>
-				<a href="{{ route('master.users.edit', $user->id) }}"
+				<a wire:navigate href="{{ route('master.users.edit', $user->id) }}"
 					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
 					<i class="fa-solid fa-pen-to-square"></i> Edit Data
 				</a>

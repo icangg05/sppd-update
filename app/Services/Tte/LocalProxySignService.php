@@ -47,7 +47,7 @@ class LocalProxySignService implements SignatureProviderInterface
         $headers = $this->buildHeaders();
 
         try {
-            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 30)])
+            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 90)])
                 ->withHeaders($headers)
                 ->attach('file', file_get_contents($filePath), basename($filePath))
                 ->post($url);
@@ -79,7 +79,7 @@ class LocalProxySignService implements SignatureProviderInterface
         $headers = $this->buildHeaders();
 
         try {
-            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 30)])
+            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 90)])
                 ->withHeaders($headers)
                 ->get($url);
 

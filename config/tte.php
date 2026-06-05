@@ -18,7 +18,7 @@ return [
       'driver'     => 'local_proxy',
       'endpoint'   => env('E_SIGN_API_ENDPOINT', 'http://103.85.5.99'),
       'basic_auth' => env('E_SIGN_AUTH_BASIC', 'ZXNwcGQ6TUEzNDVnRmJCR0hUTWRkeDdlVXI='),
-      'timeout'    => env('E_SIGN_TIMEOUT', 30),
+      'timeout'    => env('E_SIGN_TIMEOUT', 90),
     ],
 
     'bssn' => [
@@ -27,7 +27,7 @@ return [
       'endpoint'      => env('E_SIGN_BSSN_ENDPOINT', 'https://esign-bsre.bssn.go.id'),
       'client_id'     => env('E_SIGN_BSSN_CLIENT_ID'),
       'client_secret' => env('E_SIGN_BSSN_CLIENT_SECRET'),
-      'timeout'       => env('E_SIGN_TIMEOUT', 30),
+      'timeout'       => env('E_SIGN_TIMEOUT', 90),
     ],
   ],
 

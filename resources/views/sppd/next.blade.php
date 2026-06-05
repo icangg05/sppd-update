@@ -10,7 +10,7 @@
       <h1 class="text-xl font-bold text-slate-900">Portal Dokumen</h1>
       <p class="text-sm text-slate-500 mt-1">Pengelolaan administrasi SPPD untuk: <span class="font-semibold text-slate-700">{{ $sppd->user->name }}</span></p>
     </div>
-    <a href="{{ route('sppd.index') }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+    <a wire:navigate href="{{ route('sppd.index') }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar
     </a>
   </div>
@@ -36,7 +36,7 @@
         @endphp
 
         @foreach($beforeDocs as $doc)
-          <a href="{{ route($doc['route'], $sppd) }}" class="group relative flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md transition-all hover:border-{{ $doc['color'] }}-300 hover:shadow-lg hover:-translate-y-1">
+          <a wire:navigate href="{{ route($doc['route'], $sppd) }}" class="group relative flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md transition-all hover:border-{{ $doc['color'] }}-300 hover:shadow-lg hover:-translate-y-1">
             <div class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-{{ $doc['color'] }}-100 text-{{ $doc['color'] }}-600 group-hover:scale-105 transition-transform">
               <i class="fa-solid {{ $doc['icon'] }} text-lg"></i>
             </div>
@@ -69,7 +69,7 @@
         @endphp
 
         @foreach($afterDocs as $doc)
-          <a href="{{ route($doc['route'], $sppd) }}" class="group relative flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md transition-all hover:border-{{ $doc['color'] }}-300 hover:shadow-lg hover:-translate-y-1">
+          <a wire:navigate href="{{ route($doc['route'], $sppd) }}" class="group relative flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-md transition-all hover:border-{{ $doc['color'] }}-300 hover:shadow-lg hover:-translate-y-1">
             <div class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-{{ $doc['color'] }}-100 text-{{ $doc['color'] }}-600 group-hover:scale-105 transition-transform">
               <i class="fa-solid {{ $doc['icon'] }} text-lg"></i>
             </div>

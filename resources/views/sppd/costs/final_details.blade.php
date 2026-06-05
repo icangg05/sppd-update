@@ -12,7 +12,7 @@
           <i class="fa-solid fa-calculator mr-2 text-emerald-600"></i>Rincian Biaya Perjalanan
         </h1>
       </div>
-      <a href="{{ route('sppd.next', $sppd) }}"
+      <a wire:navigate href="{{ route('sppd.next', $sppd) }}"
         class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
         <i class="fa-solid fa-arrow-left"></i> Kembali
       </a>
@@ -59,7 +59,7 @@
               <i class="fa-solid fa-plus"></i> Tambah Biaya
             </button>
             @if ($costs->count() > 0)
-              <a href="{{ route('sppd.stream.rincian-biaya', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
+              <a wire:navigate href="{{ route('sppd.stream.rincian-biaya', ['sppd' => $sppd, 'user_id' => $person['id']]) }}"
                 target="_blank"
                 class="inline-flex items-center gap-1.5 rounded bg-slate-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-slate-700 transition {{ (!$sppd->pptk_id || !$bendahara) ? 'opacity-50 cursor-not-allowed' : '' }}">
                 <i class="fa-solid fa-print"></i> Cetak Data

@@ -398,7 +398,7 @@ class SppdController extends Controller
         }
       }
 
-      return redirect()->route('sppd.show', $sppd->id)
+      return redirect()->route('sppd.show', $sppd)
         ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
     } catch (\Exception $e) {
       return back()->withInput()->with('error', $e->getMessage());
@@ -1003,7 +1003,7 @@ class SppdController extends Controller
 
     $this->notifyApplicant($sppd, 'revision', $request->notes, Auth::user());
 
-    return redirect()->route('sppd.show', $sppd->id)
+    return redirect()->route('sppd.show', $sppd)
       ->with('success', 'SPPD berhasil dikembalikan kepada pemohon untuk direvisi.');
   }
 
@@ -1101,7 +1101,9 @@ class SppdController extends Controller
   {
     // Jika user_id dikirim lewat request (untuk pengikut)
     if (request()->has('user_id')) {
-      $targetUser = User::findOrFail(request()->user_id);
+      $decoded = \Vinkla\Hashids\Facades\Hashids::decode(request()->user_id);
+      $userId = !empty($decoded) ? $decoded[0] : request()->user_id;
+      $targetUser = User::findOrFail($userId);
     } else {
       $targetUser = ($user && $user->id) ? $user : $sppd->user;
     }
@@ -1543,7 +1545,7 @@ class SppdController extends Controller
     $purpose = $sppd->purpose;
     $startDate = Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
     $endDate = Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-    $detailUrl = route('sppd.show', $sppd->id);
+    $detailUrl = route('sppd.show', $sppd);
 
     $message = "📝 *PENGAJUAN SPPD BARU*\n"
       . "*────────────────────────────────*\n\n"
@@ -1571,7 +1573,7 @@ class SppdController extends Controller
     }
 
     $purpose = $sppd->purpose;
-    $detailUrl = route('sppd.show', $sppd->id);
+    $detailUrl = route('sppd.show', $sppd);
     $actorName = $actor?->name ?? 'Pejabat';
 
     $statusTitle = '';

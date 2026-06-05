@@ -260,7 +260,7 @@ class SppdCreateDetails extends Component
         }
       }
 
-      return redirect()->route('sppd.show', $sppd->id)
+      return redirect()->route('sppd.show', $sppd)
         ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
     } catch (\Exception $e) {
       session()->flash('error', $e->getMessage());
@@ -276,7 +276,7 @@ class SppdCreateDetails extends Component
       if ($approver && $approver->phone) {
         $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
         $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-        $detailUrl = route('sppd.show', $sppd->id);
+        $detailUrl = route('sppd.show', $sppd);
 
         $message = "📝 *PENGAJUAN SPPD BARU*\n"
           . "*────────────────────────────────*\n\n"

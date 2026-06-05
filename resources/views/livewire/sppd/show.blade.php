@@ -58,8 +58,6 @@
 		</div>
 	</div>
 
-
-
 	{{-- Konten Utama Grid --}}
 	<div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
@@ -514,172 +512,121 @@
 	@php
 		$sptIsApproved = $sptSig && $sptSig->status->value === 'signed' && $sptSig->signed_file_path;
 	@endphp
-	<div x-show="showDocModal"
-		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 transition-opacity duration-200 backdrop-blur-2xs"
-		style="display: none;" x-transition @click.self="showDocModal = false"
-		@keydown.escape.window="showDocModal = false">
-		<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
-			<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-				<div class="flex items-center gap-2">
-					<i class="fa-solid fa-folder-open text-cyan-600"></i>
-					<div>
-						<h3 class="text-sm font-bold text-slate-800">Dokumen SPPD</h3>
-						<p class="text-[11px] text-slate-500">Pilih dokumen yang ingin dibuka</p>
-					</div>
-				</div>
-				<button type="button" @click="showDocModal = false"
-					class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
-					<i class="fa-solid fa-xmark"></i>
-				</button>
-			</div>
-			<div class="space-y-2 p-4">
-				@if ($sptIsApproved)
-					<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"
-						class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
-						<i class="fa-solid fa-file-pdf"></i>
-						<span>SPT <span
-								class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
-					</a>
-				@else
-					<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
-						class="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100">
-						<i class="fa-solid fa-file-pdf"></i><span>SPT</span>
-					</a>
-				@endif
+	<x-ui.modal show="showDocModal" title="Dokumen SPPD" description="Pilih dokumen yang ingin dibuka"
+		icon="fa-solid fa-folder-open text-cyan-600">
+		<div class="space-y-2">
+			@if ($sptIsApproved)
+				<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"
+					class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+					<i class="fa-solid fa-file-pdf"></i>
+					<span>SPT <span
+							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
+				</a>
+			@else
+				<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
+					class="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100">
+					<i class="fa-solid fa-file-pdf"></i><span>SPT</span>
+				</a>
+			@endif
 
+			@php
+				$sppdPelaksanaSig = $sppd->digitalSignatures
+				    ->where('document_type', 'sppd_' . $sppd->user_id)
+				    ->where('status', 'signed')
+				    ->first();
+			@endphp
+			@if ($sppdPelaksanaSig && $sppdPelaksanaSig->signed_file_path)
+				<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdPelaksanaSig->signed_file_path) }}" target="_blank"
+					class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+					<i class="fa-solid fa-file-lines"></i>
+					<span>SPPD Pelaksana <span
+							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
+				</a>
+			@else
+				<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($sppd->user_id)]) }}"
+					target="_blank"
+					class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+					<i class="fa-solid fa-file-lines"></i><span>SPPD Pelaksana</span>
+				</a>
+			@endif
+
+			@foreach ($sppd->followers as $follower)
 				@php
-					$sppdPelaksanaSig = $sppd->digitalSignatures
-					    ->where('document_type', 'sppd_' . $sppd->user_id)
+					$sppdFollowerSig = $sppd->digitalSignatures
+					    ->where('document_type', 'sppd_' . $follower->user_id)
 					    ->where('status', 'signed')
 					    ->first();
 				@endphp
-				@if ($sppdPelaksanaSig && $sppdPelaksanaSig->signed_file_path)
-					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdPelaksanaSig->signed_file_path) }}" target="_blank"
+				@if ($sppdFollowerSig && $sppdFollowerSig->signed_file_path)
+					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
 						class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
-						<i class="fa-solid fa-file-lines"></i>
-						<span>SPPD Pelaksana <span
+						<i class="fa-solid fa-user-group"></i>
+						<span>SPPD {{ $follower->user->name }} <span
 								class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
 					</a>
 				@else
-					<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => $sppd->user_id]) }}" target="_blank"
+					<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
+						target="_blank"
 						class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
-						<i class="fa-solid fa-file-lines"></i><span>SPPD Pelaksana</span>
+						<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
 					</a>
 				@endif
-
-				@foreach ($sppd->followers as $follower)
-					@php
-						$sppdFollowerSig = $sppd->digitalSignatures
-						    ->where('document_type', 'sppd_' . $follower->user_id)
-						    ->where('status', 'signed')
-						    ->first();
-					@endphp
-					@if ($sppdFollowerSig && $sppdFollowerSig->signed_file_path)
-						<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
-							class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
-							<i class="fa-solid fa-user-group"></i>
-							<span>SPPD {{ $follower->user->name }} <span
-									class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
-						</a>
-					@else
-						<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => $follower->user_id]) }}" target="_blank"
-							class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
-							<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
-						</a>
-					@endif
-				@endforeach
-			</div>
-			<div class="border-t border-slate-100 px-4 py-3">
-				<button type="button" @click="showDocModal = false"
-					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
-					Tutup
-				</button>
-			</div>
+			@endforeach
 		</div>
-	</div>
+		<x-slot:footer>
+			<button type="button" @click="showDocModal = false"
+				class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				Tutup
+			</button>
+		</x-slot:footer>
+	</x-ui.modal>
 
 	{{-- Modal Tolak --}}
-	<div x-show="showRejectModal"
-		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 transition-opacity duration-200 backdrop-blur-2xs"
-		style="display: none;" x-transition @click.self="showRejectModal = false"
-		@keydown.escape.window="showRejectModal = false">
-		<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-			<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-				<div class="flex items-center gap-2">
-					<i class="fa-solid fa-ban text-rose-600 text-base"></i>
-					<div>
-						<h3 class="text-sm font-bold text-slate-800">Tolak Pengajuan SPPD</h3>
-						<p class="text-[11px] text-slate-500">Berikan alasan penolakan dokumen ini</p>
-					</div>
-				</div>
-				<button type="button" @click="showRejectModal = false"
-					class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
-					<i class="fa-solid fa-xmark"></i>
-				</button>
-			</div>
-			<div class="p-4">
-				<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Alasan Penolakan <span
-						class="text-rose-500">*</span></label>
-				<textarea wire:model="rejectNotes" required
-				 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 min-h-[100px]"
-				 placeholder="Masukkan alasan penolakan secara jelas..."></textarea>
-				@error('rejectNotes')
-					<span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
-				@enderror
-			</div>
-			<div class="flex gap-2 border-t border-slate-100 px-4 py-3">
-				<button type="button" @click="showRejectModal = false"
-					class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
-					Batal
-				</button>
-				<button type="button" wire:click="reject"
-					class="flex-1 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-700 shadow-sm">
-					Tolak Dokumen
-				</button>
-			</div>
-		</div>
-	</div>
+	<x-ui.modal show="showRejectModal" title="Tolak Pengajuan SPPD" description="Berikan alasan penolakan dokumen ini"
+		icon="fa-solid fa-ban text-rose-600">
+		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Alasan Penolakan <span
+				class="text-rose-500">*</span></label>
+		<textarea wire:model="rejectNotes" required
+		 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 min-h-[100px]"
+		 placeholder="Masukkan alasan penolakan secara jelas..."></textarea>
+		@error('rejectNotes')
+			<span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
+		@enderror
+
+		<x-slot:footer class="flex gap-2">
+			<button type="button" @click="showRejectModal = false"
+				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				Batal
+			</button>
+			<button type="button" wire:click="reject"
+				class="flex-1 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-700 shadow-sm">
+				Tolak Dokumen
+			</button>
+		</x-slot:footer>
+	</x-ui.modal>
 
 	{{-- Modal Revisi --}}
-	<div x-show="showRevisionModal"
-		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 transition-opacity duration-200 backdrop-blur-2xs"
-		style="display: none;" x-transition @click.self="showRevisionModal = false"
-		@keydown.escape.window="showRevisionModal = false">
-		<div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-			<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-				<div class="flex items-center gap-2">
-					<i class="fa-solid fa-rotate-left text-amber-600 text-base"></i>
-					<div>
-						<h3 class="text-sm font-bold text-slate-800">Kembalikan untuk Revisi</h3>
-						<p class="text-[11px] text-slate-500">Berikan catatan perbaikan yang diperlukan</p>
-					</div>
-				</div>
-				<button type="button" @click="showRevisionModal = false"
-					class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
-					<i class="fa-solid fa-xmark"></i>
-				</button>
-			</div>
-			<div class="p-4">
-				<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Keterangan / Catatan Revisi
-					<span class="text-rose-500">*</span></label>
-				<textarea wire:model="revisionNotes" required
-				 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500 min-h-[100px]"
-				 placeholder="Jelaskan bagian mana saja yang perlu diperbaiki..."></textarea>
-				@error('revisionNotes')
-					<span class="text-xs text-amber-600 mt-1 block">{{ $message }}</span>
-				@enderror
-			</div>
-			<div class="flex gap-2 border-t border-slate-100 px-4 py-3">
-				<button type="button" @click="showRevisionModal = false"
-					class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
-					Batal
-				</button>
-				<button type="button" wire:click="revision"
-					class="flex-1 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700 shadow-sm">
-					Kembalikan
-				</button>
-			</div>
-		</div>
-	</div>
+	<x-ui.modal show="showRevisionModal" title="Kembalikan untuk Revisi"
+		description="Berikan catatan perbaikan yang diperlukan" icon="fa-solid fa-rotate-left text-amber-600">
+		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Keterangan / Catatan Revisi
+			<span class="text-rose-500">*</span></label>
+		<textarea wire:model="revisionNotes" required
+		 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500 min-h-[100px]"
+		 placeholder="Jelaskan bagian mana saja yang perlu diperbaiki..."></textarea>
+		@error('revisionNotes')
+			<span class="text-xs text-amber-600 mt-1 block">{{ $message }}</span>
+		@enderror
+
+		<x-slot:footer class="flex gap-2">
+			<button type="button" @click="showRevisionModal = false"
+				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				Batal
+			</button>
+			<button type="button" wire:click="revision"
+				class="flex-1 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700 shadow-sm">
+				Kembalikan
+			</button>
+		</x-slot:footer>
+	</x-ui.modal>
 
 </div>

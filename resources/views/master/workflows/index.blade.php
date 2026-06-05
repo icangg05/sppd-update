@@ -17,7 +17,7 @@
 				</div>
 			</div>
 
-			<a href="{{ route('master.workflows.create') }}"
+			<a wire:navigate href="{{ route('master.workflows.create') }}"
 				class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
 				<i class="fa-solid fa-plus text-[10px]"></i>
 				Tambah Workflow
@@ -155,7 +155,7 @@
 								<td class="py-2.5 px-4 text-center">
 									<div class="flex items-center justify-center gap-1">
 										{{-- Tombol Edit --}}
-										<a href="{{ route('master.workflows.edit', $w->id) }}"
+										<a wire:navigate href="{{ route('master.workflows.edit', $w->id) }}"
 											class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
 											title="Edit">
 											<i class="fa-solid fa-pen-to-square text-[10px]"></i>

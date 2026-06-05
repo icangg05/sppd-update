@@ -158,7 +158,7 @@
 
 				{{-- Form Actions Footer Compact --}}
 				<div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-					<a
+					<a wire:navigate
 						href="{{ $isSuperAdmin ? route('master.departments.index') : route('master.departments.show', $department->id) }}"
 						class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">
 						Batal

@@ -11,7 +11,7 @@
         <i class="fa-solid fa-file-contract mr-2 text-emerald-600"></i>Kelola SPPD
       </h1>
     </div>
-    <a href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+    <a wire:navigate href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <i class="fa-solid fa-arrow-left"></i> Kembali
     </a>
   </div>
@@ -56,7 +56,7 @@
                 <span class="text-xs font-bold text-slate-400 w-20">PENGIKUT:</span>
                 <span class="text-sm font-semibold text-slate-700">{{ $f->user->name }}</span>
               </div>
-              <a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd->id, 'user_id' => $f->user_id]) }}" target="_blank"
+              <a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($f->user_id)]) }}" target="_blank"
                 class="inline-flex items-center gap-1.5 rounded bg-slate-600 px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-slate-700">
                 <i class="fa-solid fa-print"></i> CETAK
               </a>
@@ -112,7 +112,7 @@
 
           @if ($sppdSignature?->signed_file_path)
             <div class="mt-4">
-              <a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
+              <a wire:navigate href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sppdSignature->id]) }}"
                 class="inline-flex items-center gap-2 rounded bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-emerald-700 transition">
                 <i class="fa-solid fa-file-pdf"></i> DOWNLOAD PDF TTE
               </a>

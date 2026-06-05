@@ -11,7 +11,7 @@
         <i class="fa-solid fa-file-invoice-dollar mr-2 text-emerald-600"></i>Kuitansi Perjalanan
       </h1>
     </div>
-    <a href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+    <a wire:navigate href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <i class="fa-solid fa-arrow-left"></i> Kembali
     </a>
   </div>
@@ -64,7 +64,7 @@
 
             {{-- Cetak Panjar --}}
             @if ($receipt && $receipt->amount > 0 && $hasBendahara)
-              <a href="{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
+              <a wire:navigate href="{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
                 class="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-2 text-[10px] font-bold text-white hover:bg-amber-700 transition">
                 <i class="fa-solid fa-print"></i> Cetak Panjar
               </a>
@@ -72,7 +72,7 @@
 
             {{-- Cetak Rampung --}}
             @if ($canPrint)
-              <a href="{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
+              <a wire:navigate href="{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}" target="_blank"
                 class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-2 text-[10px] font-bold text-white hover:bg-cyan-700 transition">
                 <i class="fa-solid fa-file-invoice"></i> Cetak Rampung
               </a>

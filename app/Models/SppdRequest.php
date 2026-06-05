@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Vinkla\Hashids\Facades\Hashids;
 
 class SppdRequest extends Model
 {
@@ -199,5 +200,32 @@ class SppdRequest extends Model
     public function getDurationDaysAttribute(): int
     {
         return $this->durationInDays();
+    }
+
+    /**
+     * Get the value of the model's route key.
+     */
+    public function getRouteKey(): string
+    {
+        return Hashids::encode($this->getKey());
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $decoded = Hashids::decode($value);
+        if (! empty($decoded)) {
+            $value = $decoded[0];
+        } elseif (! is_numeric($value)) {
+            return null;
+        }
+
+        return $this->where($field ?? $this->getRouteKeyName(), $value)->firstOrFail();
     }
 }

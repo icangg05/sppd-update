@@ -20,7 +20,7 @@ $resolvedClass = trim('inline-flex items-center justify-center gap-2 rounded px-
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->merge(['class' => $resolvedClass]) }}>
+    <a wire:navigate href="{{ $href }}" {{ $attributes->merge(['class' => $resolvedClass]) }}>
         @isset($icon) {{ $icon }} @endisset
         <span>{{ $slot }}</span>
     </a>

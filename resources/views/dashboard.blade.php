@@ -18,12 +18,12 @@
     </div>
     <div class="flex shrink-0 items-center gap-3">
       @can('sppd.create')
-      <a href="{{ route('sppd.create') }}" class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 focus:ring-1 focus:ring-cyan-500">
+      <a wire:navigate href="{{ route('sppd.create') }}" class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 focus:ring-1 focus:ring-cyan-500">
         <i class="fa-solid fa-plus"></i>
         Pengajuan Baru
       </a>
       @endcan
-      <a href="{{ route('sppd.index') }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:ring-1 focus:ring-slate-300">
+      <a wire:navigate href="{{ route('sppd.index') }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:ring-1 focus:ring-slate-300">
         Lihat Laporan
         <i class="fa-solid fa-arrow-right text-xs"></i>
       </a>
@@ -174,14 +174,14 @@
             <p class="text-xs text-slate-500">{{ $recentSppd->count() }} pengajuan SPPD terakhir</p>
           </div>
         </div>
-        <a href="{{ route('sppd.index') }}" class="text-xs font-medium text-cyan-600 transition hover:text-cyan-800 hover:underline">
+        <a wire:navigate href="{{ route('sppd.index') }}" class="text-xs font-medium text-cyan-600 transition hover:text-cyan-800 hover:underline">
           Lihat Semua <i class="fa-solid fa-arrow-right ml-1"></i>
         </a>
       </div>
 
       <div class="flex max-h-72 flex-col gap-2 overflow-y-auto p-3">
         @forelse($recentSppd as $item)
-          <a href="{{ route('sppd.show', $item) }}" class="flex flex-col gap-2 rounded border border-transparent p-2.5 transition hover:bg-slate-50 hover:border-slate-100">
+          <a wire:navigate href="{{ route('sppd.show', $item) }}" class="flex flex-col gap-2 rounded border border-transparent p-2.5 transition hover:bg-slate-50 hover:border-slate-100">
             <div class="flex items-start justify-between gap-3">
               <p class="line-clamp-2 lg:line-clamp-1 text-sm font-medium leading-snug text-slate-800">{{ $item->purpose }}</p>
               @php

@@ -134,7 +134,7 @@ class SendTteSignRequestJob implements ShouldQueue
               if ($recipient && $recipient->phone) {
                 $applicantName = $sppd->user?->name ?? 'Pegawai';
                 $purpose = $sppd->purpose;
-                $detailUrl = route('sppd.show', $sppd->id);
+                $detailUrl = route('sppd.show', $sppd);
                 $statusTitle = '✅ *STATUS: SPPD DISETUJUI*';
                 $body = "Pengajuan SPPD atas nama *{$applicantName}* untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
                 if ($this->notes) {
@@ -164,7 +164,7 @@ class SendTteSignRequestJob implements ShouldQueue
                 $purpose = $sppd->purpose;
                 $startDate = Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
                 $endDate = Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-                $detailUrl = route('sppd.show', $sppd->id);
+                $detailUrl = route('sppd.show', $sppd);
 
                 $message = "📝 *PENGAJUAN SPPD BARU*\n"
                   . "*────────────────────────────────*\n\n"

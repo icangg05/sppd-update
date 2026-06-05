@@ -66,7 +66,7 @@
             Cari
           </button>
           @if(request()->hasAny(['search', 'type']))
-            <a href="{{ route('master.departments.index') }}"
+            <a wire:navigate href="{{ route('master.departments.index') }}"
               class="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
               Reset
             </a>
@@ -154,14 +154,14 @@
                 <td class="py-2.5 px-4 text-center">
                   <div class="flex items-center justify-center gap-1">
                     {{-- Tombol Detail --}}
-                    <a href="{{ route('master.departments.show', $dept->id) }}"
+                    <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"
                       class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
                       title="Detail">
                       <i class="fa-solid fa-eye text-[10px]"></i>
                     </a>
 
                     {{-- Tombol Edit --}}
-                    <a href="{{ route('master.departments.edit', $dept->id) }}"
+                    <a wire:navigate href="{{ route('master.departments.edit', $dept->id) }}"
                       class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                       title="Edit">
                       <i class="fa-solid fa-pen-to-square text-[10px]"></i>

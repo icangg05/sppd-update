@@ -11,7 +11,7 @@
         <i class="fa-solid fa-file-signature mr-2 text-emerald-600"></i>Kelola SPT
       </h1>
     </div>
-    <a href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+    <a wire:navigate href="{{ route('sppd.next', $sppd) }}" class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <i class="fa-solid fa-arrow-left"></i> Kembali
     </a>
   </div>
@@ -84,7 +84,7 @@
 
           @if ($sptSignature?->signed_file_path)
             <div class="mt-4">
-              <a href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sptSignature->id]) }}"
+              <a wire:navigate href="{{ route('sppd.sign.download', ['sppd' => $sppd->id, 'signature' => $sptSignature->id]) }}"
                 class="inline-flex items-center gap-2 rounded bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm hover:bg-emerald-700 transition">
                 <i class="fa-solid fa-file-pdf"></i> Download PDF TTE
               </a>

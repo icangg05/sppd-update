@@ -154,7 +154,7 @@
                 <td class="py-3.5 px-4 text-center">
                   <div class="flex items-center justify-center gap-1">
                     {{-- Detail --}}
-                    <a href="{{ route('master.budgets.show', $budget->id) }}"
+                    <a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"
                       class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
                       title="Detail Anggaran">
                       <i class="fa-solid fa-eye text-xs"></i>
@@ -162,7 +162,7 @@
 
                     {{-- Edit --}}
                     @can('budget.edit')
-                      <a href="{{ route('master.budgets.edit', $budget->id) }}"
+                      <a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
                         class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                         title="Edit Anggaran">
                         <i class="fa-solid fa-pen-to-square text-xs"></i>
