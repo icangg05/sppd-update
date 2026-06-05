@@ -25,9 +25,6 @@ jobs:
             set -e
             cd /var/www/sppd-update
 
-            echo "Deleting old vendor..."
-            rm -rf vendor
-
             echo "Pull latest code..."
             git pull origin main
 
@@ -35,4 +32,17 @@ jobs:
             docker compose down
             docker compose up -d --build
 
-            echo "Done..."
+            echo "Waiting for app container to be ready..."
+            sleep 5
+
+            echo "Clearing caches..."
+            docker exec sppd_update_app php artisan optimize:clear
+            docker exec sppd_update_app php artisan optimize
+
+            echo "Restarting queue worker..."
+            docker exec sppd_update_app php artisan queue:restart
+
+            echo "Verifying containers..."
+            docker compose ps
+
+            echo "Done!"

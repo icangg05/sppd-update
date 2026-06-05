@@ -128,4 +128,31 @@ Route::middleware('auth')->group(function () {
   // API
   Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');
   Route::get('/api/sppd/workflow-preview', [SppdController::class, 'previewWorkflow'])->name('api.sppd.workflow-preview');
+
+  // System Health Check — hanya super_admin
+  Route::get('/system/health', function () {
+    abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
+
+    $pendingJobs  = \DB::table('jobs')->count();
+    $failedJobs   = \DB::table('failed_jobs')->count();
+    $recentFailed = \DB::table('failed_jobs')->latest('failed_at')->limit(10)->get();
+
+    // pending=0 berarti worker aktif memproses (meski job bisa gagal)
+    $workerLikelyRunning = true; // jika pending_jobs tidak menumpuk, worker berjalan
+
+    return response()->json([
+      'status'              => $failedJobs === 0 ? 'ok' : 'has_failures',
+      'queue_worker_note'   => 'Jika pending_jobs tidak menumpuk, worker sedang berjalan.',
+      'pending_jobs'        => $pendingJobs,
+      'failed_jobs'         => $failedJobs,
+      'failed_job_details'  => $recentFailed->map(fn($j) => [
+        'id'        => $j->id,
+        'queue'     => $j->queue,
+        'failed_at' => $j->failed_at,
+        'payload'   => json_decode($j->payload, true)['displayName'] ?? '(unknown)',
+        'exception' => $j->exception,  // full exception untuk debug
+      ]),
+      'checked_at'          => now()->toDateTimeString(),
+    ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+  })->name('system.health');
 });
