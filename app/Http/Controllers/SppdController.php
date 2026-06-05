@@ -476,58 +476,6 @@ class SppdController extends Controller
   }
 
   /**
-   * Reset TTE (Electronic Signature) for a specific document type
-   */
-  public function resetTte(SppdRequest $sppd, $type)
-  {
-    $signatures = $sppd->digitalSignatures()
-      ->where(function ($q) use ($type) {
-        if ($type === 'sppd') {
-          $q->where('document_type', 'sppd')
-            ->orWhere('document_type', 'like', 'sppd_%');
-        } else {
-          $q->where('document_type', $type);
-        }
-      })
-      ->get();
-
-    $ttesDisk = Storage::disk(config('tte.storage.disk'));
-    $draftDir = config('tte.storage.paths.draft');
-
-    foreach ($signatures as $sig) {
-      // Hapus file TTE yang sudah ditandatangani
-      if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
-        $ttesDisk->delete($sig->signed_file_path);
-      }
-      $sig->delete();
-    }
-
-    // Hapus semua file draft yang mungkin masih tersisa
-    if ($ttesDisk->exists($draftDir)) {
-      foreach ($ttesDisk->files($draftDir) as $file) {
-        if (str_contains(basename($file), strtoupper($type))) {
-          $ttesDisk->delete($file);
-        }
-      }
-    }
-
-    // Set final approval step to pending
-    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
-    if ($lastApproval) {
-      $lastApproval->update([
-        'status' => ApprovalStatus::PENDING,
-        'acted_at' => null,
-        'notes' => null,
-      ]);
-    }
-
-    // Set SPPD status to IN_PROGRESS so it can be approved again
-    $sppd->update(['status' => SppdStatus::IN_PROGRESS]);
-
-    return back()->with('success', 'TTE untuk ' . strtoupper($type) . ' berhasil di-reset. File tanda tangan dihapus dan status dikembalikan untuk disetujui ulang oleh pejabat terakhir.');
-  }
-
-  /**
    * Halaman Kuitansi (Image 3)
    */
   public function receipts(SppdRequest $sppd)
@@ -1560,17 +1508,17 @@ class SppdController extends Controller
     $body = '';
 
     if ($status === 'approved') {
-      $statusTitle = '✅ *STATUS: SPPD DISETUJUI*';
+      $statusTitle = '✅ *STATUS: DOKUMEN DISETUJUI*';
       $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
       if ($notes) {
         $body .= "\n\n• *Catatan:* {$notes}";
       }
     } elseif ($status === 'rejected') {
-      $statusTitle = '❌ *STATUS: SPPD DITOLAK*';
+      $statusTitle = '❌ *STATUS: DOKUMEN DITOLAK*';
       $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
         . '• *Alasan Penolakan:* ' . ($notes ?? 'Tidak ada catatan khusus.');
     } elseif ($status === 'revision') {
-      $statusTitle = '⚠️ *STATUS: SPPD PERLU REVISI*';
+      $statusTitle = '⚠️ *STATUS: DOKUMEN PERLU REVISI*';
       $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
         . '• *Catatan Revisi:* ' . ($notes ?? 'Harap tinjau kembali data pengajuan Anda.');
     }

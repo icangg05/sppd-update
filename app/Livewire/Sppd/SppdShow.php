@@ -341,7 +341,7 @@ class SppdShow extends Component
         $body = '';
 
         if ($action === 'approved') {
-          $statusTitle = '✅ *STATUS: SPPD DISETUJUI*';
+          $statusTitle = '✅ *STATUS: DOKUMEN DISETUJUI*';
           $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
           if ($notes) {
             $body .= "\n\n• *Catatan:* {$notes}";
