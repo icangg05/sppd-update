@@ -6,12 +6,7 @@
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
 	<meta name="google" content="notranslate">
 	<meta name="robots" content="index, follow">
-	<title>
-		@hasSection('title')
-			@yield('title') -
-		@endif{{ config('app.name') }}
-	</title>
-	{{-- <link rel="icon" href="{{ asset('img/logo-sppd.png') }}"> --}}
+	<title>{{ config('app.name') }}</title>
 	@vite(['resources/css/app.css'])
 </head>
 
