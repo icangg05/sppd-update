@@ -11,7 +11,7 @@
 			@yield('title') -
 		@endif{{ config('app.name') }}
 	</title>
-	<link rel="icon" href="{{ asset('img/logo-sppd.png') }}">
+	{{-- <link rel="icon" href="{{ asset('img/logo-sppd.png') }}"> --}}
 	@vite(['resources/css/app.css'])
 </head>
 
