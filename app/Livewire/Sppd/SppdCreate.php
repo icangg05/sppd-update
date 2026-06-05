@@ -79,7 +79,7 @@ class SppdCreate extends Component
     $this->steps = $workflowService->simulateApprovals($user, $this->domain);
 
     if (empty($this->steps)) {
-      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Admin (Role Pelaksana: ' . $this->userInfo['role_label'] . ').';
+      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Role Pelaksana: ' . $this->userInfo['role_label'] . ').';
       return;
     }
 

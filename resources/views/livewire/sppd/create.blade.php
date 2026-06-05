@@ -1,9 +1,15 @@
 <div class="flex flex-col gap-4 p-1">
 
 	{{-- Header Halaman --}}
-	<div class="leading-tight">
-		<h1 class="text-lg font-bold text-slate-800">Buat SPPD Baru</h1>
-		<p class="text-xs text-slate-500 mt-0.5">Tahap 1: Pilih Pelaksana & Validasi Alur Pengajuan</p>
+	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+		<div class="leading-tight">
+			<h1 class="text-lg font-bold text-slate-800">Buat SPPD Baru</h1>
+			<p class="text-xs text-slate-500 mt-0.5">Tahap 1: Pilih Pelaksana & Validasi Alur Pengajuan</p>
+		</div>
+		<a href="{{ route('sppd.index') }}" wire:navigate
+			class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+			<i class="fa-solid fa-arrow-left"></i> Kembali
+		</a>
 	</div>
 
 	{{-- Formulir Utama Tahap 1 --}}
