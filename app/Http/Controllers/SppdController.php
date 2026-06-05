@@ -316,7 +316,7 @@ class SppdController extends Controller
       DB::transaction(function () use ($validated, $request, &$sppd) {
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-          $attachmentPath = $request->file('attachment')->store('sppd/attachments', 'public');
+          $attachmentPath = $request->file('attachment')->store(date('Y') . '/dokumen_pendukung', 'public');
         }
 
         $sppd = SppdRequest::create([
@@ -1180,26 +1180,6 @@ class SppdController extends Controller
 
     if ($sppd->status !== SppdStatus::IN_PROGRESS) {
       return back()->with('error', 'SPPD yang sudah disetujui penuh atau selesai tidak dapat dihapus.');
-    }
-
-    // Poin 4: Hapus semua file doc_dummy (draft) dan doc_tte (signed) dari storage
-    $signatures = $sppd->digitalSignatures()->get();
-    $ttesDisk = Storage::disk(config('tte.storage.disk'));
-    $draftDir = config('tte.storage.paths.draft');
-
-    foreach ($signatures as $sig) {
-      // Hapus file TTE yang sudah ditandatangani
-      if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
-        $ttesDisk->delete($sig->signed_file_path);
-      }
-    }
-
-    // Hapus semua file draft yang mungkin masih tersisa untuk SPPD ini
-    $draftPattern = $draftDir . '/*-' . $sppd->id . '-*.pdf';
-    foreach ($ttesDisk->files($draftDir) as $file) {
-      if (str_contains($file, (string) $sppd->id)) {
-        $ttesDisk->delete($file);
-      }
     }
 
     $sppd->delete();

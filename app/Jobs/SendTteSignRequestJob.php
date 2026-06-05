@@ -43,7 +43,7 @@ class SendTteSignRequestJob implements ShouldQueue
       return;
     }
 
-    if ($signature->status === SignatureStatus::SIGNED) {
+    if ($signature->status === SignatureStatus::SIGNED || $signature->status === SignatureStatus::REJECTED) {
       return;
     }
 

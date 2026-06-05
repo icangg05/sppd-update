@@ -523,6 +523,27 @@ class SppdShow extends Component
     ];
   }
 
+  public function cancelTte(): void
+  {
+    $sppd = $this->getSppd();
+
+    $processingSignatures = $sppd->digitalSignatures()
+      ->where('signer_id', Auth::id())
+      ->where('status', SignatureStatus::PROCESSING)
+      ->get();
+
+    if ($processingSignatures->isEmpty()) {
+      session()->flash('error', 'Tidak ada proses TTE aktif yang dapat dibatalkan.');
+      return;
+    }
+
+    foreach ($processingSignatures as $signature) {
+      $signature->markError('Proses TTE dibatalkan oleh pengguna.');
+    }
+
+    session()->flash('success', 'Proses TTE berhasil dibatalkan.');
+  }
+
   public function render()
   {
     $sppd = $this->getSppd();

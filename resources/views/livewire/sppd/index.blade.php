@@ -9,8 +9,8 @@
 		<div class="flex flex-col gap-2 md:flex-row md:items-center">
 			@php
 				$isDprd =
-					auth()->user()->department?->type?->value === 'dprd' ||
-					auth()->user()->department?->parent?->type?->value === 'dprd';
+				    auth()->user()->department?->type?->value === 'dprd' ||
+				    auth()->user()->department?->parent?->type?->value === 'dprd';
 				$isSuperAdmin = auth()->user()->hasRole('super_admin');
 			@endphp
 
@@ -122,25 +122,25 @@
 				@forelse($sppds as $i => $sppd)
 					@php
 						$statusBadge = match ($sppd->status->value) {
-							'draft' => ['bg' => 'bg-amber-50 border-amber-200', 'text' => 'text-amber-700', 'label' => 'Masuk'],
-							'in_progress' => ['bg' => 'bg-blue-50 border-blue-200', 'text' => 'text-blue-700', 'label' => 'Proses'],
-							'approved', 'completed', 'verified', 'signed' => [
-								'bg' => 'bg-emerald-50 border-emerald-200',
-								'text' => 'text-emerald-700',
-								'label' => 'Selesai',
-							],
-							'rejected' => ['bg' => 'bg-red-50 border-red-200', 'text' => 'text-red-700', 'label' => 'Ditolak'],
-							'pending', 'revision' => [
-								'bg' => 'bg-orange-50 border-orange-200',
-								'text' => 'text-orange-700',
-								'label' => 'Revisi',
-							],
-							'returned' => ['bg' => 'bg-pink-50 border-pink-200', 'text' => 'text-pink-700', 'label' => 'Kembali'],
-							default => [
-								'bg' => 'bg-slate-50 border-slate-200',
-								'text' => 'text-slate-700',
-								'label' => $sppd->status->label(),
-							],
+						    'draft' => ['bg' => 'bg-amber-50 border-amber-200', 'text' => 'text-amber-700', 'label' => 'Masuk'],
+						    'in_progress' => ['bg' => 'bg-blue-50 border-blue-200', 'text' => 'text-blue-700', 'label' => 'Proses'],
+						    'approved', 'completed', 'verified', 'signed' => [
+						        'bg' => 'bg-emerald-50 border-emerald-200',
+						        'text' => 'text-emerald-700',
+						        'label' => 'Selesai',
+						    ],
+						    'rejected' => ['bg' => 'bg-red-50 border-red-200', 'text' => 'text-red-700', 'label' => 'Ditolak'],
+						    'pending', 'revision' => [
+						        'bg' => 'bg-orange-50 border-orange-200',
+						        'text' => 'text-orange-700',
+						        'label' => 'Revisi',
+						    ],
+						    'returned' => ['bg' => 'bg-pink-50 border-pink-200', 'text' => 'text-pink-700', 'label' => 'Kembali'],
+						    default => [
+						        'bg' => 'bg-slate-50 border-slate-200',
+						        'text' => 'text-slate-700',
+						        'label' => $sppd->status->label(),
+						    ],
 						};
 					@endphp
 

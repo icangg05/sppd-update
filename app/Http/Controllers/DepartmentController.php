@@ -138,11 +138,11 @@ class DepartmentController extends Controller
     }
 
     if ($request->hasFile('letterhead')) {
-        $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
+        $validated['letterhead'] = $request->file('letterhead')->store('kop_surat', 'public');
     }
 
     if ($request->hasFile('letterhead_second')) {
-        $validated['letterhead_second'] = $request->file('letterhead_second')->store('departments/headers', 'public');
+        $validated['letterhead_second'] = $request->file('letterhead_second')->store('kop_surat', 'public');
     }
 
     Department::create($validated);
@@ -217,14 +217,14 @@ class DepartmentController extends Controller
         if ($department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/')) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead);
         }
-        $validated['letterhead'] = $request->file('letterhead')->store('departments/headers', 'public');
+        $validated['letterhead'] = $request->file('letterhead')->store('kop_surat', 'public');
     }
 
     if ($request->hasFile('letterhead_second')) {
         if ($department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/')) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead_second);
         }
-        $validated['letterhead_second'] = $request->file('letterhead_second')->store('departments/headers', 'public');
+        $validated['letterhead_second'] = $request->file('letterhead_second')->store('kop_surat', 'public');
     }
 
     $department->update($validated);

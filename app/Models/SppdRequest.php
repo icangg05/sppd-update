@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Vinkla\Hashids\Facades\Hashids;
@@ -43,6 +44,7 @@ class SppdRequest extends Model
         'sppd_date',
         'spt_date',
         'is_secretariat',
+        'attachment',
     ];
 
     protected function casts(): array
@@ -63,6 +65,68 @@ class SppdRequest extends Model
         return LogOptions::defaults()
             ->logOnly(['status', 'document_number'])
             ->logOnlyDirty();
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (SppdRequest $sppd) {
+            // Delete attachments
+            if ($sppd->attachment && Storage::disk('public')->exists($sppd->attachment)) {
+                Storage::disk('public')->delete($sppd->attachment);
+            }
+
+            // Delete digital signatures signed files
+            $signatures = $sppd->digitalSignatures()->get();
+            $ttesDisk = Storage::disk(config('tte.storage.disk'));
+            $draftDir = config('tte.storage.paths.draft');
+
+            foreach ($signatures as $sig) {
+                if ($sig->signed_file_path && $ttesDisk->exists($sig->signed_file_path)) {
+                    $ttesDisk->delete($sig->signed_file_path);
+                }
+            }
+
+            // Delete draft files
+            if ($draftDir && $ttesDisk->exists($draftDir)) {
+                foreach ($ttesDisk->files($draftDir) as $file) {
+                    if (str_contains(basename($file), (string)$sppd->id)) {
+                        $ttesDisk->delete($file);
+                    }
+                }
+            }
+
+            // Delete report files
+            $report = $sppd->report;
+            if ($report) {
+                if ($report->report_file && Storage::disk('public')->exists($report->report_file)) {
+                    Storage::disk('public')->delete($report->report_file);
+                }
+                if ($report->documentation_file && Storage::disk('public')->exists($report->documentation_file)) {
+                    Storage::disk('public')->delete($report->documentation_file);
+                }
+            }
+
+            // Delete cost details receipt photos
+            foreach ($sppd->costDetails as $cost) {
+                if ($cost->receipt_photo && Storage::disk('public')->exists($cost->receipt_photo)) {
+                    Storage::disk('public')->delete($cost->receipt_photo);
+                }
+            }
+
+            // Delete actual expenses receipt files
+            foreach ($sppd->actualExpenses as $expense) {
+                if ($expense->receipt_file && Storage::disk('public')->exists($expense->receipt_file)) {
+                    Storage::disk('public')->delete($expense->receipt_file);
+                }
+            }
+
+            // Delete advance receipts receipt files
+            foreach ($sppd->advanceReceipts as $receipt) {
+                if ($receipt->receipt_file && Storage::disk('public')->exists($receipt->receipt_file)) {
+                    Storage::disk('public')->delete($receipt->receipt_file);
+                }
+            }
+        });
     }
 
     // ──────────────────────────────────────────────

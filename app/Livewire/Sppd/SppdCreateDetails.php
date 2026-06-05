@@ -183,7 +183,7 @@ class SppdCreateDetails extends Component
       DB::transaction(function () use (&$sppd) {
         $attachmentPath = null;
         if ($this->attachment) {
-          $attachmentPath = $this->attachment->store('sppd/attachments', 'public');
+          $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
         }
 
         $sppd = SppdRequest::create([

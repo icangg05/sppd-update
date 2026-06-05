@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-6 p-1"
-	x-data="{ showDocModal: @entangle('showDocumentModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal') }"
+	x-data="{ showDocModal: @entangle('showDocumentModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal'), showPassphrase: false }"
 	@if ($isProcessing) wire:poll.5s @endif>
 
 	{{-- Header Halaman & Aksi --}}
@@ -113,6 +113,27 @@
 							<p class="text-sm text-slate-600 bg-amber-50 p-3 rounded border border-amber-200">{{ $sppd->notes }}</p>
 						</div>
 					@endif
+					@if ($sppd->attachment)
+						<div class="sm:col-span-2">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Dokumen Pendukung</p>
+							<div class="flex items-center gap-3 rounded border border-slate-200 bg-slate-50 p-3 shadow-2xs">
+								<div class="flex size-8 shrink-0 items-center justify-center rounded bg-amber-100 text-amber-600">
+									<i class="fa-solid fa-paperclip text-sm"></i>
+								</div>
+								<div class="min-w-0 flex-1">
+									<p class="text-xs text-slate-500 font-medium">Lampiran Dokumen</p>
+									<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+										class="text-sm font-bold text-cyan-600 hover:text-cyan-700 hover:underline truncate block">
+										{{ basename($sppd->attachment) }}
+									</a>
+								</div>
+								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+									class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+									<i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Buka
+								</a>
+							</div>
+						</div>
+					@endif
 				</div>
 			</div>
 
@@ -205,7 +226,8 @@
 									</tr>
 								@endforeach
 								<tr class="bg-cyan-50/50 border-t-2 border-slate-200">
-									<td colspan="3" class="px-5 py-3 text-right font-bold text-slate-700 uppercase tracking-wider text-xs">Total
+									<td colspan="3" class="px-5 py-3 text-right font-bold text-slate-700 uppercase tracking-wider text-xs">
+										Total
 										Anggaran</td>
 									<td class="px-5 py-3 text-right font-bold text-cyan-700">Rp {{ number_format($total, 0, ',', '.') }}</td>
 								</tr>
@@ -328,7 +350,7 @@
 					<div class="bg-blue-100/50 px-5 py-3 border-b border-blue-200">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-2">
 							<i
-								class="fa-solid fa-bell text-blue-600 @if ($isSigningInProgress) animate-spin @else animate-pulse @endif"></i>
+								class="fa-solid fa-bell text-blue-600 @if ($isSigningInProgress) animate-pulse @endif"></i>
 							@if ($isSigningInProgress)
 								Proses TTE Sedang Berjalan
 							@else
@@ -344,6 +366,10 @@
 								<p class="text-xs text-amber-700 leading-relaxed">
 									Proses tanda tangan elektronik sedang berjalan di background. Halaman akan diperbarui otomatis.
 								</p>
+								<button type="button" wire:click="cancelTte" wire:loading.attr="disabled"
+									class="mt-4 inline-flex items-center gap-1.5 rounded border border-rose-200 bg-white px-3.5 py-2 text-xs font-bold text-rose-600 shadow-2xs transition hover:bg-rose-50 hover:text-rose-700 cursor-pointer">
+									<i class="fa-solid fa-circle-xmark"></i> Batalkan Proses TTE
+								</button>
 							</div>
 						@elseif ($hasUnapprovedPrevious)
 							<div class="rounded border border-amber-300 bg-amber-50 p-4 text-center">
@@ -415,12 +441,12 @@
 										<label class="mb-1 block text-xs font-bold uppercase tracking-wider text-blue-800">Passphrase
 											Penandatangan</label>
 										<div class="relative">
-											<input type="{{ $showPassphrase ? 'text' : 'password' }}" wire:model="passphrase" required minlength="4"
+											<input :type="showPassphrase ? 'text' : 'password'" wire:model="passphrase" required minlength="4"
 												class="w-full rounded border border-slate-300 bg-white pl-3 pr-10 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
 												placeholder="••••••••">
-											<button type="button" wire:click="$toggle('showPassphrase')"
+											<button type="button" @click="showPassphrase = !showPassphrase"
 												class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
-												<i class="fa-solid {{ $showPassphrase ? 'fa-eye-slash' : 'fa-eye' }} text-sm"></i>
+												<i :class="showPassphrase ? 'fa-eye-slash' : 'fa-eye'" class="fa-solid text-sm"></i>
 											</button>
 										</div>
 									</div>
@@ -543,7 +569,8 @@
 							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
 				</a>
 			@else
-				<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($sppd->user_id)]) }}"
+				<a
+					href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($sppd->user_id)]) }}"
 					target="_blank"
 					class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
 					<i class="fa-solid fa-file-lines"></i><span>SPPD Pelaksana</span>
@@ -565,13 +592,25 @@
 								class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
 					</a>
 				@else
-					<a href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
+					<a
+						href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
 						target="_blank"
 						class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
 						<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
 					</a>
 				@endif
 			@endforeach
+
+			@if ($sppd->attachment)
+				<div class="border-t border-slate-200 my-2 pt-2">
+					<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Lampiran Lainnya</p>
+					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+						class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
+						<i class="fa-solid fa-paperclip"></i>
+						<span>Dokumen Pendukung (Lampiran)</span>
+					</a>
+				</div>
+			@endif
 		</div>
 		<x-slot:footer>
 			<button type="button" @click="showDocModal = false"
