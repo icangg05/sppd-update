@@ -282,7 +282,7 @@ class SppdCreateDetails extends Component
           . "*────────────────────────────────*\n\n"
           . "Halo *{$approver->name}*,\n"
           . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-          . "• *Pengaju:* {$sppd->user->name}\n"
+          . "• *Pelaksana:* {$sppd->user->name}\n"
           . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
           . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
           . "• *Peran Anda:* {$approval->role_label}\n\n"

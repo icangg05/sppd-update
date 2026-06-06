@@ -20,12 +20,11 @@ return new class extends Migration
       $table->string('description')->comment('Uraian biaya, misal: Tiket pesawat, Uang harian');
       $table->string('airline_name')->nullable();
       $table->string('ticket_number')->nullable();
-      $table->decimal('unit_cost', 15, 2)->default(0);
+      $table->unsignedBigInteger('unit_cost')->default(0);
       $table->unsignedInteger('quantity')->default(1);
-      $table->decimal('total', 15, 2)->default(0)->comment('unit_cost * quantity');
+      $table->unsignedBigInteger('total')->default(0)->comment('unit_cost * quantity');
       $table->string('receipt_photo')->nullable();
       $table->timestamps();
-
     });
 
     // Pengeluaran riil (setelah pulang)
@@ -34,7 +33,7 @@ return new class extends Migration
       $table->foreignId('sppd_request_id')->constrained()->cascadeOnDelete();
       $table->foreignId('user_id')->constrained()->cascadeOnDelete();
       $table->string('description');
-      $table->decimal('amount', 15, 2)->default(0);
+      $table->unsignedBigInteger('amount')->default(0);
       $table->string('receipt_file')->nullable()->comment('Path file bukti/nota');
       $table->timestamps();
     });
@@ -44,7 +43,7 @@ return new class extends Migration
       $table->id();
       $table->foreignId('sppd_request_id')->constrained()->cascadeOnDelete();
       $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-      $table->decimal('amount', 15, 2)->default(0);
+      $table->unsignedBigInteger('amount')->default(0);
       $table->string('receipt_number')->nullable();
       $table->string('receipt_file')->nullable();
       $table->timestamps();

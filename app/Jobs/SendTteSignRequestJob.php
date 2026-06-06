@@ -170,7 +170,7 @@ class SendTteSignRequestJob implements ShouldQueue
                   . "*────────────────────────────────*\n\n"
                   . "Halo *{$approver->name}*,\n"
                   . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-                  . "• *Pengaju:* {$applicantName}\n"
+                  . "• *Pelaksana:* {$applicantName}\n"
                   . "• *Maksud Perjalanan:* {$purpose}\n"
                   . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
                   . "• *Peran Anda:* {$nextApproval->role_label}\n\n"

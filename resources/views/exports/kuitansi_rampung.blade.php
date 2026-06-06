@@ -167,7 +167,7 @@
 
 	<!-- Tanggal di sebelah kanan -->
 	<p style="text-transform: uppercase; text-align: right; margin-top: 20px; margin-bottom: 0; font-size: 9pt;">
-		Kendari, {{ now()->translatedFormat('d F Y') }}
+		Kendari, {{ $pdfData['date'] ?? now()->translatedFormat('d F Y') }}
 	</p>
 
 

@@ -482,17 +482,17 @@ class SppdController extends Controller
   {
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
 
-    // Cari bendahara pengeluaran di OPD terkait (dengan fallback ke induk jika di sub-unit)
+    // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan (dengan fallback ke induk jika di sub-unit)
     $dept = $sppd->user->department;
     $bendahara = null;
     if ($dept) {
-      $bendahara = User::role('bendahara')
+      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
         ->where('department_id', $dept->id)
         ->where('is_active', true)
         ->first();
 
       if (! $bendahara && $dept->parent_id) {
-        $bendahara = User::role('bendahara')
+        $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
           ->where('department_id', $dept->parent_id)
           ->where('is_active', true)
           ->first();
@@ -547,8 +547,8 @@ class SppdController extends Controller
   {
     $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
 
-    // Cari bendahara pengeluaran di OPD terkait
-    $bendahara = User::role('bendahara')
+    // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan
+    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
       ->where('department_id', $sppd->user->department_id)
       ->where('is_active', true)
       ->first();
@@ -1191,14 +1191,35 @@ class SppdController extends Controller
         ->first();
     }
 
-    // Bendahara pengeluaran
-    $bendahara = User::role('bendahara')
+    // Bendahara pengeluaran berdasarkan jabatan
+    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
       ->where('department_id', $department?->id)
       ->where('is_active', true)
       ->first();
 
+    // Fallback ke department induk
+    if (! $bendahara && $department?->parent_id) {
+      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
+        ->where('department_id', $department->parent_id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    // Custom date if passed
+    $dateParam = $request->query('date');
+    $dateValue = now();
+    if ($dateParam) {
+      try {
+        $dateValue = \Carbon\Carbon::parse($dateParam);
+      } catch (\Exception $e) {
+      }
+    }
+
     // QR Code
     $pdfUrl = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    if ($dateParam) {
+      $pdfUrl .= '&date=' . urlencode($dateParam);
+    }
     $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
@@ -1223,7 +1244,7 @@ class SppdController extends Controller
       // QR & Misc
       'qr_image' => $qrImage,
       'bku' => null,
-      'date' => now()->translatedFormat('d F Y'),
+      'date' => $dateValue->translatedFormat('d F Y'),
     ];
 
     return Pdf::loadView('exports.kuitansi_rampung', compact('sppd', 'targetUser', 'pdfData'))
@@ -1277,14 +1298,35 @@ class SppdController extends Controller
         ->first();
     }
 
-    // Bendahara pengeluaran
-    $bendahara = User::role('bendahara')
+    // Bendahara pengeluaran berdasarkan jabatan
+    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
       ->where('department_id', $department?->id)
       ->where('is_active', true)
       ->first();
 
+    // Fallback ke department induk
+    if (! $bendahara && $department?->parent_id) {
+      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
+        ->where('department_id', $department->parent_id)
+        ->where('is_active', true)
+        ->first();
+    }
+
+    // Custom date if passed
+    $dateParam = $request->query('date');
+    $dateValue = now();
+    if ($dateParam) {
+      try {
+        $dateValue = \Carbon\Carbon::parse($dateParam);
+      } catch (\Exception $e) {
+      }
+    }
+
     // QR Code
     $pdfUrl = route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    if ($dateParam) {
+      $pdfUrl .= '&date=' . urlencode($dateParam);
+    }
     $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
@@ -1309,7 +1351,7 @@ class SppdController extends Controller
       // QR & Misc
       'qr_image' => $qrImage,
       'bku' => null,
-      'date' => now()->translatedFormat('d F Y'),
+      'date' => $dateValue->translatedFormat('d F Y'),
     ];
 
     return Pdf::loadView('exports.kuitansi_rampung', compact('sppd', 'targetUser', 'pdfData'))
@@ -1429,11 +1471,19 @@ class SppdController extends Controller
         ->first();
     }
 
-    // Bendahara Pengeluaran
-    $bendahara = User::role('bendahara')
+    // Bendahara Pengeluaran berdasarkan jabatan
+    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
       ->where('department_id', $department?->id)
       ->where('is_active', true)
       ->first();
+
+    // Fallback ke department induk
+    if (! $bendahara && $department?->parent_id) {
+      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
+        ->where('department_id', $department->parent_id)
+        ->where('is_active', true)
+        ->first();
+    }
 
     // PPTK
     $pptk = $sppd->pptk;
@@ -1479,7 +1529,7 @@ class SppdController extends Controller
       . "*────────────────────────────────*\n\n"
       . "Halo *{$approver->name}*,\n"
       . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-      . "• *Pengaju:* {$applicantName}\n"
+      . "• *Pelaksana:* {$applicantName}\n"
       . "• *Maksud Perjalanan:* {$purpose}\n"
       . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
       . "• *Peran Anda:* {$approval->role_label}\n\n"

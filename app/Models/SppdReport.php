@@ -25,7 +25,7 @@ class SppdReport extends Model
   {
     return [
       'report_date' => 'date',
-      'total_expense' => 'decimal:2',
+      'total_expense' => 'integer',
       'verification_status' => VerificationStatus::class,
       'verified_at' => 'datetime',
     ];

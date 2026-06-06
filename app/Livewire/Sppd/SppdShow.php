@@ -22,15 +22,15 @@ class SppdShow extends Component
   #[Locked]
   public int $sppdId;
 
-  public string $approveNotes = '';
-  public string $passphrase = '';
-  public string $rejectNotes = '';
+  public string $approveNotes  = '';
+  public string $passphrase    = '';
+  public string $rejectNotes   = '';
   public string $revisionNotes = '';
 
   public bool $showDocumentModal = false;
-  public bool $showRejectModal = false;
+  public bool $showRejectModal   = false;
   public bool $showRevisionModal = false;
-  public bool $showPassphrase = false;
+  public bool $showPassphrase    = false;
 
   public function mount(SppdRequest $sppd): void
   {
@@ -100,9 +100,9 @@ class SppdShow extends Component
     }
 
     $sppd->update([
-      'revision_note' => null,
+      'revision_note'  => null,
       'rejection_note' => null,
-      'reviser_id' => null,
+      'reviser_id'     => null,
     ]);
 
     if ($needsTte) {
@@ -128,7 +128,7 @@ class SppdShow extends Component
     }
 
     $this->approveNotes = '';
-    $this->passphrase = '';
+    $this->passphrase   = '';
     session()->flash('success', 'SPPD berhasil disetujui.');
   }
 
@@ -151,13 +151,13 @@ class SppdShow extends Component
 
     $approval->reject($this->rejectNotes);
     $sppd->update([
-      'status' => SppdStatus::REJECTED,
+      'status'         => SppdStatus::REJECTED,
       'rejection_note' => $this->rejectNotes,
     ]);
 
     $this->notifyApplicant($sppd, 'rejected', $this->rejectNotes, Auth::user());
 
-    $this->rejectNotes = '';
+    $this->rejectNotes     = '';
     $this->showRejectModal = false;
     session()->flash('success', 'SPPD berhasil ditolak.');
   }
@@ -181,12 +181,12 @@ class SppdShow extends Component
 
     $sppd->update([
       'revision_note' => $this->revisionNotes,
-      'reviser_id' => Auth::id(),
+      'reviser_id'    => Auth::id(),
     ]);
 
     $this->notifyApplicant($sppd, 'revision', $this->revisionNotes, Auth::user());
 
-    $this->revisionNotes = '';
+    $this->revisionNotes     = '';
     $this->showRevisionModal = false;
     session()->flash('success', 'Catatan revisi berhasil dikirim.');
   }
@@ -206,27 +206,27 @@ class SppdShow extends Component
   protected function processTteApproval(SppdRequest $sppd, $approval): void
   {
     $hasAnyTteConfigured = $sppd->approvals->contains(fn($app) => $app->signs_spt || $app->signs_sppd);
-    $shouldSignSpt = $hasAnyTteConfigured ? (bool) $approval->signs_spt : true;
-    $shouldSignSppd = $hasAnyTteConfigured ? (bool) $approval->signs_sppd : true;
+    $shouldSignSpt       = $hasAnyTteConfigured ? (bool) $approval->signs_spt : true;
+    $shouldSignSppd      = $hasAnyTteConfigured ? (bool) $approval->signs_sppd : true;
 
     $documentsToSign = [];
 
     if ($shouldSignSpt) {
       $documentsToSign[] = [
-        'type' => 'spt',
+        'type'   => 'spt',
         'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPT),
       ];
     }
 
     if ($shouldSignSppd) {
       $documentsToSign[] = [
-        'type' => 'sppd_' . $sppd->user_id,
+        'type'   => 'sppd_' . $sppd->user_id,
         'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD),
       ];
 
       foreach ($sppd->followers as $follower) {
         $documentsToSign[] = [
-          'type' => 'sppd_' . $follower->user_id,
+          'type'   => 'sppd_' . $follower->user_id,
           'coords' => $this->defaultSignatureCoordinates(SignatureDocumentType::SPPD),
         ];
       }
@@ -246,18 +246,18 @@ class SppdShow extends Component
 
       $signature = $sppd->digitalSignatures()->updateOrCreate(
         [
-          'signer_id' => Auth::id(),
+          'signer_id'     => Auth::id(),
           'document_type' => $doc['type'],
         ],
         array_merge(
           [
-            'sppd_request_id' => $sppd->id,
-            'signer_id' => Auth::id(),
-            'document_type' => $doc['type'],
-            'status' => SignatureStatus::PROCESSING,
-            'error_message' => null,
+            'sppd_request_id'  => $sppd->id,
+            'signer_id'        => Auth::id(),
+            'document_type'    => $doc['type'],
+            'status'           => SignatureStatus::PROCESSING,
+            'error_message'    => null,
             'signed_file_path' => null,
-            'provider_name' => config('tte.default_provider'),
+            'provider_name'    => config('tte.default_provider'),
           ],
           $doc['coords']
         )
@@ -283,13 +283,13 @@ class SppdShow extends Component
           $this->notifyApprover($sppd, $nextApproval);
         }
       }
-      $this->passphrase = '';
+      $this->passphrase   = '';
       $this->approveNotes = '';
       session()->flash('success', 'Seluruh dokumen telah berhasil ditandatangani.');
       return;
     }
 
-    $sppdId = $sppd->id;
+    $sppdId   = $sppd->id;
     $signerId = Auth::id();
     Bus::chain($jobs)
       ->catch(function (Throwable $e) use ($sppdId, $signerId) {
@@ -297,13 +297,13 @@ class SppdShow extends Component
           ->where('signer_id', $signerId)
           ->where('status', SignatureStatus::PROCESSING)
           ->update([
-            'status' => SignatureStatus::REJECTED,
+            'status'        => SignatureStatus::REJECTED,
             'error_message' => $e->getMessage(),
           ]);
       })
       ->dispatch();
 
-    $this->passphrase = '';
+    $this->passphrase   = '';
     $this->approveNotes = '';
     session()->flash('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
   }
@@ -313,17 +313,17 @@ class SppdShow extends Component
     return match ($type) {
       SignatureDocumentType::SPT => [
         'page_number' => 1,
-        'x' => 300,
-        'y' => 100,
-        'width' => 160,
-        'height' => 60,
+        'x'           => 300,
+        'y'           => 100,
+        'width'       => 160,
+        'height'      => 60,
       ],
       SignatureDocumentType::SPPD => [
         'page_number' => 1,
-        'x' => 300,
-        'y' => 100,
-        'width' => 160,
-        'height' => 60,
+        'x'           => 300,
+        'y'           => 100,
+        'width'       => 160,
+        'height'      => 60,
       ],
     };
   }
@@ -333,26 +333,30 @@ class SppdShow extends Component
     try {
       $recipient = $sppd->creator ?? $sppd->user;
       if ($recipient && $recipient->phone) {
-        $purpose = $sppd->purpose;
-        $detailUrl = route('sppd.show', $sppd);
-        $actorName = $actor?->name ?? 'Pejabat';
+        $purpose      = $sppd->purpose;
+        $detailUrl    = route('sppd.show', $sppd);
+        $actorName    = $actor?->name ?? 'Pejabat';
+        $travelerName = $sppd->user?->name ?? '-';
 
         $statusTitle = '';
-        $body = '';
+        $body        = '';
 
         if ($action === 'approved') {
           $statusTitle = '✅ *STATUS: DOKUMEN DISETUJUI*';
-          $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
+          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju."
+            . "\n\n• *Pelaksana:* {$travelerName}";
           if ($notes) {
-            $body .= "\n\n• *Catatan:* {$notes}";
+            $body .= "\n• *Catatan:* {$notes}";
           }
         } elseif ($action === 'rejected') {
-          $statusTitle = '❌ *STATUS: SPPD DITOLAK*';
-          $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
+          $statusTitle = '❌ *STATUS: DOKUMEN DITOLAK*';
+          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
+            . "• *Pelaksana:* {$travelerName}\n"
             . '• *Alasan Penolakan:* ' . ($notes ?? 'Tidak ada catatan khusus.');
         } elseif ($action === 'revision') {
-          $statusTitle = '⚠️ *STATUS: SPPD PERLU REVISI*';
-          $body = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
+          $statusTitle = '⚠️ *STATUS: DOKUMEN PERLU REVISI*';
+          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
+            . "• *Pelaksana:* {$travelerName}\n"
             . '• *Catatan Revisi:* ' . ($notes ?? 'Harap tinjau kembali data pengajuan Anda.');
         }
 
@@ -377,14 +381,14 @@ class SppdShow extends Component
       $approver = $approval->approver;
       if ($approver && $approver->phone) {
         $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
-        $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
+        $endDate   = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
         $detailUrl = route('sppd.show', $sppd);
 
         $message = "📝 *PENGAJUAN SPPD BARU*\n"
           . "*────────────────────────────────*\n\n"
           . "Halo *{$approver->name}*,\n"
           . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-          . "• *Pengaju:* {$sppd->user->name}\n"
+          . "• *Pelaksana:* {$sppd->user->name}\n"
           . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
           . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
           . "• *Peran Anda:* {$approval->role_label}\n\n"
@@ -446,7 +450,7 @@ class SppdShow extends Component
     $lowerMsg = strtolower($cleanMsg);
 
     $isPassphrase = false;
-    $isNik = false;
+    $isNik        = false;
 
     // Keywords untuk Passphrase salah
     $passphraseKeywords = [
@@ -502,24 +506,24 @@ class SppdShow extends Component
 
     if ($isPassphrase) {
       return [
-        'type' => 'passphrase',
+        'type'    => 'passphrase',
         'message' => $cleanMsg ?: 'Passphrase salah.',
-        'icon' => 'fa-key',
+        'icon'    => 'fa-key',
       ];
     }
 
     if ($isNik) {
       return [
-        'type' => 'nik',
+        'type'    => 'nik',
         'message' => $cleanMsg ?: 'NIK atau sertifikat elektronik bermasalah / belum terdaftar.',
-        'icon' => 'fa-id-card',
+        'icon'    => 'fa-id-card',
       ];
     }
 
     return [
-      'type' => 'sistem',
+      'type'    => 'sistem',
       'message' => $cleanMsg ?: 'Terjadi kesalahan sistem pada server BSrE.',
-      'icon' => 'fa-server',
+      'icon'    => 'fa-server',
     ];
   }
 
@@ -548,7 +552,7 @@ class SppdShow extends Component
   {
     $sppd = $this->getSppd();
 
-    $needsTte = false;
+    $needsTte   = false;
     $myApproval = $sppd->approvals
       ->where('approver_id', Auth::id())
       ->where('status', ApprovalStatus::PENDING)

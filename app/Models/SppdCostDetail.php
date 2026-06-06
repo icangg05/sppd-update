@@ -25,9 +25,9 @@ class SppdCostDetail extends Model
   {
     return [
       'cost_category' => CostCategory::class,
-      'unit_cost' => 'decimal:2',
+      'unit_cost' => 'integer',
       'quantity' => 'integer',
-      'total' => 'decimal:2',
+      'total' => 'integer',
     ];
   }
 

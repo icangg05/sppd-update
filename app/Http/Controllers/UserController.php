@@ -283,6 +283,7 @@ class UserController extends Controller
       . "*────────────────────────────────*\n\n"
       . "Halo! Ini adalah pesan percobaan dari sistem *SPPD Elektronik Kota Kendari*.\n\n"
       . "✅ Nomor WhatsApp Anda telah berhasil diverifikasi dan terdaftar sebagai penerima notifikasi.\n\n"
+      . "📌 *Mohon simpan nomor ini sebagai kontak* agar notifikasi selanjutnya (persetujuan, penolakan, revisi SPPD) dapat Anda terima dengan baik dan tidak tersaring sebagai spam.\n\n"
       . "Terima kasih.";
 
     $success = $openwa->send($phone, $message);

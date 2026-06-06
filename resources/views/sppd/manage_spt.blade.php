@@ -36,6 +36,10 @@
 							class="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700">
 							<i class="fa-solid fa-print"></i> CETAK DOKUMEN SPT
 						</a>
+						<p class="mt-2 text-[11px] text-slate-400 font-medium leading-relaxed">
+							<i class="fa-solid fa-circle-info mr-1"></i>
+							Sistem menghasilkan dokumen PDF yang sudah siap cetak atau ditandatangani secara elektronik.
+						</p>
 					</div>
 				</div>
 

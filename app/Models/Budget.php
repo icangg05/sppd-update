@@ -16,7 +16,7 @@ class Budget extends Model
   {
     return [
       'year'         => 'integer',
-      'total_amount' => 'decimal:2',
+      'total_amount' => 'integer',
     ];
   }
 
