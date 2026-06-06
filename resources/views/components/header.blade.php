@@ -1,5 +1,5 @@
 <header class="sticky top-0 z-30 w-full border-b border-cyan-600/50 bg-cyan-700 text-white shadow-sm">
-	<div class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+	<div class="flex h-13 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
 		<div class="flex items-center gap-4">
 			<button onclick="toggleSidebar()"

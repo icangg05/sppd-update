@@ -4,12 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Models\SppdActualExpense;
 use App\Models\SppdRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SppdActualExpenseController extends Controller
 {
-  public function store(Request $request, SppdRequest $sppd)
+  /**
+   * Store a newly created resource in storage.
+   */
+  public function store(Request $request, SppdRequest $sppd): RedirectResponse
   {
+    if ($request->has('user_ids')) {
+      $validated = $request->validate([
+        'user_ids'    => 'required|array',
+        'user_ids.*'  => 'exists:users,id',
+        'description' => 'required|string|max:500',
+        'amount'      => 'required|numeric|min:0',
+      ]);
+
+      foreach ($validated['user_ids'] as $userId) {
+        $sppd->actualExpenses()->create([
+          'user_id'     => $userId,
+          'description' => $validated['description'],
+          'amount'      => $validated['amount'],
+        ]);
+      }
+
+      return back()->with('success', 'Pengeluaran riil berhasil ditambahkan untuk pegawai terpilih.');
+    }
+
     $validated = $request->validate([
       'user_id'     => 'required|exists:users,id',
       'description' => 'required|string|max:500',
@@ -21,7 +44,10 @@ class SppdActualExpenseController extends Controller
     return back()->with('success', 'Pengeluaran riil berhasil ditambahkan.');
   }
 
-  public function update(Request $request, SppdRequest $sppd, SppdActualExpense $expense)
+  /**
+   * Update the specified resource in storage.
+   */
+  public function update(Request $request, SppdRequest $sppd, SppdActualExpense $expense): RedirectResponse
   {
     $validated = $request->validate([
       'description' => 'required|string|max:500',
@@ -33,10 +59,14 @@ class SppdActualExpenseController extends Controller
     return back()->with('success', 'Pengeluaran riil berhasil diperbarui.');
   }
 
-  public function destroy(SppdRequest $sppd, SppdActualExpense $expense)
+  /**
+   * Remove the specified resource from storage.
+   */
+  public function destroy(SppdRequest $sppd, SppdActualExpense $expense): RedirectResponse
   {
     $expense->delete();
 
     return back()->with('success', 'Pengeluaran riil berhasil dihapus.');
   }
 }
+

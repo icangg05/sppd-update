@@ -1404,8 +1404,21 @@ class SppdController extends Controller
     $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
     $approver = $lastApproval?->approver;
 
+    // Custom date if passed
+    $dateParam = $request->query('date');
+    $dateValue = now();
+    if ($dateParam) {
+      try {
+        $dateValue = \Carbon\Carbon::parse($dateParam);
+      } catch (\Exception $e) {
+      }
+    }
+
     // QR Code
     $pdfUrl = route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd->id, 'user_id' => $userId]);
+    if ($dateParam) {
+      $pdfUrl .= '&date=' . urlencode($dateParam);
+    }
     $qrImage = QrSimulator::generate($pdfUrl);
 
     $pdfData = [
@@ -1416,6 +1429,7 @@ class SppdController extends Controller
       'pimpinan_role' => $pimpinan?->position?->name ?? 'Kepala Dinas',
       'is_walikota' => ($approver && $approver->hasRole('walikota')) || ($pimpinan && $pimpinan->hasRole('walikota')),
       'qr_image' => $qrImage,
+      'date' => $dateValue->translatedFormat('d F Y'),
     ];
 
     return Pdf::loadView('exports.pengeluaran_riil', compact('sppd', 'targetUser', 'expenses', 'pdfData'))

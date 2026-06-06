@@ -185,7 +185,7 @@
 
 	<ol style="font-size: 9pt;">
 		<li>
-			Biaya transport pegawai dibawah ini yang tidak dapat diperoleh bukti-bukti pengeluarannya, meliputi :
+			Biaya transport pegawai di bawah ini yang tidak dapat diperoleh bukti-bukti pengeluarannya, meliputi :
 			<table class="data-table" style="margin-top: 10px; margin-bottom: 10px;">
 				<thead>
 					<tr>
@@ -223,7 +223,7 @@
 	</p>
 
 	<p style="text-align: right; margin-top: 20px; margin-bottom: 0px; font-size: 9pt;">
-		Kendari, {{ now()->translatedFormat('d F Y') }}
+		Kendari, {{ $pdfData['date'] ?? now()->translatedFormat('d F Y') }}
 	</p>
 
 	<table class="signature-table" style="font-size: 9pt;">

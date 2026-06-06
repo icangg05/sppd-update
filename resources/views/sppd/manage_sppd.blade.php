@@ -40,7 +40,7 @@
 							<table class="w-full text-left border-collapse">
 								<thead>
 									<tr class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No</th>
+										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No.</th>
 										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap</th>
 										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Peran</th>
 										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24 text-center">Aksi
@@ -51,7 +51,7 @@
 									{{-- Main Pelaksana --}}
 									<tr class="hover:bg-slate-50/80 transition-colors"
 										data-search-term="pelaksana {{ strtolower($sppd->user->name) }}">
-										<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">1</td>
+										<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">1.</td>
 										<td class="py-2 px-3">
 											<span class="text-xs font-semibold text-slate-800">{{ $sppd->user->name }}</span>
 										</td>
@@ -73,7 +73,7 @@
 									@foreach ($sppd->followers as $index => $f)
 										<tr class="hover:bg-slate-50/80 transition-colors"
 											data-search-term="pengikut {{ strtolower($f->user->name) }}">
-											<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">{{ $index + 2 }}</td>
+											<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">{{ $index + 2 }}.</td>
 											<td class="py-2 px-3">
 												<span class="text-xs font-medium text-slate-700">{{ $f->user->name }}</span>
 											</td>
