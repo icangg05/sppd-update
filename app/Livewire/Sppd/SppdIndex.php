@@ -10,10 +10,10 @@ use App\Enums\SppdStatus;
 use App\Models\SppdApproval;
 use App\Models\SppdRequest;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Url;
-use Livewire\Attributes\Layout;
 
 #[Layout('layouts.app')]
 class SppdIndex extends Component
@@ -35,14 +35,40 @@ class SppdIndex extends Component
     #[Url(keep: true)]
     public string $filter = '';
 
+    /**
+     * Roles that should default to eselon_iii view and only see the eselon III/IV/Staf filter.
+     */
+    private const ESELON_LOWER_ROLES = [
+        'staf',
+        'admin_opd',
+        'kasubid_kasubag',
+        'kabid_irban_kabag',
+        'sekretaris_opd',
+    ];
+
     public function mount(): void
     {
         if (empty($this->jabatan)) {
             $user = Auth::user();
             $isDprd = $user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd';
             $isSuperAdmin = $user->hasRole('super_admin');
-            $this->jabatan = ($isSuperAdmin || $isDprd) ? 'anggota_dprd' : 'kepala_opd';
+
+            if ($isSuperAdmin || $isDprd) {
+                $this->jabatan = 'anggota_dprd';
+            } else {
+                $this->jabatan = 'kepala_opd';
+            }
         }
+    }
+
+    /** Whether the current user is restricted to eselon III/IV/Staf view only. */
+    public function isLowerEselonUser(): bool
+    {
+        $user = Auth::user();
+
+        return ! $user->hasRole('super_admin')
+            && ! ($user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd')
+            && $user->hasAnyRole(self::ESELON_LOWER_ROLES);
     }
 
     public function filterByJabatan(string $value): void
@@ -57,12 +83,17 @@ class SppdIndex extends Component
         $this->status = '';
         $this->domain = '';
         $this->filter = '';
-        
+
         $user = Auth::user();
         $isDprd = $user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd';
         $isSuperAdmin = $user->hasRole('super_admin');
-        $this->jabatan = ($isSuperAdmin || $isDprd) ? 'anggota_dprd' : 'kepala_opd';
-        
+
+        if ($isSuperAdmin || $isDprd) {
+            $this->jabatan = 'anggota_dprd';
+        } else {
+            $this->jabatan = 'kepala_opd';
+        }
+
         $this->resetPage();
     }
 
@@ -170,15 +201,16 @@ class SppdIndex extends Component
             $query->where(function ($q) use ($search) {
                 $q->where('purpose', 'like', "%{$search}%")
                     ->orWhere('document_number', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('user', fn ($q2) => $q2->where('name', 'like', "%{$search}%"));
             });
         }
 
         $sppds = $query->latest()->paginate(15);
         $statuses = SppdStatus::cases();
         $domains = SppdDomain::cases();
+        $isLowerEselonUser = $this->isLowerEselonUser();
 
-        return view('livewire.sppd.index', compact('sppds', 'statuses', 'domains'))
+        return view('livewire.sppd.index', compact('sppds', 'statuses', 'domains', 'isLowerEselonUser'))
             ->title('Daftar SPPD');
     }
 }
