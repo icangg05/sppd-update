@@ -7,7 +7,9 @@
 		foreach ($sppd->followers as $f) {
 		    $people->push(['id' => $f->user->id, 'name' => $f->user->name, 'label' => 'Pengikut']);
 		}
-		$hasExpenses = $sppd->actualExpenses->count() > 0 || $sppd->costDetails->count() > 0;
+		$hasActualExpenses = $sppd->actualExpenses->count() > 0;
+		$hasCostDetails = $sppd->costDetails->count() > 0;
+		$hasExpenses = $hasActualExpenses && $hasCostDetails;
 		$hasBendahara = $bendahara !== null;
 	@endphp
 
@@ -179,13 +181,19 @@
 				<p class="mt-1 text-[11px] font-medium text-cyan-800 leading-relaxed">
 					Untuk dapat mencetak <strong>Kuitansi Rampung</strong>, pastikan seluruh data berikut telah dilengkapi:
 				</p>
-				<ul class="mt-2 flex flex-wrap gap-2 text-[11px] text-cyan-700">
-					<li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Laporan Pengeluaran
-						Rill</li>
-					<li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Rincian Biaya
-						Perjalanan</li>
-					<li class="flex items-center gap-1.5"><i class="fa-solid fa-check-circle text-cyan-500"></i> Bendahara Pengeluaran
-						Aktif</li>
+				<ul class="mt-2 flex flex-wrap gap-2 text-[11px]">
+					<li class="flex items-center gap-1.5 {{ $hasActualExpenses ? 'text-emerald-700' : 'text-rose-600' }}">
+						<i class="fa-solid {{ $hasActualExpenses ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-400' }}"></i>
+						Laporan Pengeluaran Rill
+					</li>
+					<li class="flex items-center gap-1.5 {{ $hasCostDetails ? 'text-emerald-700' : 'text-rose-600' }}">
+						<i class="fa-solid {{ $hasCostDetails ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-400' }}"></i>
+						Rincian Biaya Perjalanan
+					</li>
+					<li class="flex items-center gap-1.5 {{ $hasBendahara ? 'text-emerald-700' : 'text-rose-600' }}">
+						<i class="fa-solid {{ $hasBendahara ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-400' }}"></i>
+						Bendahara Pengeluaran Aktif
+					</li>
 				</ul>
 			</div>
 		</div>

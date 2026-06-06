@@ -11,147 +11,146 @@ use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\UserController;
-use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
+use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use Illuminate\Support\Facades\Route;
 
-
 // Guest routes
 Route::middleware('guest')->group(function () {
-  Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-  Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
 // Auth routes
 Route::middleware('auth')->group(function () {
-  Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-  // Dashboard
-  Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-  // SPPD — Livewire Full-Page Components
-  Route::get('/sppd', SppdIndex::class)->name('sppd.index');
-  Route::get('/sppd/create', SppdCreate::class)->name('sppd.create');
-  Route::get('/sppd/create/details', SppdCreateDetails::class)->name('sppd.create.details');
-  Route::post('/sppd', [SppdController::class, 'store'])->name('sppd.store');
-  Route::get('/sppd/{sppd}', SppdShow::class)->name('sppd.show');
-  Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
-  Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
-  Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
-  Route::post('/sppd/{sppd}/revision', [SppdController::class, 'revision'])->name('sppd.revision');
-  Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
+    // SPPD — Livewire Full-Page Components
+    Route::get('/sppd', SppdIndex::class)->name('sppd.index');
+    Route::get('/sppd/create', SppdCreate::class)->name('sppd.create');
+    Route::get('/sppd/create/details', SppdCreateDetails::class)->name('sppd.create.details');
+    Route::post('/sppd', [SppdController::class, 'store'])->name('sppd.store');
+    Route::get('/sppd/{sppd}', SppdShow::class)->name('sppd.show');
+    Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
+    Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
+    Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
+    Route::post('/sppd/{sppd}/revision', [SppdController::class, 'revision'])->name('sppd.revision');
+    Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
 
-  // Legacy Workflow Portal
-  Route::get('/sppd/{sppd}/next', [SppdController::class, 'next'])->name('sppd.next');
+    // Legacy Workflow Portal
+    Route::get('/sppd/{sppd}/next', [SppdController::class, 'next'])->name('sppd.next');
 
-  // Sub-pages of 'Selanjutnya'
-  Route::get('/sppd/{sppd}/manage-sppd', [SppdController::class, 'manageSppd'])->name('sppd.manage-sppd');
-  Route::get('/sppd/{sppd}/manage-spt', [SppdController::class, 'manageSpt'])->name('sppd.manage-spt');
-  Route::get('/sppd/{sppd}/receipts', [SppdController::class, 'receipts'])->name('sppd.receipts');
-  Route::get('/sppd/{sppd}/actual-expenses', [SppdController::class, 'actualExpenses'])->name('sppd.actual-expenses');
-  Route::get('/sppd/{sppd}/final-costs', [SppdController::class, 'finalCosts'])->name('sppd.final-costs');
-  Route::get('/sppd/{sppd}/report-input', [SppdController::class, 'reportInput'])->name('sppd.report-input');
+    // Sub-pages of 'Selanjutnya'
+    Route::get('/sppd/{sppd}/manage-sppd', [SppdController::class, 'manageSppd'])->name('sppd.manage-sppd');
+    Route::get('/sppd/{sppd}/manage-spt', [SppdController::class, 'manageSpt'])->name('sppd.manage-spt');
+    Route::get('/sppd/{sppd}/receipts', [SppdController::class, 'receipts'])->name('sppd.receipts');
+    Route::get('/sppd/{sppd}/actual-expenses', [SppdController::class, 'actualExpenses'])->name('sppd.actual-expenses');
+    Route::get('/sppd/{sppd}/final-costs', [SppdController::class, 'finalCosts'])->name('sppd.final-costs');
+    Route::get('/sppd/{sppd}/report-input', [SppdController::class, 'reportInput'])->name('sppd.report-input');
 
-  // CRUD: Rincian Biaya Perjalanan Dinas
-  Route::post('/sppd/{sppd}/cost-details', [SppdCostDetailController::class, 'store'])->name('sppd.cost-details.store');
-  Route::put('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'update'])->name('sppd.cost-details.update');
-  Route::delete('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'destroy'])->name('sppd.cost-details.destroy');
+    // CRUD: Rincian Biaya Perjalanan Dinas
+    Route::post('/sppd/{sppd}/cost-details', [SppdCostDetailController::class, 'store'])->name('sppd.cost-details.store');
+    Route::put('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'update'])->name('sppd.cost-details.update');
+    Route::delete('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'destroy'])->name('sppd.cost-details.destroy');
 
-  // CRUD: Laporan Pengeluaran Riil
-  Route::post('/sppd/{sppd}/actual-expenses', [SppdActualExpenseController::class, 'store'])->name('sppd.actual-expenses.store');
-  Route::put('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'update'])->name('sppd.actual-expenses.update');
-  Route::delete('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'destroy'])->name('sppd.actual-expenses.destroy');
+    // CRUD: Laporan Pengeluaran Riil
+    Route::post('/sppd/{sppd}/actual-expenses', [SppdActualExpenseController::class, 'store'])->name('sppd.actual-expenses.store');
+    Route::put('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'update'])->name('sppd.actual-expenses.update');
+    Route::delete('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'destroy'])->name('sppd.actual-expenses.destroy');
 
-  // Kuitansi Panjar (create or update)
-  Route::post('/sppd/{sppd}/advance-receipts', [SppdAdvanceReceiptController::class, 'storeOrUpdate'])->name('sppd.advance-receipts.store');
+    // Kuitansi Panjar (create or update)
+    Route::post('/sppd/{sppd}/advance-receipts', [SppdAdvanceReceiptController::class, 'storeOrUpdate'])->name('sppd.advance-receipts.store');
 
-  // Update PPTK
-  Route::put('/sppd/{sppd}/pptk', [SppdController::class, 'updatePptk'])->name('sppd.update-pptk');
+    // Update PPTK
+    Route::put('/sppd/{sppd}/pptk', [SppdController::class, 'updatePptk'])->name('sppd.update-pptk');
 
-  // Laporan Perjalanan (store/update)
-  Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
+    // Laporan Perjalanan (store/update)
+    Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
 
-  // TTE / Electronic signature
-  // Route::post('/sppd/{sppd}/sign/{type}', [SppdDigitalSignatureController::class, 'request'])->name('sppd.sign');
-  Route::get('/sppd/{sppd}/sign/batch-status', [SppdDigitalSignatureController::class, 'batchStatus'])->name('sppd.sign.batch-status');
-  Route::get('/sppd/{sppd}/sign/{signature}/status', [SppdDigitalSignatureController::class, 'status'])->name('sppd.sign.status');
-  Route::get('/sppd/{sppd}/sign/{signature}/download', [SppdDigitalSignatureController::class, 'download'])->name('sppd.sign.download');
+    // TTE / Electronic signature
+    // Route::post('/sppd/{sppd}/sign/{type}', [SppdDigitalSignatureController::class, 'request'])->name('sppd.sign');
+    Route::get('/sppd/{sppd}/sign/batch-status', [SppdDigitalSignatureController::class, 'batchStatus'])->name('sppd.sign.batch-status');
+    Route::get('/sppd/{sppd}/sign/{signature}/status', [SppdDigitalSignatureController::class, 'status'])->name('sppd.sign.status');
+    Route::get('/sppd/{sppd}/sign/{signature}/download', [SppdDigitalSignatureController::class, 'download'])->name('sppd.sign.download');
 
-  Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');
-  Route::get('/sppd/{sppd}/stream/sppd', [SppdController::class, 'streamSppd'])->name('sppd.stream.sppd');
-  Route::get('/sppd/{sppd}/stream/kuitansi-rampung', [SppdController::class, 'streamKuitansiRampung'])->name('sppd.stream.kuitansi-rampung');
-  Route::get('/sppd/{sppd}/stream/kuitansi-panjar', [SppdController::class, 'streamKuitansiPanjar'])->name('sppd.stream.kuitansi-panjar');
-  Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
-  Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
+    Route::get('/sppd/{sppd}/stream/spt', [SppdController::class, 'streamSpt'])->name('sppd.stream.spt');
+    Route::get('/sppd/{sppd}/stream/sppd', [SppdController::class, 'streamSppd'])->name('sppd.stream.sppd');
+    Route::get('/sppd/{sppd}/stream/kuitansi-rampung', [SppdController::class, 'streamKuitansiRampung'])->name('sppd.stream.kuitansi-rampung');
+    Route::get('/sppd/{sppd}/stream/kuitansi-panjar', [SppdController::class, 'streamKuitansiPanjar'])->name('sppd.stream.kuitansi-panjar');
+    Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
+    Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
 
-  // Workflows Preview
-  Route::get('/workflows/preview', [SppdWorkflowController::class, 'preview'])->name('workflows.preview');
+    // Workflows Preview
+    Route::get('/workflows/preview', [SppdWorkflowController::class, 'preview'])->name('workflows.preview');
 
-  // Master Data
-  Route::prefix('master')->name('master.')->group(function () {
-    // Users / Pegawai
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
-    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::patch('/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('users.toggle');
-    Route::post('/users/test-wa', [UserController::class, 'testWhatsApp'])->name('users.test-wa');
+    // Master Data
+    Route::prefix('master')->name('master.')->group(function () {
+        // Users / Pegawai
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::patch('/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('users.toggle');
+        Route::post('/users/test-wa', [UserController::class, 'testWhatsApp'])->name('users.test-wa');
 
-    // Departments / Instansi / OPD
-    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
-    Route::get('/departments/create', [DepartmentController::class, 'create'])->name('departments.create');
-    Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
-    Route::get('/departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
-    Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
-    Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
-    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+        // Departments / Instansi / OPD
+        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+        Route::get('/departments/create', [DepartmentController::class, 'create'])->name('departments.create');
+        Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+        Route::get('/departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
+        Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
+        Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+        Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
 
-    // Budgets / Anggaran
-    Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
-    Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
-    Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
-    Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
-    Route::get('/budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.edit');
-    Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
-    Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+        // Budgets / Anggaran
+        Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+        Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
+        Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+        Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
+        Route::get('/budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.edit');
+        Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+        Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
 
-    // Workflows SPPD
-    Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
-  });
+        // Workflows SPPD
+        Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
+    });
 
-  // API
-  Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');
-  Route::get('/api/sppd/workflow-preview', [SppdController::class, 'previewWorkflow'])->name('api.sppd.workflow-preview');
+    // API
+    Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');
+    Route::get('/api/sppd/workflow-preview', [SppdController::class, 'previewWorkflow'])->name('api.sppd.workflow-preview');
 
-  // System Health Check — hanya super_admin
-  Route::get('/system/health', function () {
-    abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
+    // System Health Check — hanya super_admin
+    Route::get('/system/health', function () {
+        // abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
 
-    $pendingJobs  = \DB::table('jobs')->count();
-    $failedJobs   = \DB::table('failed_jobs')->count();
-    $recentFailed = \DB::table('failed_jobs')->latest('failed_at')->limit(10)->get();
+        $pendingJobs = DB::table('jobs')->count();
+        $failedJobs = DB::table('failed_jobs')->count();
+        $recentFailed = DB::table('failed_jobs')->latest('failed_at')->limit(10)->get();
 
-    // pending=0 berarti worker aktif memproses (meski job bisa gagal)
-    $workerLikelyRunning = true; // jika pending_jobs tidak menumpuk, worker berjalan
+        // pending=0 berarti worker aktif memproses (meski job bisa gagal)
+        $workerLikelyRunning = true; // jika pending_jobs tidak menumpuk, worker berjalan
 
-    return response()->json([
-      'status'              => $failedJobs === 0 ? 'ok' : 'has_failures',
-      'queue_worker_note'   => 'Jika pending_jobs tidak menumpuk, worker sedang berjalan.',
-      'pending_jobs'        => $pendingJobs,
-      'failed_jobs'         => $failedJobs,
-      'failed_job_details'  => $recentFailed->map(fn($j) => [
-        'id'        => $j->id,
-        'queue'     => $j->queue,
-        'failed_at' => $j->failed_at,
-        'payload'   => json_decode($j->payload, true)['displayName'] ?? '(unknown)',
-        'exception' => $j->exception,  // full exception untuk debug
-      ]),
-      'checked_at'          => now()->toDateTimeString(),
-    ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-  })->name('system.health');
+        return response()->json([
+            'status' => $failedJobs === 0 ? 'ok' : 'has_failures',
+            'queue_worker_note' => 'Jika pending_jobs tidak menumpuk, worker sedang berjalan.',
+            'pending_jobs' => $pendingJobs,
+            'failed_jobs' => $failedJobs,
+            'failed_job_details' => $recentFailed->map(fn ($j) => [
+                'id' => $j->id,
+                'queue' => $j->queue,
+                'failed_at' => $j->failed_at,
+                'payload' => json_decode($j->payload, true)['displayName'] ?? '(unknown)',
+                'exception' => $j->exception,  // full exception untuk debug
+            ]),
+            'checked_at' => now()->toDateTimeString(),
+        ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    })->name('system.health');
 });

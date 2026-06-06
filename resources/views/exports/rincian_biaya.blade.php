@@ -202,7 +202,7 @@
 			</td>
 			<td style="width: 45%; line-height: 1.7;">
 				<p>
-					Kendari, {{ now()->translatedFormat('d F Y') }}<br />
+					Kendari, {{ $pdfData['date'] }}<br />
 					Telah Menerima Jumlah Uang Sebesar,<br />
 					Rp. {{ number_format($grandTotal, 0, ',', '.') }}<br />
 					Yang Menerima

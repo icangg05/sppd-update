@@ -235,7 +235,7 @@
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Mengirim...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Mengantri...';
     resultEl.classList.add('hidden');
 
     fetch('{{ route('master.users.test-wa') }}', {
@@ -250,7 +250,7 @@
     .then(function (r) { return r.json().then(function (data) { return { status: r.status, data }; }); })
     .then(function ({ status, data }) {
       if (data.success) {
-        resultEl.textContent = '✅ ' + data.message;
+        resultEl.textContent = '📤 ' + data.message;
         resultEl.className = 'mt-1 text-xs font-medium text-green-600';
         startCooldown(COOLDOWN_SECONDS);
       } else if (status === 429) {

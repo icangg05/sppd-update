@@ -351,80 +351,71 @@
 	</form>
 
 	{{-- MODAL KONFIRMASI --}}
-	<div id="modal-confirm" x-show="showConfirm"
-		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-2xs transition-opacity duration-200 leading-tight"
-		style="display: none;" x-transition>
-		<div class="w-full max-w-lg transform rounded border border-slate-200 bg-white p-5 shadow-xl transition-all">
-			<div class="flex items-center gap-2 border-b border-slate-100 pb-3 text-slate-800">
-				<i class="fa-solid fa-circle-question text-cyan-600 text-base"></i>
-				<h3 class="text-base font-bold">Konfirmasi Pengajuan</h3>
-			</div>
-
-			<div class="py-4 space-y-3.5 text-sm text-slate-600">
-				<div>
-					<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Pegawai Pelaksana:</span>
-					<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
-						<i class="fa-solid fa-user text-cyan-600 mr-1.5"></i> {{ $pelaksana->name }}
-					</p>
-				</div>
-				<div>
-					<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Pengikut Dinas:</span>
-					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 max-h-64 overflow-y-auto">
-						@if ($isInspektorat)
-							@forelse ($followers as $fId)
-								@php $folUser = $users->firstWhere('id', $fId); @endphp
-								@if ($folUser)
-									<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
-										<span class="text-xs font-semibold text-slate-700 truncate">
-											<i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i>{{ $folUser->name }}
-										</span>
-										<select wire:model="follower_positions.{{ $fId }}"
-											class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-cyan-500 focus:outline-none shrink-0"
-											required>
-											<option value="">— Pilih Jabatan —</option>
-											<option value="Penanggung Jawab">Penanggung Jawab</option>
-											<option value="Pembantu Penanggung Jawab">Pembantu Penanggung Jawab</option>
-											<option value="Pengendali Teknis">Pengendali Teknis</option>
-											<option value="Ketua Tim">Ketua Tim</option>
-											<option value="Anggota">Anggota</option>
-											<option value="Admin Tim">Admin Tim</option>
-										</select>
-									</div>
-									@error('follower_positions.' . $fId)
-										<span class="text-xs text-rose-600 px-3 pb-1 block">{{ $message }}</span>
-									@enderror
-								@endif
-							@empty
-								<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
-							@endforelse
-						@else
-							@forelse ($followers as $fId)
-								@php $folUser = $users->firstWhere('id', $fId); @endphp
-								@if ($folUser)
-									<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i> {{ $folUser->name }}</div>
-								@endif
-							@empty
-								<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
-							@endforelse
-						@endif
-					</div>
-				</div>
-				<p class="text-xs text-slate-400 mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">
-					<i class="fa-solid fa-circle-info mr-0.5"></i> Pastikan perihal, tanggal perjalanan, dan rekening anggaran sudah benar sebelum mengajukan dokumen ke alur verifikasi.
+	<x-ui.modal show="showConfirm" title="Konfirmasi Pengajuan" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-lg">
+		<div class="py-4 space-y-3.5 text-sm text-slate-600">
+			<div>
+				<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Pegawai Pelaksana:</span>
+				<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
+					<i class="fa-solid fa-user text-cyan-600 mr-1.5"></i> {{ $pelaksana->name }}
 				</p>
 			</div>
-
-			<div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-				<button type="button" wire:click="closeConfirmModal"
-					class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-					Periksa Kembali
-				</button>
-				<button type="button" wire:click="submit"
-					class="rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700">
-					Ya, Ajukan Sekarang
-				</button>
+			<div>
+				<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Pengikut Dinas:</span>
+				<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 max-h-64 overflow-y-auto">
+					@if ($isInspektorat)
+						@forelse ($followers as $fId)
+							@php $folUser = $users->firstWhere('id', $fId); @endphp
+							@if ($folUser)
+								<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
+									<span class="text-xs font-semibold text-slate-700 truncate">
+										<i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i>{{ $folUser->name }}
+									</span>
+									<select wire:model="follower_positions.{{ $fId }}"
+										class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-cyan-500 focus:outline-none shrink-0"
+										required>
+										<option value="">— Pilih Jabatan —</option>
+										<option value="Penanggung Jawab">Penanggung Jawab</option>
+										<option value="Pembantu Penanggung Jawab">Pembantu Penanggung Jawab</option>
+										<option value="Pengendali Teknis">Pengendali Teknis</option>
+										<option value="Ketua Tim">Ketua Tim</option>
+										<option value="Anggota">Anggota</option>
+										<option value="Admin Tim">Admin Tim</option>
+									</select>
+								</div>
+								@error('follower_positions.' . $fId)
+									<span class="text-xs text-rose-600 px-3 pb-1 block">{{ $message }}</span>
+								@enderror
+							@endif
+						@empty
+							<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
+						@endforelse
+					@else
+						@forelse ($followers as $fId)
+							@php $folUser = $users->firstWhere('id', $fId); @endphp
+							@if ($folUser)
+								<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i> {{ $folUser->name }}</div>
+							@endif
+						@empty
+							<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
+						@endforelse
+					@endif
+				</div>
 			</div>
+			<p class="text-xs text-slate-400 mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">
+				<i class="fa-solid fa-circle-info mr-0.5"></i> Pastikan perihal, tanggal perjalanan, dan rekening anggaran sudah benar sebelum mengajukan dokumen ke alur verifikasi.
+			</p>
 		</div>
-	</div>
+
+		<div class="flex justify-end gap-2 border-t border-slate-100 pt-3 mt-2">
+			<button type="button" wire:click="closeConfirmModal"
+				class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+				Periksa Kembali
+			</button>
+			<button type="button" wire:click="submit"
+				class="rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700">
+				Ya, Ajukan Sekarang
+			</button>
+		</div>
+	</x-ui.modal>
 
 </div>
