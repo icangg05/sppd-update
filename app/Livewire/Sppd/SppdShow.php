@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Bus;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use Throwable;
 
 #[Layout('layouts.app')]
@@ -28,9 +29,14 @@ class SppdShow extends Component
   public string $revisionNotes = '';
 
   public bool $showDocumentModal = false;
+  public bool $showApproveModal  = false;
   public bool $showRejectModal   = false;
   public bool $showRevisionModal = false;
   public bool $showPassphrase    = false;
+  public bool $wasTteProcessing  = false;
+
+  #[Url]
+  public string $from = '';
 
   public function mount(SppdRequest $sppd): void
   {
@@ -68,6 +74,7 @@ class SppdShow extends Component
       ->first();
 
     if (! $approval) {
+      $this->showApproveModal = false;
       session()->flash('error', 'Anda tidak memiliki hak untuk menyetujui SPPD ini.');
       return;
     }
@@ -78,6 +85,7 @@ class SppdShow extends Component
       ->exists();
 
     if ($hasUnapprovedPreviousSteps) {
+      $this->showApproveModal = false;
       session()->flash('error', 'Anda belum dapat menyetujui dokumen ini karena langkah persetujuan sebelumnya belum selesai.');
       return;
     }
@@ -85,16 +93,19 @@ class SppdShow extends Component
     $needsTte = $this->resolveNeedsTte($sppd, $approval);
 
     if ($needsTte && ! Auth::user()?->nik) {
+      $this->showApproveModal = false;
       session()->flash('error', 'NIK penandatangan belum tersedia. Silakan lengkapi profil Anda terlebih dahulu.');
       return;
     }
 
     if ($needsTte && empty($this->passphrase)) {
+      $this->showApproveModal = false;
       $this->addError('passphrase', 'Passphrase wajib diisi untuk persetujuan dengan TTE.');
       return;
     }
 
     if ($needsTte && strlen($this->passphrase) < 4) {
+      $this->showApproveModal = false;
       $this->addError('passphrase', 'Passphrase minimal 4 karakter.');
       return;
     }
@@ -127,8 +138,10 @@ class SppdShow extends Component
       }
     }
 
-    $this->approveNotes = '';
-    $this->passphrase   = '';
+    $this->approveNotes      = '';
+    $this->passphrase        = '';
+    $this->showApproveModal  = false;
+    $this->refreshApprovalBadge();
     session()->flash('success', 'SPPD berhasil disetujui.');
   }
 
@@ -159,6 +172,7 @@ class SppdShow extends Component
 
     $this->rejectNotes     = '';
     $this->showRejectModal = false;
+    $this->refreshApprovalBadge();
     session()->flash('success', 'SPPD berhasil ditolak.');
   }
 
@@ -283,8 +297,10 @@ class SppdShow extends Component
           $this->notifyApprover($sppd, $nextApproval);
         }
       }
-      $this->passphrase   = '';
-      $this->approveNotes = '';
+      $this->passphrase       = '';
+      $this->approveNotes     = '';
+      $this->showApproveModal = false;
+      $this->refreshApprovalBadge();
       session()->flash('success', 'Seluruh dokumen telah berhasil ditandatangani.');
       return;
     }
@@ -303,9 +319,15 @@ class SppdShow extends Component
       })
       ->dispatch();
 
-    $this->passphrase   = '';
-    $this->approveNotes = '';
+    $this->passphrase       = '';
+    $this->approveNotes     = '';
+    $this->showApproveModal = false;
     session()->flash('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
+  }
+
+  protected function refreshApprovalBadge(): void
+  {
+    $this->dispatch('approval-updated');
   }
 
   protected function defaultSignatureCoordinates(SignatureDocumentType $type): array
@@ -568,6 +590,12 @@ class SppdShow extends Component
       ->contains(fn($sig) => $sig->status === SignatureStatus::PROCESSING);
     $hasFailedSignatures = $mySignatures
       ->contains(fn($sig) => $sig->status === SignatureStatus::REJECTED);
+
+    if ($this->wasTteProcessing && ! $isProcessing) {
+      $this->refreshApprovalBadge();
+    }
+
+    $this->wasTteProcessing = $isProcessing;
 
     return view('livewire.sppd.show', compact('sppd', 'needsTte', 'isProcessing', 'hasFailedSignatures'))
       ->title('Detail SPPD');

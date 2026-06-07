@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-6 p-1"
-	x-data="{ showDocModal: @entangle('showDocumentModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal'), showPassphrase: false }"
+	x-data="{ showDocModal: @entangle('showDocumentModal'), showApproveModal: @entangle('showApproveModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal'), showPassphrase: false }"
 	@if ($isProcessing) wire:poll.5s @endif>
 
 	{{-- Header Halaman & Aksi --}}
@@ -51,7 +51,7 @@
 			</span>
 
 			{{-- Tombol Kembali --}}
-			<a href="{{ route('sppd.index') }}" wire:navigate
+			<a href="{{ $from === 'approval' ? route('sppd.index', ['filter' => 'approval']) : route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate
 				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 				<i class="fa-solid fa-arrow-left text-slate-400"></i> Kembali
 			</a>
@@ -458,7 +458,7 @@
 										<i class="fa-solid fa-lock"></i> Setujui Dokumen (NIK Belum Ada)
 									</button>
 								@else
-									<button type="button" wire:click="approve" wire:loading.attr="disabled"
+									<button type="button" @click="showApproveModal = true"
 										class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
 										<i class="fa-solid fa-check-double"></i> Setujui Dokumen
 									</button>
@@ -616,6 +616,31 @@
 			<button type="button" @click="showDocModal = false"
 				class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
 				Tutup
+			</button>
+		</x-slot:footer>
+	</x-ui.modal>
+
+	{{-- Modal Konfirmasi Setujui --}}
+	<x-ui.modal show="showApproveModal" title="Konfirmasi Persetujuan"
+		description="Pastikan data dokumen sudah benar sebelum menyetujui" icon="fa-solid fa-check-double text-emerald-600">
+		<p class="text-sm text-slate-600 leading-relaxed">
+			Apakah Anda yakin ingin menyetujui dokumen SPPD ini?
+			@if ($needsTte && auth()->user()->nik)
+				<span class="block mt-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+					<i class="fa-solid fa-file-signature mr-1"></i>
+					Proses tanda tangan elektronik (TTE) akan dijalankan setelah konfirmasi.
+				</span>
+			@endif
+		</p>
+
+		<x-slot:footer class="flex gap-2">
+			<button type="button" @click="showApproveModal = false"
+				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				Batal
+			</button>
+			<button type="button" wire:click="approve" wire:loading.attr="disabled"
+				class="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-emerald-700 shadow-sm">
+				Ya, Setujui
 			</button>
 		</x-slot:footer>
 	</x-ui.modal>

@@ -46,7 +46,7 @@
 			</button>
 
 			<div id="sppd-menu" x-show="open" x-collapse class="space-y-1 py-1 pl-8 pr-1">
-				<a href="{{ route('sppd.index') }}" wire:navigate
+				<a href="{{ route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate
 					class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.*') && !request()->routeIs('sppd.calendar') && request('filter') !== 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 					<span class="size-1 rounded-sm bg-current"></span>
 					Daftar SPPD
@@ -57,11 +57,7 @@
 						class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 						<span class="size-1 rounded-sm bg-current"></span>
 						<span class="flex-1">Persetujuan</span>
-						@if($pendingApprovalCount > 0)
-							<span class="inline-flex items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white min-w-[18px]">
-								{{ $pendingApprovalCount > 99 ? '99+' : $pendingApprovalCount }}
-							</span>
-						@endif
+						<livewire:pending-approval-badge />
 					</a>
 				@endcan
 

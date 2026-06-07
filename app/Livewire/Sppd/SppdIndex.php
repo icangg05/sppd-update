@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Sppd;
 
-use App\Enums\ApprovalStatus;
 use App\Enums\DepartmentType;
 use App\Enums\EmployeeType;
 use App\Enums\SppdDomain;
@@ -35,63 +34,91 @@ class SppdIndex extends Component
     #[Url(keep: true)]
     public string $filter = '';
 
-    /**
-     * Roles that should default to eselon_iii view and only see the eselon III/IV/Staf filter.
-     */
-    private const ESELON_LOWER_ROLES = [
-        'staf',
-        'admin_opd',
-        'kasubid_kasubag',
-        'kabid_irban_kabag',
-        'sekretaris_opd',
-    ];
+    private const SESSION_KEY = 'sppd.index.filters';
+
+    public static function jabatanLabels(): array
+    {
+        return [
+            ''            => 'Semua Jabatan',
+            'kepala_opd'  => 'Kepala OPD',
+            'eselon_staf' => 'Eselon III, IV & Staf',
+            'anggota_dprd' => 'Anggota DPRD',
+            'staff_dprd'  => 'Staff DPRD',
+            'sekwan'      => 'Sekwan',
+        ];
+    }
+
+    public static function savedFilters(): array
+    {
+        return session(self::SESSION_KEY, []);
+    }
+
+    public function isApprovalMode(): bool
+    {
+        return $this->filter === 'approval';
+    }
 
     public function mount(): void
     {
-        if (empty($this->jabatan)) {
-            $user = Auth::user();
-            $isDprd = $user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd';
-            $isSuperAdmin = $user->hasRole('super_admin');
+        if ($this->isApprovalMode()) {
+            return;
+        }
 
-            if ($isSuperAdmin || $isDprd) {
-                $this->jabatan = 'anggota_dprd';
-            } else {
-                $this->jabatan = 'kepala_opd';
-            }
+        $saved = self::savedFilters();
+
+        if ($this->jabatan === '' && ! empty($saved['jabatan'])) {
+            $this->jabatan = $saved['jabatan'];
+        }
+
+        if ($this->status === '' && ! empty($saved['status'])) {
+            $this->status = $saved['status'];
+        }
+
+        if ($this->domain === '' && ! empty($saved['domain'])) {
+            $this->domain = $saved['domain'];
+        }
+
+        if ($this->search === '' && ! empty($saved['search'])) {
+            $this->search = $saved['search'];
         }
     }
 
-    /** Whether the current user is restricted to eselon III/IV/Staf view only. */
-    public function isLowerEselonUser(): bool
+    public function activeFilterLabel(): string
     {
-        $user = Auth::user();
+        return self::jabatanLabels()[$this->jabatan] ?? 'Semua Jabatan';
+    }
 
-        return ! $user->hasRole('super_admin')
-            && ! ($user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd')
-            && $user->hasAnyRole(self::ESELON_LOWER_ROLES);
+    protected function persistFilters(): void
+    {
+        if ($this->isApprovalMode()) {
+            return;
+        }
+
+        session([self::SESSION_KEY => [
+            'jabatan' => $this->jabatan,
+            'status'  => $this->status,
+            'domain'  => $this->domain,
+            'search'  => $this->search,
+        ]]);
     }
 
     public function filterByJabatan(string $value): void
     {
         $this->jabatan = $value;
+        $this->persistFilters();
         $this->resetPage();
     }
 
     public function resetFilters(): void
     {
         $this->search = '';
-        $this->status = '';
-        $this->domain = '';
-        $this->filter = '';
 
-        $user = Auth::user();
-        $isDprd = $user->department?->type?->value === 'dprd' || $user->department?->parent?->type?->value === 'dprd';
-        $isSuperAdmin = $user->hasRole('super_admin');
-
-        if ($isSuperAdmin || $isDprd) {
-            $this->jabatan = 'anggota_dprd';
-        } else {
-            $this->jabatan = 'kepala_opd';
+        if (! $this->isApprovalMode()) {
+            $this->status = '';
+            $this->domain = '';
+            $this->jabatan = '';
+            $this->filter = '';
+            session()->forget(self::SESSION_KEY);
         }
 
         $this->resetPage();
@@ -99,16 +126,19 @@ class SppdIndex extends Component
 
     public function updatedSearch(): void
     {
+        $this->persistFilters();
         $this->resetPage();
     }
 
     public function updatedStatus(): void
     {
+        $this->persistFilters();
         $this->resetPage();
     }
 
     public function updatedDomain(): void
     {
+        $this->persistFilters();
         $this->resetPage();
     }
 
@@ -127,75 +157,55 @@ class SppdIndex extends Component
     public function render()
     {
         $query = SppdRequest::with(['user.department', 'category', 'budget.department']);
+        $isApprovalMode = $this->isApprovalMode();
 
-        // Filter by department hierarchy
-        if (! Auth::user()->hasRole('super_admin')) {
-            $dept = Auth::user()->department;
-            if ($dept) {
-                $allowedIds = $dept->getAllRelatedIds();
-                $query->whereHas('user', function ($q) use ($allowedIds) {
-                    $q->whereIn('department_id', $allowedIds);
-                });
-            } else {
-                $query->whereHas('user', function ($q) {
-                    $q->where('department_id', Auth::user()->department_id);
+        if ($isApprovalMode) {
+            $pendingSppdIds = SppdApproval::readyForApprover(Auth::id())
+                ->pluck('sppd_request_id');
+            $query->whereIn('id', $pendingSppdIds);
+        } else {
+            if ($this->status !== '') {
+                $query->where('status', $this->status);
+            }
+
+            if ($this->domain !== '') {
+                $query->where('domain', $this->domain);
+            }
+
+            if ($this->jabatan !== '') {
+                $jabatan = $this->jabatan;
+                $query->whereHas('user', function ($q) use ($jabatan) {
+                    if ($jabatan === 'kepala_opd') {
+                        $q->role('kepala_opd');
+                    } elseif ($jabatan === 'eselon_ii') {
+                        $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);
+                    } elseif ($jabatan === 'eselon_staf') {
+                        $q->role(['staf', 'admin_opd', 'sekretaris_opd', 'kasubid_kasubag', 'kabid_irban_kabag']);
+                    } elseif ($jabatan === 'eselon_iv') {
+                        $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
+                    } elseif ($jabatan === 'staf') {
+                        $q->role('staf');
+                    } elseif ($jabatan === 'anggota_dprd') {
+                        $q->where(function ($sub) {
+                            $sub->role(['anggota_dprd', 'pimpinan_dprd'])
+                                ->orWhere('employee_type', EmployeeType::DPRD);
+                        });
+                    } elseif ($jabatan === 'staff_dprd') {
+                        $q->role('staf')->whereHas('department', function ($d) {
+                            $d->where(function ($sub) {
+                                $sub->where('type', DepartmentType::DPRD)
+                                    ->orWhereHas('parent', function ($p) {
+                                        $p->where('type', DepartmentType::DPRD);
+                                    });
+                            });
+                        });
+                    } elseif ($jabatan === 'sekwan') {
+                        $q->role('sekwan');
+                    }
                 });
             }
         }
 
-        // Filter by status
-        if ($this->status !== '') {
-            $query->where('status', $this->status);
-        }
-
-        // Filter by domain
-        if ($this->domain !== '') {
-            $query->where('domain', $this->domain);
-        }
-
-        // Filter: show only pending approvals for current user
-        if ($this->filter === 'approval') {
-            $pendingSppdIds = SppdApproval::where('approver_id', Auth::id())
-                ->where('status', ApprovalStatus::PENDING)
-                ->pluck('sppd_request_id');
-            $query->whereIn('id', $pendingSppdIds);
-        }
-
-        // Filter by Jabatan/Eselon
-        if ($this->jabatan !== '') {
-            $jabatan = $this->jabatan;
-            $query->whereHas('user', function ($q) use ($jabatan) {
-                if ($jabatan === 'kepala_opd') {
-                    $q->role('kepala_opd');
-                } elseif ($jabatan === 'eselon_ii') {
-                    $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);
-                } elseif ($jabatan === 'eselon_iii') {
-                    $q->role(['sekretaris_opd', 'kabid_irban_kabag', 'camat']);
-                } elseif ($jabatan === 'eselon_iv') {
-                    $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
-                } elseif ($jabatan === 'staf') {
-                    $q->role('staf');
-                } elseif ($jabatan === 'anggota_dprd') {
-                    $q->where(function ($sub) {
-                        $sub->role(['anggota_dprd', 'pimpinan_dprd'])
-                            ->orWhere('employee_type', EmployeeType::DPRD);
-                    });
-                } elseif ($jabatan === 'staff_dprd') {
-                    $q->role('staf')->whereHas('department', function ($d) {
-                        $d->where(function ($sub) {
-                            $sub->where('type', DepartmentType::DPRD)
-                                ->orWhereHas('parent', function ($p) {
-                                    $p->where('type', DepartmentType::DPRD);
-                                });
-                        });
-                    });
-                } elseif ($jabatan === 'sekwan') {
-                    $q->role('sekwan');
-                }
-            });
-        }
-
-        // Search
         if ($this->search !== '') {
             $search = $this->search;
             $query->where(function ($q) use ($search) {
@@ -208,9 +218,11 @@ class SppdIndex extends Component
         $sppds = $query->latest()->paginate(15);
         $statuses = SppdStatus::cases();
         $domains = SppdDomain::cases();
-        $isLowerEselonUser = $this->isLowerEselonUser();
+        $title = $isApprovalMode ? 'Persetujuan' : 'Daftar SPPD';
 
-        return view('livewire.sppd.index', compact('sppds', 'statuses', 'domains', 'isLowerEselonUser'))
-            ->title('Daftar SPPD');
+        $activeFilterLabel = $this->activeFilterLabel();
+
+        return view('livewire.sppd.index', compact('sppds', 'statuses', 'domains', 'isApprovalMode', 'activeFilterLabel'))
+            ->title($title);
     }
 }

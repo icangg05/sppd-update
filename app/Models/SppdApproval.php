@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApprovalStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -39,6 +40,22 @@ class SppdApproval extends Model
   public function approver(): BelongsTo
   {
     return $this->belongsTo(User::class, 'approver_id');
+  }
+
+  /**
+   * Pending approvals where it is the approver's turn (all prior steps approved).
+   */
+  public function scopeReadyForApprover(Builder $query, int $approverId): Builder
+  {
+    return $query
+      ->where('approver_id', $approverId)
+      ->where('status', ApprovalStatus::PENDING)
+      ->whereNotExists(function ($sub) {
+        $sub->from('sppd_approvals as prev')
+          ->whereColumn('prev.sppd_request_id', 'sppd_approvals.sppd_request_id')
+          ->whereColumn('prev.step_order', '<', 'sppd_approvals.step_order')
+          ->where('prev.status', '!=', ApprovalStatus::APPROVED->value);
+      });
   }
 
   /**

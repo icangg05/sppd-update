@@ -121,7 +121,15 @@
 								<i class="fa-solid fa-circle-exclamation shrink-0 mt-0.5"></i>
 								<div>
 									<span class="font-bold">Peringatan Validasi:</span>
-									<span>{{ $errorMessage }}</span>
+									<span>
+										@if ($errorMessageName !== '')
+											Pegawai <strong class="font-bold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
+										@elseif ($errorMessageRole !== '')
+											{{ $errorMessage }} (Role Pelaksana: <strong class="font-bold">{{ $errorMessageRole }}</strong>).
+										@else
+											{{ $errorMessage }}
+										@endif
+									</span>
 								</div>
 							</div>
 						</div>

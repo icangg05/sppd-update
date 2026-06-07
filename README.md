@@ -4,4 +4,3 @@ curl -s http://openwa-api:2785/api/sessions -H "X-API-Key: dev-admin-key"
 Cannot validate since a PHP installation could not be found. Use the setting 'php.validate.executablePath' to configure the PHP executable.
 
 ===================================================
-modfi halaman persetujuan, hilangkan filter status, hilangkan tombol filter kepala opd dan lain lain. tampilkan seluruh sppd yang pending untuk berdasarkan approver  yang login

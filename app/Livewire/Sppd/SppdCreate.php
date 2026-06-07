@@ -20,6 +20,8 @@ class SppdCreate extends Component
   public bool $hasHeader = false;
   public bool $isComplete = false;
   public string $errorMessage = '';
+  public string $errorMessageName = '';
+  public string $errorMessageRole = '';
   public array $userInfo = [];
 
   public function mount(): void
@@ -40,6 +42,8 @@ class SppdCreate extends Component
   public function checkWorkflow(): void
   {
     $this->errorMessage = '';
+    $this->errorMessageName = '';
+    $this->errorMessageRole = '';
     $this->steps = [];
     $this->isComplete = false;
 
@@ -70,7 +74,8 @@ class SppdCreate extends Component
       ->exists();
 
     if ($hasActiveTravel) {
-      $this->errorMessage = 'Pegawai ' . $user->name . ' masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan).';
+      $this->errorMessageName = $user->name;
+      $this->errorMessage = 'masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan).';
       return;
     }
 
@@ -79,7 +84,8 @@ class SppdCreate extends Component
     $this->steps = $workflowService->simulateApprovals($user, $this->domain);
 
     if (empty($this->steps)) {
-      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Role Pelaksana: ' . $this->userInfo['role_label'] . ').';
+      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin)';
+      $this->errorMessageRole = $this->userInfo['role_label'];
       return;
     }
 

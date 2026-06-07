@@ -92,8 +92,8 @@ class SppdController extends Controller
                     $q->role('kepala_opd');
                 } elseif ($jabatan === 'eselon_ii') {
                     $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);
-                } elseif ($jabatan === 'eselon_iii') {
-                    $q->role(['sekretaris_opd', 'kabid_irban_kabag', 'camat']);
+                } elseif ($jabatan === 'eselon_staf') {
+                    $q->role(['staf', 'admin_opd', 'sekretaris_opd', 'kasubid_kasubag', 'kabid_irban_kabag']);
                 } elseif ($jabatan === 'eselon_iv') {
                     $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
                 } elseif ($jabatan === 'staf') {

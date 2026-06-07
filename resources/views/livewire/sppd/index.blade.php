@@ -3,55 +3,71 @@
 	{{-- Header Halaman --}}
 	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 		<div class="leading-tight">
-			<h1 class="text-lg font-bold text-slate-800">Daftar SPPD</h1>
-			<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
+			@if ($isApprovalMode)
+				<h1 class="text-lg font-bold text-slate-800">Persetujuan</h1>
+				<p class="text-xs text-slate-500 mt-0.5">Daftar SPPD yang menunggu persetujuan Anda</p>
+			@else
+				<h1 class="text-lg font-bold text-slate-800 flex flex-wrap items-center gap-2">
+					<span>Daftar SPPD</span>
+					<span class="text-slate-300 font-normal">|</span>
+					<span class="text-cyan-600 underline">{{ $activeFilterLabel }}</span>
+				</h1>
+				<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
+			@endif
 		</div>
-		<div class="flex flex-col gap-2 md:flex-row md:items-center">
-			@php
-				$isDprd =
-				    auth()->user()->department?->type?->value === 'dprd' ||
-				    auth()->user()->department?->parent?->type?->value === 'dprd';
-				$isSuperAdmin = auth()->user()->hasRole('super_admin');
-			@endphp
+		@if (!$isApprovalMode)
+			<div class="flex flex-col gap-2 md:flex-row md:items-center">
+				@php
+					$isDprd =
+					    auth()->user()->department?->type?->value === 'dprd' ||
+					    auth()->user()->department?->parent?->type?->value === 'dprd';
+					$isSuperAdmin = auth()->user()->hasRole('super_admin');
+				@endphp
 
-			<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-				@if ($isSuperAdmin || $isDprd)
-					<button wire:click="filterByJabatan('anggota_dprd')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'anggota_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Anggota DPRD
+				<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+					<button wire:click="filterByJabatan('')"
+						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+						Semua Jabatan
 					</button>
-					<button wire:click="filterByJabatan('staff_dprd')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'staff_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Staff DPRD
-					</button>
-					<button wire:click="filterByJabatan('sekwan')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'sekwan' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Sekwan
-					</button>
-				@endif
 
-				@if ($isSuperAdmin || !$isDprd)
-					<button wire:click="filterByJabatan('kepala_opd')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'kepala_opd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Kepala OPD
-					</button>
-					<button wire:click="filterByJabatan('eselon_iii')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'eselon_iii' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Eselon III, IV & Staf
-					</button>
-				@endif
+					@if ($isSuperAdmin || $isDprd)
+						<button wire:click="filterByJabatan('anggota_dprd')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'anggota_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Anggota DPRD
+						</button>
+						<button wire:click="filterByJabatan('staff_dprd')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'staff_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Staff DPRD
+						</button>
+						<button wire:click="filterByJabatan('sekwan')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'sekwan' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Sekwan
+						</button>
+					@endif
+
+					@if ($isSuperAdmin || !$isDprd)
+						<button wire:click="filterByJabatan('kepala_opd')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'kepala_opd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Kepala OPD
+						</button>
+						<button wire:click="filterByJabatan('eselon_staf')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'eselon_staf' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Eselon III, IV & Staf
+						</button>
+					@endif
+				</div>
+
+				@can('sppd.create')
+					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
+						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
+						<x-slot name="icon">
+							<i class="fa-solid fa-plus text-xs"></i>
+						</x-slot>
+						Buat SPPD
+					</x-ui.button>
+				@endcan
 			</div>
-
-			@can('sppd.create')
-				<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
-					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
-					<x-slot name="icon">
-						<i class="fa-solid fa-plus text-xs"></i>
-					</x-slot>
-					Buat SPPD
-				</x-ui.button>
-			@endcan
-		</div>
+		@endif
 	</div>
 
 	{{-- Bar Filter --}}
@@ -64,27 +80,29 @@
 					placeholder="Cari pelaksana, maksud, atau nomor surat..."
 					wrapperClass="w-full" />
 			</div>
-			<div class="w-full sm:w-44">
-				<select name="status" wire:model.live="status"
-					class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-					<option value="">Semua Status</option>
-					@foreach ($statuses as $st)
-						<option value="{{ $st->value }}">{{ $st->label() }}</option>
-					@endforeach
-				</select>
-			</div>
-			<div class="w-full sm:w-44">
-				<select name="domain" wire:model.live="domain"
-					class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-					<option value="">Semua Domain</option>
-					@foreach ($domains as $dom)
-						<option value="{{ $dom->value }}">{{ $dom->label() }}</option>
-					@endforeach
-				</select>
-			</div>
+			@if (!$isApprovalMode)
+				<div class="w-full sm:w-44">
+					<select name="status" wire:model.live="status"
+						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
+						<option value="">Semua Status</option>
+						@foreach ($statuses as $st)
+							<option value="{{ $st->value }}">{{ $st->label() }}</option>
+						@endforeach
+					</select>
+				</div>
+				<div class="w-full sm:w-44">
+					<select name="domain" wire:model.live="domain"
+						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
+						<option value="">Semua Domain</option>
+						@foreach ($domains as $dom)
+							<option value="{{ $dom->value }}">{{ $dom->label() }}</option>
+						@endforeach
+					</select>
+				</div>
+			@endif
 
 			<div class="flex items-center gap-2 shrink-0">
-				@if ($search !== '' || $status !== '' || $domain !== '' || $filter !== '')
+				@if ($isApprovalMode ? $search !== '' : ($search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== ''))
 					<button type="button" wire:click="resetFilters"
 						class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 						<i class="fa-solid fa-rotate-left text-xs text-slate-400"></i>
@@ -207,7 +225,7 @@
 							<div class="flex items-center justify-end gap-1.5">
 
 								<a
-									href="{{ route('sppd.show', $sppd) }}" wire:navigate
+									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}" wire:navigate
 									class="inline-flex items-center rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50">
 									Detail
 								</a>
@@ -240,7 +258,9 @@
 						<td colspan="7" class="py-12 text-center text-slate-400">
 							<div class="flex flex-col items-center justify-center gap-2">
 								<i class="fa-solid fa-file-lines text-3xl text-slate-200"></i>
-								<p class="text-sm">Belum ada data SPPD.</p>
+								<p class="text-sm">
+									{{ $isApprovalMode ? 'Tidak ada SPPD yang menunggu persetujuan Anda.' : 'Belum ada data SPPD.' }}
+								</p>
 							</div>
 						</td>
 					</tr>
