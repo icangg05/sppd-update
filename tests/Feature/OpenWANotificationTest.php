@@ -126,4 +126,23 @@ class OpenWANotificationTest extends TestCase
                 $request['text'] === 'Job Message';
         });
     }
+
+    public function test_openwa_service_fallbacks_to_phone_field_when_chat_is_unavailable(): void
+    {
+        Http::fakeSequence()
+            ->push(Http::response(['status' => 'failed'], 500))
+            ->push(Http::response(['status' => 'success'], 200));
+
+        $service = app(OpenWAService::class);
+        $result = $service->send('081234567890', 'Retry Message');
+
+        $this->assertTrue($result);
+
+        Http::assertSentCount(2);
+
+        Http::assertSent(function ($request) {
+            return $request['chatId'] === '6281234567890@c.us' &&
+                $request['text'] === 'Retry Message';
+        });
+    }
 }

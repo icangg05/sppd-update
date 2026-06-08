@@ -16,5 +16,5 @@ return [
 
   'session_id' => env('OPENWA_SESSION_ID', '5626c952-f0ec-4105-9a66-dac48ed4c04a'),
 
-  'enabled' => env('OPENWA_ENABLED', true),
+  'enabled' => filter_var(env('OPENWA_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
 ];

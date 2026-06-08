@@ -36,43 +36,75 @@ class OpenWAService
             return false;
         }
 
-        if (str_contains($phone, '@')) {
-            $chatId = $phone;
-        } else {
-            $chatId = $this->normalizePhone($phone).'@c.us';
-        }
+        $normalizedPhone = $this->normalizePhone($phone);
+        $chatId = $this->buildChatId($phone, $normalizedPhone);
 
         try {
-            $response = Http::timeout(15)
-                ->retry(2, 1000)
-                ->withHeaders([
-                    'X-API-Key' => $key,
-                    'Content-Type' => 'application/json',
-                ])
-                ->post("{$url}/api/sessions/{$sessionId}/messages/send-text", [
-                    'chatId' => $chatId,
-                    'text' => $message,
-                ]);
+            $response = $this->postSendText($url, $key, $sessionId, [
+                'chatId' => $chatId,
+                'text' => $message,
+            ]);
 
-            if (! $response->successful()) {
-                Log::warning('OpenWAService: API returned non-2xx response.', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'chatId' => $chatId,
-                ]);
-
-                return false;
+            if ($response->successful()) {
+                return true;
             }
 
-            return true;
+            Log::warning('OpenWAService: API returned non-2xx response.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'chatId' => $chatId,
+                'phone' => $normalizedPhone,
+            ]);
+
+            $fallbackResponse = $this->postSendText($url, $key, $sessionId, [
+                'chatId' => $chatId,
+                'phone' => $normalizedPhone,
+                'text' => $message,
+            ]);
+
+            if ($fallbackResponse->successful()) {
+                return true;
+            }
+
+            Log::warning('OpenWAService: Fallback send-text with phone field failed.', [
+                'status' => $fallbackResponse->status(),
+                'body' => $fallbackResponse->body(),
+                'chatId' => $chatId,
+                'phone' => $normalizedPhone,
+            ]);
+
+            return false;
         } catch (\Throwable $e) {
             Log::error('OpenWAService: Exception saat mengirim pesan.', [
                 'error' => $e->getMessage(),
                 'chatId' => $chatId,
+                'phone' => $normalizedPhone,
             ]);
 
             return false;
         }
+    }
+
+    private function buildChatId(string $phone, string $normalizedPhone): string
+    {
+        if (! str_contains($phone, '@')) {
+            return $normalizedPhone.'@c.us';
+        }
+
+        [$raw, $suffix] = explode('@', $phone, 2);
+
+        return $this->normalizePhone($raw).'@'.$suffix;
+    }
+
+    private function postSendText(string $url, string $key, string $sessionId, array $payload)
+    {
+        return Http::timeout(15)
+            ->retry(2, 1000)
+            ->withHeaders([
+                'X-API-Key' => $key,
+                'Content-Type' => 'application/json',
+            ])
+            ->post("{$url}/api/sessions/{$sessionId}/messages/send-text", $payload);
     }
 
     /**
