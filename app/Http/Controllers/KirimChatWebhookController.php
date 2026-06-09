@@ -12,11 +12,16 @@ use Illuminate\Support\Facades\Log;
  * Class KirimChatWebhookController
  *
  * Menangani callback webhook masuk dari layanan Kirim.Chat untuk verifikasi nomor WhatsApp.
+ * Verifikasi dilakukan dengan mencocokkan nomor pengirim dengan nomor yang terdaftar.
  */
 class KirimChatWebhookController extends Controller
 {
     /**
      * Handle incoming webhook requests from Kirim.Chat.
+     *
+     * Alur: webhook menerima pesan masuk → cari verifikasi pending berdasarkan nomor pengirim
+     * → jika cocok: verified + kirim notif sukses
+     * → jika tidak ditemukan: abaikan (timeout di frontend yang menangani)
      *
      * @param  Request  $request
      * @param  KirimChatService  $kirimChatService
@@ -52,64 +57,81 @@ class KirimChatWebhookController extends Controller
             ], 200);
         }
 
-        // Cari token verifikasi dengan pola V-XXXXXX atau V-XXXXX
-        $token = null;
-        if (preg_match('/(V-\d+)/i', $messageText, $matches)) {
-            $token = strtoupper($matches[1]);
+        // Ekstrak nomor dari isi pesan template (📱 *Nomor:* XXXXXXXXXXX)
+        $templatePhone = null;
+        if (preg_match('/Nomor:\*?\s*([0-9+]+)/', $messageText, $phoneMatch)) {
+            $templatePhone = $phoneMatch[1];
         }
 
-        if (!$token) {
+        if (! $templatePhone) {
+            Log::info('KirimChatWebhook: Pesan tidak mengandung nomor verifikasi, diabaikan.');
+
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ditemukan kode verifikasi yang valid.',
+                'message' => 'Pesan tidak mengandung format verifikasi.',
+            ], 200);
+        }
+
+        // Cari verifikasi pending berdasarkan nomor di pesan template
+        $templatePhoneNormalized = $this->normalizePhone($templatePhone);
+        $token = Cache::get("wa_verification_phone:{$templatePhoneNormalized}");
+
+        if (! $token) {
+            Log::info("KirimChatWebhook: Tidak ada verifikasi pending untuk nomor {$templatePhoneNormalized}.");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada verifikasi yang menunggu untuk nomor ini.',
             ], 200);
         }
 
         $cached = Cache::get("wa_verification:{$token}");
 
-        if (!$cached) {
-            Log::warning("KirimChatWebhook: Token {$token} tidak ditemukan di Cache atau sudah kedaluwarsa.");
+        if (! $cached) {
+            Log::warning("KirimChatWebhook: Token {$token} sudah kedaluwarsa.");
 
-            $reply = "❌ *VERIFIKASI GAGAL*\n\n" .
-                     "Mohon maaf, proses verifikasi nomor WhatsApp Anda tidak dapat diproses.\n\n" .
-                     "⚠️ *Penyebab:* Kode verifikasi salah, sudah kedaluwarsa, atau format pesan telah diubah.\n" .
-                     "👉 *Solusi:* Silakan kembali ke halaman Profil di aplikasi SPPD, refresh halaman, dan klik ulang tombol Verifikasi Nomor.";
-
-            $kirimChatService->send($from, $reply);
+            Cache::forget("wa_verification_phone:{$templatePhoneNormalized}");
 
             return response()->json([
                 'success' => false,
-                'message' => 'Token tidak valid atau kedaluwarsa.',
+                'message' => 'Verifikasi sudah kedaluwarsa.',
             ], 200);
         }
 
-        // Normalisasi nomor telepon untuk dicocokkan
+        // Bandingkan nomor pengirim dengan nomor yang terdaftar di verifikasi
         $fromNormalized = $this->normalizePhone($from);
         $cachedNormalized = $this->normalizePhone($cached['phone']);
 
         if ($fromNormalized !== $cachedNormalized) {
-            Log::warning("KirimChatWebhook: Kecocokan nomor gagal untuk token {$token}. Pengirim: {$fromNormalized}, Terdaftar: {$cachedNormalized}");
+            Log::warning("KirimChatWebhook: Nomor tidak cocok. Pengirim: {$fromNormalized}, Terdaftar: {$cachedNormalized}");
+
+            // Simpan status gagal di cache agar polling frontend mengetahui
+            Cache::put("wa_verification_failed:{$token}", [
+                'message' => "Nomor pengirim ({$from}) tidak sesuai dengan nomor yang didaftarkan ({$cached['phone']}). Pastikan mengirim dari nomor yang benar.",
+            ], now()->addMinutes(15));
 
             $reply = "❌ *VERIFIKASI GAGAL*\n\n" .
                      "Nomor pengirim tidak sesuai dengan nomor yang didaftarkan di aplikasi SPPD.\n\n" .
-                     "Harap mengirimkan pesan verifikasi dari nomor WhatsApp yang Anda daftarkan ({$cached['phone']}).";
+                     "📱 *Nomor terdaftar:* {$cached['phone']}\n" .
+                     "📱 *Nomor pengirim:* {$from}\n\n" .
+                     "Harap mengirimkan pesan verifikasi dari nomor WhatsApp yang Anda daftarkan.";
 
             $kirimChatService->send($from, $reply);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Nomor pengirim tidak cocok dengan data pendaftaran.',
+                'message' => 'Nomor pengirim tidak cocok.',
             ], 200);
         }
 
-        // Simpan status sukses verifikasi di Cache untuk polling frontend
+        // ✅ Nomor cocok — verifikasi berhasil
         Cache::put("wa_verified_status:{$token}", [
             'verified' => true,
             'phone' => $cached['phone'],
         ], now()->addMinutes(15));
 
-        // Jika user_id ada (proses edit pegawai), update nomor telepon di database
-        if (!empty($cached['user_id'])) {
+        // Update nomor telepon user di database jika user_id ada
+        if (! empty($cached['user_id'])) {
             $user = \App\Models\User::find($cached['user_id']);
             if ($user) {
                 $user->update(['phone' => $cached['phone']]);
@@ -125,8 +147,9 @@ class KirimChatWebhookController extends Controller
 
         $kirimChatService->send($from, $reply);
 
-        // Hapus token verifikasi dari cache agar satu kali pakai
+        // Bersihkan cache verifikasi
         Cache::forget("wa_verification:{$token}");
+        Cache::forget("wa_verification_phone:{$templatePhoneNormalized}");
 
         return response()->json([
             'success' => true,
@@ -157,3 +180,4 @@ class KirimChatWebhookController extends Controller
         return $phone;
     }
 }
+

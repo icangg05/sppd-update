@@ -7,7 +7,7 @@ Cannot validate since a PHP installation could not be found. Use the setting 'ph
 ===================================================
 pada halaman list telaah status ;perjalanan selesai dan masukan; dan 'belum realisasi' berubah saat apa?
 ===================================================
-
+cloudflared tunnel --url http://localhost:8004
 ===================================================
 
 icang01 => nonaktif
