@@ -365,7 +365,7 @@ class SppdShow extends Component
 
         if ($action === 'approved') {
           $statusTitle = '✅ *STATUS: DOKUMEN DISETUJUI*';
-          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju."
+          $body        = "\nPengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju."
             . "\n\n• *Pelaksana:* {$travelerName}";
           if ($notes) {
             $body .= "\n• *Catatan:* {$notes}";

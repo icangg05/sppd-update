@@ -136,7 +136,7 @@ class SendTteSignRequestJob implements ShouldQueue
                 $purpose = $sppd->purpose;
                 $detailUrl = route('sppd.show', $sppd);
                 $statusTitle = '✅ *STATUS: DOKUMEN DISETUJUI*';
-                $body = "Pengajuan SPPD atas nama *{$applicantName}* untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
+                $body = "\nPengajuan SPPD atas nama *{$applicantName}* untuk perjalanan *\"{$purpose}\"* telah *DISETUJUI SEPENUHNYA* oleh semua pejabat penyetuju.";
                 if ($this->notes) {
                   $body .= "\n\n• *Catatan:* {$this->notes}";
                 }

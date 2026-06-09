@@ -21,7 +21,7 @@ return new class extends Migration
       $table->string('email')->unique()->nullable();
       $table->timestamp('email_verified_at')->nullable();
       $table->string('password');
-      $table->string('phone')->nullable();
+      $table->string('phone')->nullable()->unique();
       $table->string('employee_type')->default('pns');
       $table->foreignId('rank_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('position_id')->nullable()->constrained()->nullOnDelete();

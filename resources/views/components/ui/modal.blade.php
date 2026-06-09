@@ -1,4 +1,4 @@
-@props(['show', 'title', 'description' => null, 'icon' => null, 'maxWidth' => 'max-w-md'])
+@props(['show', 'title', 'description' => null, 'icon' => null, 'maxWidth' => 'max-w-md', 'closeable' => true])
 
 <div x-show="{{ $show }}" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
 	<!-- Backdrop -->
@@ -10,7 +10,7 @@
 		x-transition:leave-start="opacity-100"
 		x-transition:leave-end="opacity-0"
 		class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
-		@click="{{ $show }} = false">
+		@click="{{ $closeable ? $show . ' = false' : '' }}">
 	</div>
 
 	<!-- Modal Container (to center the modal) -->
@@ -25,7 +25,7 @@
 			x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
 			x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
 			class="w-full {{ $maxWidth }} rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
-			@keydown.escape.window="{{ $show }} = false">
+			@keydown.escape.window="{{ $closeable ? $show . ' = false' : '' }}">
 
 			{{-- Header --}}
 			<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -44,7 +44,8 @@
 						@endif
 					</div>
 				</div>
-				<button type="button" @click="{{ $show }} = false"
+				<button type="button" @click="{{ $closeable ? $show . ' = false' : '' }}"
+					@if(!$closeable) style="display:none" @endif
 					class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
 					<i class="fa-solid fa-xmark"></i>
 				</button>

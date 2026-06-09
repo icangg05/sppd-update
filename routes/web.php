@@ -11,6 +11,7 @@ use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KirimChatWebhookController;
 use App\Livewire\Sppd\SppdCalendar;
 use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
@@ -102,6 +103,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::patch('/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('users.toggle');
         Route::post('/users/test-wa', [UserController::class, 'testWhatsApp'])->name('users.test-wa');
+        Route::get('/users/check-verification/{token}', [UserController::class, 'checkVerification'])->name('users.check-verification');
 
         // Departments / Instansi / OPD
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
@@ -156,3 +158,6 @@ Route::middleware('auth')->group(function () {
         ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     })->name('system.health');
 });
+
+// Kirim.Chat Webhook
+Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])->name('webhook.kirimchat');

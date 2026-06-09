@@ -39,10 +39,8 @@
 		<main class="flex-1 p-4 sm:p-5 lg:p-6">
 
 			{{-- Hidden Session Dispatcher inside dynamic area --}}
-			<div x-data x-init="
-				@if (session('success')) $dispatch('toast', { type: 'success', message: '{{ addslashes(session('success')) }}' }); @endif
-				@if (session('error')) $dispatch('toast', { type: 'error', message: '{{ addslashes(session('error')) }}' }); @endif
-			" class="hidden"></div>
+			<div x-data x-init="@if (session('success')) $dispatch('toast', { type: 'success', message: '{{ addslashes(session('success')) }}' }); @endif
+@if (session('error')) $dispatch('toast', { type: 'error', message: '{{ addslashes(session('error')) }}' }); @endif" class="hidden"></div>
 
 			@if (session('error_details'))
 				<script>
@@ -95,11 +93,11 @@
 	@livewireScripts
 
 	{{-- Toast Notifications container --}}
-	<div x-data="toastManager()" 
+	<div x-data="toastManager()"
 		@toast.window="add($event.detail)"
-		class="fixed top-5 right-5 z-[9999] flex flex-col gap-3.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+		class="fixed top-5 right-5 z-9999 flex flex-col gap-3.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
 		<template x-for="toast in toasts" :key="toast.id">
-			<div x-show="toast.show" 
+			<div x-show="toast.show"
 				x-transition:enter="transition ease-out duration-300 transform"
 				x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
 				x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
@@ -108,12 +106,12 @@
 				x-transition:leave-end="opacity-0 translate-x-2"
 				class="pointer-events-auto flex items-start gap-3 rounded-lg border p-4 shadow-md bg-white border-l-4"
 				:class="{
-					'border-emerald-500 bg-emerald-50 text-emerald-950 border-l-emerald-600': toast.type === 'success',
-					'border-rose-200 bg-rose-50 text-rose-950 border-l-rose-600': toast.type === 'error',
-					'border-cyan-200 bg-cyan-50 text-cyan-950 border-l-cyan-600': toast.type === 'info',
-					'border-amber-200 bg-amber-50 text-amber-950 border-l-amber-600': toast.type === 'warning'
+				    'border-emerald-500 bg-emerald-50 text-emerald-950 border-l-emerald-600': toast.type === 'success',
+				    'border-rose-200 bg-rose-50 text-rose-950 border-l-rose-600': toast.type === 'error',
+				    'border-cyan-200 bg-cyan-50 text-cyan-950 border-l-cyan-600': toast.type === 'info',
+				    'border-amber-200 bg-amber-50 text-amber-950 border-l-amber-600': toast.type === 'warning'
 				}">
-				
+
 				<!-- Icon -->
 				<div class="shrink-0 mt-0.5">
 					<template x-if="toast.type === 'success'">
@@ -129,12 +127,13 @@
 						<i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
 					</template>
 				</div>
-				
+
 				<!-- Message -->
 				<div class="flex-1 text-xs font-semibold leading-normal" x-text="toast.message"></div>
-				
+
 				<!-- Close button -->
-				<button type="button" @click="remove(toast.id)" class="text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
+				<button type="button" @click="remove(toast.id)"
+					class="text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
 					<i class="fa-solid fa-xmark text-xs"></i>
 				</button>
 			</div>
@@ -153,14 +152,14 @@
 						message: detail.message,
 						show: false
 					});
-					
+
 					this.$nextTick(() => {
 						const toast = this.toasts.find(t => t.id === id);
 						if (toast) {
 							toast.show = true;
 						}
 					});
-					
+
 					setTimeout(() => {
 						this.remove(id);
 					}, 4000);

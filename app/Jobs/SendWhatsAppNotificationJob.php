@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\FonnteService;
+use App\Services\KirimChatService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,7 +26,7 @@ class SendWhatsAppNotificationJob implements ShouldQueue
     public readonly string $message,
   ) {}
 
-  public function handle(FonnteService $fonnte): void
+  public function handle(KirimChatService $kirimChat): void
   {
     if (empty($this->phone)) {
       Log::warning('SendWhatsAppNotificationJob: no phone number provided, skipping.');
@@ -34,7 +34,7 @@ class SendWhatsAppNotificationJob implements ShouldQueue
       return;
     }
 
-    $fonnte->send($this->phone, $this->message);
+    $kirimChat->send($this->phone, $this->message);
   }
 
   public function failed(Throwable $exception): void

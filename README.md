@@ -10,6 +10,4 @@ pada halaman list telaah status ;perjalanan selesai dan masukan; dan 'belum real
 
 ===================================================
 
-===================================================
-
-===================================================
+icang01 => nonaktif

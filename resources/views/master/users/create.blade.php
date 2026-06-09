@@ -3,7 +3,7 @@
 @section('page-title', 'Tambah Pegawai')
 
 @section('content')
-	<div class="p-1 space-y-6">
+	<div class="p-1 space-y-6" x-data="waVerifyData()" @open-verify.window="openVerify($event.detail)">
 
 		{{-- Header Halaman --}}
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -82,22 +82,20 @@
 									placeholder="Contoh: 08123456789"
 									inputmode="numeric"
 									pattern="[0-9+]*"
-									class="flex-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @enderror"
-								/>
+									class="flex-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @enderror" />
 								<button
 									type="button"
 									id="btn-test-wa"
-									onclick="testWhatsApp()"
-									title="Kirim pesan percobaan ke nomor ini"
-									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap"
-								>
-									<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim
+									onclick="openVerifyModal()"
+									title="Verifikasi nomor WhatsApp ini"
+									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap">
+									<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi
 								</button>
 							</div>
 							<p class="text-xs text-slate-400 mt-1">
 								<i class="fa-solid fa-circle-info mr-1 text-cyan-500"></i>
 								Nomor ini akan digunakan untuk mengirim notifikasi WhatsApp terkait pengajuan SPPD.
-								Gunakan tombol <strong>Uji Kirim</strong> untuk memverifikasi nomor sebelum menyimpan.
+								Gunakan tombol <strong>Verifikasi</strong> untuk mengkonfirmasi nomor sebelum menyimpan.
 							</p>
 							@error('phone')
 								<p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
@@ -189,99 +187,188 @@
 				</x-ui.button>
 			</div>
 		</form>
-	</div>
+
+		{{-- Modal Verifikasi WhatsApp --}}
+		<x-ui.modal show="showVerifyModal" :closeable="false" title="Verifikasi Nomor WhatsApp"
+			description="Kirim pesan ke operator untuk konfirmasi" icon="fa-brands fa-whatsapp text-emerald-600">
+			<div class="space-y-4">
+				{{-- Instruksi singkat --}}
+				<p class="text-xs text-slate-500">Kirim pesan verifikasi di bawah ini melalui WhatsApp. Silakan cek status verifikasi secara berkala di browser Anda.</p>
+
+				{{-- Template pesan --}}
+				<div>
+					<p class="text-xs font-semibold text-slate-600 mb-1.5">Pesan Verifikasi:</p>
+					<div id="modal-verify-template" x-text="verificationTemplate"
+						class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">
+					</div>
+				</div>
+
+				{{-- Status Polling --}}
+				<div class="rounded-lg p-3 text-center text-xs font-medium border"
+					:class="isVerified ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'">
+					<template x-if="!isVerified">
+						<span class="flex items-center justify-center gap-2">
+							<i class="fa-solid fa-circle-notch fa-spin text-amber-600"></i>
+							Menunggu pesan WhatsApp dikirim...
+						</span>
+					</template>
+					<template x-if="isVerified">
+						<span class="flex items-center justify-center gap-2">
+							<i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+							Nomor WhatsApp Berhasil Diverifikasi.
+						</span>
+					</template>
+				</div>
+			</div>
+
+			<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+				<button type="button" @click="showVerifyModal = false"
+					class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+					Tutup
+				</button>
+				<template x-if="!isVerified">
+					<a :href="deeplinkUrl" target="_blank" rel="noopener"
+						class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-green-700 whitespace-nowrap">
+						<i class="fa-brands fa-whatsapp shrink-0"></i>
+						<span>Kirim via WhatsApp</span>
+					</a>
+				</template>
+				<template x-if="isVerified">
+					<button type="button" disabled
+						class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-xs font-bold text-white shadow cursor-not-allowed whitespace-nowrap">
+						<i class="fa-solid fa-circle-check text-sm shrink-0"></i>
+						<span>Terverifikasi</span>
+					</button>
+				</template>
+			</x-slot>
+		</x-ui.modal>
+
+	</div>{{-- end x-data wrapper --}}
+
 @endsection
 
 @push('scripts')
-<script>
-  const WA_COOLDOWN_KEY = 'wa_cooldown_end_{{ auth()->id() }}';
-  const COOLDOWN_SECONDS = 60;
-  let countdownInterval = null;
+	<script>
+		const _waCheckUrl = '{{ route('master.users.check-verification', ['token' => '__TOKEN__'], false) }}';
 
-  function startCooldown(seconds) {
-    const btn = document.getElementById('btn-test-wa');
-    const endTime = Date.now() + seconds * 1000;
-    localStorage.setItem(WA_COOLDOWN_KEY, endTime.toString());
+		function waVerifyData() {
+			return {
+				showVerifyModal: false,
+				verificationNumber: '',
+				verificationTemplate: '',
+				deeplinkUrl: '',
+				token: '',
+				isVerified: false,
+				pollingInterval: null,
+				openVerify(data) {
+					this.verificationNumber = '+' + data.verification_number;
+					this.verificationTemplate = data.template;
+					this.token = data.token;
+					this.deeplinkUrl = 'https://wa.me/' + data.verification_number + '?text=' + encodeURIComponent(data
+						.template);
+					this.isVerified = false;
+					this.showVerifyModal = true;
+					this.startPolling();
+				},
+				startPolling() {
+					if (this.pollingInterval) {
+						clearInterval(this.pollingInterval);
+					}
+					const self = this;
+					this.pollingInterval = setInterval(function() {
+						if (!self.showVerifyModal) {
+							clearInterval(self.pollingInterval);
+							return;
+						}
+						const url = _waCheckUrl.replace('__TOKEN__', self.token);
+						fetch(url)
+							.then(function(r) {
+								return r.json();
+							})
+							.then(function(res) {
+								if (res.verified) {
+									self.isVerified = true;
+									clearInterval(self.pollingInterval);
+									document.getElementById('phone').value = res.phone;
+									const btn = document.getElementById('btn-test-wa');
+									if (btn) {
+										btn.className =
+											'inline-flex items-center gap-1.5 rounded border border-emerald-500 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 cursor-not-allowed';
+										btn.disabled = true;
+										btn.innerHTML =
+											'<i class="fa-solid fa-circle-check text-sm"></i> Terverifikasi';
+									}
 
-    btn.disabled = true;
+									// Modal tidak ditutup otomatis agar pengguna dapat melihat status sukses sebelum ditutup manual.
+								}
+							})
+							.catch(function() {});
+					}, 3000);
+				}
+			};
+		}
 
-    clearInterval(countdownInterval);
-    countdownInterval = setInterval(function () {
-      const remaining = Math.ceil((parseInt(localStorage.getItem(WA_COOLDOWN_KEY)) - Date.now()) / 1000);
-      if (remaining <= 0) {
-        clearInterval(countdownInterval);
-        localStorage.removeItem(WA_COOLDOWN_KEY);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
-      } else {
-        btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin text-sm"></i> Kirim Ulang (' + remaining + ' d)';
-      }
-    }, 1000);
-  }
+		function openVerifyModal() {
+			const phone = document.getElementById('phone').value.trim();
+			const nameEl = document.getElementById('name');
+			const emailEl = document.getElementById('email');
+			const name = nameEl ? nameEl.value.trim() : '';
+			const email = emailEl ? emailEl.value.trim() : '';
+			const btn = document.getElementById('btn-test-wa');
 
-  function testWhatsApp() {
-    const phone = document.getElementById('phone').value.trim();
-    const resultEl = document.getElementById('wa-test-result');
-    const btn = document.getElementById('btn-test-wa');
+			if (!phone) {
+				alert('⚠️ Masukkan nomor telepon terlebih dahulu.');
+				return;
+			}
 
-    if (!phone) {
-      resultEl.textContent = '⚠️ Masukkan nomor telepon terlebih dahulu.';
-      resultEl.className = 'mt-1 text-xs font-medium text-amber-600';
-      resultEl.classList.remove('hidden');
-      return;
-    }
+			btn.disabled = true;
+			btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Memuat...';
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Mengantri...';
-    resultEl.classList.add('hidden');
+			fetch('{{ route('master.users.test-wa', [], false) }}', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-TOKEN': '{{ csrf_token() }}',
+						'Accept': 'application/json',
+					},
+					body: JSON.stringify({
+						phone: phone,
+						name: name,
+						email: email
+					}),
+				})
+				.then(function(r) {
+					return r.json();
+				})
+				.then(function(data) {
+					btn.disabled = false;
+					btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi';
 
-    fetch('{{ route('master.users.test-wa') }}', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ phone }),
-    })
-    .then(function (r) { return r.json().then(function (data) { return { status: r.status, data }; }); })
-    .then(function ({ status, data }) {
-      if (data.success) {
-        resultEl.textContent = '📤 ' + data.message;
-        resultEl.className = 'mt-1 text-xs font-medium text-green-600';
-        startCooldown(COOLDOWN_SECONDS);
-      } else if (status === 429) {
-        resultEl.textContent = '⏳ ' + data.message;
-        resultEl.className = 'mt-1 text-xs font-medium text-amber-600';
-        startCooldown(data.remaining ?? COOLDOWN_SECONDS);
-      } else {
-        resultEl.textContent = '❌ ' + data.message;
-        resultEl.className = 'mt-1 text-xs font-medium text-red-600';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
-      }
-      resultEl.classList.remove('hidden');
-    })
-    .catch(function () {
-      resultEl.textContent = '❌ Terjadi kesalahan jaringan. Coba lagi.';
-      resultEl.className = 'mt-1 text-xs font-medium text-red-600';
-      resultEl.classList.remove('hidden');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Uji Kirim';
-    });
-  }
+					if (!data.success) {
+						alert('❌ ' + (data.message || 'Terjadi kesalahan.'));
+						return;
+					}
 
-  // Restore cooldown on page load
-  document.addEventListener('DOMContentLoaded', function () {
-    const savedEnd = localStorage.getItem(WA_COOLDOWN_KEY);
-    if (savedEnd) {
-      const remaining = Math.ceil((parseInt(savedEnd) - Date.now()) / 1000);
-      if (remaining > 0) {
-        startCooldown(remaining);
-      } else {
-        localStorage.removeItem(WA_COOLDOWN_KEY);
-      }
-    }
-  });
-</script>
+					window.dispatchEvent(new CustomEvent('open-verify', {
+						detail: data
+					}));
+				})
+				.catch(function() {
+					btn.disabled = false;
+					btn.innerHTML = '<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi';
+					alert('❌ Terjadi kesalahan jaringan. Coba lagi.');
+				});
+		}
+
+		function copyTemplate() {
+			const text = document.getElementById('modal-verify-template').textContent;
+			navigator.clipboard.writeText(text).then(function() {
+				const btn = document.getElementById('btn-copy-template');
+				btn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+				setTimeout(function() {
+					btn.innerHTML = '<i class="fa-regular fa-copy"></i> Salin';
+				}, 2000);
+			});
+		}
+	</script>
 @endpush
