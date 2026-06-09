@@ -69,7 +69,7 @@
 						</div>
 
 						<div class="space-y-1">
-							{{-- Phone Field dengan tombol verifikasi --}}
+							{{-- Phone Field (Disabled pada Create) --}}
 							<label for="phone" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
 								No. Telepon / WhatsApp
 							</label>
@@ -78,29 +78,14 @@
 									type="tel"
 									id="phone"
 									name="phone"
-									value="{{ old('phone') }}"
-									placeholder="Contoh: 08123456789"
-									inputmode="numeric"
-									pattern="[0-9+]*"
-									class="flex-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @enderror" />
-								<button
-									type="button"
-									id="btn-test-wa"
-									onclick="openVerifyModal()"
-									title="Verifikasi nomor WhatsApp ini"
-									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap">
-									<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi
-								</button>
+									disabled
+									placeholder="Simpan data untuk verifikasi nomor"
+									class="flex-1 block w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-400 cursor-not-allowed" />
 							</div>
-							<p class="text-xs text-slate-400 mt-1">
-								<i class="fa-solid fa-circle-info mr-1 text-cyan-500"></i>
-								Nomor ini akan digunakan untuk mengirim notifikasi WhatsApp terkait pengajuan SPPD.
-								Gunakan tombol <strong>Verifikasi</strong> untuk mengkonfirmasi nomor sebelum menyimpan.
+							<p class="text-xs text-amber-600 mt-1 font-medium">
+								<i class="fa-solid fa-lock mr-1"></i>
+								Simpan data terlebih dahulu untuk mengaktifkan fitur verifikasi nomor telepon.
 							</p>
-							@error('phone')
-								<p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
-							@enderror
-							<div id="wa-test-result" class="hidden mt-1 text-xs font-medium"></div>
 						</div>
 
 						<div class="space-y-1">

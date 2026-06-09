@@ -72,7 +72,7 @@
 						</div>
 
 						<div class="space-y-1">
-							{{-- Phone Field dengan tombol verifikasi --}}
+							{{-- Phone Field dengan tombol verifikasi/ganti nomor --}}
 							<label for="phone" class="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
 								No. Telepon / WhatsApp
 							</label>
@@ -85,21 +85,46 @@
 									placeholder="Contoh: 08123456789"
 									inputmode="numeric"
 									pattern="[0-9+]*"
-									class="flex-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @enderror" />
-								<button
-									type="button"
-									id="btn-test-wa"
-									onclick="openVerifyModal()"
-									title="Verifikasi nomor WhatsApp ini"
-									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap">
-									<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi
-								</button>
+									@if($user->phone_verified) readonly @endif
+									class="flex-1 block w-full rounded border px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @else border-slate-300 @enderror @if($user->phone_verified) bg-slate-50 cursor-not-allowed @endif" />
+
+								@if($user->phone_verified)
+									<button
+										type="button"
+										disabled
+										class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 whitespace-nowrap cursor-default">
+										<i class="fa-solid fa-check-circle text-sm"></i> Terverifikasi
+									</button>
+									<button
+										type="button"
+										onclick="resetPhoneVerification()"
+										title="Ganti nomor WhatsApp"
+										class="inline-flex items-center gap-1.5 rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white whitespace-nowrap">
+										<i class="fa-solid fa-rotate text-sm"></i> Ganti
+									</button>
+								@else
+									<button
+										type="button"
+										id="btn-test-wa"
+										onclick="openVerifyModal()"
+										title="Verifikasi nomor WhatsApp ini"
+										class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap">
+										<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi
+									</button>
+								@endif
 							</div>
-							<p class="text-xs text-slate-400 mt-1">
-								<i class="fa-solid fa-circle-info mr-1 text-cyan-500"></i>
-								Nomor ini akan digunakan untuk mengirim notifikasi WhatsApp terkait pengajuan SPPD.
-								Gunakan tombol <strong>Verifikasi</strong> untuk mengkonfirmasi nomor sebelum menyimpan.
-							</p>
+							
+							@if($user->phone_verified)
+								<p class="text-xs text-green-600 mt-1 font-medium">
+									<i class="fa-solid fa-shield-check mr-1"></i> Nomor telah diverifikasi dan terkunci. Gunakan tombol Ganti jika ingin mengubahnya.
+								</p>
+							@else
+								<p class="text-xs text-amber-600 mt-1 font-medium">
+									<i class="fa-solid fa-triangle-exclamation mr-1"></i> 
+									Wajib verifikasi nomor dengan menekan tombol <strong>Verifikasi</strong> sebelum dapat menyimpan perubahan.
+								</p>
+							@endif
+
 							@error('phone')
 								<p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
 							@enderror
@@ -449,6 +474,30 @@
 					btn.innerHTML = '<i class="fa-regular fa-copy"></i> Salin';
 				}, 2000);
 			});
+		}
+
+		function resetPhoneVerification() {
+			if (!confirm('Apakah Anda yakin ingin mengganti nomor WhatsApp? Anda harus melakukan verifikasi ulang setelah ini.')) {
+				return;
+			}
+
+			fetch('{{ route('master.users.reset-phone', $user->id) }}', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': '{{ csrf_token() }}',
+					'Accept': 'application/json',
+				}
+			})
+			.then(r => r.json())
+			.then(data => {
+				if (data.success) {
+					window.location.reload();
+				} else {
+					alert('❌ Gagal mereset nomor. Silakan coba lagi.');
+				}
+			})
+			.catch(() => alert('❌ Terjadi kesalahan jaringan.'));
 		}
 	</script>
 @endpush

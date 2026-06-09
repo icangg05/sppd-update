@@ -107,13 +107,13 @@ class KirimChatWebhookController extends Controller
 
             // Simpan status gagal di cache agar polling frontend mengetahui
             Cache::put("wa_verification_failed:{$token}", [
-                'message' => "Nomor pengirim ({$from}) tidak sesuai dengan nomor yang didaftarkan ({$cached['phone']}). Pastikan mengirim dari nomor yang benar.",
+                'message' => "Nomor pengirim ({$fromNormalized}) tidak sesuai dengan nomor yang didaftarkan ({$cachedNormalized}). Pastikan mengirim dari nomor yang benar.",
             ], now()->addMinutes(15));
 
             $reply = "❌ *VERIFIKASI GAGAL*\n\n" .
                      "Nomor pengirim tidak sesuai dengan nomor yang didaftarkan di aplikasi SPPD.\n\n" .
-                     "📱 *Nomor terdaftar:* {$cached['phone']}\n" .
-                     "📱 *Nomor pengirim:* {$from}\n\n" .
+                     "📱 *Nomor terdaftar:* {$cachedNormalized}\n" .
+                     "📱 *Nomor pengirim:* {$fromNormalized}\n\n" .
                      "Harap mengirimkan pesan verifikasi dari nomor WhatsApp yang Anda daftarkan.";
 
             $kirimChatService->send($from, $reply);
@@ -127,22 +127,25 @@ class KirimChatWebhookController extends Controller
         // ✅ Nomor cocok — verifikasi berhasil
         Cache::put("wa_verified_status:{$token}", [
             'verified' => true,
-            'phone' => $cached['phone'],
+            'phone' => $cachedNormalized,
         ], now()->addMinutes(15));
 
-        // Update nomor telepon user di database jika user_id ada
+        // Update nomor telepon + status verifikasi di database
         if (! empty($cached['user_id'])) {
             $user = \App\Models\User::find($cached['user_id']);
             if ($user) {
-                $user->update(['phone' => $cached['phone']]);
-                Log::info("KirimChatWebhook: Berhasil memperbarui nomor telepon user ID {$user->id}.");
+                $user->update([
+                    'phone' => $cachedNormalized,
+                    'phone_verified' => true,
+                ]);
+                Log::info("KirimChatWebhook: Berhasil memverifikasi nomor telepon user ID {$user->id}.");
             }
         }
 
-        // Kirim balasan WhatsApp sukses
+        // Kirim balasan WhatsApp sukses (nomor format 62xxx)
         $name = $cached['name'] ?? 'Pegawai';
         $reply = "✅ *VERIFIKASI BERHASIL!*\n\n" .
-                 "Halo *{$name}*, nomor WhatsApp Anda ({$cached['phone']}) telah sukses terverifikasi pada *Sistem SPPD Elektronik Kota Kendari*.\n\n" .
+                 "Halo *{$name}*, nomor WhatsApp Anda ({$cachedNormalized}) telah sukses terverifikasi pada *Sistem SPPD Elektronik Kota Kendari*.\n\n" .
                  "Anda sekarang akan menerima notifikasi perjalanan dinas secara otomatis di nomor ini. Terima kasih!";
 
         $kirimChatService->send($from, $reply);

@@ -146,7 +146,6 @@ class UserController extends Controller
       'email'         => 'nullable|email|unique:users,email',
       'password'      => 'required|string|min:6',
       'nip'           => 'nullable|string|max:20',
-      'phone'         => 'nullable|string|max:20',
       'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
       'department_id' => 'nullable|exists:departments,id',
       'rank_id'       => 'nullable|exists:ranks,id',
@@ -155,7 +154,6 @@ class UserController extends Controller
     ]);
 
     if (! auth()->user()->hasRole('super_admin')) {
-      // Pastikan department yang dipilih berada dalam hierarki OPD admin
       $dept = auth()->user()->department;
       if ($dept && ! empty($validated['department_id'])) {
         $allowedIds = $dept->getAllRelatedIds();
@@ -169,13 +167,14 @@ class UserController extends Controller
 
     $user = User::create([
       ...$validated,
-      'password'  => Hash::make($validated['password']),
-      'is_active' => true,
+      'password'       => Hash::make($validated['password']),
+      'is_active'      => true,
+      'phone_verified' => false,
     ]);
 
     $user->assignRole($validated['role']);
 
-    return redirect()->route('master.users.index')->with('success', "Pegawai {$user->name} berhasil ditambahkan.");
+    return redirect()->route('master.users.edit', $user)->with('success', "Pegawai {$user->name} berhasil ditambahkan. Silakan verifikasi nomor telepon.");
   }
 
   public function show(User $user)
@@ -211,8 +210,12 @@ class UserController extends Controller
       'role'          => 'required|string',
     ]);
 
+    // Validasi: jika nomor telepon diisi dan belum terverifikasi, tolak
+    if (! empty($validated['phone']) && ! $user->phone_verified) {
+      return back()->withErrors(['phone' => 'Nomor telepon harus diverifikasi terlebih dahulu.'])->withInput();
+    }
+
     if (! auth()->user()->hasRole('super_admin')) {
-      // Pastikan department yang dipilih berada dalam hierarki OPD admin
       $dept = auth()->user()->department;
       if ($dept && ! empty($validated['department_id'])) {
         $allowedIds = $dept->getAllRelatedIds();
@@ -229,6 +232,11 @@ class UserController extends Controller
       $data['password'] = Hash::make($data['password']);
     } else {
       unset($data['password']);
+    }
+
+    // Jika phone sudah verified, ambil dari DB (readonly di frontend)
+    if ($user->phone_verified) {
+      unset($data['phone']);
     }
 
     $user->update($data);
@@ -251,6 +259,19 @@ class UserController extends Controller
     $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
     return back()->with('success', "Pegawai {$user->name} berhasil {$status}.");
+  }
+
+  /**
+   * Reset status verifikasi telepon — memungkinkan user mengganti nomor.
+   */
+  public function resetPhone(User $user): JsonResponse
+  {
+    $user->update([
+      'phone' => null,
+      'phone_verified' => false,
+    ]);
+
+    return response()->json(['success' => true]);
   }
 
   /**
@@ -307,9 +328,9 @@ class UserController extends Controller
     // Reverse lookup: nomor telepon → token (agar webhook bisa cari tanpa token di pesan)
     Cache::put("wa_verification_phone:{$normalizedPhone}", $token, now()->addMinutes(15));
 
-    // Template pesan tanpa kode — hanya nomor + keterangan proses
+    // Template pesan — nomor dalam format 62xxx + keterangan proses
     $template = "Verifikasi WhatsApp SPPD Kendari\n" .
-      "📱 *Nomor:* {$phone}\n\n" .
+      "📱 *Nomor:* {$normalizedPhone}\n\n" .
       "Kirim pesan ini untuk memverifikasi nomor WhatsApp Anda.\n" .
       "_Sistem akan otomatis mencocokkan nomor pengirim. Hasil verifikasi akan dikirim di chat ini._";
 
@@ -318,7 +339,7 @@ class UserController extends Controller
       'verification_number' => $verificationNumber,
       'template'            => $template,
       'token'               => $token,
-      'phone_input'         => $phone,
+      'phone_input'         => $normalizedPhone,
     ]);
   }
 

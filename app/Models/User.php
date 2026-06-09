@@ -26,6 +26,7 @@ class User extends Authenticatable
     'email',
     'password',
     'phone',
+    'phone_verified',
     'employee_type',
     'department_id',
     'rank_id',
@@ -53,6 +54,7 @@ class User extends Authenticatable
       'password' => 'hashed',
       'employee_type' => EmployeeType::class,
       'is_active' => 'boolean',
+      'phone_verified' => 'boolean',
     ];
   }
 
