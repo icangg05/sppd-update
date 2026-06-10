@@ -11,3 +11,6 @@ cloudflared tunnel --url http://localhost:8004
 ===================================================
 
 icang01 => nonaktif
+
+- ada masalah diserver production tidak ada notifikasi berhasil atau gagal verifikasi hp. tetapi status dimodal berjalan lancar
+- halaman create/edit pakai livewire agar mudah pengelolaan responsive. saat verifikasi berhasil otomatis form telepon disabled. dan muncul tombol ganti nomor

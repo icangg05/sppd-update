@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendWhatsAppNotificationJob;
 use App\Services\KirimChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -116,7 +117,7 @@ class KirimChatWebhookController extends Controller
                      "📱 *Nomor pengirim:* {$fromNormalized}\n\n" .
                      "Harap mengirimkan pesan verifikasi dari nomor WhatsApp yang Anda daftarkan.";
 
-            $kirimChatService->send($from, $reply);
+            SendWhatsAppNotificationJob::dispatch($from, $reply);
 
             return response()->json([
                 'success' => false,
@@ -148,7 +149,7 @@ class KirimChatWebhookController extends Controller
                  "Halo *{$name}*, nomor WhatsApp Anda ({$cachedNormalized}) telah sukses terverifikasi pada *Sistem SPPD Elektronik Kota Kendari*.\n\n" .
                  "Anda sekarang akan menerima notifikasi perjalanan dinas secara otomatis di nomor ini. Terima kasih!";
 
-        $kirimChatService->send($from, $reply);
+        SendWhatsAppNotificationJob::dispatch($from, $reply);
 
         // Bersihkan cache verifikasi
         Cache::forget("wa_verification:{$token}");

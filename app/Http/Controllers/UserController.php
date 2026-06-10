@@ -4,12 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\EmployeeType;
 use App\Models\Department;
-use App\Models\Position;
-use App\Models\Rank;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -100,11 +96,7 @@ class UserController extends Controller
 
   public function create()
   {
-    $departments = $this->getHierarchicalDepartments();
-    $ranks       = Rank::orderBy('group')->get();
-    $positions   = Position::orderBy('name')->get();
-
-    return view('master.users.create', compact('departments', 'ranks', 'positions'));
+    return view('master.users.create');
   }
 
   private function getHierarchicalDepartments()
@@ -186,11 +178,7 @@ class UserController extends Controller
 
   public function edit(User $user)
   {
-    $departments = $this->getHierarchicalDepartments();
-    $ranks       = Rank::orderBy('group')->get();
-    $positions   = Position::orderBy('level')->get();
-
-    return view('master.users.edit', compact('user', 'departments', 'ranks', 'positions'));
+    return view('master.users.edit', compact('user'));
   }
 
   public function update(Request $request, User $user)
@@ -259,147 +247,5 @@ class UserController extends Controller
     $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
     return back()->with('success', "Pegawai {$user->name} berhasil {$status}.");
-  }
-
-  /**
-   * Reset status verifikasi telepon — memungkinkan user mengganti nomor.
-   */
-  public function resetPhone(User $user): JsonResponse
-  {
-    $user->update([
-      'phone' => null,
-      'phone_verified' => false,
-    ]);
-
-    return response()->json(['success' => true]);
-  }
-
-  /**
-   * Kembalikan template pesan verifikasi WhatsApp.
-   *
-   * Alur verifikasi:
-   * 1. User klik tombol "Verifikasi" → endpoint ini dipanggil
-   * 2. Sistem kembalikan teks template siap kirim beserta nomor tujuan operator
-   * 3. User mengirim pesan ke operator via deep-link WA
-   * 4. Webhook KirimChat cocokkan nomor pengirim dengan nomor terdaftar → kirim notif hasil
-   */
-  public function testWhatsApp(Request $request): JsonResponse
-  {
-    $request->validate([
-      'phone'   => 'required|string|max:20',
-      'name'    => 'nullable|string|max:255',
-      'email'   => 'nullable|string|max:255',
-      'user_id' => 'nullable|integer',
-    ]);
-
-    $verificationNumber = config('kirimchat.verification_number', '6281376111919');
-    $phone              = $request->phone;
-    $name               = $request->name ?? 'Pegawai';
-    $email              = $request->email ?? '-';
-
-    // Generate internal token untuk polling frontend (tidak ditampilkan di pesan)
-    $token           = 'V-' . rand(10000, 99999);
-    $normalizedPhone = $this->normalizePhone($phone);
-
-    // Bersihkan verifikasi sebelumnya untuk user ini (mencegah stale cache)
-    if ($request->user_id) {
-      $prevToken = Cache::get("wa_verification_user:{$request->user_id}");
-      if ($prevToken) {
-        $prevCached = Cache::get("wa_verification:{$prevToken}");
-        if ($prevCached) {
-          $prevNormalized = $this->normalizePhone($prevCached['phone']);
-          Cache::forget("wa_verification_phone:{$prevNormalized}");
-        }
-        Cache::forget("wa_verification:{$prevToken}");
-        Cache::forget("wa_verified_status:{$prevToken}");
-        Cache::forget("wa_verification_failed:{$prevToken}");
-      }
-      Cache::put("wa_verification_user:{$request->user_id}", $token, now()->addMinutes(15));
-    }
-
-    // Simpan data verifikasi di Cache selama 15 menit
-    Cache::put("wa_verification:{$token}", [
-      'phone'   => $phone,
-      'user_id' => $request->user_id,
-      'name'    => $name,
-      'email'   => $email,
-    ], now()->addMinutes(15));
-
-    // Reverse lookup: nomor telepon → token (agar webhook bisa cari tanpa token di pesan)
-    Cache::put("wa_verification_phone:{$normalizedPhone}", $token, now()->addMinutes(15));
-
-    // Template pesan — nomor dalam format 62xxx + keterangan proses
-    $template = "Verifikasi WhatsApp SPPD Kendari\n" .
-      "📱 *Nomor:* {$normalizedPhone}\n\n" .
-      "Kirim pesan ini untuk memverifikasi nomor WhatsApp Anda.\n" .
-      "_Sistem akan otomatis mencocokkan nomor pengirim. Hasil verifikasi akan dikirim di chat ini._";
-
-    return response()->json([
-      'success'             => true,
-      'verification_number' => $verificationNumber,
-      'template'            => $template,
-      'token'               => $token,
-      'phone_input'         => $normalizedPhone,
-    ]);
-  }
-
-  /**
-   * Cek status verifikasi WhatsApp berdasarkan token.
-   *
-   * Hanya membaca status dari cache yang di-set oleh KirimChatWebhookController.
-   * Mengembalikan 3 state: verified, failed, atau pending.
-   *
-   * @param  string  $token
-   * @return JsonResponse
-   */
-  public function checkVerification(string $token): JsonResponse
-  {
-    // Cek apakah sudah berhasil diverifikasi oleh webhook
-    $verified = Cache::get("wa_verified_status:{$token}");
-
-    if ($verified && ! empty($verified['verified'])) {
-      return response()->json([
-        'verified' => true,
-        'failed'   => false,
-        'phone'    => $verified['phone'],
-      ]);
-    }
-
-    // Cek apakah webhook melaporkan kegagalan
-    $failed = Cache::get("wa_verification_failed:{$token}");
-
-    if ($failed) {
-      return response()->json([
-        'verified' => false,
-        'failed'   => true,
-        'message'  => $failed['message'] ?? 'Verifikasi gagal.',
-      ]);
-    }
-
-    // Masih menunggu — token belum diproses webhook
-    return response()->json([
-      'verified' => false,
-      'failed'   => false,
-    ]);
-  }
-
-  /**
-   * Normalisasi nomor telepon ke format internasional tanpa + atau 0 di depan.
-   */
-  private function normalizePhone(string $phone): string
-  {
-    if (str_contains($phone, '@')) {
-      [$phone] = explode('@', $phone, 2);
-    }
-
-    $phone = preg_replace('/\D/', '', $phone);
-
-    if (str_starts_with($phone, '0')) {
-      $phone = '62' . substr($phone, 1);
-    } elseif (str_starts_with($phone, '8') && strlen($phone) >= 9 && strlen($phone) <= 13) {
-      $phone = '62' . $phone;
-    }
-
-    return $phone;
   }
 }

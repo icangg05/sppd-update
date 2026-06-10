@@ -157,9 +157,7 @@ class KirimChatNotificationTest extends TestCase
 
     public function test_kirim_chat_webhook_verifies_successfully(): void
     {
-        Http::fake([
-            'https://api-prod.kirim.chat/api/v1/public/messages/send' => Http::response(['success' => true], 200),
-        ]);
+        Queue::fake();
 
         $token = 'V-12345';
         \Illuminate\Support\Facades\Cache::put("wa_verification:{$token}", [
@@ -187,17 +185,15 @@ class KirimChatNotificationTest extends TestCase
         $this->assertTrue($status['verified']);
         $this->assertEquals('081341770730', $status['phone']);
 
-        Http::assertSent(function ($request) {
-            return $request['phone_number'] === '6281341770730' &&
-                str_contains($request['content'], 'VERIFIKASI BERHASIL');
+        Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
+            return $job->phone === '6281341770730' &&
+                str_contains($job->message, 'VERIFIKASI BERHASIL');
         });
     }
 
     public function test_kirim_chat_webhook_fails_with_expired_or_invalid_token(): void
     {
-        Http::fake([
-            'https://api-prod.kirim.chat/api/v1/public/messages/send' => Http::response(['success' => true], 200),
-        ]);
+        Queue::fake();
 
         $payload = [
             'event' => 'message.received',
@@ -212,60 +208,17 @@ class KirimChatNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson(['success' => false]);
 
-        Http::assertSent(function ($request) {
-            return $request['phone_number'] === '6281341770730' &&
-                str_contains($request['content'], 'VERIFIKASI GAGAL');
+        Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
+            return $job->phone === '6281341770730' &&
+                str_contains($job->message, 'VERIFIKASI GAGAL');
         });
     }
 
-    public function test_check_verification_endpoint_polls_kirim_chat_api_directly(): void
-    {
-        $token = 'V-98765';
-        \Illuminate\Support\Facades\Cache::put("wa_verification:{$token}", [
-            'phone' => '081341770730',
-            'name' => 'Budi',
-            'email' => 'budi@example.com',
-            'user_id' => null,
-        ], now()->addMinutes(15));
 
-        Http::fake([
-            'https://api-prod.kirim.chat/api/v1/public/messages?limit=20' => Http::response([
-                'success' => true,
-                'data' => [
-                    [
-                        'customer_phone' => '6281341770730',
-                        'content' => "Verifikasi WhatsApp SPPD Kendari:\n📱 *Nomor:* 081341770730\n🔑 *Kode:* {$token}",
-                        'direction' => 'inbound',
-                    ]
-                ]
-            ], 200),
-            'https://api-prod.kirim.chat/api/v1/public/messages/send' => Http::response(['success' => true], 200),
-        ]);
-
-        $response = $this->getJson(route('master.users.check-verification', ['token' => $token]));
-
-        $response->assertStatus(200);
-        $response->assertJson(['verified' => true, 'phone' => '081341770730']);
-
-        Http::assertSent(function ($request) {
-            return $request->url() === 'https://api-prod.kirim.chat/api/v1/public/messages/send' &&
-                $request['phone_number'] === '6281341770730' &&
-                str_contains($request['content'], 'VERIFIKASI BERHASIL');
-        });
-
-        // Verification token should be cleared from cache
-        $this->assertNull(\Illuminate\Support\Facades\Cache::get("wa_verification:{$token}"));
-        // Verification status should be stored in cache
-        $status = \Illuminate\Support\Facades\Cache::get("wa_verified_status:{$token}");
-        $this->assertNotNull($status);
-        $this->assertTrue($status['verified']);
-    }
 
     public function test_kirim_chat_webhook_verifies_successfully_with_actual_payload(): void
     {
-        Http::fake([
-            'https://api-prod.kirim.chat/api/v1/public/messages/send' => Http::response(['success' => true], 200),
-        ]);
+        Queue::fake();
 
         $token = 'V-54321';
         \Illuminate\Support\Facades\Cache::put("wa_verification:{$token}", [
@@ -314,9 +267,9 @@ class KirimChatNotificationTest extends TestCase
         $this->assertTrue($status['verified']);
         $this->assertEquals('081341770730', $status['phone']);
 
-        Http::assertSent(function ($request) {
-            return $request['phone_number'] === '6281341770730' &&
-                str_contains($request['content'], 'VERIFIKASI BERHASIL');
+        Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
+            return $job->phone === '6281341770730' &&
+                str_contains($job->message, 'VERIFIKASI BERHASIL');
         });
     }
 }

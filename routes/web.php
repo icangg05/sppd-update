@@ -102,9 +102,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::patch('/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('users.toggle');
-        Route::post('/users/test-wa', [UserController::class, 'testWhatsApp'])->name('users.test-wa');
-        Route::post('/users/{user}/reset-phone', [UserController::class, 'resetPhone'])->name('users.reset-phone');
-        Route::get('/users/check-verification/{token}', [UserController::class, 'checkVerification'])->name('users.check-verification');
 
         // Departments / Instansi / OPD
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
