@@ -87,23 +87,25 @@
 							diatur</p>
 					@endif
 				</div>
-				<form action="{{ route('sppd.update-pptk', $sppd) }}" method="POST" class="flex items-center gap-2">
-					@csrf @method('PUT')
-					<select name="pptk_id"
-						class="rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-						required>
-						<option value="">-- Pilih PPTK --</option>
-						@foreach ($pptkCandidates as $candidate)
-							<option value="{{ $candidate->id }}" {{ $sppd->pptk_id == $candidate->id ? 'selected' : '' }}>
-								{{ $candidate->name }} {{ $candidate->nip ? '(' . $candidate->nip . ')' : '' }}
-							</option>
-						@endforeach
-					</select>
-					<button type="submit"
-						class="rounded bg-slate-800 px-4 py-1.5 text-sm font-bold text-white hover:bg-slate-900 transition cursor-pointer">
-						<i class="fa-solid fa-floppy-disk mr-1"></i> Simpan
-					</button>
-				</form>
+				@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+					<form action="{{ route('sppd.update-pptk', $sppd) }}" method="POST" class="flex items-center gap-2">
+						@csrf @method('PUT')
+						<select name="pptk_id"
+							class="rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+							required>
+							<option value="">-- Pilih PPTK --</option>
+							@foreach ($pptkCandidates as $candidate)
+								<option value="{{ $candidate->id }}" {{ $sppd->pptk_id == $candidate->id ? 'selected' : '' }}>
+									{{ $candidate->name }} {{ $candidate->nip ? '(' . $candidate->nip . ')' : '' }}
+								</option>
+							@endforeach
+						</select>
+						<button type="submit"
+							class="rounded bg-slate-800 px-4 py-1.5 text-sm font-bold text-white hover:bg-slate-900 transition cursor-pointer">
+							<i class="fa-solid fa-floppy-disk mr-1"></i> Simpan
+						</button>
+					</form>
+				@endif
 			</div>
 		</div>
 
@@ -135,6 +137,7 @@
 				</div>
 			</div>
 			{{-- Kanan: Tombol Input Sekaligus --}}
+			@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 			<div>
 				<button type="button" @click="showBulkModal = true"
 					class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
@@ -142,6 +145,7 @@
 					Input Sekaligus
 				</button>
 			</div>
+			@endif
 		</div>
 
 		{{-- Table Section --}}
@@ -194,6 +198,7 @@
 												<span class="text-[10px] text-slate-400 font-mono">| Rp
 													{{ number_format($expense->amount, 0, ',', '.') }}</span>
 											</div>
+											@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 											<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 												<button type="button"
 													@click="openEditModal('{{ $expense->id }}', {{ json_encode($expense->description) }}, '{{ $expense->amount }}')"
@@ -208,6 +213,7 @@
 													</button>
 												</form>
 											</div>
+											@endif
 										</div>
 									@empty
 										<span class="text-slate-400 italic text-[11px] pl-1">Belum ada data pengeluaran</span>
@@ -221,11 +227,13 @@
 							</td>
 							<td class="py-3 px-4 text-right">
 								<div class="flex items-center justify-end gap-1.5">
+									@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 									<button type="button"
 										@click="openAddModal('{{ $person['id'] }}', {{ json_encode($person['name']) }})"
 										class="inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer hover:scale-[1.03] active:scale-[0.97]">
 										<i class="fa-solid fa-plus text-[8px]"></i> Tambah
 									</button>
+									@endif
 									@if ($expenses->count() > 0)
 										<a
 											:href="'{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' +

@@ -70,6 +70,7 @@
 						class="w-full rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm" />
 				</div>
 			</div>
+			@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 			<div class="flex items-center gap-2">
 				<button type="button" @click="showBulkModal = true"
 					class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm">
@@ -77,6 +78,7 @@
 					Input Panjar Massal
 				</button>
 			</div>
+			@endif
 		</div>
 
 		{{-- Daftar Personel (Bulk Form) --}}
@@ -119,6 +121,7 @@
 								<td class="py-3 px-4">
 									<div class="flex flex-col gap-1">
 										<input type="number" name="amounts[{{ $person['id'] }}]" x-model="amounts['{{ $person['id'] }}']"
+											{{ !auth()->user()->hasAnyRole(['admin_opd', 'super_admin']) ? 'disabled bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : '' }}
 											class="w-full max-w-[180px] rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
 											placeholder="Input Nominal Panjar">
 										@if ($receipt && $receipt->amount > 0)
@@ -160,6 +163,7 @@
 				</table>
 			</div>
 
+			@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 			<div class="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
 				<span class="text-[11px] text-slate-500 font-medium">
 					<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>
@@ -170,6 +174,7 @@
 					<i class="fa-solid fa-floppy-disk"></i> Simpan Semua Panjar
 				</button>
 			</div>
+			@endif
 		</form>
 
 		<div class="flex items-start gap-4 rounded-lg border border-cyan-200 bg-cyan-50 p-4 shadow-sm">

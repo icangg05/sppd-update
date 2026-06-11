@@ -14,7 +14,7 @@
 
 		<div class="flex flex-wrap items-center gap-2.5">
 			{{-- Tombol Batalkan Pengajuan --}}
-			@if ($sppd->status->value === 'in_progress' && (auth()->id() === $sppd->creator_id || auth()->id() === $sppd->user_id))
+			@if ($sppd->status->value === 'in_progress' && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 				<form action="{{ route('sppd.destroy', $sppd) }}" method="POST"
 					onsubmit="return confirm('Batalkan dan hapus pengajuan SPPD ini secara permanen?')">
 					@csrf
@@ -29,8 +29,9 @@
 			{{-- Tombol Portal Selanjutnya --}}
 			@if (in_array($sppd->status->value, ['approved', 'completed']))
 				<a href="{{ route('sppd.next', $sppd) }}" wire:navigate
-					class="inline-flex items-center gap-1.5 rounded bg-amber-500 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600">
-					<i class="fa-solid fa-share-from-square"></i> Portal Selanjutnya
+					class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-cyan-700">
+					<span>Selanjutnya</span>
+					<i class="fa-solid fa-arrow-right text-[10px]"></i>
 				</a>
 			@endif
 
@@ -193,49 +194,7 @@
 				</div>
 			@endif
 
-			{{-- 4. Rincian Biaya --}}
-			@if ($sppd->costDetails->count())
-				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-file-invoice-dollar text-cyan-600"></i> Rincian Biaya Anggaran
-						</h3>
-					</div>
-					<div class="overflow-x-auto">
-						<table class="w-full text-left text-sm text-slate-600">
-							<thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
-								<tr>
-									<th class="px-5 py-3">Uraian / Deskripsi</th>
-									<th class="px-5 py-3 text-right">Biaya Satuan</th>
-									<th class="px-5 py-3 text-center">Qty</th>
-									<th class="px-5 py-3 text-right">Subtotal</th>
-								</tr>
-							</thead>
-							<tbody class="divide-y divide-slate-100">
-								@php $total = 0; @endphp
-								@foreach ($sppd->costDetails as $c)
-									@php
-										$sub = $c->unit_cost * $c->quantity;
-										$total += $sub;
-									@endphp
-									<tr class="hover:bg-slate-50 transition-colors">
-										<td class="px-5 py-3 font-medium text-slate-800">{{ $c->description }}</td>
-										<td class="px-5 py-3 text-right">Rp {{ number_format($c->unit_cost, 0, ',', '.') }}</td>
-										<td class="px-5 py-3 text-center bg-slate-50/50">{{ $c->quantity }}</td>
-										<td class="px-5 py-3 text-right font-bold text-slate-800">Rp {{ number_format($sub, 0, ',', '.') }}</td>
-									</tr>
-								@endforeach
-								<tr class="bg-cyan-50/50 border-t-2 border-slate-200">
-									<td colspan="3" class="px-5 py-3 text-right font-bold text-slate-700 uppercase tracking-wider text-xs">
-										Total
-										Anggaran</td>
-									<td class="px-5 py-3 text-right font-bold text-cyan-700">Rp {{ number_format($total, 0, ',', '.') }}</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			@endif
+
 		</div>
 
 		{{-- Kolom Kanan: Timeline & Aksi --}}

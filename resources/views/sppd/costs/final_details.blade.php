@@ -118,6 +118,7 @@
                 </div>
             </div>
             {{-- Kanan: Tombol Input Sekaligus --}}
+            @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
             <div>
                 <button type="button" @click="showBulkModal = true"
                     class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
@@ -125,6 +126,7 @@
                     Input Sekaligus
                 </button>
             </div>
+            @endif
         </div>
 
         {{-- Table Section --}}
@@ -197,6 +199,7 @@
                                                         <i class="fa-solid fa-image text-[10px]"></i>
                                                     </a>
                                                 @endif
+                                                @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
                                                 <button type="button" @click='openEdit(@json($cost))'
                                                     class="text-amber-600 hover:text-amber-800 p-0.5 cursor-pointer"
                                                     title="Edit">
@@ -211,6 +214,7 @@
                                                         <i class="fa-solid fa-trash text-[10px]"></i>
                                                     </button>
                                                 </form>
+                                                @endif
                                             </div>
                                         </div>
                                     @empty
@@ -226,11 +230,13 @@
                             </td>
                             <td class="py-3 px-4 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
+                                    @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
                                     <button type="button"
                                         @click="openAdd('{{ $person['id'] }}', {{ json_encode($person['name']) }})"
                                         class="inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer hover:scale-[1.03] active:scale-[0.97]">
                                         <i class="fa-solid fa-plus text-[8px]"></i> Tambah
                                     </button>
+                                    @endif
                                     @if ($costs->count() > 0)
                                         <a
                                             :href="'{{ route('sppd.stream.rincian-biaya', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' +

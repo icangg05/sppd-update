@@ -26,7 +26,7 @@ class SppdCreate extends Component
 
   public function mount(): void
   {
-    // No-op, users retrieved directly in render/computed properties
+    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat membuat SPPD.');
   }
 
   public function updatedUserId(): void

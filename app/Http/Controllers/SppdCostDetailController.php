@@ -12,6 +12,9 @@ class SppdCostDetailController extends Controller
 {
     public function store(Request $request, SppdRequest $sppd)
     {
+        abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
         if ($request->has('user_ids')) {
             $validated = $request->validate([
                 'user_ids' => 'required|array',
@@ -58,6 +61,9 @@ class SppdCostDetailController extends Controller
 
     public function update(Request $request, SppdRequest $sppd, SppdCostDetail $cost)
     {
+        abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
         $validated = $request->validate([
             'cost_category' => 'required|in:'.implode(',', array_column(CostCategory::cases(), 'value')),
             'description' => 'required|string|max:500',
@@ -84,6 +90,9 @@ class SppdCostDetailController extends Controller
 
     public function destroy(SppdRequest $sppd, SppdCostDetail $cost)
     {
+        abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
         if ($cost->receipt_photo) {
             Storage::disk('public')->delete($cost->receipt_photo);
         }

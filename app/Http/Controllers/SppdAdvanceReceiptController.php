@@ -13,6 +13,9 @@ class SppdAdvanceReceiptController extends Controller
    */
   public function storeOrUpdate(Request $request, SppdRequest $sppd)
   {
+    abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     if ($request->has('amounts')) {
       $validated = $request->validate([
         'amounts' => 'required|array',

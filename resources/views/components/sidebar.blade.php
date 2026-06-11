@@ -47,14 +47,14 @@
 
 			<div id="sppd-menu" x-show="open" x-collapse class="space-y-1 py-1 pl-8 pr-1">
 				<a href="{{ route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate
-					class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.*') && !request()->routeIs('sppd.calendar') && request('filter') !== 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.*') && !request()->routeIs('sppd.calendar') && request('filter') !== 'approval' && request('from') !== 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 					<span class="size-1 rounded-sm bg-current"></span>
 					Daftar SPPD
 				</a>
 
 				@can('sppd.approve')
 					<a href="{{ route('sppd.index', ['filter' => 'approval']) }}" wire:navigate
-						class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' || request('from') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 						<span class="size-1 rounded-sm bg-current"></span>
 						<span class="flex-1">Persetujuan</span>
 						<livewire:pending-approval-badge />

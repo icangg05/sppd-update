@@ -451,6 +451,8 @@ class SppdController extends Controller
    */
   public function next(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user', 'followers.user']);
 
     return view('sppd.next', compact('sppd'));
@@ -461,6 +463,8 @@ class SppdController extends Controller
    */
   public function manageSppd(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user', 'followers.user']);
 
     return view('sppd.manage_sppd', compact('sppd'));
@@ -471,6 +475,8 @@ class SppdController extends Controller
    */
   public function manageSpt(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user']);
 
     return view('sppd.manage_spt', compact('sppd'));
@@ -481,6 +487,8 @@ class SppdController extends Controller
    */
   public function receipts(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
 
     // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan (dengan fallback ke induk jika di sub-unit)
@@ -508,6 +516,8 @@ class SppdController extends Controller
    */
   public function actualExpenses(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
 
     // Kandidat PPTK: pegawai di OPD yang sama (termasuk sub-unit)
@@ -532,6 +542,9 @@ class SppdController extends Controller
    */
   public function updatePptk(SppdRequest $sppd, Request $request)
   {
+    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $request->validate([
       'pptk_id' => 'required|exists:users,id',
     ]);
@@ -546,6 +559,8 @@ class SppdController extends Controller
    */
   public function finalCosts(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
 
     // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan
@@ -562,6 +577,8 @@ class SppdController extends Controller
    */
   public function reportInput(SppdRequest $sppd)
   {
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $sppd->load(['user', 'report']);
 
     return view('sppd.report_input', compact('sppd'));
@@ -572,6 +589,9 @@ class SppdController extends Controller
    */
   public function storeReport(Request $request, SppdRequest $sppd)
   {
+    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
+
     $hasReportFile = $sppd->report?->report_file;
     $hasDocFile = $sppd->report?->documentation_file;
 
@@ -826,8 +846,8 @@ class SppdController extends Controller
 
   public function destroy(SppdRequest $sppd)
   {
-    $isOwner = Auth::id() === $sppd->creator_id || Auth::id() === $sppd->user_id;
-    if (! $isOwner) {
+    $isAdmin = Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
+    if (! $isAdmin) {
       return back()->with('error', 'Anda tidak memiliki akses untuk menghapus SPPD ini.');
     }
 

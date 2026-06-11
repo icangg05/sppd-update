@@ -59,6 +59,8 @@ class SppdCreateDetails extends Component
 
   public function mount(): void
   {
+    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat mengisi detail SPPD.');
+
     $this->user_id = (int) request('user_id');
     $this->domain = request('domain', 'dalam_daerah');
 

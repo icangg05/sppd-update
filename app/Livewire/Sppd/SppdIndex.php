@@ -156,7 +156,7 @@ class SppdIndex extends Component
   {
     $sppd = SppdRequest::findOrFail($id);
 
-    if ($sppd->status->value === 'in_progress' && (Auth::id() === $sppd->creator_id || Auth::id() === $sppd->user_id)) {
+    if ($sppd->status->value === 'in_progress' && Auth::user()->hasAnyRole(['admin_opd', 'super_admin'])) {
       $sppd->delete();
       session()->flash('success', 'Pengajuan SPPD berhasil dibatalkan dan dihapus.');
     } else {
@@ -238,6 +238,8 @@ class SppdIndex extends Component
 
   public function startSppdLanjutan(int $sppdId): void
   {
+    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+
     $this->errorMessage = null;
     $this->simulatedSteps = [];
     $this->showWorkflowModal = false;

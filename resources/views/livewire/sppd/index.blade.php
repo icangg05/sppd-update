@@ -138,7 +138,7 @@
 					@endif
 				</div>
 
-				@can('sppd.create')
+				@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
 						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
 						<x-slot name="icon">
@@ -146,7 +146,7 @@
 						</x-slot>
 						Buat SPPD
 					</x-ui.button>
-				@endcan
+				@endif
 			</div>
 		@endif
 	</div>
@@ -364,7 +364,7 @@
 										<i class="fa-solid fa-arrow-right text-[10px]"></i>
 									</a>
 
-									@can('sppd.create')
+									@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 										@if ($allGreen)
 											<button
 												type="button"
@@ -376,10 +376,10 @@
 												<span>SPPD Lanjutan</span>
 											</button>
 										@endif
-									@endcan
+									@endif
 								@endif
 
-								@if ($sppd->status->value === 'in_progress' && (auth()->id() === $sppd->creator_id || auth()->id() === $sppd->user_id))
+								@if ($sppd->status->value === 'in_progress' && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 									<button
 										type="button"
 										wire:click="deleteSppd({{ $sppd->id }})"
