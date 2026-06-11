@@ -75,7 +75,7 @@ class UserForm extends Component
         $this->verificationToken = $token;
         // Hanya memulihkan phone jika saat ini kosong agar input user tidak tertimpa tanpa alasan
         if (empty($this->phone)) {
-            $this->phone = $cached['phone'];
+          $this->phone = $cached['phone'];
         }
         $this->isPolling = true;
       } else {
@@ -218,7 +218,7 @@ class UserForm extends Component
     $this->isVerified = false;
     $this->isPolling = false;
     session()->forget('wa_verification_token');
-    
+
     if ($this->isEdit && $this->user) {
       $this->user->update([
         'phone' => null,

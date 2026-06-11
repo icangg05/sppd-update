@@ -36,13 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd', SppdIndex::class)->name('sppd.index');
     Route::get('/sppd/create', SppdCreate::class)->name('sppd.create');
     Route::get('/sppd/create/details', SppdCreateDetails::class)->name('sppd.create.details');
-    Route::post('/sppd', [SppdController::class, 'store'])->name('sppd.store');
     Route::get('/sppd/calendar', SppdCalendar::class)->name('sppd.calendar');
     Route::get('/sppd/{sppd}', SppdShow::class)->name('sppd.show');
-    Route::post('/sppd/{sppd}/submit', [SppdController::class, 'submit'])->name('sppd.submit');
-    Route::post('/sppd/{sppd}/approve', [SppdController::class, 'approve'])->name('sppd.approve');
-    Route::post('/sppd/{sppd}/reject', [SppdController::class, 'reject'])->name('sppd.reject');
-    Route::post('/sppd/{sppd}/revision', [SppdController::class, 'revision'])->name('sppd.revision');
     Route::delete('/sppd/{sppd}', [SppdController::class, 'destroy'])->name('sppd.destroy');
 
     // Legacy Workflow Portal

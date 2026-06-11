@@ -235,9 +235,7 @@
 				{{-- Template pesan --}}
 				<div>
 					<p class="text-xs font-semibold text-slate-600 mb-1.5">Pesan Verifikasi:</p>
-					<div
-						class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">
-						{{ $verificationTemplate }}</div>
+					<div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">{{ $verificationTemplate }}</div>
 				</div>
 
 				{{-- Status Polling: 3 states --}}

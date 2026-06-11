@@ -273,7 +273,7 @@ class SppdCreateDetails extends Component
     // Replicating SppdController's notifyApprover logic
     try {
       $approver = $approval->approver;
-      if ($approver && $approver->phone) {
+      if ($approver && $approver->phone && $approver->phone_verified) {
         $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
         $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
         $detailUrl = route('sppd.show', $sppd);

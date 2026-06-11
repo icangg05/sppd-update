@@ -53,11 +53,11 @@
                 <input type="date" name="report_date" value="{{ $sppd->report?->report_date?->format('Y-m-d') ?? now()->format('Y-m-d') }}" required class="w-full sm:w-64 rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm">
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                 <div>
-                    <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">File Laporan (Dokumen)</label>
-                    <input type="file" name="report_file" accept=".pdf,.doc,.docx" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
-                    <p class="text-[10px] text-slate-400 mt-1">Format: PDF, DOC, DOCX (Maks. 20MB). Opsional.</p>
+                    <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">File Laporan (Dokumen) <span class="text-rose-500">*</span></label>
+                    <input type="file" name="report_file" accept=".pdf,.doc,.docx" {{ !$sppd->report?->report_file ? 'required' : '' }} class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
+                    <p class="text-[10px] text-slate-400 mt-1">Format: PDF, DOC, DOCX (Maks. 20MB). Wajib diisi.</p>
                     @if($sppd->report?->report_file)
                         <div class="mt-2 flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 border border-emerald-200">
@@ -71,9 +71,9 @@
                 </div>
 
                 <div>
-                    <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Foto Dokumentasi</label>
-                    <input type="file" name="documentation_file" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
-                    <p class="text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Maks. 20MB). Opsional.</p>
+                    <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Foto Dokumentasi <span class="text-rose-500">*</span></label>
+                    <input type="file" name="documentation_file" accept="image/*" {{ !$sppd->report?->documentation_file ? 'required' : '' }} class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
+                    <p class="text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Maks. 20MB). Wajib diisi.</p>
                     @if($sppd->report?->documentation_file)
                         <div class="mt-2 flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700 border border-emerald-200">

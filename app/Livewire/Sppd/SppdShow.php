@@ -354,7 +354,7 @@ class SppdShow extends Component
   {
     try {
       $recipient = $sppd->creator ?? $sppd->user;
-      if ($recipient && $recipient->phone) {
+      if ($recipient && $recipient->phone && $recipient->phone_verified) {
         $purpose      = $sppd->purpose;
         $detailUrl    = route('sppd.show', $sppd);
         $actorName    = $actor?->name ?? 'Pejabat';
@@ -372,12 +372,12 @@ class SppdShow extends Component
           }
         } elseif ($action === 'rejected') {
           $statusTitle = '❌ *STATUS: DOKUMEN DITOLAK*';
-          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
+          $body        = "\nPengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* telah *DITOLAK* oleh *{$actorName}*.\n\n"
             . "• *Pelaksana:* {$travelerName}\n"
             . '• *Alasan Penolakan:* ' . ($notes ?? 'Tidak ada catatan khusus.');
         } elseif ($action === 'revision') {
           $statusTitle = '⚠️ *STATUS: DOKUMEN PERLU REVISI*';
-          $body        = "Pengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
+          $body        = "\nPengajuan SPPD Anda untuk perjalanan *\"{$purpose}\"* memerlukan *REVISI* oleh *{$actorName}*.\n\n"
             . "• *Pelaksana:* {$travelerName}\n"
             . '• *Catatan Revisi:* ' . ($notes ?? 'Harap tinjau kembali data pengajuan Anda.');
         }
@@ -401,7 +401,7 @@ class SppdShow extends Component
   {
     try {
       $approver = $approval->approver;
-      if ($approver && $approver->phone) {
+      if ($approver && $approver->phone && $approver->phone_verified) {
         $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
         $endDate   = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
         $detailUrl = route('sppd.show', $sppd);
