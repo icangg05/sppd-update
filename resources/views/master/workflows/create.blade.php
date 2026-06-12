@@ -168,8 +168,9 @@
 
 {{-- Script Pengendali Operasi Baris dengan Drag & Drop --}}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
   const container = document.getElementById('steps-container');
+  if (!container) return;
   const addBtn = document.getElementById('add-step-btn');
   const template = document.getElementById('step-template').innerHTML;
 
@@ -305,6 +306,6 @@ document.addEventListener('DOMContentLoaded', function() {
       item.querySelector('.signs-sppd-checkbox').name = `steps[${index}][signs_sppd]`;
     });
   }
-});
+})();
 </script>
 @endsection

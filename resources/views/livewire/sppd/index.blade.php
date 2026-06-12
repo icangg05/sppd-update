@@ -1,29 +1,34 @@
 <div class="flex flex-col gap-4 p-1">
 
 	@if ($errorMessage)
-		<div class="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800 shadow-sm transition-all duration-300">
+		<div
+			class="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800 shadow-sm transition-all duration-300">
 			<div class="flex items-start gap-2 flex-1">
 				<i class="fa-solid fa-triangle-exclamation text-red-600 text-sm shrink-0 mt-0.5"></i>
 				<span class="font-medium leading-relaxed">
 					{{ $errorMessage }}
 					@if (!empty($simulatedSteps))
-						<button type="button" wire:click="$set('showWorkflowModal', true)" class="font-bold text-red-700 hover:text-red-950 underline cursor-pointer ml-1">
+						<button type="button" wire:click="$set('showWorkflowModal', true)"
+							class="font-bold text-red-700 hover:text-red-950 underline cursor-pointer ml-1">
 							Cek Detail Alur Pejabat
 						</button>
 					@endif
 				</span>
 			</div>
-			<button type="button" wire:click="$set('errorMessage', null)" class="text-red-400 hover:text-red-600 shrink-0 cursor-pointer">
+			<button type="button" wire:click="$set('errorMessage', null)"
+				class="text-red-400 hover:text-red-600 shrink-0 cursor-pointer">
 				<i class="fa-solid fa-xmark text-sm"></i>
 			</button>
 		</div>
 	@endif
 
 	{{-- Modal Detail Alur Pejabat --}}
-	<x-ui.modal show="$wire.showWorkflowModal" :closeable="true" title="Detail Alur Pejabat Penandatangan" icon="fa-solid fa-route text-cyan-600">
+	<x-ui.modal show="$wire.showWorkflowModal" :closeable="true" title="Detail Alur Pejabat Penandatangan"
+		icon="fa-solid fa-route text-cyan-600">
 		@if (!empty($simulatedSteps))
 			<div class="space-y-4">
-				<p class="text-xs text-slate-500">Berikut adalah daftar alur persetujuan pejabat struktural untuk perjalanan dinas ini. Pastikan semua pejabat sudah ditentukan di unit kerja terkait.</p>
+				<p class="text-xs text-slate-500">Berikut adalah daftar alur persetujuan pejabat struktural untuk perjalanan dinas
+					ini. Pastikan semua pejabat sudah ditentukan di unit kerja terkait.</p>
 
 				<div class="flow-root my-2 px-1">
 					<ul role="list" class="-mb-8">
@@ -35,7 +40,8 @@
 									@endif
 									<div class="relative flex space-x-3">
 										<div>
-											<span class="flex size-8 items-center justify-center rounded-full ring-8 ring-white {{ $step['status'] === 'found' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600' }}">
+											<span
+												class="flex size-8 items-center justify-center rounded-full ring-8 ring-white {{ $step['status'] === 'found' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600' }}">
 												@if ($step['status'] === 'found')
 													<i class="fa-solid fa-check text-xs"></i>
 												@else
@@ -49,16 +55,19 @@
 													{{ $step['role_label'] }}
 												</p>
 												<p class="text-xs text-slate-500 mt-0.5">
-													Nama: <span class="{{ $step['status'] === 'found' ? 'font-medium text-slate-700' : 'font-bold text-rose-600' }}">{{ $step['approver_name'] }}</span>
+													Nama: <span
+														class="{{ $step['status'] === 'found' ? 'font-medium text-slate-700' : 'font-bold text-rose-600' }}">{{ $step['approver_name'] }}</span>
 												</p>
 											</div>
 											<div class="whitespace-nowrap text-right text-[10px]">
 												@if ($step['status'] === 'found')
-													<span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+													<span
+														class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
 														Aktif
 													</span>
 												@else
-													<span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+													<span
+														class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
 														Belum Diatur
 													</span>
 												@endif
@@ -138,7 +147,7 @@
 					@endif
 				</div>
 
-				@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
 						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
 						<x-slot name="icon">
@@ -167,7 +176,7 @@
 						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
 						<option value="">Semua Status</option>
 						@foreach ($statuses as $st)
-							<option value="{{ $st->value }}">{{ $st->label() }}</option>
+							<option value="{{ $st->value }}">{{ \App\Helpers\SmartTitle::convert($st->label()) }}</option>
 						@endforeach
 					</select>
 				</div>
@@ -183,7 +192,10 @@
 			@endif
 
 			<div class="flex items-center gap-2 shrink-0">
-				@if ($isApprovalMode ? $search !== '' : ($search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== ''))
+				@if (
+					$isApprovalMode
+						? $search !== ''
+						: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '')
 					<button type="button" wire:click="resetFilters"
 						class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 						<i class="fa-solid fa-rotate-left text-xs text-slate-400"></i>
@@ -248,7 +260,11 @@
 						if (in_array($sppd->status->value, ['approved', 'completed'])) {
 						    $isPastEndDate = today()->greaterThan($sppd->end_date);
 						    $isRealized = $sppd->actualExpenses->isNotEmpty() && $sppd->costDetails->isNotEmpty();
-						    $isReported = $sppd->report && $sppd->report->report_date && $sppd->report->report_file && $sppd->report->documentation_file;
+						    $isReported =
+						        $sppd->report &&
+						        $sppd->report->report_date &&
+						        $sppd->report->report_file &&
+						        $sppd->report->documentation_file;
 
 						    $allGreen = $isPastEndDate && $isRealized && $isReported;
 						}
@@ -309,31 +325,37 @@
 						<td class="whitespace-nowrap">
 							@if (in_array($sppd->status->value, ['approved', 'completed']))
 								@if (today()->lessThanOrEqualTo($sppd->end_date))
-									<span class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide">
+									<span
+										class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide">
 										Perjalanan Disetujui
 									</span>
 								@else
 									<div class="flex flex-col gap-1 w-[180px]">
-										<span class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center whitespace-normal leading-tight">
-											Perjalanan Selesai Dan Masukkan Laporan
+										<span
+											class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center whitespace-normal leading-tight">
+											Perjalanan Selesai dan Masukkan Laporan
 										</span>
-										
+
 										@if ($sppd->actualExpenses->isNotEmpty() && $sppd->costDetails->isNotEmpty())
-											<span class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
+											<span
+												class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
 												Sudah Realisasi
 											</span>
 										@else
-											<span class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
+											<span
+												class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
 												Belum Realisasi
 											</span>
 										@endif
 
 										@if ($sppd->report && $sppd->report->report_date && $sppd->report->report_file && $sppd->report->documentation_file)
-											<span class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
+											<span
+												class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
 												Sudah Upload Laporan
 											</span>
 										@else
-											<span class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
+											<span
+												class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
 												Belum Upload Laporan
 											</span>
 										@endif
@@ -342,7 +364,7 @@
 							@else
 								<span
 									class="inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wide {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
-									{{ ucwords(strtolower($statusBadge['label'])) }}
+									{{ \App\Helpers\SmartTitle::convert($statusBadge['label']) }}
 								</span>
 							@endif
 						</td>
@@ -350,11 +372,22 @@
 						<td class="whitespace-nowrap">
 							<div class="flex flex-col gap-1 w-[115px]">
 								<a
-									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}" wire:navigate
+									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}"
+									wire:navigate
 									class="inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
 									<i class="fa-solid fa-eye text-[10px] text-slate-500"></i>
 									<span>Lihat</span>
 								</a>
+
+								@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+									<a
+										href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}"
+										wire:navigate
+										class="inline-flex items-center justify-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
+										<i class="fa-solid fa-pen-to-square text-[10px] text-amber-600"></i>
+										<span>Edit Perbaikan</span>
+									</a>
+								@endif
 
 								@if (in_array($sppd->status->value, ['approved', 'completed']))
 									<a
@@ -364,22 +397,26 @@
 										<i class="fa-solid fa-arrow-right text-[10px]"></i>
 									</a>
 
-									@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+									@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 										@if ($allGreen)
 											<button
 												type="button"
 												wire:click="startSppdLanjutan({{ $sppd->id }})"
 												wire:loading.attr="disabled"
 												class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-												<i class="fa-solid fa-plus text-[10px]" wire:loading.remove wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
-												<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
+												<i class="fa-solid fa-plus text-[10px]" wire:loading.remove
+													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
+												<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading
+													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
 												<span>SPPD Lanjutan</span>
 											</button>
 										@endif
 									@endif
 								@endif
 
-								@if ($sppd->status->value === 'in_progress' && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+								@if (
+									$sppd->status->value === 'in_progress' &&
+										auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 									<button
 										type="button"
 										wire:click="deleteSppd({{ $sppd->id }})"

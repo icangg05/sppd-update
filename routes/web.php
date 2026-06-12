@@ -10,6 +10,7 @@ use App\Http\Controllers\SppdController;
 use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\SppdWorkflowController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KirimChatWebhookController;
 use App\Livewire\Sppd\SppdCalendar;
@@ -116,8 +117,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
         Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
 
-        // Workflows SPPD
+        // Workflows SPPD (hanya super_admin)
         Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
+
+        // Roles & Permissions (hanya super_admin)
+        // create/edit ditangani oleh Livewire RoleForm component
+        Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::get('/roles/create', fn () => view('master.roles.create'))->name('roles.create');
+        Route::get('/roles/{role}/edit', fn (\Spatie\Permission\Models\Role $role) => view('master.roles.edit', compact('role')))->name('roles.edit');
+        Route::delete('/roles/{role}', [RolePermissionController::class, 'destroy'])->name('roles.destroy');
     });
 
     // API

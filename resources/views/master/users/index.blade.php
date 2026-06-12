@@ -182,21 +182,21 @@
 										</form>
 
 										{{-- View --}}
-										<a wire:navigate href="{{ route('master.users.show', $user->id) }}"
+										<a wire:navigate href="{{ route('master.users.show', $user) }}"
 											class="rounded p-1.5 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
 											title="Detail Pegawai">
 											<i class="fa-solid fa-eye"></i>
 										</a>
 
 										{{-- Edit --}}
-										<a wire:navigate href="{{ route('master.users.edit', $user->id) }}"
+										<a wire:navigate href="{{ route('master.users.edit', $user) }}"
 											class="rounded p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
 											title="Edit Data">
 											<i class="fa-solid fa-pen-to-square"></i>
 										</a>
 
 										{{-- Delete --}}
-										<form action="{{ route('master.users.destroy', $user->id) }}" method="POST" class="inline"
+										<form action="{{ route('master.users.destroy', $user) }}" method="POST" class="inline"
 											onsubmit="return confirm('Yakin ingin menghapus pegawai ini secara permanen?')">
 											@csrf @method('DELETE')
 											<button type="submit"

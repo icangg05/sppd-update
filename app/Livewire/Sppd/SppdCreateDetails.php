@@ -25,6 +25,7 @@ class SppdCreateDetails extends Component
   // Route inputs
   public int $user_id;
   public string $domain;
+  public ?int $sppd_id = null;
 
   // Form inputs
   public ?int $budget_id = null;
@@ -61,32 +62,94 @@ class SppdCreateDetails extends Component
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat mengisi detail SPPD.');
 
-    $this->user_id = (int) request('user_id');
-    $this->domain = request('domain', 'dalam_daerah');
+    $sppdId = request('sppd_id') ? (int) request('sppd_id') : null;
 
-    $this->start_date = date('Y-m-d');
-    $this->end_date = date('Y-m-d');
+    if ($sppdId) {
+      $sppd = SppdRequest::with(['destinations', 'followers', 'user.department'])->findOrFail($sppdId);
+      $this->sppd_id = $sppd->id;
+      $this->user_id = $sppd->user_id;
+      $this->domain = $sppd->domain->value;
 
-    $user = User::with('department')->find($this->user_id);
-    if (! $user) {
-      redirect()->route('sppd.create')->with('error', 'Pegawai tidak ditemukan.');
-      return;
+      $this->budget_id = $sppd->budget_id;
+      $this->category_id = $sppd->category_id;
+      $this->purpose = $sppd->purpose;
+      $this->problem = $sppd->problem ?? '';
+      $this->facts = $sppd->facts ?? '';
+      $this->analysis = $sppd->analysis ?? '';
+      $this->start_date = $sppd->start_date->format('Y-m-d');
+      $this->end_date = $sppd->end_date->format('Y-m-d');
+      $this->transport_type = $sppd->transport_type ?? '';
+      $this->transport_name = $sppd->transport_name ?? '';
+      $this->departure_place = $sppd->departure_place ?? '';
+      $this->urgency = $sppd->urgency ?? 'Biasa';
+      $this->spt_date = $sppd->spt_date ? $sppd->spt_date->format('Y-m-d') : '';
+      $this->sppd_date = $sppd->sppd_date ? $sppd->sppd_date->format('Y-m-d') : '';
+      $this->document_number = $sppd->document_number;
+
+      $this->followers = $sppd->followers->pluck('user_id')->toArray();
+      $this->follower_positions = $sppd->followers->pluck('travel_position', 'user_id')->toArray();
+
+      $this->destinations = [];
+      foreach ($sppd->destinations as $dest) {
+        if ($this->domain === 'dalam_daerah') {
+          $this->destinations[] = [
+            'province_id' => $dest->province_id,
+            'regency_id' => $dest->regency_id,
+            'address' => '',
+            'address_only' => $dest->address,
+          ];
+        } else {
+          $this->destinations[] = [
+            'province_id' => $dest->province_id,
+            'regency_id' => $dest->regency_id,
+            'address' => $dest->address,
+            'address_only' => '',
+          ];
+        }
+      }
+
+      $user = $sppd->user;
+    } else {
+      $this->user_id = (int) request('user_id');
+      $this->domain = request('domain', 'dalam_daerah');
+
+      $this->start_date = date('Y-m-d');
+      $this->end_date = date('Y-m-d');
+
+      $user = User::with('department')->find($this->user_id);
+      if (! $user) {
+        redirect()->route('sppd.create')->with('error', 'Pegawai tidak ditemukan.');
+        return;
+      }
+
+      $isInspektorat = str_contains(strtolower($user->department?->name ?? ''), 'inspektorat');
+      if ($isInspektorat) {
+        $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
+      }
+
+      $seSultra = Province::where('name', 'Sulawesi Tenggara')->first();
+      $this->destinations = [
+        [
+          'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
+          'regency_id' => '',
+          'address' => '',
+          'address_only' => '',
+        ]
+      ];
     }
 
-    $isInspektorat = str_contains(strtolower($user->department?->name ?? ''), 'inspektorat');
-    if ($isInspektorat) {
-      $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
+    // Security check in mount
+    if (! Auth::user()->hasRole('super_admin')) {
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $allowedIds = $dept->getAllRelatedIds();
+        if (! $allowedIds->contains($user->department_id)) {
+          abort(403, 'Unauthorized action.');
+        }
+      } elseif ($user->department_id !== Auth::user()->department_id) {
+        abort(403, 'Unauthorized action.');
+      }
     }
-
-    $seSultra = Province::where('name', 'Sulawesi Tenggara')->first();
-    $this->destinations = [
-      [
-        'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
-        'regency_id' => '',
-        'address' => '',
-        'address_only' => '',
-      ]
-    ];
   }
 
   public function getRegenciesForProvince($provinceId)
@@ -183,87 +246,179 @@ class SppdCreateDetails extends Component
 
     try {
       DB::transaction(function () use (&$sppd) {
-        $attachmentPath = null;
-        if ($this->attachment) {
-          $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
-        }
+        if ($this->sppd_id) {
+          $sppd = SppdRequest::findOrFail($this->sppd_id);
 
-        $sppd = SppdRequest::create([
-          'user_id' => $this->user_id,
-          'creator_id' => Auth::id(),
-          'budget_id' => $this->budget_id,
-          'category_id' => $this->category_id,
-          'purpose' => $this->purpose,
-          'problem' => $this->problem,
-          'facts' => $this->facts,
-          'analysis' => $this->analysis,
-          'start_date' => $this->start_date,
-          'end_date' => $this->end_date,
-          'transport_type' => $this->transport_type,
-          'transport_name' => $this->transport_name,
-          'departure_place' => $this->departure_place,
-          'domain' => $this->domain,
-          'urgency' => $this->urgency,
-          'sppd_date' => $this->sppd_date,
-          'spt_date' => $this->spt_date,
-          'status' => SppdStatus::IN_PROGRESS,
-          'document_number' => $this->document_number,
-          'attachment' => $attachmentPath,
-        ]);
-
-        // Save destinations
-        foreach ($this->destinations as $dest) {
-          if ($this->domain === 'dalam_daerah') {
-            $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
-            $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
-
-            $sppd->destinations()->create([
-              'address' => $dest['address_only'],
-              'province_id' => $sultra?->id,
-              'regency_id' => $kendari?->id,
-            ]);
-          } else {
-            $sppd->destinations()->create([
-              'province_id' => $dest['province_id'] ?? null,
-              'regency_id' => $dest['regency_id'] ?? null,
-              'address' => $dest['address'] ?? null,
-            ]);
+          $attachmentPath = $sppd->attachment;
+          if ($this->attachment) {
+            $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
           }
-        }
 
-        // Save followers
-        if (! empty($this->followers)) {
-          foreach ($this->followers as $userId) {
-            $sppd->followers()->create([
-              'user_id' => $userId,
-              'travel_position' => $this->follower_positions[$userId] ?? null,
-            ]);
+          $reviserId = $sppd->reviser_id;
+
+          $sppd->update([
+            'budget_id' => $this->budget_id,
+            'category_id' => $this->category_id,
+            'purpose' => $this->purpose,
+            'problem' => $this->problem,
+            'facts' => $this->facts,
+            'analysis' => $this->analysis,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'transport_type' => $this->transport_type,
+            'transport_name' => $this->transport_name,
+            'departure_place' => $this->departure_place,
+            'domain' => $this->domain,
+            'urgency' => $this->urgency,
+            'sppd_date' => $this->sppd_date,
+            'spt_date' => $this->spt_date,
+            'document_number' => $this->document_number,
+            'attachment' => $attachmentPath,
+            'revision_note' => null,
+            'reviser_id' => null,
+          ]);
+
+          $sppd->destinations()->delete();
+          $sppd->followers()->delete();
+
+          // Save destinations
+          foreach ($this->destinations as $dest) {
+            if ($this->domain === 'dalam_daerah') {
+              $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
+              $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
+
+              $sppd->destinations()->create([
+                'address' => $dest['address_only'],
+                'province_id' => $sultra?->id,
+                'regency_id' => $kendari?->id,
+              ]);
+            } else {
+              $sppd->destinations()->create([
+                'province_id' => $dest['province_id'] ?? null,
+                'regency_id' => $dest['regency_id'] ?? null,
+                'address' => $dest['address'] ?? null,
+              ]);
+            }
           }
-        }
 
-        // Generate approvals
-        $workflowService = app(SppdWorkflowService::class);
-        $success = $workflowService->generateApprovals($sppd);
+          // Save followers
+          if (! empty($this->followers)) {
+            foreach ($this->followers as $userId) {
+              $sppd->followers()->create([
+                'user_id' => $userId,
+                'travel_position' => $this->follower_positions[$userId] ?? null,
+              ]);
+            }
+          }
 
-        if (! $success) {
-          throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut.');
+          $sppd->temp_reviser_id = $reviserId;
+        } else {
+          $attachmentPath = null;
+          if ($this->attachment) {
+            $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
+          }
+
+          $sppd = SppdRequest::create([
+            'user_id' => $this->user_id,
+            'creator_id' => Auth::id(),
+            'budget_id' => $this->budget_id,
+            'category_id' => $this->category_id,
+            'purpose' => $this->purpose,
+            'problem' => $this->problem,
+            'facts' => $this->facts,
+            'analysis' => $this->analysis,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'transport_type' => $this->transport_type,
+            'transport_name' => $this->transport_name,
+            'departure_place' => $this->departure_place,
+            'domain' => $this->domain,
+            'urgency' => $this->urgency,
+            'sppd_date' => $this->sppd_date,
+            'spt_date' => $this->spt_date,
+            'status' => SppdStatus::IN_PROGRESS,
+            'document_number' => $this->document_number,
+            'attachment' => $attachmentPath,
+          ]);
+
+          // Save destinations
+          foreach ($this->destinations as $dest) {
+            if ($this->domain === 'dalam_daerah') {
+              $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
+              $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
+
+              $sppd->destinations()->create([
+                'address' => $dest['address_only'],
+                'province_id' => $sultra?->id,
+                'regency_id' => $kendari?->id,
+              ]);
+            } else {
+              $sppd->destinations()->create([
+                'province_id' => $dest['province_id'] ?? null,
+                'regency_id' => $dest['regency_id'] ?? null,
+                'address' => $dest['address'] ?? null,
+              ]);
+            }
+          }
+
+          // Save followers
+          if (! empty($this->followers)) {
+            foreach ($this->followers as $userId) {
+              $sppd->followers()->create([
+                'user_id' => $userId,
+                'travel_position' => $this->follower_positions[$userId] ?? null,
+              ]);
+            }
+          }
+
+          // Generate approvals
+          $workflowService = app(SppdWorkflowService::class);
+          $success = $workflowService->generateApprovals($sppd);
+
+          if (! $success) {
+            throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut.');
+          }
         }
       });
 
-      // Dispatch notification to first approver
+      // Dispatch notification
       if (isset($sppd)) {
-        $firstApproval = $sppd->approvals()
-          ->orderBy('step_order', 'asc')
-          ->where('status', ApprovalStatus::PENDING)
-          ->first();
+        if ($this->sppd_id) {
+          $reviserId = $sppd->temp_reviser_id;
+          $approval = null;
+          if ($reviserId) {
+            $approval = $sppd->approvals()
+              ->where('approver_id', $reviserId)
+              ->where('status', ApprovalStatus::PENDING)
+              ->first();
+          }
+          if (! $approval) {
+            $approval = $sppd->approvals()
+              ->where('status', ApprovalStatus::PENDING)
+              ->orderBy('step_order', 'asc')
+              ->first();
+          }
 
-        if ($firstApproval) {
-          $this->notifyApprover($sppd, $firstApproval);
+          if ($approval) {
+            $this->notifyApproverRevision($sppd, $approval);
+          }
+
+          return redirect()->route('sppd.show', $sppd)
+            ->with('success', 'Perbaikan SPPD berhasil dikirim. Silakan menunggu proses persetujuan.');
+        } else {
+          $firstApproval = $sppd->approvals()
+            ->orderBy('step_order', 'asc')
+            ->where('status', ApprovalStatus::PENDING)
+            ->first();
+
+          if ($firstApproval) {
+            $this->notifyApprover($sppd, $firstApproval);
+          }
+
+          return redirect()->route('sppd.show', $sppd)
+            ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
         }
       }
-
-      return redirect()->route('sppd.show', $sppd)
-        ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
     } catch (\Exception $e) {
       session()->flash('error', $e->getMessage());
       $this->showConfirmModal = false;
@@ -284,6 +439,34 @@ class SppdCreateDetails extends Component
           . "*────────────────────────────────*\n\n"
           . "Halo *{$approver->name}*,\n"
           . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
+          . "• *Pelaksana:* {$sppd->user->name}\n"
+          . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
+          . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
+          . "• *Peran Anda:* {$approval->role_label}\n\n"
+          . "Silakan tinjau dan lakukan persetujuan melalui tautan berikut:\n"
+          . "🔗 {$detailUrl}\n\n"
+          . "Terima kasih.";
+
+        \App\Jobs\SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
+      }
+    } catch (\Exception $e) {
+      // Ignore notification errors to not block transaction
+    }
+  }
+
+  protected function notifyApproverRevision(SppdRequest $sppd, $approval): void
+  {
+    try {
+      $approver = $approval->approver;
+      if ($approver && $approver->phone && $approver->phone_verified) {
+        $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
+        $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
+        $detailUrl = route('sppd.show', $sppd);
+
+        $message = "📝 *PERBAIKAN DOKUMEN SPPD (REVISI)*\n"
+          . "*────────────────────────────────*\n\n"
+          . "Halo *{$approver->name}*,\n"
+          . "Pegawai telah mengirimkan perbaikan/revisi data SPPD berikut yang memerlukan persetujuan kembali dari Anda.\n\n"
           . "• *Pelaksana:* {$sppd->user->name}\n"
           . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
           . "• *Tanggal:* {$startDate} s/d {$endDate}\n"

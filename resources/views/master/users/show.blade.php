@@ -18,7 +18,7 @@
 					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 					<i class="fa-solid fa-arrow-left"></i> Kembali
 				</a>
-				<a wire:navigate href="{{ route('master.users.edit', $user->id) }}"
+				<a wire:navigate href="{{ route('master.users.edit', $user) }}"
 					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
 					<i class="fa-solid fa-pen-to-square"></i> Edit Data
 				</a>
@@ -153,6 +153,141 @@
 							</div>
 						</div>
 
+					</div>
+				</div>
+
+				{{-- Card: Riwayat Perjalanan Dinas --}}
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mt-6">
+					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-2 border-b border-slate-100">
+						<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
+							<i class="fa-solid fa-route text-cyan-500 text-base"></i>Riwayat Perjalanan Dinas
+						</h3>
+
+						{{-- Search Trip Form --}}
+						<form method="GET" action="{{ url()->current() }}" class="flex items-center gap-2 w-full sm:w-72">
+							@foreach (request()->except(['search_trip', 'page_pelaksana', 'page_pengikut']) as $key => $value)
+								@if (is_array($value))
+									@foreach ($value as $val)
+										<input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+									@endforeach
+								@else
+									<input type="hidden" name="{{ $key }}" value="{{ $value }}">
+								@endif
+							@endforeach
+							<div class="relative flex-1">
+								<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+									<i class="fa-solid fa-magnifying-glass text-xs"></i>
+								</span>
+								<input type="text" name="search_trip" value="{{ request('search_trip') }}"
+									class="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-cyan-500 focus:outline-hidden"
+									placeholder="Cari maksud, nomor, atau tujuan...">
+							</div>
+							<button type="submit" class="inline-flex items-center rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
+								Cari
+							</button>
+							@if(request('search_trip'))
+								<a href="{{ url()->current() }}" class="text-slate-400 hover:text-slate-600">
+									<i class="fa-solid fa-circle-xmark text-sm"></i>
+								</a>
+							@endif
+						</form>
+					</div>
+
+					<div x-data="{ activeTab: '{{ request()->has('page_pengikut') ? 'pengikut' : 'pelaksana' }}' }" class="space-y-4">
+						{{-- Tab Buttons --}}
+						<div class="flex border-b border-slate-200">
+							<button @click="activeTab = 'pelaksana'"
+								:class="activeTab === 'pelaksana' ? 'border-cyan-500 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+								class="flex-1 py-2.5 px-4 text-center border-b-2 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
+								Sebagai Pelaksana Utama ({{ $tripsAsPelaksana->total() }})
+							</button>
+							<button @click="activeTab = 'pengikut'"
+								:class="activeTab === 'pengikut' ? 'border-cyan-500 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+								class="flex-1 py-2.5 px-4 text-center border-b-2 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
+								Sebagai Pengikut ({{ $tripsAsFollower->total() }})
+							</button>
+						</div>
+
+						{{-- Tab: Pelaksana --}}
+						<div x-show="activeTab === 'pelaksana'" class="space-y-3">
+							@forelse ($tripsAsPelaksana as $trip)
+								<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+									<div class="space-y-1">
+										<div class="flex items-center gap-2 flex-wrap">
+											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
+											<span class="badge-{{ $trip->status->value }} px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+												{{ $trip->status->label() }}
+											</span>
+										</div>
+										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
+										<p class="text-xs text-slate-500 flex items-center gap-1">
+											<i class="fa-solid fa-location-dot text-slate-400"></i>
+											@foreach ($trip->destinations as $dest)
+												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
+											@endforeach
+										</p>
+										<p class="text-xs text-slate-500">
+											<i class="fa-regular fa-calendar mr-1"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
+										</p>
+									</div>
+									<div class="shrink-0">
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
+										</a>
+									</div>
+								</div>
+							@empty
+								<p class="text-sm text-slate-400 italic text-center py-6">Belum ada riwayat perjalanan sebagai pelaksana utama.</p>
+							@endforelse
+
+							@if ($tripsAsPelaksana->hasPages())
+								<div class="mt-4 pt-3 border-t border-slate-100">
+									{{ $tripsAsPelaksana->links() }}
+								</div>
+							@endif
+						</div>
+
+						{{-- Tab: Pengikut --}}
+						<div x-show="activeTab === 'pengikut'" class="space-y-3" style="display: none;">
+							@forelse ($tripsAsFollower as $trip)
+								<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+									<div class="space-y-1">
+										<div class="flex items-center gap-2 flex-wrap">
+											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
+											<span class="badge-{{ $trip->status->value }} px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+												{{ $trip->status->label() }}
+											</span>
+											<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+												Pelaksana: {{ $trip->user->name }}
+											</span>
+										</div>
+										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
+										<p class="text-xs text-slate-500 flex items-center gap-1">
+											<i class="fa-solid fa-location-dot text-slate-400"></i>
+											@foreach ($trip->destinations as $dest)
+												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
+											@endforeach
+										</p>
+										<p class="text-xs text-slate-500">
+											<i class="fa-regular fa-calendar mr-1"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
+										</p>
+									</div>
+									<div class="shrink-0">
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
+										</a>
+									</div>
+								</div>
+							@empty
+								<p class="text-sm text-slate-400 italic text-center py-6">Belum ada riwayat perjalanan sebagai pengikut.</p>
+							@endforelse
+
+							@if ($tripsAsFollower->hasPages())
+								<div class="mt-4 pt-3 border-t border-slate-100">
+									{{ $tripsAsFollower->links() }}
+								</div>
+							@endif
+						</div>
 					</div>
 				</div>
 			</div>

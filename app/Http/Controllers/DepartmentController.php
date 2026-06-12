@@ -137,12 +137,20 @@ class DepartmentController extends Controller
         $validated['level'] = 1;
     }
 
+    $cleanName = strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '_', $validated['name']));
+    $cleanName = preg_replace('/_+/', '_', $cleanName);
+    $cleanName = trim($cleanName, '_');
+
     if ($request->hasFile('letterhead')) {
-        $validated['letterhead'] = $request->file('letterhead')->store('kop_surat', 'public');
+        $extension = $request->file('letterhead')->getClientOriginalExtension();
+        $fileName = $cleanName . '_primary.' . $extension;
+        $validated['letterhead'] = $request->file('letterhead')->storeAs('kop_surat', $fileName, 'public');
     }
 
     if ($request->hasFile('letterhead_second')) {
-        $validated['letterhead_second'] = $request->file('letterhead_second')->store('kop_surat', 'public');
+        $extension = $request->file('letterhead_second')->getClientOriginalExtension();
+        $fileName = $cleanName . '_secondary.' . $extension;
+        $validated['letterhead_second'] = $request->file('letterhead_second')->storeAs('kop_surat', $fileName, 'public');
     }
 
     Department::create($validated);
@@ -212,19 +220,27 @@ class DepartmentController extends Controller
         $validated['level'] = 1;
     }
 
+    $cleanName = strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '_', $validated['name']));
+    $cleanName = preg_replace('/_+/', '_', $cleanName);
+    $cleanName = trim($cleanName, '_');
+
     if ($request->hasFile('letterhead')) {
         // Delete old image if exists and it looks like a path
         if ($department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/')) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead);
         }
-        $validated['letterhead'] = $request->file('letterhead')->store('kop_surat', 'public');
+        $extension = $request->file('letterhead')->getClientOriginalExtension();
+        $fileName = $cleanName . '_primary.' . $extension;
+        $validated['letterhead'] = $request->file('letterhead')->storeAs('kop_surat', $fileName, 'public');
     }
 
     if ($request->hasFile('letterhead_second')) {
         if ($department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/')) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($department->letterhead_second);
         }
-        $validated['letterhead_second'] = $request->file('letterhead_second')->store('kop_surat', 'public');
+        $extension = $request->file('letterhead_second')->getClientOriginalExtension();
+        $fileName = $cleanName . '_secondary.' . $extension;
+        $validated['letterhead_second'] = $request->file('letterhead_second')->storeAs('kop_surat', $fileName, 'public');
     }
 
     $department->update($validated);

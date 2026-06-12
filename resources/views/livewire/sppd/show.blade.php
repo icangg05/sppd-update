@@ -13,6 +13,14 @@
 		</div>
 
 		<div class="flex flex-wrap items-center gap-2.5">
+			{{-- Tombol Edit Perbaikan --}}
+			@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+				<a href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}" wire:navigate
+					class="inline-flex items-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 hover:text-amber-800">
+					<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Perbaikan
+				</a>
+			@endif
+
 			{{-- Tombol Batalkan Pengajuan --}}
 			@if ($sppd->status->value === 'in_progress' && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 				<form action="{{ route('sppd.destroy', $sppd) }}" method="POST"
@@ -75,7 +83,10 @@
 				<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pelaksana</p>
-						<p class="text-sm font-bold text-slate-800">{{ $sppd->user->name }}</p>
+						<a href="{{ route('master.users.show', $sppd->user) }}" class="text-sm font-bold text-cyan-600 hover:text-cyan-700 hover:underline inline-flex items-center gap-1">
+							<span>{{ $sppd->user->name }}</span>
+							<i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+						</a>
 						<p class="text-xs font-mono text-slate-500">{{ $sppd->user->nip ?? '-' }}</p>
 					</div>
 					<div>
@@ -88,8 +99,21 @@
 					</div>
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Domain Wilayah</p>
-						<p class="text-sm font-semibold text-slate-800"><span
-								class="bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-100 text-xs uppercase">{{ $sppd->domain->label() }}</span>
+						<p class="text-sm font-semibold text-slate-800">
+							<span class="bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-100 text-xs uppercase">{{ $sppd->domain->label() }}</span>
+						</p>
+					</div>
+					<div>
+						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Sifat Surat Dokumen</p>
+						<p class="text-sm font-semibold text-slate-800">
+							<span class="inline-block rounded-sm px-2 py-0.5 text-xs font-bold uppercase tracking-wide border
+								@if (strtolower($sppd->urgency) === 'segera')
+									bg-rose-50 text-rose-700 border-rose-100
+								@else
+									bg-slate-50 text-slate-700 border-slate-200
+								@endif">
+								{{ $sppd->urgency ?? 'Biasa' }}
+							</span>
 						</p>
 					</div>
 					<div>
@@ -108,10 +132,28 @@
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Maksud Perjalanan</p>
 						<p class="text-sm font-medium text-slate-800 leading-relaxed">{{ $sppd->purpose }}</p>
 					</div>
+					@if ($sppd->problem)
+						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Persoalan</p>
+							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->problem }}</p>
+						</div>
+					@endif
+					@if ($sppd->facts)
+						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Fakta-Fakta Yang Mempengaruhi</p>
+							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->facts }}</p>
+						</div>
+					@endif
+					@if ($sppd->analysis)
+						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Analisis</p>
+							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->analysis }}</p>
+						</div>
+					@endif
 					@if ($sppd->notes)
-						<div class="sm:col-span-2">
+						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Catatan Tambahan</p>
-							<p class="text-sm text-slate-600 bg-amber-50 p-3 rounded border border-amber-200">{{ $sppd->notes }}</p>
+							<p class="text-sm text-slate-600 bg-amber-50 p-3 rounded border border-amber-200 leading-relaxed">{{ $sppd->notes }}</p>
 						</div>
 					@endif
 					@if ($sppd->attachment)
@@ -137,6 +179,40 @@
 					@endif
 				</div>
 			</div>
+
+			{{-- Pembebanan Anggaran --}}
+			@if ($sppd->budget)
+				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+							<i class="fa-solid fa-money-check-dollar text-cyan-600"></i> Pembebanan Anggaran
+						</h3>
+					</div>
+					<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
+						<div>
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">No. Rekening Anggaran</p>
+							<p class="text-sm font-semibold text-slate-800 font-mono">{{ $sppd->budget->account_code ?? '-' }}</p>
+						</div>
+						<div>
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Program</p>
+							<p class="text-sm font-semibold text-slate-800">{{ $sppd->budget->program ?? '-' }}</p>
+						</div>
+						<div class="sm:col-span-2">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Kegiatan</p>
+							<p class="text-sm font-semibold text-slate-800">{{ $sppd->budget->activity ?? '-' }}</p>
+						</div>
+						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
+							<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Anggaran Tersedia (Sisa Anggaran)</p>
+							<p class="text-lg font-extrabold text-emerald-600">
+								Rp {{ number_format($sppd->budget->balance, 0, ',', '.') }}
+							</p>
+							<p class="text-xs text-slate-500 mt-1">
+								Pagu: Rp {{ number_format($sppd->budget->total_amount, 0, ',', '.') }} | Realisasi: Rp {{ number_format($sppd->budget->realization, 0, ',', '.') }}
+							</p>
+						</div>
+					</div>
+				</div>
+			@endif
 
 			{{-- 2. Tujuan --}}
 			@if ($sppd->destinations->count())
@@ -175,20 +251,20 @@
 					</div>
 					<div class="p-5 flex flex-wrap gap-2.5">
 						@foreach ($sppd->followers as $f)
-							<div class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 shadow-2xs">
+							<a href="{{ route('master.users.show', $f->user) }}" class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 shadow-2xs hover:border-cyan-300 hover:bg-cyan-50/10 transition group">
 								<span
-									class="flex size-6 shrink-0 items-center justify-center rounded bg-cyan-600 text-[10px] font-bold text-white shadow-2xs">
+									class="flex size-6 shrink-0 items-center justify-center rounded bg-cyan-600 text-[10px] font-bold text-white shadow-2xs group-hover:bg-cyan-700 transition">
 									{{ strtoupper(substr($f->user->name, 0, 1)) }}
 								</span>
 								<div class="leading-tight pr-1">
-									<span class="block text-sm font-semibold text-slate-700">{{ $f->user->name }}</span>
+									<span class="block text-sm font-semibold text-slate-700 group-hover:text-cyan-600 transition">{{ $f->user->name }}</span>
 									@if ($f->travel_position)
 										<span class="block text-[10px] font-bold uppercase tracking-wide text-indigo-600 mt-0.5">
 											<i class="fa-solid fa-id-badge mr-0.5"></i>{{ $f->travel_position }}
 										</span>
 									@endif
 								</div>
-							</div>
+							</a>
 						@endforeach
 					</div>
 				</div>

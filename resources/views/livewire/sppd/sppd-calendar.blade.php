@@ -233,18 +233,9 @@
         }
     </style>
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-        <script>
-            document.addEventListener('livewire:navigated', function() {
-                initCalendar();
-            });
-
-            // Ensure calendar loads on initial full page load if livewire:navigated hasn't fired
-            document.addEventListener('DOMContentLoaded', function() {
-                initCalendar();
-            });
-
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+        (function() {
             function initCalendar() {
                 var calendarEl = document.getElementById('calendar');
                 if (!calendarEl) return;
@@ -271,6 +262,17 @@
                 });
                 calendar.render();
             }
-        </script>
-    @endpush
+
+            if (typeof FullCalendar !== 'undefined') {
+                initCalendar();
+            } else {
+                var checkInterval = setInterval(function() {
+                    if (typeof FullCalendar !== 'undefined') {
+                        clearInterval(checkInterval);
+                        initCalendar();
+                    }
+                }, 50);
+            }
+        })();
+    </script>
 </div>

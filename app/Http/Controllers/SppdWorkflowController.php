@@ -12,6 +12,8 @@ class SppdWorkflowController extends Controller
 {
   public function index()
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $workflows = SppdWorkflow::orderBy('id')->get();
     $roleLabels = Role::pluck('label', 'name')->all();
     return view('master.workflows.index', compact('workflows', 'roleLabels'));
@@ -46,6 +48,8 @@ class SppdWorkflowController extends Controller
 
   public function create()
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $departmentTypes = DepartmentType::cases();
     $domains = SppdDomain::cases();
     $roles = Role::orderBy('name')->get();
@@ -55,6 +59,8 @@ class SppdWorkflowController extends Controller
 
   public function store(Request $request)
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $validated = $request->validate([
       'name'            => 'required|string|max:255',
       'department_type' => 'nullable|array',
@@ -98,6 +104,8 @@ class SppdWorkflowController extends Controller
 
   public function edit(SppdWorkflow $workflow)
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $departmentTypes = DepartmentType::cases();
     $domains = SppdDomain::cases();
     $roles = Role::orderBy('name')->get();
@@ -107,6 +115,8 @@ class SppdWorkflowController extends Controller
 
   public function update(Request $request, SppdWorkflow $workflow)
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $validated = $request->validate([
       'name'            => 'required|string|max:255',
       'department_type' => 'nullable|array',
@@ -150,6 +160,8 @@ class SppdWorkflowController extends Controller
 
   public function destroy(SppdWorkflow $workflow)
   {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
     $workflow->delete();
     return redirect()->route('master.workflows.index')
       ->with('success', 'Workflow SPPD berhasil dihapus.');

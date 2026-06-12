@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Vinkla\Hashids\Facades\Hashids;
 
 class User extends Authenticatable
 {
@@ -118,5 +119,31 @@ class User extends Authenticatable
   {
     return $this->employee_type === EmployeeType::DPRD
       || $this->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+  }
+
+  /**
+   * Get the value of the model's route key.
+   */
+  public function getRouteKey(): string
+  {
+    return Hashids::encode($this->getKey());
+  }
+
+  /**
+   * Retrieve the model for a bound value.
+   *
+   * @param  mixed  $value
+   * @param  string|null  $field
+   * @return \Illuminate\Database\Eloquent\Model|null
+   */
+  public function resolveRouteBinding($value, $field = null)
+  {
+    $decoded = Hashids::decode($value);
+
+    if (empty($decoded)) {
+      abort(404);
+    }
+
+    return $this->where($field ?? $this->getRouteKeyName(), $decoded[0])->firstOrFail();
   }
 }

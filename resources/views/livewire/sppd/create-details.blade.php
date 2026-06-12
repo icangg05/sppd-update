@@ -351,7 +351,7 @@
 	</form>
 
 	{{-- MODAL KONFIRMASI --}}
-	<x-ui.modal show="showConfirm" title="Konfirmasi Pengajuan" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-lg">
+	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-lg">
 		<div class="py-4 space-y-3.5 text-sm text-slate-600">
 			<div>
 				<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Pegawai Pelaksana:</span>
@@ -401,9 +401,15 @@
 					@endif
 				</div>
 			</div>
-			<p class="text-xs text-slate-400 mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">
-				<i class="fa-solid fa-circle-info mr-0.5"></i> Pastikan perihal, tanggal perjalanan, dan rekening anggaran sudah benar sebelum mengajukan dokumen ke alur verifikasi.
-			</p>
+			@if ($sppd_id)
+				<p class="text-xs text-slate-400 mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">
+					<i class="fa-solid fa-circle-info mr-0.5"></i> Revisi akan dikirim kepada pejabat approver dan selama proses tidak dapat dilakukan pengeditan data.
+				</p>
+			@else
+				<p class="text-xs text-slate-400 mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">
+					<i class="fa-solid fa-circle-info mr-0.5"></i> Pastikan perihal, tanggal perjalanan, dan rekening anggaran sudah benar sebelum mengajukan dokumen ke alur verifikasi.
+				</p>
+			@endif
 		</div>
 
 		<div class="flex justify-end gap-2 border-t border-slate-100 pt-3 mt-2">
@@ -413,7 +419,7 @@
 			</button>
 			<button type="button" wire:click="submit"
 				class="rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700">
-				Ya, Ajukan Sekarang
+				{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
 			</button>
 		</div>
 	</x-ui.modal>

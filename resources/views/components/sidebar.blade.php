@@ -98,11 +98,19 @@
 			<span>Unit Kerja</span>
 		</a>
 
-		<a href="{{ route('master.workflows.index') }}" wire:navigate
-			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
-			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-diagram-project fa-fw"></i></span>
-			<span>Workflow</span>
-		</a>
+		@if (auth()->user()->hasRole('super_admin'))
+			<a href="{{ route('master.workflows.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-diagram-project fa-fw"></i></span>
+				<span>Workflow</span>
+			</a>
+
+			<a href="{{ route('master.roles.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.roles.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-shield-halved fa-fw"></i></span>
+				<span>Role & Permission</span>
+			</a>
+		@endif
 	</nav>
 
 	<div class="border-t border-slate-800 p-3 lg:hidden">
