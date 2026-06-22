@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Models\SppdAdvanceReceipt;
 use App\Models\SppdRequest;
 use Illuminate\Http\Request;
 
 class SppdAdvanceReceiptController extends Controller
 {
+  use AuthorizesSppdAccess;
+
   /**
    * Create or update advance receipt (max 1 per user per SPPD).
    */
   public function storeOrUpdate(Request $request, SppdRequest $sppd)
   {
     abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     if ($request->has('amounts')) {

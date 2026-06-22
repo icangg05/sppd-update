@@ -8,7 +8,9 @@ use App\Enums\SignatureStatus;
 use App\Enums\SppdStatus;
 use App\Jobs\SendTteSignRequestJob;
 use App\Jobs\SendWhatsAppNotificationJob;
+use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
+use App\Services\ApproverNotifier;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Livewire\Component;
@@ -20,6 +22,8 @@ use Throwable;
 #[Layout('layouts.app')]
 class SppdShow extends Component
 {
+  use InteractsWithToast;
+
   #[Locked]
   public int $sppdId;
 
@@ -75,7 +79,7 @@ class SppdShow extends Component
 
     if (! $approval) {
       $this->showApproveModal = false;
-      session()->flash('error', 'Anda tidak memiliki hak untuk menyetujui SPPD ini.');
+      $this->toastError('Anda tidak memiliki hak untuk menyetujui SPPD ini.');
       return;
     }
 
@@ -86,7 +90,7 @@ class SppdShow extends Component
 
     if ($hasUnapprovedPreviousSteps) {
       $this->showApproveModal = false;
-      session()->flash('error', 'Anda belum dapat menyetujui dokumen ini karena langkah persetujuan sebelumnya belum selesai.');
+      $this->toastError('Anda belum dapat menyetujui dokumen ini karena langkah persetujuan sebelumnya belum selesai.');
       return;
     }
 
@@ -94,7 +98,7 @@ class SppdShow extends Component
 
     if ($needsTte && ! Auth::user()?->nik) {
       $this->showApproveModal = false;
-      session()->flash('error', 'NIK penandatangan belum tersedia. Silakan lengkapi profil Anda terlebih dahulu.');
+      $this->toastError('NIK penandatangan belum tersedia. Silakan lengkapi profil Anda terlebih dahulu.');
       return;
     }
 
@@ -142,7 +146,7 @@ class SppdShow extends Component
     $this->passphrase        = '';
     $this->showApproveModal  = false;
     $this->refreshApprovalBadge();
-    session()->flash('success', 'SPPD berhasil disetujui.');
+    $this->toastSuccess('SPPD berhasil disetujui.');
   }
 
   public function reject(): void
@@ -157,7 +161,7 @@ class SppdShow extends Component
       ->first();
 
     if (! $approval) {
-      session()->flash('error', 'Anda tidak memiliki hak untuk menolak SPPD ini.');
+      $this->toastError('Anda tidak memiliki hak untuk menolak SPPD ini.');
       $this->showRejectModal = false;
       return;
     }
@@ -173,7 +177,7 @@ class SppdShow extends Component
     $this->rejectNotes     = '';
     $this->showRejectModal = false;
     $this->refreshApprovalBadge();
-    session()->flash('success', 'SPPD berhasil ditolak.');
+    $this->toastSuccess('SPPD berhasil ditolak.');
   }
 
   public function revision(): void
@@ -188,7 +192,7 @@ class SppdShow extends Component
       ->first();
 
     if (! $approval) {
-      session()->flash('error', 'Anda tidak memiliki hak untuk merevisi SPPD ini.');
+      $this->toastError('Anda tidak memiliki hak untuk merevisi SPPD ini.');
       $this->showRevisionModal = false;
       return;
     }
@@ -202,7 +206,7 @@ class SppdShow extends Component
 
     $this->revisionNotes     = '';
     $this->showRevisionModal = false;
-    session()->flash('success', 'Catatan revisi berhasil dikirim.');
+    $this->toastSuccess('Catatan revisi berhasil dikirim.');
   }
 
   protected function resolveNeedsTte(SppdRequest $sppd, $approval): bool
@@ -301,7 +305,7 @@ class SppdShow extends Component
       $this->approveNotes     = '';
       $this->showApproveModal = false;
       $this->refreshApprovalBadge();
-      session()->flash('success', 'Seluruh dokumen telah berhasil ditandatangani.');
+      $this->toastSuccess('Seluruh dokumen telah berhasil ditandatangani.');
       return;
     }
 
@@ -322,7 +326,7 @@ class SppdShow extends Component
     $this->passphrase       = '';
     $this->approveNotes     = '';
     $this->showApproveModal = false;
-    session()->flash('success', 'Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
+    $this->toastSuccess('Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
   }
 
   protected function refreshApprovalBadge(): void
@@ -399,30 +403,7 @@ class SppdShow extends Component
 
   protected function notifyApprover(SppdRequest $sppd, $approval): void
   {
-    try {
-      $approver = $approval->approver;
-      if ($approver && $approver->phone && $approver->phone_verified) {
-        $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
-        $endDate   = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-        $detailUrl = route('sppd.show', $sppd);
-
-        $message = "📝 *PENGAJUAN SPPD BARU*\n"
-          . "*────────────────────────────────*\n\n"
-          . "Halo *{$approver->name}*,\n"
-          . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-          . "• *Pelaksana:* {$sppd->user->name}\n"
-          . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
-          . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
-          . "• *Peran Anda:* {$approval->role_label}\n\n"
-          . "Silakan tinjau dan lakukan persetujuan melalui tautan berikut:\n"
-          . "🔗 {$detailUrl}\n\n"
-          . "Terima kasih.";
-
-        SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
-      }
-    } catch (\Exception $e) {
-      // Ignore notification errors
-    }
+    app(ApproverNotifier::class)->notifyNewRequest($sppd, $approval);
   }
 
   public function parseTteError(?string $rawError): array
@@ -559,7 +540,7 @@ class SppdShow extends Component
       ->get();
 
     if ($processingSignatures->isEmpty()) {
-      session()->flash('error', 'Tidak ada proses TTE aktif yang dapat dibatalkan.');
+      $this->toastError('Tidak ada proses TTE aktif yang dapat dibatalkan.');
       return;
     }
 
@@ -567,7 +548,7 @@ class SppdShow extends Component
       $signature->markError('Proses TTE dibatalkan oleh pengguna.');
     }
 
-    session()->flash('success', 'Proses TTE berhasil dibatalkan.');
+    $this->toastSuccess('Proses TTE berhasil dibatalkan.');
   }
 
   public function render()

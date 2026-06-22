@@ -1,5 +1,5 @@
 @props([
-    'name',
+    'name' => null,
     'label' => null,
     'value' => null,
     'id' => null,
@@ -13,8 +13,11 @@
 ])
 
 @php
-$id = $id ?? $name;
-$resolvedValue = $value ?? old($name);
+// Saat dipakai di Livewire (wire:model), Livewire yang mengontrol isi textarea.
+$wireModel = $attributes->whereStartsWith('wire:model')->first();
+$key = $name ?? $wireModel;
+$id = $id ?? $key;
+$resolvedValue = $wireModel ? null : ($value ?? old($name));
 // min-h disesuaikan agar proporsional dan tidak terlalu memaksa jika rows yang dikirim kecil
 $resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 min-h-[80px] ' . $class);
 @endphp
@@ -30,7 +33,7 @@ $resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-3 py-2
     @endif
 
     <textarea
-        name="{{ $name }}"
+        @if ($name) name="{{ $name }}" @endif
         id="{{ $id }}"
         rows="{{ $rows }}"
         @if ($placeholder) placeholder="{{ $placeholder }}" @endif
@@ -42,7 +45,9 @@ $resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-3 py-2
         <p class="mt-1 text-xs text-slate-400">{{ $hint }}</p>
     @endif
 
-    @error($name)
-        <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-    @enderror
+    @if ($key)
+        @error($key)
+            <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+        @enderror
+    @endif
 </div>

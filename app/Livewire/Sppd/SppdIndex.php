@@ -6,6 +6,7 @@ use App\Enums\DepartmentType;
 use App\Enums\EmployeeType;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
+use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdApproval;
 use App\Models\SppdRequest;
 use App\Models\User;
@@ -21,6 +22,7 @@ use Livewire\WithPagination;
 class SppdIndex extends Component
 {
   use WithPagination;
+  use InteractsWithToast;
 
   public ?string $errorMessage = null;
   public array $simulatedSteps = [];
@@ -158,9 +160,9 @@ class SppdIndex extends Component
 
     if ($sppd->status->value === 'in_progress' && Auth::user()->hasAnyRole(['admin_opd', 'super_admin'])) {
       $sppd->delete();
-      session()->flash('success', 'Pengajuan SPPD berhasil dibatalkan dan dihapus.');
+      $this->toastSuccess('Pengajuan SPPD berhasil dibatalkan dan dihapus.');
     } else {
-      session()->flash('error', 'Anda tidak memiliki hak untuk membatalkan pengajuan ini atau status SPPD tidak dalam proses.');
+      $this->toastError('Anda tidak memiliki hak untuk membatalkan pengajuan ini atau status SPPD tidak dalam proses.');
     }
   }
 
@@ -174,6 +176,21 @@ class SppdIndex extends Component
         ->pluck('sppd_request_id');
       $query->whereIn('id', $pendingSppdIds);
     } else {
+      // Batasi data hanya untuk department user (beserta sub-department) — selain super admin.
+      if (! Auth::user()->hasRole('super_admin')) {
+        $dept = Auth::user()->department;
+        if ($dept) {
+          $allowedIds = $dept->getAllRelatedIds();
+          $query->whereHas('user', function ($q) use ($allowedIds) {
+            $q->whereIn('department_id', $allowedIds);
+          });
+        } else {
+          $query->whereHas('user', function ($q) {
+            $q->where('department_id', Auth::user()->department_id);
+          });
+        }
+      }
+
       if ($this->status !== '') {
         $query->where('status', $this->status);
       }

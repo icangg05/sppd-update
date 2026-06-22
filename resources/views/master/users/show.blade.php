@@ -14,11 +14,11 @@
 				<p class="mt-1 text-xs text-slate-500 font-medium">Detail informasi lengkap pegawai dan hak akses pengguna sistem</p>
 			</div>
 			<div class="flex items-center gap-2">
-				<a wire:navigate href="{{ route('master.users.index') }}"
+				<a wire:navigate href="{{ route('master.users.index', array_filter(['type' => request('type')])) }}"
 					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 					<i class="fa-solid fa-arrow-left"></i> Kembali
 				</a>
-				<a wire:navigate href="{{ route('master.users.edit', $user) }}"
+				<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"
 					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
 					<i class="fa-solid fa-pen-to-square"></i> Edit Data
 				</a>
@@ -215,9 +215,9 @@
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
-											<span class="badge-{{ $trip->status->value }} px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
-											</span>
+											</x-ui.badge>
 										</div>
 										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
 										<p class="text-xs text-slate-500 flex items-center gap-1">
@@ -254,9 +254,9 @@
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
-											<span class="badge-{{ $trip->status->value }} px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
-											</span>
+											</x-ui.badge>
 											<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
 												Pelaksana: {{ $trip->user->name }}
 											</span>

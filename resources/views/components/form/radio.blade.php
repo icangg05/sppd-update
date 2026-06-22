@@ -1,5 +1,5 @@
 @props([
-    'name',
+    'name' => null,
     'label' => null,
     'value' => '',
     'checked' => false,
@@ -11,14 +11,16 @@
 ])
 
 @php
-$id = $id ?? $name;
+$wireModel = $attributes->whereStartsWith('wire:model')->first();
+$key = $name ?? $wireModel;
+$id = $id ?? $key;
 @endphp
 
 <div class="{{ $wrapperClass }}">
     <label for="{{ $id }}" class="inline-flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
         <input
             type="radio"
-            name="{{ $name }}"
+            @if ($name) name="{{ $name }}" @endif
             id="{{ $id }}"
             value="{{ $value }}"
             @if ($checked) checked @endif
@@ -32,7 +34,9 @@ $id = $id ?? $name;
         <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
-    @error($name)
-        <p class="form-error">{{ $message }}</p>
-    @enderror
+    @if ($key)
+        @error($key)
+            <p class="form-error">{{ $message }}</p>
+        @enderror
+    @endif
 </div>

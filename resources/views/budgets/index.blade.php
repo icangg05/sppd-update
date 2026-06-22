@@ -73,10 +73,9 @@
           </div>
 
           {{-- Submit Button --}}
-          <button type="submit"
-            class="w-full sm:w-auto inline-flex items-center justify-center rounded bg-slate-800 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900">
+          <x-ui.button type="submit" variant="dark" class="w-full sm:w-auto px-6 py-2 font-semibold">
             Filter
-          </button>
+          </x-ui.button>
         </form>
       </div>
 

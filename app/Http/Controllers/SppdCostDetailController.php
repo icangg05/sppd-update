@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CostCategory;
+use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Models\SppdCostDetail;
 use App\Models\SppdRequest;
 use Illuminate\Http\Request;
@@ -10,9 +11,12 @@ use Illuminate\Support\Facades\Storage;
 
 class SppdCostDetailController extends Controller
 {
+    use AuthorizesSppdAccess;
+
     public function store(Request $request, SppdRequest $sppd)
     {
         abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        $this->authorizeSppdAccess($sppd);
         abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
         if ($request->has('user_ids')) {
@@ -62,6 +66,7 @@ class SppdCostDetailController extends Controller
     public function update(Request $request, SppdRequest $sppd, SppdCostDetail $cost)
     {
         abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        $this->authorizeSppdAccess($sppd);
         abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
         $validated = $request->validate([
@@ -91,6 +96,7 @@ class SppdCostDetailController extends Controller
     public function destroy(SppdRequest $sppd, SppdCostDetail $cost)
     {
         abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+        $this->authorizeSppdAccess($sppd);
         abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
         if ($cost->receipt_photo) {

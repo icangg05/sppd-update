@@ -30,6 +30,17 @@ class KirimChatWebhookController extends Controller
    */
   public function handle(Request $request, KirimChatService $kirimChatService): JsonResponse
   {
+    // Verifikasi shared-secret bila dikonfigurasi — mencegah pemalsuan request webhook.
+    $secret = config('kirimchat.webhook_secret');
+    if (! empty($secret)) {
+      $provided = $request->header('X-Webhook-Secret') ?? $request->query('secret');
+      if (! is_string($provided) || ! hash_equals($secret, $provided)) {
+        Log::warning('KirimChatWebhook: secret tidak valid, request ditolak.');
+
+        return response()->json(['success' => false, 'message' => 'Unauthorized.'], 401);
+      }
+    }
+
     Log::info('KirimChatWebhook: Request masuk.', $request->all());
 
     $event = $request->input('event') ?? $request->input('event_type');

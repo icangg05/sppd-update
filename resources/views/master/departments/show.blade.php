@@ -88,8 +88,63 @@
             @endif
 
             {{-- Bagian Pratinjau Kop Surat Resmi --}}
-            @php $inheritedKop = $department->getInheritedLetterhead(); @endphp
-            @if ($inheritedKop)
+            @php
+              $isDprd = $department->type === \App\Enums\DepartmentType::DPRD;
+              $inheritedKop = $department->getInheritedLetterhead();
+              $inheritedKopSecond = $department->getInheritedLetterheadSecond();
+            @endphp
+            @if ($isDprd)
+              {{-- DPRD memakai dua kop: Kop Utama (SPPD) & Kop Kedua (SPT) --}}
+              <div class="space-y-2 border-t border-slate-100 pt-3">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kop Resmi Surat Dinas
+                  DPRD</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {{-- Kop Utama / SPPD --}}
+                  <div class="space-y-1">
+                    <span
+                      class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Kop Utama / SPPD
+                      @if (empty($department->letterhead) && $inheritedKop)
+                        <span
+                          class="rounded bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 text-[9px] font-bold">Warisan
+                          dari Induk</span>
+                      @endif
+                    </span>
+                    @if ($inheritedKop)
+                      <div class="p-2 bg-slate-50 border border-slate-200 rounded flex justify-center">
+                        <img src="{{ asset('storage/' . $inheritedKop) }}" alt="kop-surat-utama"
+                          class="max-h-16 rounded border border-slate-300/60 p-1 bg-white shadow-sm">
+                      </div>
+                    @else
+                      <p class="text-xs text-slate-400 italic font-medium"><i class="fa-solid fa-image-slash mr-1"></i>Belum
+                        diatur.</p>
+                    @endif
+                  </div>
+
+                  {{-- Kop Kedua / SPT --}}
+                  <div class="space-y-1">
+                    <span
+                      class="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Kop Kedua / SPT
+                      @if (empty($department->letterhead_second) && $inheritedKopSecond)
+                        <span
+                          class="rounded bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 text-[9px] font-bold">Warisan
+                          dari Induk</span>
+                      @endif
+                    </span>
+                    @if ($inheritedKopSecond)
+                      <div class="p-2 bg-slate-50 border border-slate-200 rounded flex justify-center">
+                        <img src="{{ asset('storage/' . $inheritedKopSecond) }}" alt="kop-surat-kedua"
+                          class="max-h-16 rounded border border-slate-300/60 p-1 bg-white shadow-sm">
+                      </div>
+                    @else
+                      <p class="text-xs text-slate-400 italic font-medium"><i class="fa-solid fa-image-slash mr-1"></i>Belum
+                        diatur.</p>
+                    @endif
+                  </div>
+                </div>
+              </div>
+            @elseif ($inheritedKop)
               <div class="space-y-1 border-t border-slate-100 pt-3">
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   Kop Resmi Surat Dinas

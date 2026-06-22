@@ -8,8 +8,10 @@ use App\Models\Budget;
 use App\Models\Province;
 use App\Models\Regency;
 use App\Models\SppdCategory;
+use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Models\User;
+use App\Services\ApproverNotifier;
 use App\Services\SppdWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,7 @@ use Livewire\Attributes\Layout;
 class SppdCreateDetails extends Component
 {
   use WithFileUploads;
+  use InteractsWithToast;
 
   // Route inputs
   public int $user_id;
@@ -127,7 +130,7 @@ class SppdCreateDetails extends Component
         $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
       }
 
-      $seSultra = Province::where('name', 'Sulawesi Tenggara')->first();
+      $seSultra = Province::where('name', config('sppd.default_province_name'))->first();
       $this->destinations = [
         [
           'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
@@ -161,7 +164,7 @@ class SppdCreateDetails extends Component
     $query = Regency::where('province_id', $provinceId)->orderBy('name');
 
     if ($this->domain === 'lddp') {
-      $query->where('name', 'NOT LIKE', '%Kendari%');
+      $query->where('name', 'NOT LIKE', '%' . config('sppd.home_base_regency_keyword') . '%');
     }
 
     return $query->get();
@@ -173,7 +176,7 @@ class SppdCreateDetails extends Component
       return;
     }
 
-    $seSultra = Province::where('name', 'Sulawesi Tenggara')->first();
+    $seSultra = Province::where('name', config('sppd.default_province_name'))->first();
     $this->destinations[] = [
       'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
       'regency_id' => '',
@@ -284,8 +287,8 @@ class SppdCreateDetails extends Component
           // Save destinations
           foreach ($this->destinations as $dest) {
             if ($this->domain === 'dalam_daerah') {
-              $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
-              $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
+              $sultra = Province::where('name', config('sppd.default_province_name'))->first();
+              $kendari = Regency::where('name', 'LIKE', '%' . config('sppd.home_base_regency_keyword') . '%')->where('province_id', $sultra?->id)->first();
 
               $sppd->destinations()->create([
                 'address' => $dest['address_only'],
@@ -344,8 +347,8 @@ class SppdCreateDetails extends Component
           // Save destinations
           foreach ($this->destinations as $dest) {
             if ($this->domain === 'dalam_daerah') {
-              $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
-              $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
+              $sultra = Province::where('name', config('sppd.default_province_name'))->first();
+              $kendari = Regency::where('name', 'LIKE', '%' . config('sppd.home_base_regency_keyword') . '%')->where('province_id', $sultra?->id)->first();
 
               $sppd->destinations()->create([
                 'address' => $dest['address_only'],
@@ -420,66 +423,19 @@ class SppdCreateDetails extends Component
         }
       }
     } catch (\Exception $e) {
-      session()->flash('error', $e->getMessage());
+      $this->toastError($e->getMessage());
       $this->showConfirmModal = false;
     }
   }
 
   protected function notifyApprover(SppdRequest $sppd, $approval): void
   {
-    // Replicating SppdController's notifyApprover logic
-    try {
-      $approver = $approval->approver;
-      if ($approver && $approver->phone && $approver->phone_verified) {
-        $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
-        $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-        $detailUrl = route('sppd.show', $sppd);
-
-        $message = "📝 *PENGAJUAN SPPD BARU*\n"
-          . "*────────────────────────────────*\n\n"
-          . "Halo *{$approver->name}*,\n"
-          . "Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.\n\n"
-          . "• *Pelaksana:* {$sppd->user->name}\n"
-          . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
-          . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
-          . "• *Peran Anda:* {$approval->role_label}\n\n"
-          . "Silakan tinjau dan lakukan persetujuan melalui tautan berikut:\n"
-          . "🔗 {$detailUrl}\n\n"
-          . "Terima kasih.";
-
-        \App\Jobs\SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
-      }
-    } catch (\Exception $e) {
-      // Ignore notification errors to not block transaction
-    }
+    app(ApproverNotifier::class)->notifyNewRequest($sppd, $approval);
   }
 
   protected function notifyApproverRevision(SppdRequest $sppd, $approval): void
   {
-    try {
-      $approver = $approval->approver;
-      if ($approver && $approver->phone && $approver->phone_verified) {
-        $startDate = \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y');
-        $endDate = \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y');
-        $detailUrl = route('sppd.show', $sppd);
-
-        $message = "📝 *PERBAIKAN DOKUMEN SPPD (REVISI)*\n"
-          . "*────────────────────────────────*\n\n"
-          . "Halo *{$approver->name}*,\n"
-          . "Pegawai telah mengirimkan perbaikan/revisi data SPPD berikut yang memerlukan persetujuan kembali dari Anda.\n\n"
-          . "• *Pelaksana:* {$sppd->user->name}\n"
-          . "• *Maksud Perjalanan:* {$sppd->purpose}\n"
-          . "• *Tanggal:* {$startDate} s/d {$endDate}\n"
-          . "• *Peran Anda:* {$approval->role_label}\n\n"
-          . "Silakan tinjau dan lakukan persetujuan melalui tautan berikut:\n"
-          . "🔗 {$detailUrl}\n\n"
-          . "Terima kasih.";
-
-        \App\Jobs\SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
-      }
-    } catch (\Exception $e) {
-      // Ignore notification errors to not block transaction
-    }
+    app(ApproverNotifier::class)->notifyRevision($sppd, $approval);
   }
 
   public function render()

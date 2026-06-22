@@ -61,15 +61,13 @@
 
         {{-- Tombol Submit & Reset --}}
         <div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
-          <button type="submit"
-            class="w-full sm:w-auto inline-flex items-center justify-center rounded bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
+          <x-ui.button type="submit" variant="dark" class="w-full sm:w-auto px-4 py-1.5 text-xs font-semibold">
             Cari
-          </button>
+          </x-ui.button>
           @if(request()->hasAny(['search', 'type']))
-            <a wire:navigate href="{{ route('master.departments.index') }}"
-              class="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
+            <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary" class="px-3 py-1.5 text-xs font-medium text-slate-600">
               Reset
-            </a>
+            </x-ui.button>
           @endif
         </div>
       </form>

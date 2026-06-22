@@ -12,6 +12,12 @@ class Budget extends Model
 
   protected $appends = ['realization', 'balance', 'realization_percentage'];
 
+  /**
+   * Cache realisasi per-instance. Tanpa ini, getRealizationAttribute() dieksekusi 3x
+   * (realization + balance + realization_percentage) setiap budget di-serialize → boros query.
+   */
+  protected ?float $realizationCache = null;
+
   protected function casts(): array
   {
     return [
@@ -22,6 +28,10 @@ class Budget extends Model
 
   public function getRealizationAttribute(): float
   {
+    if ($this->realizationCache !== null) {
+      return $this->realizationCache;
+    }
+
     $requestIdQuery = $this->sppdRequests()
       ->whereIn('status', ['approved', 'completed'])
       ->select('id');
@@ -29,7 +39,7 @@ class Budget extends Model
     $totalCostDetails = SppdCostDetail::whereIn('sppd_request_id', $requestIdQuery)->sum('total');
     $totalActualExpenses = SppdActualExpense::whereIn('sppd_request_id', $requestIdQuery)->sum('amount');
 
-    return (float) ($totalCostDetails + $totalActualExpenses);
+    return $this->realizationCache = (float) ($totalCostDetails + $totalActualExpenses);
   }
 
   public function getBalanceAttribute(): float

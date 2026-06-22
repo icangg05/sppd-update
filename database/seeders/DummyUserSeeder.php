@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DprdJabatan;
+use App\Enums\DprdPartai;
 use App\Enums\EmployeeType;
 use App\Models\Position;
 use App\Models\Rank;
@@ -253,8 +255,8 @@ class DummyUserSeeder extends Seeder
         'rank_id'       => null,
         'position_id'   => null,
         'role'          => 'pimpinan_dprd',
-        'dprd_jabatan'  => 'Ketua DPRD KOTA KENDARI',
-        'partai'        => 'F. NASDEM',
+        'dprd_jabatan'  => DprdJabatan::KETUA->value,
+        'partai'        => DprdPartai::NASDEM->value,
       ],
       // Anggota DPRD
       [
@@ -267,8 +269,8 @@ class DummyUserSeeder extends Seeder
         'rank_id'       => null,
         'position_id'   => null,
         'role'          => 'anggota_dprd',
-        'dprd_jabatan'  => 'ANGGOTA KOMISI III',
-        'partai'        => 'F. PDI-P',
+        'dprd_jabatan'  => DprdJabatan::KOMISI_3->value,
+        'partai'        => DprdPartai::PDIP->value,
       ],
       // Sekwan
       [

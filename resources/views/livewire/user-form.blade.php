@@ -13,7 +13,7 @@
 					{{ $isEdit ? 'Ubah informasi profile, instansi, atau kredensial pengguna sistem' : 'Tambahkan pegawai baru ke dalam sistem' }}
 				</p>
 			</div>
-			<x-ui.button href="{{ route('master.users.index') }}" variant="secondary"
+			<x-ui.button href="{{ route('master.users.index', array_filter(['type' => $listType])) }}" variant="secondary"
 				class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 				<x-slot name="icon">
 					<i class="fa-solid fa-arrow-left text-xs"></i>
@@ -48,7 +48,7 @@
 
 						<div class="space-y-1">
 							<x-form.input wire:model="email" type="email" name="email" label="Email Resmi"
-								class="focus:border-cyan-500 focus:ring-cyan-500" />
+							  placeholder="email@contoh.com" class="focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
 						<div class="space-y-1">
@@ -59,10 +59,12 @@
 								class="focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
-						<div class="space-y-1">
-							<x-form.input wire:model="nip" name="nip" label="NIP (Nomor Induk Pegawai)"
-								placeholder="18 digit angka" class="font-mono focus:border-cyan-500 focus:ring-cyan-500" />
-						</div>
+						@unless ($this->isDprdContext())
+							<div class="space-y-1">
+								<x-form.input wire:model="nip" name="nip" label="NIP (Nomor Induk Pegawai)"
+									placeholder="18 digit angka" class="font-mono focus:border-cyan-500 focus:ring-cyan-500" />
+							</div>
+						@endunless
 
 						<div class="space-y-1">
 							<x-form.input wire:model="nik" name="nik" label="NIK (Nomor Induk Kependudukan)"
@@ -136,14 +138,21 @@
 						</div>
 
 						<div class="space-y-1">
-							<x-form.select wire:model="employee_type" name="employee_type" label="Tipe Status Pegawai" required
-								class="focus:border-cyan-500 focus:ring-cyan-500">
-								@foreach ($employeeTypes as $type)
-									<option value="{{ $type->value }}">
-										{{ $type->label() }}
-									</option>
-								@endforeach
-							</x-form.select>
+							@php
+								// Opsi "Anggota DPRD" hanya tersedia pada konteks DPRD.
+								$employeeTypeOptions = collect($employeeTypes)
+									->when(! $this->isDprdContext(), fn($c) => $c->reject(fn($type) => $type->value === \App\Enums\EmployeeType::DPRD->value))
+									->map(fn($type) => ['value' => $type->value, 'label' => $type->label()])
+									->values()
+									->all();
+							@endphp
+							<x-form.searchable-select wire:model.live="employee_type" name="employee_type"
+								label="Tipe Status Pegawai" required :disabled="$this->isDprdContext()"
+								:options="$employeeTypeOptions" placeholder="— Pilih Tipe Pegawai —"
+								searchPlaceholder="Cari tipe..." />
+							@if ($this->isDprdContext())
+								<p class="text-xs text-slate-400">Terkunci sebagai Anggota DPRD pada formulir ini.</p>
+							@endif
 						</div>
 
 						<div class="sm:col-span-2 my-1">
@@ -151,52 +160,89 @@
 						</div>
 
 						<div class="space-y-1">
-							<x-form.select wire:model="department_id" name="department_id" label="Instansi / Unit Kerja (OPD)"
-								class="focus:border-cyan-500 focus:ring-cyan-500">
-								<option value="">— Pilih Instansi —</option>
-								@foreach ($departments as $d)
-									<option value="{{ $d->id }}">
-										{{ $d->display_name }}
-									</option>
-								@endforeach
-							</x-form.select>
+							@php
+								$departmentOptions = collect($departments)
+									->map(fn($d) => ['value' => $d->id, 'label' => $d->display_name])
+									->all();
+							@endphp
+							<x-form.searchable-select wire:model="department_id" name="department_id"
+								label="Instansi / Unit Kerja (OPD)" required :options="$departmentOptions"
+								placeholder="— Pilih Instansi —" searchPlaceholder="Cari instansi..." />
 						</div>
 
-						<div class="space-y-1">
-							<x-form.select wire:model="rank_id" name="rank_id" label="Golongan / Pangkat"
-								class="focus:border-cyan-500 focus:ring-cyan-500">
-								<option value="">— Pilih Pangkat —</option>
-								@foreach ($ranks as $r)
-									<option value="{{ $r->id }}">
-										{{ $r->group }} — {{ $r->name }}
-									</option>
-								@endforeach
-							</x-form.select>
-						</div>
+						@unless ($this->isDprdContext())
+							<div class="space-y-1">
+								@php
+									$rankOptions = collect($ranks)
+										->map(fn($r) => ['value' => $r->id, 'label' => $r->group . ' — ' . $r->name])
+										->prepend(['value' => '', 'label' => '— Tidak dipilih —'])
+										->all();
+								@endphp
+								<x-form.searchable-select wire:model="rank_id" name="rank_id" label="Golongan / Pangkat"
+									:options="$rankOptions" placeholder="— Pilih Pangkat —" searchPlaceholder="Cari pangkat..." />
+							</div>
+
+							<div class="space-y-1">
+								@php
+									$positionOptions = collect($positions)
+										->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
+										->prepend(['value' => '', 'label' => '— Tidak dipilih —'])
+										->all();
+								@endphp
+								<x-form.searchable-select wire:model="position_id" name="position_id"
+									label="Jabatan Struktural / Fungsional" :options="$positionOptions"
+									placeholder="— Pilih Jabatan —" searchPlaceholder="Cari jabatan..." />
+							</div>
+						@endunless
 
 						<div class="space-y-1">
-							<x-form.select wire:model="position_id" name="position_id" label="Jabatan Struktural / Fungsional"
-								class="focus:border-cyan-500 focus:ring-cyan-500">
-								<option value="">— Pilih Jabatan —</option>
-								@foreach ($positions as $p)
-									<option value="{{ $p->id }}">
-										{{ $p->name }}
-									</option>
-								@endforeach
-							</x-form.select>
+							@php
+								$roleOptions = ($this->isDprdContext()
+									? $roles->whereIn('name', ['pimpinan_dprd', 'anggota_dprd'])
+									: $roles)
+									->map(fn($r) => ['value' => $r->name, 'label' => $r->label])
+									->values()
+									->all();
+							@endphp
+							<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
+								required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..." />
 						</div>
 
-						<div class="space-y-1">
-							<x-form.select wire:model="role" name="role" label="Role Otentikasi Sistem" required
-								class="focus:border-cyan-500 focus:ring-cyan-500">
-								<option value="">— Pilih Role —</option>
-								@foreach ($roles as $r)
-									<option value="{{ $r->name }}">
-										{{ $r->label }}
-									</option>
-								@endforeach
-							</x-form.select>
-						</div>
+						{{-- Data khusus Anggota DPRD --}}
+						@if ($this->isDprdMember())
+							<div class="sm:col-span-2 my-1">
+								<hr class="border-slate-100">
+							</div>
+
+							<div class="sm:col-span-2">
+								<h4 class="text-xs font-bold uppercase tracking-wide text-cyan-700 flex items-center gap-2">
+									<i class="fa-solid fa-landmark-dome text-cyan-500"></i>Data Anggota DPRD
+								</h4>
+								<p class="mt-0.5 text-xs text-slate-400">Informasi ini digunakan pada dokumen SPT/SPPD Anggota DPRD.</p>
+							</div>
+
+							<div class="space-y-1">
+								@php
+									$jabatanOptions = collect($dprdJabatans)
+										->map(fn($jabatan) => ['value' => $jabatan->value, 'label' => $jabatan->label()])
+										->all();
+								@endphp
+								<x-form.searchable-select wire:model.live="dprd_jabatan" name="dprd_jabatan" label="Jabatan DPRD"
+									required :options="$jabatanOptions" placeholder="— Pilih Jabatan DPRD —"
+									searchPlaceholder="Cari jabatan DPRD..." />
+							</div>
+
+							<div class="space-y-1">
+								@php
+									$partaiOptions = collect($dprdPartais)
+										->map(fn($partaiOpt) => ['value' => $partaiOpt->value, 'label' => $partaiOpt->label()])
+										->all();
+								@endphp
+								<x-form.searchable-select wire:model="partai" name="partai" label="Partai / Fraksi"
+									:options="$partaiOptions" placeholder="— Pilih Partai / Fraksi —"
+									searchPlaceholder="Cari partai..." />
+							</div>
+						@endif
 
 					</div>
 				</div>
@@ -204,7 +250,7 @@
 
 			{{-- Form Actions --}}
 			<div class="flex justify-end gap-3">
-				<x-ui.button href="{{ route('master.users.index') }}" variant="secondary"
+				<x-ui.button href="{{ route('master.users.index', array_filter(['type' => $listType])) }}" variant="secondary"
 					class="inline-flex items-center rounded border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
 					Batal
 				</x-ui.button>

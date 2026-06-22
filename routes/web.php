@@ -18,7 +18,9 @@ use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
+use App\Livewire\UsersIndex;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -90,14 +92,10 @@ Route::middleware('auth')->group(function () {
     // Master Data
     Route::prefix('master')->name('master.')->group(function () {
         // Users / Pegawai
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users', UsersIndex::class)->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::patch('/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('users.toggle');
 
         // Departments / Instansi / OPD
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
@@ -134,14 +132,11 @@ Route::middleware('auth')->group(function () {
 
     // System Health Check — hanya super_admin
     Route::get('/system/health', function () {
-        // abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
+        abort_unless(auth()->user()->hasRole('super_admin'), 403, 'Aksi ini tidak diizinkan.');
 
         $pendingJobs = DB::table('jobs')->count();
         $failedJobs = DB::table('failed_jobs')->count();
         $recentFailed = DB::table('failed_jobs')->latest('failed_at')->limit(10)->get();
-
-        // pending=0 berarti worker aktif memproses (meski job bisa gagal)
-        $workerLikelyRunning = true; // jika pending_jobs tidak menumpuk, worker berjalan
 
         return response()->json([
             'status' => $failedJobs === 0 ? 'ok' : 'has_failures',
@@ -153,7 +148,8 @@ Route::middleware('auth')->group(function () {
                 'queue' => $j->queue,
                 'failed_at' => $j->failed_at,
                 'payload' => json_decode($j->payload, true)['displayName'] ?? '(unknown)',
-                'exception' => $j->exception,  // full exception untuk debug
+                // Ringkasan pesan error saja — hindari bocorkan full stack trace.
+                'error' => Str::limit((string) strtok((string) $j->exception, "\n"), 200),
             ]),
             'checked_at' => now()->toDateTimeString(),
         ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

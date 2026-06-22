@@ -13,6 +13,7 @@ $variantClasses = [
     'warning' => 'bg-amber-500 text-white hover:bg-amber-600',
     'danger' => 'bg-red-600 text-white hover:bg-red-700',
     'ghost' => 'text-slate-500 hover:text-slate-800 hover:bg-slate-50',
+    'dark' => 'bg-slate-800 text-white hover:bg-slate-900',
 ];
 
 $variantClass = $variantClasses[$variant] ?? $variantClasses['primary'];

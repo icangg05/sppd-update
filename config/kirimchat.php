@@ -22,4 +22,11 @@ return [
    * User mengirim pesan ke nomor ini sebagai langkah verifikasi.
    */
   'verification_number' => env('KIRIMCHAT_VERIFICATION_NUMBER', '628217611919'),
+
+  /**
+   * Shared-secret untuk memvalidasi request webhook masuk.
+   * Dikirim oleh Kirim.Chat lewat header `X-Webhook-Secret` atau query string `?secret=`.
+   * Jika dikosongkan, verifikasi webhook dinonaktifkan (mis. untuk dev lokal).
+   */
+  'webhook_secret' => env('KIRIMCHAT_WEBHOOK_SECRET'),
 ];

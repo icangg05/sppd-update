@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Models\SppdActualExpense;
 use App\Models\SppdRequest;
 use Illuminate\Http\RedirectResponse;
@@ -9,12 +10,15 @@ use Illuminate\Http\Request;
 
 class SppdActualExpenseController extends Controller
 {
+  use AuthorizesSppdAccess;
+
   /**
    * Store a newly created resource in storage.
    */
   public function store(Request $request, SppdRequest $sppd): RedirectResponse
   {
     abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     if ($request->has('user_ids')) {
@@ -53,6 +57,7 @@ class SppdActualExpenseController extends Controller
   public function update(Request $request, SppdRequest $sppd, SppdActualExpense $expense): RedirectResponse
   {
     abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $validated = $request->validate([
@@ -71,6 +76,7 @@ class SppdActualExpenseController extends Controller
   public function destroy(SppdRequest $sppd, SppdActualExpense $expense): RedirectResponse
   {
     abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $expense->delete();

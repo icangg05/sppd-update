@@ -38,9 +38,13 @@
 		{{-- Main Page Content --}}
 		<main class="flex-1 p-4 sm:p-5 lg:p-6">
 
-			{{-- Hidden Session Dispatcher inside dynamic area --}}
-			<div x-data x-init="@if (session('success')) $dispatch('toast', { type: 'success', message: '{{ addslashes(session('success')) }}' }); @endif
-@if (session('error')) $dispatch('toast', { type: 'error', message: '{{ addslashes(session('error')) }}' }); @endif" class="hidden"></div>
+			{{-- Hidden Session Dispatcher inside dynamic area.
+			     setTimeout memastikan event 'toast' dikirim setelah container toast
+			     (di akhir body) selesai mendaftarkan listener @toast.window. --}}
+			<div x-data x-init="
+				@if (session('success')) setTimeout(() => $dispatch('toast', { type: 'success', message: @js(session('success')) }), 60); @endif
+				@if (session('error')) setTimeout(() => $dispatch('toast', { type: 'error', message: @js(session('error')) }), 60); @endif
+			" class="hidden"></div>
 
 			@if (session('error_details'))
 				<script>
@@ -95,45 +99,43 @@
 	{{-- Toast Notifications container --}}
 	<div x-data="toastManager()"
 		@toast.window="add($event.detail)"
-		class="fixed top-5 right-5 z-9999 flex flex-col gap-3.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+		class="fixed top-3 right-3 left-3 sm:top-5 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-9999 flex flex-col items-center gap-2 sm:gap-3.5 sm:w-full sm:max-w-sm pointer-events-none">
 		<template x-for="toast in toasts" :key="toast.id">
 			<div x-show="toast.show"
 				x-transition:enter="transition ease-out duration-300 transform"
-				x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-				x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+				x-transition:enter-start="-translate-y-3 opacity-0 scale-95"
+				x-transition:enter-end="translate-y-0 opacity-100 scale-100"
 				x-transition:leave="transition ease-in duration-200 transform"
-				x-transition:leave-start="opacity-100 translate-x-0"
-				x-transition:leave-end="opacity-0 translate-x-2"
-				class="pointer-events-auto flex items-start gap-3 rounded-lg border p-4 shadow-md bg-white border-l-4"
-				:class="{
-				    'border-emerald-500 bg-emerald-50 text-emerald-950 border-l-emerald-600': toast.type === 'success',
-				    'border-rose-200 bg-rose-50 text-rose-950 border-l-rose-600': toast.type === 'error',
-				    'border-cyan-200 bg-cyan-50 text-cyan-950 border-l-cyan-600': toast.type === 'info',
-				    'border-amber-200 bg-amber-50 text-amber-950 border-l-amber-600': toast.type === 'warning'
-				}">
+				x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+				x-transition:leave-end="-translate-y-3 opacity-0 scale-95"
+				class="pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5">
 
-				<!-- Icon -->
-				<div class="shrink-0 mt-0.5">
-					<template x-if="toast.type === 'success'">
-						<i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-					</template>
-					<template x-if="toast.type === 'error'">
-						<i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
-					</template>
-					<template x-if="toast.type === 'info'">
-						<i class="fa-solid fa-circle-info text-cyan-600 text-base"></i>
-					</template>
-					<template x-if="toast.type === 'warning'">
-						<i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
-					</template>
+				<!-- Icon (lingkaran berisi) -->
+				<div class="shrink-0 flex size-6 sm:size-7 items-center justify-center rounded-full text-white shadow-sm"
+					:class="{
+					    'bg-emerald-500': toast.type === 'success',
+					    'bg-rose-500': toast.type === 'error',
+					    'bg-cyan-500': toast.type === 'info',
+					    'bg-amber-500': toast.type === 'warning'
+					}">
+					<i class="fa-solid text-xs"
+						:class="{
+						    'fa-check': toast.type === 'success',
+						    'fa-xmark': toast.type === 'error',
+						    'fa-info': toast.type === 'info',
+						    'fa-exclamation': toast.type === 'warning'
+						}"></i>
 				</div>
 
-				<!-- Message -->
-				<div class="flex-1 text-xs font-semibold leading-normal" x-text="toast.message"></div>
+				<!-- Title + Message -->
+				<div class="flex-1 min-w-0 leading-tight">
+					<p class="text-xs sm:text-sm font-bold text-slate-800 truncate" x-text="toast.title"></p>
+					<p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 line-clamp-2 sm:line-clamp-none" x-show="toast.message" x-text="toast.message"></p>
+				</div>
 
 				<!-- Close button -->
 				<button type="button" @click="remove(toast.id)"
-					class="text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
+					class="shrink-0 self-start -mr-0.5 -mt-0.5 rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 cursor-pointer">
 					<i class="fa-solid fa-xmark text-xs"></i>
 				</button>
 			</div>
@@ -142,14 +144,22 @@
 
 	<script>
 		function toastManager() {
+			const defaultTitles = {
+				success: 'Berhasil!',
+				error: 'Terjadi Kesalahan',
+				info: 'Informasi',
+				warning: 'Peringatan',
+			};
 			return {
 				toasts: [],
 				add(detail) {
 					const id = Date.now() + Math.random().toString(36).substr(2, 9);
+					const type = detail.type || 'success';
 					this.toasts.push({
 						id: id,
-						type: detail.type || 'success',
-						message: detail.message,
+						type: type,
+						title: detail.title || defaultTitles[type] || defaultTitles.success,
+						message: detail.message || '',
 						show: false
 					});
 

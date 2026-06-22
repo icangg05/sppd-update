@@ -28,28 +28,20 @@
 
 			{{-- Input Grid Pemilihan Pelaksana & Domain --}}
 			<div class="p-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-				<div>
-					<label for="user_id" class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Pelaksana Perjalanan Dinas <span class="text-rose-500">*</span></label>
-					<select wire:model.live="user_id" id="user_id" required
-						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-						<option value="">— Pilih Pegawai yang Berangkat —</option>
-						@foreach ($users as $u)
-							<option value="{{ $u->id }}">
-								{{ $u->nip ? $u->nip . ' -' : '' }} {{ $u->name }}
-							</option>
-						@endforeach
-					</select>
-				</div>
+				<x-form.select wire:model.live="user_id" label="Pelaksana Perjalanan Dinas" required>
+					<option value="">— Pilih Pegawai yang Berangkat —</option>
+					@foreach ($users as $u)
+						<option value="{{ $u->id }}">
+							{{ $u->nip ? $u->nip . ' -' : '' }} {{ $u->name }}
+						</option>
+					@endforeach
+				</x-form.select>
 
-				<div>
-					<label for="domain" class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Domain Perjalanan <span class="text-rose-500">*</span></label>
-					<select wire:model.live="domain" id="domain" required
-						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-						<option value="dalam_daerah">Dalam Daerah</option>
-						<option value="lddp">Luar Daerah Dalam Provinsi (LDDP)</option>
-						<option value="ldlp">Luar Daerah Luar Provinsi (LDLP)</option>
-					</select>
-				</div>
+				<x-form.select wire:model.live="domain" label="Domain Perjalanan" required>
+					<option value="dalam_daerah">Dalam Daerah</option>
+					<option value="lddp">Luar Daerah Dalam Provinsi (LDDP)</option>
+					<option value="ldlp">Luar Daerah Luar Provinsi (LDLP)</option>
+				</x-form.select>
 			</div>
 
 			{{-- Container Pratinjau Alur Alur Dokumen --}}

@@ -26,14 +26,7 @@
 			</div>
 		</div>
 
-		{{-- Flash --}}
-		@if (session('success'))
-			<div class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-				<i class="fa-solid fa-circle-check"></i>
-				{{ session('success') }}
-			</div>
-		@endif
-
+		{{-- Flash sukses ditangani toast global (lihat layouts.app) --}}
 		@if ($errors->any())
 			<div class="flex items-center gap-2 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
 				<i class="fa-solid fa-circle-xmark"></i>

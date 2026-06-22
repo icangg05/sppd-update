@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
+use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Enums\DepartmentType;
 use App\Enums\EmployeeType;
 use App\Enums\SignatureDocumentType;
@@ -30,14 +31,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 use Vinkla\Hashids\Facades\Hashids;
 
 class SppdController extends Controller
 {
+  use AuthorizesSppdAccess;
+
   public function index(Request $request): View
   {
     if (! $request->has('jabatan')) {
@@ -135,317 +140,6 @@ class SppdController extends Controller
     return view('sppd.index', compact('sppds', 'statuses', 'domains'));
   }
 
-  public function create()
-  {
-    $query = User::where('is_active', true);
-
-    // Filter: Admin OPD bisa melihat pegawai di instansinya + sub-department (bidang/subbidang)
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $query->whereIn('department_id', $dept->getAllRelatedIds());
-      } else {
-        $query->where('department_id', Auth::user()->department_id);
-      }
-    }
-
-    $users = $query->orderBy('name')->get();
-
-    return view('sppd.create', compact('users'));
-  }
-
-  public function createDetails(Request $request)
-  {
-    $request->validate([
-      'user_id' => 'required|exists:users,id',
-      'domain' => 'required|in:dalam_daerah,lddp,ldlp',
-    ]);
-
-    $pelaksana = User::with('department')->findOrFail($request->user_id);
-
-    // Keamanan tambahan: Pastikan Admin OPD tidak menembak user_id dari OPD lain lewat URL
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $allowedIds = $dept->getAllRelatedIds();
-        if (! $allowedIds->contains($pelaksana->department_id)) {
-          return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
-        }
-      } elseif ($pelaksana->department_id !== Auth::user()->department_id) {
-        return redirect()->route('sppd.create')->with('error', 'Anda tidak memiliki akses untuk membuat SPPD bagi pegawai di luar instansi Anda.');
-      }
-    }
-
-    $domain = $request->domain;
-
-    // Validasi apakah alur tersedia
-    $workflowService = new SppdWorkflowService;
-    $steps = $workflowService->simulateApprovals($pelaksana, $domain);
-
-    if (empty($steps)) {
-      return redirect()->route('sppd.create')
-        ->with('error', 'Alur pengajuan untuk pelaksana ini belum diatur. Harap hubungi Admin.');
-    }
-
-    // Cek apakah pelaksana masih dalam perjalanan aktif
-    // (status IN_PROGRESS atau APPROVED dengan end_date belum lewat)
-    $hasActiveTravel = SppdRequest::where('user_id', $pelaksana->id)
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
-      ->exists();
-
-    if ($hasActiveTravel) {
-      return redirect()->route('sppd.create')
-        ->with('error', 'Pegawai ' . $pelaksana->name . ' masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan).');
-    }
-
-    // Cek kelengkapan pejabat
-    foreach ($steps as $step) {
-      if ($step['status'] !== 'found') {
-        return redirect()->route('sppd.create')
-          ->with('error', 'Pejabat penanggung jawab (' . $step['role_label'] . ') belum diatur di unit kerja terkait.');
-      }
-    }
-
-    // Filter Anggaran: Milik instansi OPD induk (root) user login
-    $budgetQuery = Budget::with('department');
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $budgetQuery->whereIn('department_id', $dept->getAllRelatedIds());
-      } else {
-        $budgetQuery->where('department_id', Auth::user()->department_id);
-      }
-    }
-    $budgets = $budgetQuery->get();
-
-    $categories = SppdCategory::all();
-
-    // Filter Pengikut: Satu OPD induk (termasuk sub-department)
-    $userQuery = User::where('is_active', true);
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $userQuery->whereIn('department_id', $dept->getAllRelatedIds());
-      } else {
-        $userQuery->where('department_id', Auth::user()->department_id);
-      }
-    }
-    $users = $userQuery->orderBy('name')->get();
-
-    $provinces = Province::orderBy('name')->get();
-
-    // Kumpulkan ID user yang sedang dalam perjalanan aktif (untuk disable di pilihan pengikut)
-    $activeFollowerIds = SppdRequest::whereIn('user_id', $users->pluck('id'))
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
-      ->pluck('user_id')
-      ->unique()
-      ->toArray();
-
-    // Deteksi apakah unit kerja pelaksana adalah Inspektorat
-    $isInspektorat = str_contains(strtolower($pelaksana->department?->name ?? ''), 'inspektorat');
-
-    return view('sppd.create_details', compact('pelaksana', 'domain', 'budgets', 'categories', 'users', 'provinces', 'steps', 'activeFollowerIds', 'isInspektorat'));
-  }
-
-  public function store(Request $request)
-  {
-    $validated = $request->validate([
-      'user_id' => 'required|exists:users,id',
-      'budget_id' => 'required|exists:budgets,id',
-      'category_id' => 'required|exists:sppd_categories,id',
-      'purpose' => 'required|string|max:1000',
-      'problem' => 'nullable|string',
-      'facts' => 'nullable|string',
-      'analysis' => 'nullable|string',
-      'start_date' => 'required|date',
-      'end_date' => 'required|date|after_or_equal:start_date',
-      'transport_type' => 'nullable|string|max:255',
-      'transport_name' => 'nullable|string|max:255',
-      'departure_place' => 'nullable|string|max:255',
-      'domain' => 'required|in:dalam_daerah,lddp,ldlp',
-      'urgency' => 'nullable|string|max:255',
-      'sppd_date' => 'nullable|date',
-      'spt_date' => 'nullable|date',
-      'notes' => 'nullable|string|max:1000',
-      'document_number' => 'nullable|string|max:255',
-      // Destinations
-      'destinations' => 'required|array|min:1',
-      'destinations.*.province_id' => 'required_if:domain,lddp,ldlp|exists:provinces,id',
-      'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp|exists:regencies,id',
-      'destinations.*.address' => 'required_if:domain,lddp,ldlp|string|max:500',
-      'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
-      // Followers
-      'followers' => 'nullable|array',
-      'followers.*' => 'exists:users,id',
-      'follower_positions' => 'nullable|array',
-      'follower_positions.*' => 'nullable|string|max:100',
-      // Cost details
-      'costs' => 'nullable|array',
-      'costs.*.description' => 'required_with:costs|string|max:255',
-      'costs.*.unit_cost' => 'required_with:costs|numeric|min:0',
-      'costs.*.quantity' => 'required_with:costs|integer|min:1',
-    ]);
-
-    // Cek aktif perjalanan sebelum menyimpan (double-check server side)
-    $hasActiveTravel = SppdRequest::where('user_id', $validated['user_id'])
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
-      ->exists();
-
-    if ($hasActiveTravel) {
-      return back()->withInput()->with('error', 'Pegawai ini masih memiliki SPPD aktif. SPPD baru hanya dapat diajukan setelah tanggal perjalanan sebelumnya selesai.');
-    }
-
-    try {
-      DB::transaction(function () use ($validated, $request, &$sppd) {
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-          $attachmentPath = $request->file('attachment')->store(date('Y') . '/dokumen_pendukung', 'public');
-        }
-
-        $sppd = SppdRequest::create([
-          'user_id' => $validated['user_id'],
-          'creator_id' => Auth::id(),
-          'budget_id' => $validated['budget_id'],
-          'category_id' => $validated['category_id'],
-          'purpose' => $validated['purpose'],
-          'problem' => $validated['problem'] ?? null,
-          'facts' => $validated['facts'] ?? null,
-          'analysis' => $validated['analysis'] ?? null,
-          'start_date' => $validated['start_date'],
-          'end_date' => $validated['end_date'],
-          'transport_type' => $validated['transport_type'],
-          'transport_name' => $validated['transport_name'],
-          'departure_place' => $validated['departure_place'],
-          'domain' => $validated['domain'],
-          'urgency' => $validated['urgency'],
-          'sppd_date' => $validated['sppd_date'],
-          'spt_date' => $validated['spt_date'],
-          'status' => SppdStatus::IN_PROGRESS,
-          'notes' => $validated['notes'] ?? null,
-          'document_number' => $validated['document_number'] ?? null,
-          'attachment' => $attachmentPath,
-        ]);
-
-        // Save destinations
-        foreach ($validated['destinations'] as $dest) {
-          if ($sppd->domain->value === 'dalam_daerah') {
-            $sultra = Province::where('name', 'Sulawesi Tenggara')->first();
-            $kendari = Regency::where('name', 'LIKE', '%Kendari%')->where('province_id', $sultra?->id)->first();
-
-            $sppd->destinations()->create([
-              'address' => $dest['address_only'],
-              'province_id' => $sultra?->id,
-              'regency_id' => $kendari?->id,
-            ]);
-          } else {
-            $sppd->destinations()->create([
-              'province_id' => $dest['province_id'] ?? null,
-              'regency_id' => $dest['regency_id'] ?? null,
-              'address' => $dest['address'] ?? null,
-            ]);
-          }
-        }
-
-        // Save followers
-        if (! empty($validated['followers'])) {
-          $followerPositions = $validated['follower_positions'] ?? [];
-          foreach ($validated['followers'] as $userId) {
-            $sppd->followers()->create([
-              'user_id' => $userId,
-              'travel_position' => $followerPositions[$userId] ?? null,
-            ]);
-          }
-        }
-
-        // Generate approvals via dynamic workflow
-        $workflowService = app(SppdWorkflowService::class);
-        $success = $workflowService->generateApprovals($sppd);
-
-        if (! $success) {
-          throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut. Silakan hubungi admin untuk melengkapi aturan Workflow SPPD.');
-        }
-
-        // PDF generation is now handled on-the-fly via streaming to save storage.
-        // Files will only be saved permanently when the document is officially signed.
-      });
-
-      // Dispatch notification to first approver
-      if (isset($sppd)) {
-        $firstApproval = $sppd->approvals()
-          ->orderBy('step_order', 'asc')
-          ->where('status', ApprovalStatus::PENDING)
-          ->first();
-
-        if ($firstApproval) {
-          $this->notifyApprover($sppd, $firstApproval);
-        }
-      }
-
-      return redirect()->route('sppd.show', $sppd)
-        ->with('success', 'SPPD berhasil dibuat dan diajukan. Silakan menunggu proses persetujuan.');
-    } catch (\Exception $e) {
-      return back()->withInput()->with('error', $e->getMessage());
-    }
-  }
-
-  public function show(SppdRequest $sppd)
-  {
-    $sppd->load([
-      'user.department',
-      'creator',
-      'reviser',
-      'pptk',
-      'budget.department',
-      'category',
-      'destinations.province',
-      'destinations.regency',
-      'followers.user',
-      'approvals.approver',
-      'costDetails',
-      'actualExpenses',
-      'advanceReceipts',
-      'report',
-      'digitalSignatures.signer',
-    ]);
-
-    // Determine if current user's pending approval step needs TTE
-    $needsTte = false;
-    $myApproval = $sppd->approvals
-      ->where('approver_id', Auth::id())
-      ->where('status', ApprovalStatus::PENDING)
-      ->first();
-
-    if ($myApproval) {
-      $hasAnyTteConfigured = $sppd->approvals->contains(fn($app) => $app->signs_spt || $app->signs_sppd);
-      if ($hasAnyTteConfigured) {
-        $needsTte = (bool) $myApproval->signs_spt || (bool) $myApproval->signs_sppd;
-      } else {
-        // Fallback: final step signs everything
-        $needsTte = $myApproval->step_order === $sppd->approvals->max('step_order');
-      }
-    }
-
-    return view('sppd.show', compact('sppd', 'needsTte'));
-  }
-
   /**
    * Portal 'Selanjutnya' (Image 2)
    */
@@ -463,6 +157,7 @@ class SppdController extends Controller
    */
   public function manageSppd(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user', 'followers.user']);
@@ -475,6 +170,7 @@ class SppdController extends Controller
    */
   public function manageSpt(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user']);
@@ -487,6 +183,7 @@ class SppdController extends Controller
    */
   public function receipts(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
@@ -516,6 +213,7 @@ class SppdController extends Controller
    */
   public function actualExpenses(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
@@ -543,10 +241,24 @@ class SppdController extends Controller
   public function updatePptk(SppdRequest $sppd, Request $request)
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
+    // PPTK harus pegawai aktif di lingkup OPD pemohon (induk + sub-unit) — sama dengan kandidat di actualExpenses().
+    $dept = $sppd->user->department;
+    $opdId = $dept?->parent_id ?? $dept?->id;
+    $allowedDeptIds = Department::where('id', $opdId)
+      ->orWhere('parent_id', $opdId)
+      ->pluck('id')
+      ->all();
+
     $request->validate([
-      'pptk_id' => 'required|exists:users,id',
+      'pptk_id' => [
+        'required',
+        Rule::exists('users', 'id')
+          ->where('is_active', true)
+          ->whereIn('department_id', $allowedDeptIds),
+      ],
     ]);
 
     $sppd->update(['pptk_id' => $request->pptk_id]);
@@ -559,6 +271,7 @@ class SppdController extends Controller
    */
   public function finalCosts(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
@@ -577,6 +290,7 @@ class SppdController extends Controller
    */
   public function reportInput(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $sppd->load(['user', 'report']);
@@ -590,6 +304,7 @@ class SppdController extends Controller
   public function storeReport(Request $request, SppdRequest $sppd)
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $hasReportFile = $sppd->report?->report_file;
@@ -699,6 +414,16 @@ class SppdController extends Controller
     ]);
 
     $user = User::with('department.parent')->find($request->user_id);
+
+    // Batasi preview ke pegawai dalam lingkup department yang diizinkan (super_admin bebas) —
+    // mencegah enumerasi struktur organisasi oleh user login mana pun.
+    $authUser = Auth::user();
+    if (! $authUser->hasRole('super_admin')) {
+      $dept = $authUser->department;
+      $allowedIds = $dept ? $dept->getAllRelatedIds() : collect([$authUser->department_id]);
+      abort_unless($allowedIds->contains($user->department_id), 403, 'Anda tidak memiliki akses ke data pegawai ini.');
+    }
+
     $workflowService = app(SppdWorkflowService::class);
 
     $steps = $workflowService->simulateApprovals($user, $request->domain);
@@ -717,6 +442,7 @@ class SppdController extends Controller
 
   public function streamSpt(SppdRequest $sppd)
   {
+    $this->authorizeSppdAccess($sppd);
     // Check if already TTE signed, if so stream the signed file
     $signature = $sppd->signatureFor('spt');
     if ($signature && $signature->status->value === SignatureStatus::SIGNED->value && $signature->signed_file_path) {
@@ -772,6 +498,7 @@ class SppdController extends Controller
 
   public function streamSppd(SppdRequest $sppd, ?User $user = null)
   {
+    $this->authorizeSppdAccess($sppd);
     // Jika user_id dikirim lewat request (untuk pengikut)
     if (request()->has('user_id')) {
       $decoded = Hashids::decode(request()->user_id);
@@ -865,6 +592,7 @@ class SppdController extends Controller
    */
   public function streamKuitansiRampung(SppdRequest $sppd, Request $request)
   {
+    $this->authorizeSppdAccess($sppd);
     $sppd->load([
       'user.department.head',
       'user.department.parent',
@@ -937,6 +665,7 @@ class SppdController extends Controller
       try {
         $dateValue = Carbon::parse($dateParam);
       } catch (\Exception $e) {
+        Log::warning('Parameter tanggal tidak valid pada stream PDF, memakai tanggal hari ini.', ['date' => $dateParam]);
       }
     }
 
@@ -982,6 +711,7 @@ class SppdController extends Controller
    */
   public function streamKuitansiPanjar(SppdRequest $sppd, Request $request)
   {
+    $this->authorizeSppdAccess($sppd);
     $sppd->load([
       'user.department.head',
       'user.department.parent',
@@ -1044,6 +774,7 @@ class SppdController extends Controller
       try {
         $dateValue = Carbon::parse($dateParam);
       } catch (\Exception $e) {
+        Log::warning('Parameter tanggal tidak valid pada stream PDF, memakai tanggal hari ini.', ['date' => $dateParam]);
       }
     }
 
@@ -1089,6 +820,7 @@ class SppdController extends Controller
    */
   public function streamPengeluaranRiil(SppdRequest $sppd, Request $request)
   {
+    $this->authorizeSppdAccess($sppd);
     $sppd->load([
       'user.department.parent',
       'user.department.head',
@@ -1136,6 +868,7 @@ class SppdController extends Controller
       try {
         $dateValue = Carbon::parse($dateParam);
       } catch (\Exception $e) {
+        Log::warning('Parameter tanggal tidak valid pada stream PDF, memakai tanggal hari ini.', ['date' => $dateParam]);
       }
     }
 
@@ -1167,6 +900,7 @@ class SppdController extends Controller
    */
   public function streamRincianBiaya(SppdRequest $sppd, Request $request)
   {
+    $this->authorizeSppdAccess($sppd);
     $sppd->load([
       'user.department.parent',
       'user.rank',
@@ -1234,6 +968,7 @@ class SppdController extends Controller
       try {
         $dateValue = Carbon::parse($dateParam);
       } catch (\Exception $e) {
+        Log::warning('Parameter tanggal tidak valid pada stream PDF, memakai tanggal hari ini.', ['date' => $dateParam]);
       }
     }
 

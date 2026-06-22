@@ -110,10 +110,10 @@
         
         @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
             <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-3 rounded-b-lg">
-                <button type="submit" class="inline-flex items-center gap-2 rounded bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <x-ui.button type="submit" variant="success" class="px-6 py-2.5 font-bold shadow-md cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
                     <i class="fa-solid fa-save"></i>
                     {{ $sppd->report ? 'Perbarui Laporan' : 'Simpan Laporan' }}
-                </button>
+                </x-ui.button>
             </div>
         @endif
       </div>

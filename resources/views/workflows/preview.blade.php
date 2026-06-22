@@ -48,13 +48,13 @@
 							@if(is_array($w->destination) && count($w->destination) > 0)
 								<div class="flex flex-wrap gap-1">
 									@foreach($w->destination as $d)
-										<span class="badge bg-blue-50 text-blue-700 border border-blue-100 text-[10px]">
+										<x-ui.badge bg="bg-blue-50" text="text-blue-700" class="border border-blue-100 text-[10px]">
 											{{ \App\Enums\SppdDomain::tryFrom($d)?->label() ?? $d }}
-										</span>
+										</x-ui.badge>
 									@endforeach
 								</div>
 							@else
-								<span class="badge bg-slate-100 text-slate-500">Semua</span>
+								<x-ui.badge text="text-slate-500">Semua</x-ui.badge>
 							@endif
 						</td>
 						<td>
@@ -63,8 +63,7 @@
 									<div class="flex items-center">
 										<div class="flex flex-col items-start">
 											<span class="text-[10px] font-bold text-slate-400 mb-0.5">STEP {{ $idx + 1 }}</span>
-											<span
-												class="uppercase badge bg-white border border-slate-200 text-slate-700 shadow-sm">{{ ucwords(str_replace('_', ' ', $role)) }}</span>
+											<x-ui.badge bg="bg-white" text="text-slate-700" class="uppercase border border-slate-200 shadow-sm">{{ ucwords(str_replace('_', ' ', $role)) }}</x-ui.badge>
 
 											@if (isset($roleMapping[$role]))
 												<span class="text-[11px] text-emerald-600 font-medium mt-1">

@@ -2,20 +2,30 @@
 
 namespace App\Livewire;
 
+use App\Enums\DprdJabatan;
+use App\Enums\DprdPartai;
 use App\Enums\EmployeeType;
+use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
 class UserForm extends Component
 {
+  use InteractsWithToast;
+
   public ?User $user = null;
   public bool $isEdit = false;
+
+  // Konteks asal: 'dprd' bila formulir dibuka dari halaman Anggota DPRD.
+  // Dipakai agar menu sidebar & tombol kembali tetap mengarah ke daftar yang benar.
+  public string $listType = '';
 
   // Form fields
   public $name = '';
@@ -30,6 +40,10 @@ class UserForm extends Component
   public $rank_id = '';
   public $position_id = '';
   public $role = '';
+
+  // Data khusus Anggota DPRD
+  public $dprd_jabatan = '';
+  public $partai = '';
 
   // WhatsApp Verification state
   public bool $phoneVerified = false;
@@ -62,9 +76,27 @@ class UserForm extends Component
       $this->rank_id = $user->rank_id;
       $this->position_id = $user->position_id;
       $this->role = $user->roles->first()?->name ?? '';
+      $this->dprd_jabatan = $user->dprd_jabatan ?? '';
+      $this->partai = $user->partai ?? '';
       $this->phoneVerified = (bool) $user->phone_verified;
+
+      // Edit pegawai DPRD tetap dianggap konteks DPRD walau parameter URL hilang.
+      if ($user->isDprdMember()) {
+        $this->listType = 'dprd';
+      }
     } else {
       $this->employee_type = EmployeeType::cases()[0]->value ?? '';
+    }
+
+    // Konteks dari halaman asal (mis. dibuka dari menu Anggota DPRD).
+    if (request('type') === 'dprd') {
+      $this->listType = 'dprd';
+
+      // Saat menambah dari halaman DPRD, default-kan tipe pegawai ke DPRD
+      // agar field khusus DPRD langsung tampil.
+      if (! $this->isEdit) {
+        $this->employee_type = EmployeeType::DPRD->value;
+      }
     }
 
     // Memulihkan state verifikasi jika halaman di-refresh
@@ -87,7 +119,7 @@ class UserForm extends Component
   protected function rules()
   {
     $userId = $this->isEdit ? $this->user->id : 'NULL';
-    return [
+    $rules = [
       'name' => 'required|string|max:255',
       'username' => 'required|string|max:255|unique:users,username,' . $userId,
       'email' => 'nullable|email|unique:users,email,' . $userId,
@@ -96,11 +128,71 @@ class UserForm extends Component
       'nik' => 'nullable|string|max:20|unique:users,nik,' . $userId,
       'phone' => 'nullable|string|max:20',
       'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
-      'department_id' => 'nullable|exists:departments,id',
+      'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
       'role' => 'required|string',
     ];
+
+    if ($this->isDprdMember()) {
+      $jabatanValues = implode(',', array_column(DprdJabatan::cases(), 'value'));
+      $partaiValues = implode(',', array_column(DprdPartai::cases(), 'value'));
+      $rules['dprd_jabatan'] = 'required|in:' . $jabatanValues;
+      $rules['partai'] = 'nullable|in:' . $partaiValues;
+    }
+
+    return $rules;
+  }
+
+  protected function validationAttributes()
+  {
+    return [
+      'department_id' => 'instansi / unit kerja',
+      'dprd_jabatan' => 'jabatan DPRD',
+      'partai' => 'partai / fraksi',
+    ];
+  }
+
+  /**
+   * Menentukan apakah pegawai yang sedang diisi merupakan Anggota DPRD,
+   * berdasarkan tipe pegawai atau role yang dipilih pada formulir.
+   */
+  public function isDprdMember(): bool
+  {
+    return $this->employee_type === EmployeeType::DPRD->value
+      || in_array($this->role, ['anggota_dprd', 'pimpinan_dprd'], true);
+  }
+
+  /**
+   * Formulir sedang dalam konteks Anggota DPRD (dibuka dari menu Anggota DPRD).
+   * Pada konteks ini tipe pegawai dikunci ke DPRD dan field kepegawaian umum
+   * (NIP, pangkat, jabatan struktural) disembunyikan.
+   */
+  public function isDprdContext(): bool
+  {
+    return $this->listType === 'dprd';
+  }
+
+  /**
+   * Sinkronkan role <-> jabatan DPRD:
+   * Pimpinan DPRD ⟺ Ketua DPRD, selain itu Anggota DPRD.
+   */
+  public function updatedRole($value)
+  {
+    if ($value === 'pimpinan_dprd') {
+      $this->dprd_jabatan = DprdJabatan::KETUA->value;
+    } elseif ($value === 'anggota_dprd' && $this->dprd_jabatan === DprdJabatan::KETUA->value) {
+      $this->dprd_jabatan = '';
+    }
+  }
+
+  public function updatedDprdJabatan($value)
+  {
+    if ($value === DprdJabatan::KETUA->value) {
+      $this->role = 'pimpinan_dprd';
+    } elseif (! empty($value)) {
+      $this->role = 'anggota_dprd';
+    }
   }
 
   public function openVerifyModal()
@@ -229,10 +321,16 @@ class UserForm extends Component
 
   public function save()
   {
-    $this->validate();
+    try {
+      $this->validate();
+    } catch (ValidationException $e) {
+      $this->toastError('Periksa kembali isian formulir.');
+      throw $e;
+    }
 
     if (!empty($this->phone) && !$this->phoneVerified) {
       $this->addError('phone', 'Nomor telepon harus diverifikasi terlebih dahulu.');
+      $this->toastError('Nomor telepon harus diverifikasi terlebih dahulu.');
       return;
     }
 
@@ -261,6 +359,15 @@ class UserForm extends Component
       'position_id' => $this->position_id ?: null,
     ];
 
+    // Simpan data DPRD hanya untuk Anggota DPRD; selain itu kosongkan agar tidak ada data basi.
+    if ($this->isDprdMember()) {
+      $data['dprd_jabatan'] = $this->dprd_jabatan ?: null;
+      $data['partai'] = $this->partai ?: null;
+    } else {
+      $data['dprd_jabatan'] = null;
+      $data['partai'] = null;
+    }
+
     if ($this->phoneVerified) {
       $data['phone'] = $this->phone;
     }
@@ -269,16 +376,18 @@ class UserForm extends Component
       $data['password'] = Hash::make($this->password);
     }
 
+    $typeParam = array_filter(['type' => $this->listType]);
+
     if ($this->isEdit) {
       $this->user->update($data);
       $this->user->syncRoles([$this->role]);
-      return redirect()->route('master.users.index')->with('success', "Pegawai {$this->user->name} berhasil diperbarui.");
+      return redirect()->route('master.users.index', $typeParam)->with('success', "Pegawai {$this->user->name} berhasil diperbarui.");
     } else {
       $data['is_active'] = true;
       $data['phone_verified'] = $this->phoneVerified;
       $newUser = User::create($data);
       $newUser->assignRole($this->role);
-      return redirect()->route('master.users.edit', $newUser)->with('success', "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
+      return redirect()->route('master.users.edit', [...$typeParam, 'user' => $newUser])->with('success', "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
     }
   }
 
@@ -333,6 +442,8 @@ class UserForm extends Component
       'positions' => Position::orderBy('level')->get(),
       'roles' => Role::all(),
       'employeeTypes' => EmployeeType::cases(),
+      'dprdJabatans' => DprdJabatan::cases(),
+      'dprdPartais' => DprdPartai::cases(),
     ]);
   }
 }

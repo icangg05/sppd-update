@@ -158,16 +158,15 @@
 
 				{{-- Form Actions Footer Compact --}}
 				<div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-					<a wire:navigate
+					<x-ui.button
 						href="{{ $isSuperAdmin ? route('master.departments.index') : route('master.departments.show', $department->id) }}"
-						class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50">
+						variant="secondary" class="gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600">
 						Batal
-					</a>
+					</x-ui.button>
 
-					<button type="submit"
-						class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+					<x-ui.button type="submit" class="gap-1.5 px-4 py-1.5 text-xs font-bold shadow-md shadow-cyan-200 hover:shadow-lg">
 						<i class="fa-solid fa-floppy-disk text-[11px]"></i> Simpan Perubahan
-					</button>
+					</x-ui.button>
 				</div>
 			</form>
 		</div>

@@ -54,10 +54,9 @@
 			<div class="hidden sm:block border-l border-slate-300 h-5 self-center mx-0.5"></div>
 
 			{{-- Badge Status --}}
-			<span
-				class="badge-{{ $sppd->status->value }} inline-block rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+			<x-ui.badge :status="$sppd->status->value" class="inline-block rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
 				{{ $sppd->status->label() }}
-			</span>
+			</x-ui.badge>
 
 			{{-- Tombol Kembali --}}
 			<a href="{{ $from === 'approval' ? route('sppd.index', ['filter' => 'approval']) : route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate
@@ -322,8 +321,7 @@
 													class="bg-slate-100 text-slate-400 border border-slate-200 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">Tidak
 													Dilanjutkan</span>
 											@else
-												<span
-													class="badge-{{ $displayStatus }} px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">
+												<x-ui.badge :status="$displayStatus" class="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">
 													@if ($displayStatus === 'rejected')
 														Ditolak
 													@elseif ($displayStatus === 'revision')
@@ -331,7 +329,7 @@
 													@else
 														{{ $ap->status->label() }}
 													@endif
-												</span>
+												</x-ui.badge>
 											@endif
 										</div>
 										@if ($ap->notes)
