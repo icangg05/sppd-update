@@ -85,11 +85,6 @@ class User extends Authenticatable
     return $this->belongsTo(Position::class);
   }
 
-  public function departmentAssignments(): HasMany
-  {
-    return $this->hasMany(UserDepartmentAssignment::class);
-  }
-
   public function sppdRequests(): HasMany
   {
     return $this->hasMany(SppdRequest::class);
@@ -98,11 +93,6 @@ class User extends Authenticatable
   public function createdSppdRequests(): HasMany
   {
     return $this->hasMany(SppdRequest::class, 'creator_id');
-  }
-
-  public function bankAccounts(): HasMany
-  {
-    return $this->hasMany(BankAccount::class);
   }
 
   public function approvals(): HasMany

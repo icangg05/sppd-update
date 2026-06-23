@@ -89,8 +89,9 @@ Route::middleware('auth')->group(function () {
     // Workflows Preview
     Route::get('/workflows/preview', [SppdWorkflowController::class, 'preview'])->name('workflows.preview');
 
-    // Master Data
-    Route::prefix('master')->name('master.')->group(function () {
+    // Master Data — hanya dapat diakses oleh Super Admin & Admin OPD.
+    // Mencegah akses lewat URL langsung oleh role lain (mis. kepala_opd).
+    Route::prefix('master')->name('master.')->middleware('role:super_admin|admin_opd')->group(function () {
         // Users / Pegawai
         Route::get('/users', UsersIndex::class)->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
@@ -115,15 +116,16 @@ Route::middleware('auth')->group(function () {
         Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
         Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
 
-        // Workflows SPPD (hanya super_admin)
-        Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
+        // Workflows SPPD & Roles/Permissions — hanya super_admin.
+        Route::middleware('role:super_admin')->group(function () {
+            Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
 
-        // Roles & Permissions (hanya super_admin)
-        // create/edit ditangani oleh Livewire RoleForm component
-        Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
-        Route::get('/roles/create', fn () => view('master.roles.create'))->name('roles.create');
-        Route::get('/roles/{role}/edit', fn (\Spatie\Permission\Models\Role $role) => view('master.roles.edit', compact('role')))->name('roles.edit');
-        Route::delete('/roles/{role}', [RolePermissionController::class, 'destroy'])->name('roles.destroy');
+            // Roles & Permissions — create/edit ditangani oleh Livewire RoleForm component
+            Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
+            Route::get('/roles/create', fn () => view('master.roles.create'))->name('roles.create');
+            Route::get('/roles/{role}/edit', fn (\Spatie\Permission\Models\Role $role) => view('master.roles.edit', compact('role')))->name('roles.edit');
+            Route::delete('/roles/{role}', [RolePermissionController::class, 'destroy'])->name('roles.destroy');
+        });
     });
 
     // API

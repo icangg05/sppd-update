@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PositionScope;
 use App\Models\Position;
 use App\Models\Rank;
 use Illuminate\Database\Seeder;
@@ -36,41 +37,48 @@ class PositionAndRankSeeder extends Seeder
     }
 
     // ── Jabatan ──
+    // Scope menentukan batas jumlah pemangku jabatan:
+    //   SYSTEM     => hanya satu di seluruh sistem (mis. Walikota, Sekda)
+    //   DEPARTMENT => hanya satu per OPD / unit kerja (mis. Kepala Dinas, Camat)
+    //   NONE       => boleh banyak (mis. Staf, Fungsional Umum)
     $positions = [
-      'Walikota',
-      'Wakil Walikota',
-      'Sekretaris Daerah',
-      'Asisten Pemerintahan dan Kesejahteraan Rakyat',
-      'Asisten Administrasi Umum',
-      'Asisten Perekonomian dan Pembangunan',
-      'Staf Ahli',
-      'Kepala Dinas',
-      'Sekretaris Dinas',
-      'Kepala Bagian',
-      'Kepala Bidang',
-      'Kepala Seksi',
-      'Kepala Sub Bagian',
-      'Camat',
-      'Sekretaris Camat',
-      'Lurah',
-      'Sekretaris Lurah',
-      'Kepala Puskesmas',
-      'Kepala Badan',
-      'Inspektur',
-      'Sekretaris Inspektur',
-      'Sekretaris Dewan',
-      'Staf',
-      'Fungsional Umum',
-      'Analis Kebijakan',
-      'Pranata Komputer',
-      'Auditor',
-      'Bendahara Pengeluaran',
-      'Bendahara Penerimaan',
-      'Bendahara Pembantu',
+      ['name' => 'Walikota', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Wakil Walikota', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Sekretaris Daerah', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Asisten Pemerintahan dan Kesejahteraan Rakyat', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Asisten Administrasi Umum', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Asisten Perekonomian dan Pembangunan', 'scope' => PositionScope::SYSTEM],
+      ['name' => 'Staf Ahli', 'scope' => PositionScope::NONE],
+      ['name' => 'Kepala Dinas', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Dinas', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Bagian', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Bidang', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Seksi', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Sub Bagian', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Camat', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Camat', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Lurah', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Lurah', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Puskesmas', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Badan', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Inspektur', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Inspektur', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Dewan', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Staf', 'scope' => PositionScope::NONE],
+      ['name' => 'Fungsional Umum', 'scope' => PositionScope::NONE],
+      ['name' => 'Analis Kebijakan', 'scope' => PositionScope::NONE],
+      ['name' => 'Pranata Komputer', 'scope' => PositionScope::NONE],
+      ['name' => 'Auditor', 'scope' => PositionScope::NONE],
+      ['name' => 'Bendahara Pengeluaran', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Bendahara Penerimaan', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Bendahara Pembantu', 'scope' => PositionScope::NONE],
     ];
 
     foreach ($positions as $pos) {
-      Position::updateOrCreate(['name' => $pos]);
+      Position::updateOrCreate(
+        ['name' => $pos['name']],
+        ['uniqueness_scope' => $pos['scope']],
+      );
     }
   }
 }

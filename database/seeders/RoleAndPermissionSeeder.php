@@ -287,5 +287,37 @@ class RoleAndPermissionSeeder extends Seeder
       'report.create',
       'report.view',
     ]);
+
+    // ──────────────────────────────────────────────
+    // Warna badge per role (token Tailwind, lihat App\Support\BadgeColor)
+    // ──────────────────────────────────────────────
+    // Warna sengaja disebar agar role yang bisa tampil dalam satu OPD selalu
+    // jelas berbeda (tidak ada hue yang mirip dalam satu grup).
+    $roleColors = [
+      'super_admin'       => 'red',
+      'admin_opd'         => 'blue',
+      'kepala_opd'        => 'green',
+      'sekretaris_opd'    => 'orange',
+      'kabid_irban_kabag' => 'violet',
+      'kasubid_kasubag'   => 'pink',
+      'pimpinan_dprd'     => 'indigo',
+      'anggota_dprd'      => 'fuchsia',
+      'asisten'           => 'lime',
+      'sekda'             => 'cyan',
+      'walikota'          => 'rose',
+      'wakil_walikota'    => 'amber',
+      'sekwan'            => 'teal',
+      'camat'             => 'emerald',
+      'sekcam'            => 'yellow',
+      'lurah'             => 'sky',
+      'kapus'             => 'purple',
+      // 'rose' dipakai ulang dgn walikota — keduanya tak pernah satu OPD.
+      'inspektorat'       => 'rose',
+      'staf'              => 'slate',
+    ];
+
+    foreach ($roleColors as $name => $color) {
+      Role::where('name', $name)->update(['color' => $color]);
+    }
   }
 }

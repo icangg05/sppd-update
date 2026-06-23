@@ -65,11 +65,6 @@ class Department extends Model
     return $this->hasMany(Budget::class);
   }
 
-  public function signatories(): HasMany
-  {
-    return $this->hasMany(DocumentSignatory::class);
-  }
-
   /**
    * Get all descendant department IDs (children, grandchildren, etc.)
    *

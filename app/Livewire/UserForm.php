@@ -6,6 +6,7 @@ use App\Enums\DprdJabatan;
 use App\Enums\DprdPartai;
 use App\Enums\EmployeeType;
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Enums\PositionScope;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
@@ -131,23 +132,124 @@ class UserForm extends Component
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
-      'role' => 'required|string',
+      'role' => ['required', 'string', $this->uniqueRoleRule()],
     ];
+
+    // Validasi: jabatan struktural yang dibatasi (Walikota, Sekda, Kepala OPD, dst.)
+    // hanya boleh dipangku satu orang — sesuai scope-nya (sistem / per OPD).
+    $rules['position_id'] = ['nullable', 'exists:positions,id', $this->uniquePositionRule()];
 
     if ($this->isDprdMember()) {
       $jabatanValues = implode(',', array_column(DprdJabatan::cases(), 'value'));
       $partaiValues = implode(',', array_column(DprdPartai::cases(), 'value'));
-      $rules['dprd_jabatan'] = 'required|in:' . $jabatanValues;
+      $rules['dprd_jabatan'] = ['required', 'in:' . $jabatanValues, $this->uniqueDprdJabatanRule()];
       $rules['partai'] = 'nullable|in:' . $partaiValues;
     }
 
     return $rules;
   }
 
+  /**
+   * Aturan: cegah dua pegawai aktif memangku jabatan struktural yang sama
+   * pada lingkup yang dibatasi (satu sistem atau satu OPD).
+   */
+  protected function uniquePositionRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      if (empty($value)) {
+        return;
+      }
+
+      $position = Position::find($value);
+      if (! $position) {
+        return;
+      }
+
+      $holder = $position->conflictingHolder(
+        $this->department_id ? (int) $this->department_id : null,
+        $this->isEdit ? $this->user->id : null,
+      );
+
+      if ($holder) {
+        $cakupan = $position->uniqueness_scope === PositionScope::DEPARTMENT
+          ? 'pada unit kerja ini'
+          : 'di lingkup pemerintah daerah';
+        $fail("Jabatan {$position->name} sudah dijabat oleh {$holder->name} {$cakupan}. Nonaktifkan pejabat lama terlebih dahulu.");
+      }
+    };
+  }
+
+  /**
+   * Aturan: role/kewenangan tunggal (Walikota, Sekda, Kepala OPD, dst.)
+   * hanya boleh dipegang satu pegawai aktif sesuai lingkupnya.
+   */
+  protected function uniqueRoleRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      if (empty($value)) {
+        return;
+      }
+
+      $perOpd = in_array($value, config('role_uniqueness.department', []), true);
+      $perSystem = in_array($value, config('role_uniqueness.system', []), true);
+
+      if (! $perOpd && ! $perSystem) {
+        return; // role boleh dipegang banyak pegawai
+      }
+
+      $query = User::role($value)->where('is_active', true);
+
+      if ($perOpd) {
+        $query->where('department_id', $this->department_id ? (int) $this->department_id : null);
+      }
+
+      if ($this->isEdit) {
+        $query->where('id', '!=', $this->user->id);
+      }
+
+      $holder = $query->first();
+      if ($holder) {
+        $label = Role::where('name', $value)->value('label') ?? $value;
+        $cakupan = $perOpd ? 'pada unit kerja ini' : 'di lingkup pemerintah daerah';
+        $fail("Role {$label} sudah dipegang oleh {$holder->name} {$cakupan}. Nonaktifkan pejabat lama terlebih dahulu.");
+      }
+    };
+  }
+
+  /**
+   * Aturan: jabatan pimpinan DPRD (Ketua & Wakil Ketua) hanya boleh satu orang.
+   */
+  protected function uniqueDprdJabatanRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      $singletons = [
+        DprdJabatan::KETUA->value,
+        DprdJabatan::WAKIL_1->value,
+        DprdJabatan::WAKIL_2->value,
+        DprdJabatan::WAKIL_3->value,
+      ];
+
+      if (! in_array($value, $singletons, true)) {
+        return;
+      }
+
+      $query = User::where('dprd_jabatan', $value)->where('is_active', true);
+      if ($this->isEdit) {
+        $query->where('id', '!=', $this->user->id);
+      }
+
+      $holder = $query->first();
+      if ($holder) {
+        $fail("Jabatan {$value} sudah dijabat oleh {$holder->name}. Nonaktifkan pejabat lama terlebih dahulu.");
+      }
+    };
+  }
+
   protected function validationAttributes()
   {
     return [
       'department_id' => 'instansi / unit kerja',
+      'position_id' => 'jabatan',
       'dprd_jabatan' => 'jabatan DPRD',
       'partai' => 'partai / fraksi',
     ];

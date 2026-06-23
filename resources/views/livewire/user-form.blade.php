@@ -192,20 +192,27 @@
 								<x-form.searchable-select wire:model="position_id" name="position_id"
 									label="Jabatan Struktural / Fungsional" :options="$positionOptions"
 									placeholder="— Pilih Jabatan —" searchPlaceholder="Cari jabatan..." />
+								<p class="text-xs text-slate-400">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
+									dipangku satu pegawai aktif sesuai lingkupnya.</p>
 							</div>
 						@endunless
 
 						<div class="space-y-1">
 							@php
+								// Role DPRD hanya tersedia bila pegawai bertipe DPRD.
 								$roleOptions = ($this->isDprdContext()
 									? $roles->whereIn('name', ['pimpinan_dprd', 'anggota_dprd'])
-									: $roles)
+									: ($this->isDprdMember()
+										? $roles
+										: $roles->whereNotIn('name', ['pimpinan_dprd', 'anggota_dprd'])))
 									->map(fn($r) => ['value' => $r->name, 'label' => $r->label])
 									->values()
 									->all();
 							@endphp
 							<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
 								required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..." />
+							<p class="text-xs text-slate-400">Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD,
+								Camat, Lurah, dll.) hanya boleh dipegang satu pegawai aktif sesuai lingkupnya.</p>
 						</div>
 
 						{{-- Data khusus Anggota DPRD --}}

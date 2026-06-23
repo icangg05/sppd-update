@@ -161,10 +161,7 @@
 							<td class="py-3 px-4">
 								<div class="flex flex-wrap gap-1">
 									@foreach ($user->roles as $role)
-										<span
-											class="inline-flex items-center rounded-md bg-cyan-50 px-2 py-1 text-[11px] font-medium text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
-											{{ $role->label }}
-										</span>
+										<x-ui.badge :color="$role->color ?? 'slate'">{{ $role->label }}</x-ui.badge>
 									@endforeach
 								</div>
 							</td>

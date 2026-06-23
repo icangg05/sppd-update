@@ -69,6 +69,7 @@
 			</div>
 		</div>
 
+		@if (auth()->user()->hasAnyRole(['super_admin', 'admin_opd']))
 		<div class="px-3 py-1.5 pt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Pengaturan</div>
 
 		<a href="{{ route('master.users.index') }}" wire:navigate.hover
@@ -110,6 +111,7 @@
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-shield-halved fa-fw"></i></span>
 				<span>Role & Permission</span>
 			</a>
+		@endif
 		@endif
 	</nav>
 

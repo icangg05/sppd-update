@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Support\BadgeColor;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -16,6 +17,8 @@ class RoleForm extends Component
 
     public string $label = '';
 
+    public string $color = BadgeColor::DEFAULT;
+
     /** @var array<string> */
     public array $selectedPermissions = [];
 
@@ -29,6 +32,7 @@ class RoleForm extends Component
 
             $this->name = $role->name;
             $this->label = $role->label ?? '';
+            $this->color = $role->color ?? BadgeColor::DEFAULT;
             $this->selectedPermissions = $role->permissions->pluck('name')->toArray();
         }
     }
@@ -45,6 +49,7 @@ class RoleForm extends Component
         return [
             'name'                  => $this->isEdit ? 'required|string|max:100' : "required|string|max:100|{$uniqueRule}",
             'label'                 => 'required|string|max:100',
+            'color'                 => 'required|string|in:' . implode(',', BadgeColor::PALETTE),
             'selectedPermissions'   => 'nullable|array',
             'selectedPermissions.*' => 'exists:permissions,name',
         ];
@@ -66,7 +71,7 @@ class RoleForm extends Component
         $this->validate();
 
         if ($this->isEdit) {
-            $this->role->update(['label' => $this->label]);
+            $this->role->update(['label' => $this->label, 'color' => $this->color]);
             $this->role->syncPermissions($this->selectedPermissions);
 
             return redirect()->route('master.roles.index')
@@ -76,6 +81,7 @@ class RoleForm extends Component
         $role = Role::create([
             'name'       => $this->name,
             'label'      => $this->label,
+            'color'      => $this->color,
             'guard_name' => 'web',
         ]);
 
