@@ -122,18 +122,12 @@
           </div>
 
           {{-- Progress Bar Penyerapan --}}
-          @php
-            $percentage = $budget->total_amount > 0 ? min(100, round(($budget->realization / $budget->total_amount) * 100)) : 0;
-            $colorClass = $percentage > 90 ? 'bg-rose-500' : ($percentage > 75 ? 'bg-amber-500' : 'bg-cyan-500');
-          @endphp
           <div class="pt-4 border-t border-slate-100">
             <div class="flex justify-between items-center text-xs font-bold mb-2">
               <span class="text-slate-400 uppercase text-[10px] tracking-wider">Persentase Penyerapan</span>
-              <span class="text-slate-800 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">{{ $percentage }}%</span>
+              <span class="text-slate-800 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">{{ number_format($budget->realization_percentage, 1, ',', '.') }}%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded border border-slate-200/30 h-3 overflow-hidden p-0.5">
-              <div class="{{ $colorClass }} h-2 rounded-sm transition-all duration-500" style="width: {{ $percentage }}%"></div>
-            </div>
+            <x-ui.budget-bar :percentage="$budget->realization_percentage" height="h-3" />
           </div>
         </div>
       </div>

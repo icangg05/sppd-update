@@ -3,107 +3,287 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\SignatureStatus;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
+use App\Models\SppdActualExpense;
 use App\Models\SppdApproval;
+use App\Models\SppdCostDetail;
 use App\Models\SppdRequest;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
   public function index()
   {
+    /** @var User $user */
     $user = Auth::user();
 
-    // Stats - match design: Total SPPD, Telaah Masuk, Di Proses, Selesai
-    $stats = [
-      'total'       => SppdRequest::count(),
-      'in_progress' => SppdRequest::where('status', SppdStatus::IN_PROGRESS)->count(),
-      'approved'    => SppdRequest::where('status', SppdStatus::APPROVED)->count(),
-      'completed'   => SppdRequest::where('status', SppdStatus::COMPLETED)->count(),
-      'rejected'    => SppdRequest::where('status', SppdStatus::REJECTED)->count(),
-    ];
+    // Tentukan archetype dashboard berdasarkan kewenangan (otomatis utk role baru).
+    $archetype = match (true) {
+      $user->hasAnyRole(['super_admin', 'admin_opd']) => 'admin',
+      $user->can('sppd.approve')                      => 'leadership',
+      default                                          => 'requester',
+    };
 
-    // Recent SPPD (for telaah terbaru)
-    $recentSppd = SppdRequest::with(['user', 'category', 'budget.department', 'destinations'])
-      ->latest()
-      ->take(5)
-      ->get();
+    // ── DPA tahun berjalan (ditampilkan di semua archetype) ──
+    $year = now()->year;
+    $scopeIds = $this->budgetScopeIds($user);
 
-    // Pending approvals for current user
-    $pendingApprovals = SppdApproval::with(['sppdRequest.user', 'sppdRequest.category'])
-      ->where('approver_id', $user->id)
-      ->where('status', ApprovalStatus::PENDING)
-      ->latest()
-      ->take(5)
-      ->get();
-
-    // Budget Stats for Chart
-    $budgetQuery = Budget::query();
-    if (!$user->hasRole('super_admin')) {
-      $budgetQuery->where('department_id', $user->department_id);
+    $budgetQuery = Budget::with('department')->where('year', $year);
+    if ($scopeIds !== null) {
+      $budgetQuery->whereIn('department_id', $scopeIds);
     }
     $budgets = $budgetQuery->get();
 
-    // Total anggaran tahun berjalan
-    $totalBudget = $budgets->sum('total_amount');
+    $realByBudget = $this->realizationByBudget($budgets->pluck('id'));
 
-    // Monthly trend data (Masuk vs Selesai) for last 12 months
+    $pagu = (float) $budgets->sum('total_amount');
+    $realisasi = (float) array_sum($realByBudget);
+    $dpa = [
+      'year'       => $year,
+      'pagu'       => $pagu,
+      'realisasi'  => $realisasi,
+      'sisa'       => $pagu - $realisasi,
+      'percentage' => $pagu > 0 ? round($realisasi / $pagu * 100, 2) : 0,
+    ];
+
+    // Daftar per-item (program/kegiatan) — angka diambil dari agregat massal,
+    // jadi tetap murah. Hanya dikirim sebagai array skalar (bukan model Budget,
+    // agar atribut realization yang berat tidak ikut ter-serialize).
+    $dpaItems = $budgets->map(function (Budget $b) use ($realByBudget) {
+      $pagu = (float) $b->total_amount;
+      $real = (float) ($realByBudget[$b->id] ?? 0);
+
+      return [
+        'id'         => $b->id,
+        'name'       => $b->program ?: ($b->activity ?: $b->description),
+        'activity'   => $b->activity,
+        'account'    => $b->account_code,
+        'department' => $b->department?->name,
+        'pagu'       => $pagu,
+        'realisasi'  => $real,
+        'sisa'       => $pagu - $real,
+        'percentage' => $pagu > 0 ? round($real / $pagu * 100, 2) : 0,
+      ];
+    })->values()->all();
+
+    $shared = [
+      'archetype' => $archetype,
+      'dpa'       => $dpa,
+      'dpaItems'  => $dpaItems,
+    ];
+
+    $specific = match ($archetype) {
+      'admin'      => $this->adminData($user, $budgets, $realByBudget),
+      'leadership' => $this->leadershipData($user),
+      'requester'  => $this->requesterData($user),
+    };
+
+    return view('dashboard', array_merge($shared, $specific));
+  }
+
+  // ──────────────────────────────────────────────
+  // Scope helpers
+  // ──────────────────────────────────────────────
+
+  /**
+   * ID departemen dalam lingkup user (root OPD + seluruh turunannya).
+   * null = seluruh sistem (super_admin).
+   */
+  private function budgetScopeIds(User $user): ?Collection
+  {
+    if ($user->hasRole('super_admin')) {
+      return null;
+    }
+
+    return $user->department?->getRootDepartment()->getAllRelatedIds() ?? collect([0]);
+  }
+
+  /**
+   * Query dasar SPPD sesuai lingkup: super_admin = semua,
+   * admin/leadership = pengaju dalam lingkup OPD, requester = milik sendiri.
+   */
+  private function scopedSppd(User $user): Builder
+  {
+    if ($user->hasRole('super_admin')) {
+      return SppdRequest::query();
+    }
+
+    $ids = $this->budgetScopeIds($user) ?? collect([0]);
+
+    return SppdRequest::whereHas('user', fn ($q) => $q->whereIn('department_id', $ids));
+  }
+
+  /**
+   * @return array<string, int>
+   */
+  private function statusCounts(Builder $base): array
+  {
+    return [
+      'total'       => (clone $base)->count(),
+      'in_progress' => (clone $base)->where('status', SppdStatus::IN_PROGRESS)->count(),
+      'approved'    => (clone $base)->where('status', SppdStatus::APPROVED)->count(),
+      'completed'   => (clone $base)->where('status', SppdStatus::COMPLETED)->count(),
+      'rejected'    => (clone $base)->where('status', SppdStatus::REJECTED)->count(),
+    ];
+  }
+
+  /**
+   * Realisasi anggaran per budget_id secara massal (3 query, tanpa N+1).
+   * Logika selaras dengan Budget::getRealizationAttribute().
+   *
+   * @param  Collection<int, int>  $budgetIds
+   * @return array<int, float>  [budget_id => realisasi]
+   */
+  private function realizationByBudget(Collection $budgetIds): array
+  {
+    if ($budgetIds->isEmpty()) {
+      return [];
+    }
+
+    // [sppd_request_id => budget_id] untuk SPPD yang sudah disetujui/selesai.
+    $reqMap = SppdRequest::whereIn('budget_id', $budgetIds)
+      ->whereIn('status', [SppdStatus::APPROVED->value, SppdStatus::COMPLETED->value])
+      ->pluck('budget_id', 'id');
+
+    if ($reqMap->isEmpty()) {
+      return [];
+    }
+
+    $reqIds = $reqMap->keys();
+
+    $costByReq = SppdCostDetail::whereIn('sppd_request_id', $reqIds)
+      ->groupBy('sppd_request_id')
+      ->selectRaw('sppd_request_id, SUM(total) as agg')
+      ->pluck('agg', 'sppd_request_id');
+
+    $expByReq = SppdActualExpense::whereIn('sppd_request_id', $reqIds)
+      ->groupBy('sppd_request_id')
+      ->selectRaw('sppd_request_id, SUM(amount) as agg')
+      ->pluck('agg', 'sppd_request_id');
+
+    $result = [];
+    foreach ($reqMap as $reqId => $budgetId) {
+      $result[$budgetId] = ($result[$budgetId] ?? 0)
+        + (float) ($costByReq[$reqId] ?? 0)
+        + (float) ($expByReq[$reqId] ?? 0);
+    }
+
+    return $result;
+  }
+
+  // ──────────────────────────────────────────────
+  // Data per archetype
+  // ──────────────────────────────────────────────
+
+  /**
+   * @param  Collection<int, Budget>  $budgets
+   * @param  array<int, float>  $realByBudget
+   */
+  private function adminData(User $user, Collection $budgets, array $realByBudget): array
+  {
+    $base = $this->scopedSppd($user);
+    $stats = $this->statusCounts($base);
+
+    // Tren 12 bulan (ter-scope)
     $monthlyTrend = [];
     for ($i = 11; $i >= 0; $i--) {
       $date = now()->subMonths($i);
-      $month = $date->format('M');
-      $year = $date->year;
-      $monthNum = $date->month;
-
-      $masuk = SppdRequest::whereYear('created_at', $year)
-        ->whereMonth('created_at', $monthNum)
+      $masuk = (clone $base)
+        ->whereYear('created_at', $date->year)
+        ->whereMonth('created_at', $date->month)
         ->count();
-      $selesai = SppdRequest::whereYear('created_at', $year)
-        ->whereMonth('created_at', $monthNum)
+      $selesai = (clone $base)
+        ->whereYear('created_at', $date->year)
+        ->whereMonth('created_at', $date->month)
         ->where('status', SppdStatus::COMPLETED)
         ->count();
-
-      $monthlyTrend[] = [
-        'month' => $month,
-        'masuk' => $masuk,
-        'selesai' => $selesai,
-      ];
+      $monthlyTrend[] = ['month' => $date->format('M'), 'masuk' => $masuk, 'selesai' => $selesai];
     }
 
-    // Status distribution for donut chart
     $statusDistribution = [
-      ['label' => 'Selesai', 'count' => $stats['completed'], 'color' => '#10b981'],
+      ['label' => 'Selesai',   'count' => $stats['completed'],   'color' => '#10b981'],
+      ['label' => 'Disetujui', 'count' => $stats['approved'],    'color' => '#22c55e'],
       ['label' => 'Di Proses', 'count' => $stats['in_progress'], 'color' => '#3b82f6'],
-      ['label' => 'Masuk', 'count' => $stats['in_progress'], 'color' => '#f59e0b'],
-      ['label' => 'Perbaikan', 'count' => $stats['rejected'], 'color' => '#8b5cf6'],
-      ['label' => 'Tidak Diterima', 'count' => 0, 'color' => '#ef4444'],
+      ['label' => 'Ditolak',   'count' => $stats['rejected'],    'color' => '#ef4444'],
     ];
 
-    // Top 6 OPD pengaju SPPD
-    $topDepartments = SppdRequest::select('budget_id', DB::raw('count(*) as total'))
-      ->groupBy('budget_id')
-      ->orderByDesc('total')
-      ->take(6)
-      ->get()
-      ->map(function ($item) {
-        $budget = Budget::with('department')->find($item->budget_id);
-        return [
-          'name' => $budget?->department?->name ?? ($budget?->name ?? 'Unknown'),
-          'total' => $item->total,
-        ];
-      });
+    $recentSppd = (clone $base)
+      ->with(['user', 'category', 'budget.department', 'destinations.regency', 'costDetails'])
+      ->latest()->take(6)->get();
 
-    return view('dashboard', compact(
-      'stats',
-      'recentSppd',
-      'pendingApprovals',
-      'budgets',
-      'totalBudget',
-      'monthlyTrend',
-      'statusDistribution',
-      'topDepartments'
-    ));
+    $pendingApprovals = SppdApproval::with(['sppdRequest.user'])
+      ->where('approver_id', $user->id)
+      ->where('status', ApprovalStatus::PENDING)
+      ->latest()->take(5)->get();
+
+    // Top OPD berdasarkan % pemakaian anggaran (dari budget yang sudah dimuat).
+    $topByUsage = $budgets
+      ->groupBy('department_id')
+      ->map(function ($group) use ($realByBudget) {
+        $pagu = (float) $group->sum('total_amount');
+        $real = (float) $group->sum(fn ($b) => $realByBudget[$b->id] ?? 0);
+
+        return [
+          'name'       => $group->first()->department?->name ?? '-',
+          'pagu'       => $pagu,
+          'realisasi'  => $real,
+          'percentage' => $pagu > 0 ? round($real / $pagu * 100, 2) : 0,
+        ];
+      })
+      ->sortByDesc('percentage')
+      ->take(6)
+      ->values();
+
+    return compact('stats', 'monthlyTrend', 'statusDistribution', 'recentSppd', 'pendingApprovals', 'topByUsage');
+  }
+
+  private function leadershipData(User $user): array
+  {
+    $base = $this->scopedSppd($user);
+    $stats = $this->statusCounts($base);
+
+    $pendingApprovals = SppdApproval::with(['sppdRequest.user', 'sppdRequest.destinations.regency', 'sppdRequest.costDetails'])
+      ->where('approver_id', $user->id)
+      ->where('status', ApprovalStatus::PENDING)
+      ->latest()->get();
+
+    $pendingSignatures = collect();
+    if ($user->can('sppd.sign')) {
+      $pendingSignatures = $user->digitalSignatures()
+        ->with('sppdRequest.user')
+        ->where('status', SignatureStatus::PENDING)
+        ->latest()->get();
+    }
+
+    $recentDecisions = SppdApproval::with(['sppdRequest.user'])
+      ->where('approver_id', $user->id)
+      ->whereIn('status', [ApprovalStatus::APPROVED, ApprovalStatus::REJECTED])
+      ->latest()->take(5)->get();
+
+    return compact('stats', 'pendingApprovals', 'pendingSignatures', 'recentDecisions');
+  }
+
+  private function requesterData(User $user): array
+  {
+    $base = SppdRequest::where('user_id', $user->id);
+    $stats = $this->statusCounts($base);
+
+    $mySppd = (clone $base)
+      ->with(['destinations.regency', 'costDetails'])
+      ->latest()->take(6)->get();
+
+    // SPPD selesai milik user yang laporannya belum dibuat.
+    $needReport = (clone $base)
+      ->where('status', SppdStatus::COMPLETED)
+      ->whereDoesntHave('report')
+      ->with(['destinations.regency'])
+      ->latest()->take(5)->get();
+
+    return compact('stats', 'mySppd', 'needReport');
   }
 }
