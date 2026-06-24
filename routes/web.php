@@ -18,6 +18,7 @@ use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
+use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\UsersIndex;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -108,7 +109,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
 
         // Budgets / Anggaran
-        Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+        Route::get('/budgets', BudgetIndex::class)->name('budgets.index');
         Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
         Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
         Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');

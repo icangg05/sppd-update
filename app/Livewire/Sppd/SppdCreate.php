@@ -15,6 +15,7 @@ use Livewire\Attributes\Layout;
 class SppdCreate extends Component
 {
   public ?int $user_id = null;
+  public string $searchUser = '';
   public string $domain = 'dalam_daerah';
   public array $steps = [];
   public bool $hasHeader = false;
@@ -31,6 +32,12 @@ class SppdCreate extends Component
 
   public function updatedUserId(): void
   {
+    $this->checkWorkflow();
+  }
+
+  public function selectUser(int $id): void
+  {
+    $this->user_id = $id;
     $this->checkWorkflow();
   }
 
@@ -147,9 +154,24 @@ class SppdCreate extends Component
       }
     }
 
-    $users = $query->orderBy('name')->get();
+    // Pencarian server-side: hanya muat sebagian data (bukan seluruh pegawai).
+    if (trim($this->searchUser) !== '') {
+      $term = trim($this->searchUser);
+      $query->where(function ($q) use ($term) {
+        $q->where('name', 'like', "%{$term}%")
+          ->orWhere('nip', 'like', "%{$term}%");
+      });
+    }
 
-    return view('livewire.sppd.create', compact('users'))
+    $limit = 25;
+    $users = $query->orderBy('name')->limit($limit + 1)->get();
+    $usersHasMore = $users->count() > $limit;
+    $users = $users->take($limit);
+
+    // Pegawai terpilih untuk ditampilkan di trigger (tetap tampil walau di luar hasil pencarian).
+    $selectedUser = $this->user_id ? User::find($this->user_id) : null;
+
+    return view('livewire.sppd.create', compact('users', 'usersHasMore', 'selectedUser'))
       ->title('Buat SPPD Baru');
   }
 }

@@ -48,13 +48,46 @@ class SppdIndex extends Component
   public static function jabatanLabels(): array
   {
     return [
-      ''            => 'Semua Jabatan',
-      'kepala_opd'  => 'Kepala OPD',
-      'eselon_staf' => 'Eselon III, IV & Staf',
-      'anggota_dprd' => 'Anggota DPRD',
-      'staff_dprd'  => 'Staff DPRD',
-      'sekwan'      => 'Sekwan',
+      ''              => 'Semua Jabatan',
+      'kepala_opd'    => 'Kepala OPD',
+      'eselon_staf'   => 'Eselon III, IV & Staf',
+      'sekda_asisten' => 'Sekda, Asisten & Kabag',
+      'staf_setda'    => 'Kasubag & Staf',
+      'camat'         => 'Camat & Sekcam',
+      'lurah'         => 'Lurah',
+      'kapus'         => 'Kepala Puskesmas',
+      'anggota_dprd'  => 'Anggota DPRD',
+      'staff_dprd'    => 'Staff DPRD',
+      'sekwan'        => 'Sekwan',
     ];
+  }
+
+  /**
+   * Daftar tab filter jabatan yang ditampilkan sesuai jenis OPD (akar),
+   * meniru perilaku sistem lama (sppd-2026) yang dibedakan per jenis_skpd.
+   *
+   * @return list<string>
+   */
+  public static function jabatanTabsFor(?DepartmentType $type): array
+  {
+    return match ($type) {
+      DepartmentType::DPRD      => ['anggota_dprd', 'staff_dprd', 'sekwan'],
+      DepartmentType::SETDA,
+      DepartmentType::ASISTEN   => ['sekda_asisten', 'staf_setda'],
+      DepartmentType::KECAMATAN => ['camat', 'eselon_staf'],
+      DepartmentType::KELURAHAN => ['lurah', 'eselon_staf'],
+      DepartmentType::PUSKESMAS => ['kapus', 'eselon_staf'],
+      DepartmentType::DINKES    => ['kepala_opd', 'eselon_staf', 'kapus'],
+      default                   => ['kepala_opd', 'eselon_staf'],
+    };
+  }
+
+  /**
+   * Jenis OPD akar milik user (telusuri ke parent teratas).
+   */
+  protected function rootDepartmentType(): ?DepartmentType
+  {
+    return Auth::user()->department?->getRootDepartment()?->type;
   }
 
   public static function savedFilters(): array
@@ -154,6 +187,12 @@ class SppdIndex extends Component
     $this->resetPage();
   }
 
+  public function updatedJabatan(): void
+  {
+    $this->persistFilters();
+    $this->resetPage();
+  }
+
   public function deleteSppd(int $id): void
   {
     $sppd = SppdRequest::findOrFail($id);
@@ -210,6 +249,16 @@ class SppdIndex extends Component
             $q->role(['staf', 'admin_opd', 'sekretaris_opd', 'kasubid_kasubag', 'kabid_irban_kabag']);
           } elseif ($jabatan === 'eselon_iv') {
             $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
+          } elseif ($jabatan === 'sekda_asisten') {
+            $q->role(['sekda', 'asisten', 'kabid_irban_kabag']);
+          } elseif ($jabatan === 'staf_setda') {
+            $q->role(['kasubid_kasubag', 'staf']);
+          } elseif ($jabatan === 'camat') {
+            $q->role(['camat', 'sekcam']);
+          } elseif ($jabatan === 'lurah') {
+            $q->role(['lurah']);
+          } elseif ($jabatan === 'kapus') {
+            $q->role(['kapus']);
           } elseif ($jabatan === 'staf') {
             $q->role('staf');
           } elseif ($jabatan === 'anggota_dprd') {
@@ -249,8 +298,26 @@ class SppdIndex extends Component
 
     $activeFilterLabel = $this->activeFilterLabel();
 
-    return view('livewire.sppd.index', compact('sppds', 'statuses', 'domains', 'isApprovalMode', 'activeFilterLabel'))
-      ->title($title);
+    // Super admin memakai select-search (semua jabatan), selain itu tab sesuai jenis OPD.
+    $isSuperAdmin = Auth::user()->hasRole('super_admin');
+    $jabatanLabels = self::jabatanLabels();
+    $jabatanTabs = $this->jabatanTabsFor($this->rootDepartmentType());
+    $jabatanOptions = collect($jabatanLabels)
+      ->map(fn($label, $value) => ['value' => $value, 'label' => $label])
+      ->values()
+      ->all();
+
+    return view('livewire.sppd.index', compact(
+      'sppds',
+      'statuses',
+      'domains',
+      'isApprovalMode',
+      'activeFilterLabel',
+      'isSuperAdmin',
+      'jabatanLabels',
+      'jabatanTabs',
+      'jabatanOptions',
+    ))->title($title);
   }
 
   public function startSppdLanjutan(int $sppdId): void

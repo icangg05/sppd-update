@@ -9,39 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class BudgetController extends Controller
 {
-  public function index(Request $request)
-  {
-    /** @var \App\Models\User $user */
-    $user  = Auth::user();
-    $query = Budget::query();
-
-    // Filter by department if not super_admin
-    if (!$user->hasRole('super_admin')) {
-      $query->where('department_id', $user->department_id);
-    }
-
-    // Search
-    if ($request->filled('search')) {
-      $search = $request->search;
-      $query->where(function ($q) use ($search) {
-        $q->where('description', 'like', "%{$search}%")
-          ->orWhere('program', 'like', "%{$search}%")
-          ->orWhere('activity', 'like', "%{$search}%")
-          ->orWhere('account_code', 'like', "%{$search}%")
-          ->orWhere('type', 'like', "%{$search}%")
-          ->orWhere('source', 'like', "%{$search}%");
-      });
-    }
-
-    // Filter by Year
-    $year = $request->get('year', date('Y'));
-    $query->where('year', $year);
-
-    $budgets = $query->with('department')->latest()->paginate(15)->withQueryString();
-
-    return view('budgets.index', compact('budgets', 'year'));
-  }
-
   public function create()
   {
     $departments = Department::all();

@@ -107,45 +107,28 @@
 		</div>
 		@if (!$isApprovalMode)
 			<div class="flex flex-col gap-2 md:flex-row md:items-center">
-				@php
-					$isDprd =
-					    auth()->user()->department?->type?->value === 'dprd' ||
-					    auth()->user()->department?->parent?->type?->value === 'dprd';
-					$isSuperAdmin = auth()->user()->hasRole('super_admin');
-				@endphp
+				@if ($isSuperAdmin)
+					{{-- Super admin: semua jabatan via select-search --}}
+					<div class="w-full md:w-64">
+						<x-form.searchable-select wire:model.live="jabatan" name="jabatan" :options="$jabatanOptions"
+							placeholder="Semua Jabatan" searchPlaceholder="Cari jabatan..." />
+					</div>
+				@else
+					{{-- Tab jabatan dinamis sesuai jenis OPD user --}}
+					<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+						<button wire:click="filterByJabatan('')"
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							Semua Jabatan
+						</button>
 
-				<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-					<button wire:click="filterByJabatan('')"
-						class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-						Semua Jabatan
-					</button>
-
-					@if ($isSuperAdmin || $isDprd)
-						<button wire:click="filterByJabatan('anggota_dprd')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'anggota_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Anggota DPRD
-						</button>
-						<button wire:click="filterByJabatan('staff_dprd')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'staff_dprd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Staff DPRD
-						</button>
-						<button wire:click="filterByJabatan('sekwan')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'sekwan' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Sekwan
-						</button>
-					@endif
-
-					@if ($isSuperAdmin || !$isDprd)
-						<button wire:click="filterByJabatan('kepala_opd')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'kepala_opd' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Kepala OPD
-						</button>
-						<button wire:click="filterByJabatan('eselon_staf')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === 'eselon_staf' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
-							Eselon III, IV & Staf
-						</button>
-					@endif
-				</div>
+						@foreach ($jabatanTabs as $tab)
+							<button wire:click="filterByJabatan('{{ $tab }}')"
+								class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === $tab ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+								{{ $jabatanLabels[$tab] ?? $tab }}
+							</button>
+						@endforeach
+					</div>
+				@endif
 
 				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
