@@ -78,7 +78,8 @@
 			<span>Pegawai</span>
 		</a>
 
-		@if (auth()->user()->department?->type?->value === 'dprd' ||
+		@if (auth()->user()->hasRole('super_admin') ||
+				auth()->user()->department?->type?->value === 'dprd' ||
 				auth()->user()->department?->parent?->type?->value === 'dprd')
 			<a wire:navigate href="{{ route('master.users.index', ['type' => 'dprd']) }}" wire:navigate
 				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">

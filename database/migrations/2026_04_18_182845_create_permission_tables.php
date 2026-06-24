@@ -43,6 +43,8 @@ return new class extends Migration
       }
       $table->string('name');
       $table->string('label');
+      $table->string('color')->default('slate')
+        ->comment('Token warna Tailwind untuk badge role (lihat App\\Support\\BadgeColor)');
       $table->string('guard_name');
       $table->timestamps();
       if ($teams || config('permission.testing')) {

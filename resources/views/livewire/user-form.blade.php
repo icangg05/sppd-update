@@ -38,12 +38,12 @@
 
 						<div class="space-y-1">
 							<x-form.input wire:model="name" name="name" label="Nama Lengkap" required
-								class="focus:border-cyan-500 focus:ring-cyan-500" />
+								placeholder="Contoh: Budi Santoso" class="focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
 						<div class="space-y-1">
 							<x-form.input wire:model="username" name="username" label="Username" required
-								class="focus:border-cyan-500 focus:ring-cyan-500" />
+								placeholder="Contoh: budi.santoso" class="focus:border-cyan-500 focus:ring-cyan-500" />
 						</div>
 
 						<div class="space-y-1">
@@ -167,7 +167,7 @@
 							@endphp
 							<x-form.searchable-select wire:model="department_id" name="department_id"
 								label="Instansi / Unit Kerja (OPD)" required :options="$departmentOptions"
-								placeholder="— Pilih Instansi —" searchPlaceholder="Cari instansi..." />
+								placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..." />
 						</div>
 
 						@unless ($this->isDprdContext())

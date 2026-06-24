@@ -33,6 +33,9 @@ return new class extends Migration
       $table->string('status')->default('in_progress')->comment('in_progress, approved, rejected, completed');
       $table->string('document_number')->nullable()->comment('Nomor surat');
       $table->text('notes')->nullable();
+      $table->text('revision_note')->nullable();
+      $table->text('rejection_note')->nullable();
+      $table->foreignId('reviser_id')->nullable()->constrained('users')->nullOnDelete();
       $table->boolean('is_secretariat')->default(false)->comment('Penanda telaah sekretariat');
       $table->timestamps();
 

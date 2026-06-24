@@ -12,6 +12,8 @@ return new class extends Migration
       $table->id();
       $table->string('name');
       $table->integer('level')->default(1000)->comment('Urutan jabatan, semakin kecil semakin tinggi');
+      $table->string('uniqueness_scope')->default('none')
+        ->comment('Batas jumlah pemangku jabatan: none, department, system');
       $table->timestamps();
     });
   }

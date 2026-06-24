@@ -26,7 +26,7 @@
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
 					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
-					placeholder="Cari nama, username, NIP, atau email...">
+					placeholder="{{ $this->searchPlaceholder() }}">
 				<div wire:loading wire:target="search"
 					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
 					<i class="fa-solid fa-spinner fa-spin text-xs"></i>

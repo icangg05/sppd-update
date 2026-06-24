@@ -30,6 +30,13 @@ class UsersIndex extends Component
     return $this->type === 'dprd';
   }
 
+  public function searchPlaceholder(): string
+  {
+    return $this->isDprd()
+      ? 'Cari nama, jabatan, role, atau partai...'
+      : 'Cari nama, jabatan, atau role...';
+  }
+
   public function updatedSearch(): void
   {
     $this->resetPage();
@@ -133,12 +140,21 @@ class UsersIndex extends Component
 
     if ($this->search !== '') {
       $s = $this->search;
-      $query->where(function ($q) use ($s) {
+      $isDprd = $this->isDprd();
+      $query->where(function ($q) use ($s, $isDprd) {
+        // Cari nama & role (cocokkan label maupun nama teknis role)
         $q->where('name', 'like', "%{$s}%")
-          ->orWhere('username', 'like', "%{$s}%")
-          ->orWhere('nik', 'like', "%{$s}%")
-          ->orWhere('nip', 'like', "%{$s}%")
-          ->orWhere('email', 'like', "%{$s}%");
+          ->orWhereHas('roles', fn($r) => $r->where('label', 'like', "%{$s}%")
+            ->orWhere('name', 'like', "%{$s}%"));
+
+        if ($isDprd) {
+          // Jabatan DPRD disimpan di dprd_jabatan; sertakan pencarian partai
+          $q->orWhere('dprd_jabatan', 'like', "%{$s}%")
+            ->orWhere('partai', 'like', "%{$s}%");
+        } else {
+          // Jabatan pegawai biasa berasal dari relasi position
+          $q->orWhereHas('position', fn($p) => $p->where('name', 'like', "%{$s}%"));
+        }
       });
     }
 
@@ -165,7 +181,7 @@ class UsersIndex extends Component
         ->orderByRaw("FIELD(department_id, {$idsString})");
     }
 
-    $users = $query->orderBy('name')->paginate(20);
+    $users = $query->orderBy('name')->paginate(20)->onEachSide(1);
 
     // Build a depth map for department indentation — avoids N+1 by using in-memory lookup
     $allDepts     = Department::all()->keyBy('id');

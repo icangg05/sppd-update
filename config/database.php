@@ -64,6 +64,21 @@ return [
             ]) : [],
         ],
 
+        // Koneksi ke database lama (sppd-2026 / CodeIgniter) untuk migrasi data.
+        // Hanya dipakai oleh command app:import-legacy. Aman dihapus setelah migrasi selesai.
+        'mysql_old' => [
+            'driver' => 'mysql',
+            'host' => env('OLD_DB_HOST', 'db'),
+            'port' => env('OLD_DB_PORT', '3306'),
+            'database' => env('OLD_DB_DATABASE', 'db_sppd_legacy'),
+            'username' => env('OLD_DB_USERNAME', 'user'),
+            'password' => env('OLD_DB_PASSWORD', 'icangg05@2002'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

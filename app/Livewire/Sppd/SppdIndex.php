@@ -242,7 +242,7 @@ class SppdIndex extends Component
       });
     }
 
-    $sppds = $query->latest()->paginate(15);
+    $sppds = $query->latest()->paginate(15)->onEachSide(1);
     $statuses = SppdStatus::cases();
     $domains = SppdDomain::cases();
     $title = $isApprovalMode ? 'Persetujuan' : 'Daftar SPPD';

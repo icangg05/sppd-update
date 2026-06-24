@@ -61,7 +61,7 @@ services:
       - app_net
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin:5.2.3
     container_name: sppd_update_phpmyadmin
     ports:
       - "8084:80"
