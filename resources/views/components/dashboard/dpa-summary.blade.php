@@ -11,13 +11,6 @@
 @php
     $pct = (float) $percentage;
     $pctLabel = $pagu > 0 ? number_format($pct, 1, ',', '.') : '0';
-
-    $statusText = $pct > 90 ? 'Kritis' : ($pct > 75 ? 'Tinggi' : ($pct > 50 ? 'Waspada' : 'Aman'));
-    $statusColor = $pct > 90
-        ? 'bg-red-50 text-red-700 ring-red-600/20'
-        : ($pct > 75 ? 'bg-orange-50 text-orange-700 ring-orange-600/20'
-        : ($pct > 50 ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
-        : 'bg-green-50 text-green-700 ring-green-600/20'));
 @endphp
 
 <div class="rounded border border-slate-200 bg-white p-5 shadow-md">
@@ -33,9 +26,6 @@
         <p class="mt-0.5 text-xs text-slate-500">{{ $subtitle }}</p>
       @endif
     </div>
-    <span class="inline-flex items-center rounded-md px-2 py-1 text-[11px] font-bold ring-1 ring-inset {{ $statusColor }}">
-      {{ $statusText }}
-    </span>
   </div>
 
   <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">

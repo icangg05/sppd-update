@@ -21,6 +21,7 @@ use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\DepartmentIndex;
+use App\Livewire\PositionRequestIndex;
 use App\Livewire\UsersIndex;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -109,6 +110,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
         Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
+
+        // Pengajuan Jabatan — Admin OPD mengajukan, Super Admin memverifikasi.
+        // Aksi verifikasi (approve/reject) diguard super_admin di dalam komponen.
+        Route::get('/position-requests', PositionRequestIndex::class)->name('position-requests.index');
 
         // Budgets / Anggaran
         Route::get('/budgets', BudgetIndex::class)->name('budgets.index');

@@ -31,6 +31,19 @@
       </h3>
     </div>
 
+    {{-- Panduan Menyusun Struktur --}}
+    <div class="px-4 pt-3">
+      <div class="rounded border border-cyan-200 bg-cyan-50/60 p-3 text-[11px] leading-relaxed text-slate-600">
+        <p class="font-bold text-cyan-700 mb-1"><i class="fa-solid fa-sitemap mr-1"></i>Panduan Menyusun Struktur</p>
+        <ul class="list-disc pl-4 space-y-0.5">
+          <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
+          <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
+          <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
+          <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
+        </ul>
+      </div>
+    </div>
+
     <form method="POST" action="{{ route('master.departments.store') }}" enctype="multipart/form-data" class="p-4 space-y-4">
       @csrf
 
@@ -52,6 +65,9 @@
               <option value="{{ $p->id }}" data-type="{{ $p->type->value }}" {{ old('parent_id') == $p->id ? 'selected' : '' }}>{{ $p->display_name }}</option>
             @endforeach
           </x-form.select>
+          <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+            <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Kosongkan untuk membuat OPD induk baru; pilih induk untuk membuat sub-unit di bawahnya.
+          </p>
         </div>
 
         {{-- Logika Kondisional Super Admin --}}

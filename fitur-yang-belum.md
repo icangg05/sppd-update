@@ -16,6 +16,12 @@
 14. Buat akun admin tiap OPD => ✅
 15. Pada halaman create => pelaksana except role super_admin & admin_opd => ✅
 16. Pada halaman create_detail => Pengikut tampilkan data sesuai dengan department pelaksana untuk login sebagai super_admin. jika login sebagai admin_opd tidak ada masalah karna mengambil data dari department terkait. => ✅
+17. Halaman create users diberi keterangan pass default jika dikosongkan saat membuat data. simpan diconfig pass defaulnya => ✅
+18. Halaman create/edit department, beri keterangan yang jelas cara buat struktur yang baik dan benar => ✅
+19. Halaman create users beri keterangn yang jelas untuk pemilihan department, jika butuh space untuk menjelaskan lebih baik sediakan tombol modal => ✅
+20. Pastikan qeue worker berjalan saat membuat sppd baru. tolak jika queue belum berfungsi/jalan => xxxxxxxxxxxxxx
+21. Tambah validasi form indonesia (id) => ✅
+22. Buat mekanisme pengajuan jabatan baru jika admin opd ingin menambahkan jabatan. Lalu super_admin perlu memverifikasi dan pastikan jabatan tersebut unique tidak ada duplikat => ✅
 
 ================================================================
 

@@ -23,6 +23,17 @@ class Position extends Model
   }
 
   /**
+   * Cari jabatan berdasarkan nama secara case-insensitive.
+   * Dipakai untuk memastikan jabatan unik / tidak duplikat.
+   */
+  public static function findByName(string $name): ?self
+  {
+    return static::query()
+      ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($name))])
+      ->first();
+  }
+
+  /**
    * Apakah jabatan ini dibatasi hanya boleh satu pemangku
    * (baik per OPD maupun seluruh sistem).
    */

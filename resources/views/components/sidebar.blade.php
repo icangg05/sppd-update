@@ -100,6 +100,13 @@
 			<span>Unit Kerja</span>
 		</a>
 
+		<a href="{{ route('master.position-requests.index') }}" wire:navigate
+			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-id-badge fa-fw"></i></span>
+			<span class="flex-1">Pengajuan Jabatan</span>
+			<livewire:pending-position-request-badge />
+		</a>
+
 		@if (auth()->user()->hasRole('super_admin'))
 			<a href="{{ route('master.workflows.index') }}" wire:navigate
 				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">

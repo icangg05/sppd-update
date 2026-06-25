@@ -124,8 +124,8 @@ class UserForm extends Component
       'name' => 'required|string|max:255',
       'username' => 'required|string|max:255|unique:users,username,' . $userId,
       'email' => 'nullable|email|unique:users,email,' . $userId,
-      'password' => $this->isEdit ? 'nullable|string|min:6' : 'required|string|min:6',
-      'nip' => 'nullable|string|max:20',
+      'password' => 'nullable|string|min:6',
+      'nip' => 'nullable|string|max:20|unique:users,nip,' . $userId,
       'nik' => 'nullable|string|max:20|unique:users,nik,' . $userId,
       'phone' => 'nullable|string|max:20',
       'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
@@ -452,9 +452,9 @@ class UserForm extends Component
     $data = [
       'name' => $this->name,
       'username' => $this->username,
-      'email' => $this->email,
-      'nip' => $this->nip,
-      'nik' => $this->nik,
+      'email' => $this->email ?: null,
+      'nip' => $this->nip ?: null,
+      'nik' => $this->nik ?: null,
       'employee_type' => $this->employee_type,
       'department_id' => $this->department_id ?: null,
       'rank_id' => $this->rank_id ?: null,
@@ -476,6 +476,9 @@ class UserForm extends Component
 
     if (!empty($this->password)) {
       $data['password'] = Hash::make($this->password);
+    } elseif (!$this->isEdit) {
+      // Pegawai baru tanpa password memakai password default dari config.
+      $data['password'] = Hash::make(config('users.default_password'));
     }
 
     $typeParam = array_filter(['type' => $this->listType]);

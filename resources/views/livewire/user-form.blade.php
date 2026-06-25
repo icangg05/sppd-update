@@ -54,9 +54,16 @@
 						<div class="space-y-1">
 							<x-form.input wire:model="password" type="password" name="password"
 								label="{{ $isEdit ? 'Password Baru' : 'Password' }}"
-								placeholder="{{ $isEdit ? 'Kosongkan jika tidak ingin mengubah password' : 'Minimal 6 karakter' }}"
-								:required="!$isEdit"
+								placeholder="{{ $isEdit ? 'Kosongkan jika tidak ingin mengubah password' : 'Minimal 6 karakter (opsional)' }}"
 								class="focus:border-cyan-500 focus:ring-cyan-500" />
+							@unless ($isEdit)
+								<p class="text-xs text-slate-400">
+									<i class="fa-solid fa-circle-info mr-1"></i>
+									Jika dikosongkan, password default
+									<strong class="font-mono text-slate-600">{{ config('users.default_password') }}</strong>
+									akan digunakan.
+								</p>
+							@endunless
 						</div>
 
 						@unless ($this->isDprdContext())
@@ -167,7 +174,15 @@
 							@endphp
 							<x-form.searchable-select wire:model="department_id" name="department_id"
 								label="Instansi / Unit Kerja (OPD)" required :options="$departmentOptions"
-								placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..." />
+								placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..."
+								hint="Pilih unit kerja tempat pegawai benar-benar ditempatkan. Daftar ditampilkan berjenjang (indentasi) sesuai struktur OPD induk → bidang/seksi; pilih unit yang paling spesifik." />
+							<p class="text-xs text-slate-500 mt-1">
+								<i class="fa-solid fa-circle-plus text-cyan-500 mr-1"></i>Unit kerja belum ada?
+								<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
+									class="font-semibold text-cyan-600 underline-offset-2 hover:underline">
+									Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+								</a>
+							</p>
 						</div>
 
 						@unless ($this->isDprdContext())
@@ -194,6 +209,12 @@
 									placeholder="— Pilih Jabatan —" searchPlaceholder="Cari jabatan..." />
 								<p class="text-xs text-slate-400">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
 									dipangku satu pegawai aktif sesuai lingkupnya.</p>
+								<p class="text-xs text-slate-400">Jabatan tidak ada?
+									<a href="{{ route('master.position-requests.index', ['new' => 1]) }}" target="_blank"
+										class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
+										Ajukan jabatan baru <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+									</a>
+								</p>
 							</div>
 						@endunless
 
