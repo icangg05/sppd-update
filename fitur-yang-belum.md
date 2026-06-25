@@ -21,3 +21,4 @@ Optional:
 
 1. Redesign menggunakan claude SKILLS
 2. Hapus database yang tidak terpakai: => ✅
+3. oke
