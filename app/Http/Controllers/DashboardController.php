@@ -54,7 +54,9 @@ class DashboardController extends Controller
     // Daftar per-item (program/kegiatan) — angka diambil dari agregat massal,
     // jadi tetap murah. Hanya dikirim sebagai array skalar (bukan model Budget,
     // agar atribut realization yang berat tidak ikut ter-serialize).
-    $dpaItems = $budgets->map(function (Budget $b) use ($realByBudget) {
+    // Dibatasi ke 10 DPA terakhir dibuat agar daftar tetap ringkas (ringkasan
+    // di atasnya tetap dihitung dari SELURUH budget, jadi total tak berubah).
+    $dpaItems = $budgets->sortByDesc('created_at')->take(10)->map(function (Budget $b) use ($realByBudget) {
       $pagu = (float) $b->total_amount;
       $real = (float) ($realByBudget[$b->id] ?? 0);
 

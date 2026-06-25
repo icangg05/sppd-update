@@ -9,60 +9,6 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
-  public function index(Request $request)
-  {
-    $user = auth()->user();
-    $isSuperAdmin = $user->hasRole('super_admin');
-
-    $query = Department::withCount(['users', 'budgets', 'children'])->with('head');
-
-    if (!$isSuperAdmin) {
-      // Admin OPD hanya bisa melihat unit di bawah departemennya sendiri
-      $myDeptId = $user->department_id;
-      if (!$myDeptId) abort(403, 'Anda belum memiliki instansi terkait.');
-      
-      $query->where(function($q) use ($myDeptId) {
-          $q->where('id', $myDeptId)
-            ->orWhere('parent_id', $myDeptId)
-            ->orWhereIn('parent_id', Department::where('parent_id', $myDeptId)->pluck('id'));
-      });
-    }
-
-    if ($request->filled('search')) {
-      $query->where(function($q) use ($request) {
-        $q->where('name', 'like', "%{$request->search}%")
-          ->orWhere('code', 'like', "%{$request->search}%");
-      });
-    }
-
-    if ($request->filled('type') && $isSuperAdmin) {
-      $query->where('type', $request->type);
-    }
-
-    // Tampilkan secara hierarki tanpa pagination agar tree-nya terlihat
-    $list = [];
-    if ($isSuperAdmin) {
-        // Jika ada pencarian, kita tampilkan hasil pencarian secara flat
-        if ($request->filled('search') || $request->filled('type')) {
-            $departments = $query->orderBy('name')->get();
-        } else {
-            $roots = (clone $query)->whereNull('parent_id')->orderBy('name')->get();
-            foreach ($roots as $root) {
-                $this->flattenDepartment($root, 0, $list);
-            }
-            $departments = $list;
-        }
-    } else {
-        $root = (clone $query)->find($user->department_id);
-        $this->flattenDepartment($root, 0, $list);
-        $departments = $list;
-    }
-    
-    $types = DepartmentType::cases();
-
-    return view('master.departments.index', compact('departments', 'types', 'isSuperAdmin'));
-  }
-
   public function create()
   {
     $types = DepartmentType::cases();

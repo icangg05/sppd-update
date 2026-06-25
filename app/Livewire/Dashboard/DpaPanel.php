@@ -16,6 +16,9 @@ class DpaPanel extends Component
 
   public string $title = 'DPA Tahun Berjalan';
 
+  // Tampilkan asal OPD tiap item (khusus super_admin yang melihat lintas OPD).
+  public bool $showDepartment = false;
+
   // Batas baris SPPD yang ditampilkan di modal agar tetap ringan
   // walau satu program punya ribuan SPPD.
   private const DETAIL_LIMIT = 20;
@@ -30,11 +33,12 @@ class DpaPanel extends Component
    * @param  array<string,mixed>  $summary
    * @param  array<int,array>  $items
    */
-  public function mount(array $summary, array $items, string $title = 'DPA Tahun Berjalan'): void
+  public function mount(array $summary, array $items, string $title = 'DPA Tahun Berjalan', bool $showDepartment = false): void
   {
     $this->summary = $summary;
     $this->items = $items;
     $this->title = $title;
+    $this->showDepartment = $showDepartment;
   }
 
   /**

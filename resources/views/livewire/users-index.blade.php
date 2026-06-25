@@ -33,8 +33,21 @@
 				</div>
 			</div>
 
+			{{-- DPRD: filter Partai/Fraksi menggantikan filter Instansi --}}
+			@if ($isDprd)
+				@php
+					$partaiFilterOptions = collect($partaiList)
+						->map(fn($p) => ['value' => $p, 'label' => $p])
+						->prepend(['value' => '', 'label' => 'Semua Partai'])
+						->all();
+				@endphp
+				<div class="w-full sm:w-64">
+					<x-form.searchable-select wire:model.live="partai" name="partai"
+						:options="$partaiFilterOptions" placeholder="Semua Partai"
+						searchPlaceholder="Cari partai / fraksi..." class="bg-slate-50" />
+				</div>
 			{{-- Department Dropdown (Super Admin) --}}
-			@if (auth()->user()->hasRole('super_admin'))
+			@elseif (auth()->user()->hasRole('super_admin'))
 				@php
 					$departmentFilterOptions = collect($departments)
 						->map(fn($d) => ['value' => $d->id, 'label' => $d->display_name])
@@ -49,7 +62,7 @@
 			@endif
 
 			{{-- Reset --}}
-			@if ($search !== '' || $department_id !== '')
+			@if ($search !== '' || $department_id !== '' || $partai !== '')
 				<div class="flex items-center gap-2">
 					<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
 						class="rounded-lg px-4 py-2 font-semibold text-slate-600">
@@ -62,7 +75,7 @@
 
 	{{-- Table --}}
 	<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" wire:loading.class="opacity-60"
-		wire:target="search,department_id">
+		wire:target="search,department_id,partai">
 		<div class="overflow-x-auto custom-scrollbar">
 			<table class="w-full text-left whitespace-nowrap">
 				<thead

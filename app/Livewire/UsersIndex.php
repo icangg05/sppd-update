@@ -25,6 +25,9 @@ class UsersIndex extends Component
   #[Url(keep: true)]
   public string $department_id = '';
 
+  #[Url(keep: true)]
+  public string $partai = '';
+
   public function isDprd(): bool
   {
     return $this->type === 'dprd';
@@ -47,10 +50,16 @@ class UsersIndex extends Component
     $this->resetPage();
   }
 
+  public function updatedPartai(): void
+  {
+    $this->resetPage();
+  }
+
   public function resetFilters(): void
   {
     $this->search = '';
     $this->department_id = '';
+    $this->partai = '';
     $this->resetPage();
   }
 
@@ -162,6 +171,11 @@ class UsersIndex extends Component
       $query->where('department_id', $this->department_id);
     }
 
+    // Untuk daftar DPRD, filter instansi diganti filter partai/fraksi.
+    if ($this->isDprd() && $this->partai !== '') {
+      $query->where('partai', $this->partai);
+    }
+
     // Order by department from root to descendants, then by name
     $sortedDeptIds = Department::whereNull('parent_id')
       ->with('children')
@@ -198,7 +212,12 @@ class UsersIndex extends Component
 
     $departments = $this->getHierarchicalDepartments();
 
-    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap'))
+    // Daftar partai/fraksi unik untuk filter searchable select pada daftar DPRD.
+    $partaiList = $this->isDprd()
+      ? User::whereNotNull('partai')->where('partai', '!=', '')->distinct()->orderBy('partai')->pluck('partai')
+      : collect();
+
+    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList'))
       ->title('Data Pegawai');
   }
 }

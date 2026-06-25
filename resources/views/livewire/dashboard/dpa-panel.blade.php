@@ -14,17 +14,27 @@
       <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{{ count($items) }} item</span>
     </div>
 
-    <div class="divide-y divide-slate-100">
+    {{-- Tinggi dibatasi (~5 baris terlihat), sisanya bisa di-scroll. --}}
+    <div class="max-h-104 divide-y divide-slate-100 overflow-y-auto">
       @forelse ($items as $item)
         <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div class="min-w-0 flex-1">
-            <p class="line-clamp-1 text-sm font-semibold text-slate-800" title="{{ $item['name'] }}">{{ $item['name'] }}</p>
-            <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-              <span>Pagu <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($item['pagu'], 0, ',', '.') }}</span></span>
-              <span class="text-slate-300">&bull;</span>
-              <span>Realisasi <span class="font-mono font-semibold text-cyan-700">Rp {{ number_format($item['realisasi'], 0, ',', '.') }}</span></span>
-              <span class="text-slate-300">&bull;</span>
-              <span>Sisa <span class="font-mono font-semibold {{ $item['sisa'] < 0 ? 'text-rose-600' : 'text-emerald-700' }}">Rp {{ number_format($item['sisa'], 0, ',', '.') }}</span></span>
+          <div class="flex min-w-0 flex-1 items-start gap-3">
+            <span class="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 font-mono text-[11px] font-bold text-slate-500">{{ $loop->iteration }}</span>
+            <div class="min-w-0 flex-1">
+              <p class="line-clamp-1 text-sm font-semibold text-slate-800" title="{{ $item['name'] }}">{{ $item['name'] }}</p>
+              @if ($showDepartment && ! empty($item['department']))
+                <p class="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-cyan-700">
+                  <i class="fa-solid fa-building text-[10px] text-cyan-500"></i>
+                  <span class="line-clamp-1">{{ $item['department'] }}</span>
+                </p>
+              @endif
+              <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                <span>Pagu <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($item['pagu'], 0, ',', '.') }}</span></span>
+                <span class="text-slate-300">&bull;</span>
+                <span>Realisasi <span class="font-mono font-semibold text-cyan-700">Rp {{ number_format($item['realisasi'], 0, ',', '.') }}</span></span>
+                <span class="text-slate-300">&bull;</span>
+                <span>Sisa <span class="font-mono font-semibold {{ $item['sisa'] < 0 ? 'text-rose-600' : 'text-emerald-700' }}">Rp {{ number_format($item['sisa'], 0, ',', '.') }}</span></span>
+              </div>
             </div>
           </div>
 

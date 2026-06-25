@@ -20,6 +20,7 @@ use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetIndex;
+use App\Livewire\DepartmentIndex;
 use App\Livewire\UsersIndex;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -101,7 +102,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 
         // Departments / Instansi / OPD
-        Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
+        Route::get('/departments', DepartmentIndex::class)->name('departments.index');
         Route::get('/departments/create', [DepartmentController::class, 'create'])->name('departments.create');
         Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
         Route::get('/departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');

@@ -35,6 +35,7 @@
 
     {{-- Widget DPA tahun berjalan (semua role): ringkasan + per-item + modal rincian (lazy) --}}
     <livewire:dashboard.dpa-panel :summary="$dpa" :items="$dpaItems"
+      :show-department="auth()->user()->hasRole('super_admin')"
       :title="auth()->user()->hasRole('super_admin') ? 'DPA Seluruh OPD' : 'DPA ' . (auth()->user()->department?->getRootDepartment()->name ?? 'OPD')" />
 
     {{-- Konten spesifik per archetype --}}

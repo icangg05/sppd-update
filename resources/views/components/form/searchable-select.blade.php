@@ -14,8 +14,9 @@
 
 @php
     // Ambil property dari wire:model agar bisa di-entangle ke Livewire.
+    // Catatan: tanpa wire:model, value() mengembalikan false (bukan null), jadi cek tipe string.
     $model = $attributes->wire('model');
-    $hasWire = ! is_null($model->value());
+    $hasWire = is_string($model->value()) && $model->value() !== '';
     $key = $name ?? ($model->value() ?? null);
     // Untuk form non-Livewire, pakai nilai awal dari old()/value agar tetap tersubmit.
     $initialValue = $hasWire ? null : old($name, $attributes->get('value'));

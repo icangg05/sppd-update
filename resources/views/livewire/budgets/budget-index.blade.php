@@ -45,48 +45,47 @@
 				</div>
 			</div>
 
-			{{-- Department Dropdown (Super Admin) --}}
+			{{-- Department Searchable Select (Super Admin) --}}
 			@if (auth()->user()->hasRole('super_admin'))
-				<div class="relative w-full sm:w-56">
-					<select wire:model.live="department_id"
-						class="block w-full appearance-none rounded-lg border border-slate-300 bg-slate-50 py-2 pl-3 pr-10 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition">
-						<option value="">Semua Instansi</option>
-						@foreach ($departments as $dept)
-							<option value="{{ $dept->id }}">{{ $dept->name }}</option>
-						@endforeach
-					</select>
-					<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-						<i class="fa-solid fa-chevron-down text-xs"></i>
-					</div>
+				@php
+					$departmentFilterOptions = collect($departments)
+						->map(fn($d) => ['value' => $d->id, 'label' => $d->name])
+						->prepend(['value' => '', 'label' => 'Semua Instansi'])
+						->all();
+				@endphp
+				<div class="w-full sm:w-56">
+					<x-form.searchable-select wire:model.live="department_id" name="department_id"
+						:options="$departmentFilterOptions" placeholder="Semua Instansi"
+						searchPlaceholder="Cari instansi..." class="bg-slate-50" />
 				</div>
 			@endif
 
-			{{-- Source Dropdown --}}
-			<div class="relative w-full sm:w-40">
-				<select wire:model.live="source"
-					class="block w-full appearance-none rounded-lg border border-slate-300 bg-slate-50 py-2 pl-3 pr-10 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition">
-					<option value="">Semua Sumber</option>
-					<option value="APBD">APBD</option>
-					<option value="APBD-P">APBD-P</option>
-					<option value="APBN">APBN</option>
-				</select>
-				<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-					<i class="fa-solid fa-chevron-down text-xs"></i>
-				</div>
+			{{-- Source Searchable Select --}}
+			@php
+				$sourceOptions = [
+					['value' => '', 'label' => 'Semua Sumber'],
+					['value' => 'APBD', 'label' => 'APBD'],
+					['value' => 'APBD-P', 'label' => 'APBD-P'],
+					['value' => 'APBN', 'label' => 'APBN'],
+				];
+			@endphp
+			<div class="w-full sm:w-40">
+				<x-form.searchable-select wire:model.live="source" name="source"
+					:options="$sourceOptions" placeholder="Semua Sumber"
+					searchPlaceholder="Cari sumber..." class="bg-slate-50" />
 			</div>
 
-			{{-- Year Dropdown --}}
-			<div class="relative w-full sm:w-32">
-				<select wire:model.live="year"
-					class="block w-full appearance-none rounded-lg border border-slate-300 bg-slate-50 py-2 pl-3 pr-10 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition">
-					<option value="">Semua TA</option>
-					@for ($y = date('Y'); $y >= date('Y') - 4; $y--)
-						<option value="{{ $y }}">{{ $y }}</option>
-					@endfor
-				</select>
-				<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-					<i class="fa-solid fa-chevron-down text-xs"></i>
-				</div>
+			{{-- Year Searchable Select --}}
+			@php
+				$yearOptions = collect(range(date('Y'), date('Y') - 4))
+					->map(fn($y) => ['value' => (string) $y, 'label' => (string) $y])
+					->prepend(['value' => '', 'label' => 'Semua TA'])
+					->all();
+			@endphp
+			<div class="w-full sm:w-32">
+				<x-form.searchable-select wire:model.live="year" name="year"
+					:options="$yearOptions" placeholder="Semua TA"
+					searchPlaceholder="Cari tahun..." class="bg-slate-50" />
 			</div>
 
 			{{-- Reset (selalu tampil, nonaktif saat tidak ada filter) --}}
