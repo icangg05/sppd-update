@@ -36,7 +36,7 @@
 				type="text"
 				name="username"
 				id="username"
-				value="{{ old('username', 'admin_kominfo') }}"
+				value="{{ old('username', 'admin_diskominfo') }}"
 				required
 				autofocus
 				class="mt-2 w-full rounded-2xl border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
@@ -46,7 +46,7 @@
 		<div>
 			<label for="password" class="block text-sm font-semibold text-sky-50">Password</label>
 			<input
-				value="admin"
+				value="pass1234"
 				type="password"
 				name="password"
 				id="password"

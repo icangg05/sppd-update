@@ -119,7 +119,9 @@ class UsersIndex extends Component
 
   public function render()
   {
-    $query = User::with(['department', 'rank', 'position', 'roles']);
+    $query = User::with(['department', 'rank', 'position', 'roles'])
+      // Akun super_admin tidak ditampilkan di daftar pegawai.
+      ->whereDoesntHave('roles', fn($r) => $r->where('name', 'super_admin'));
 
     // Filter berdasarkan instansi user jika bukan super admin
     // Termasuk semua pegawai di sub-department (bidang/subbidang)
