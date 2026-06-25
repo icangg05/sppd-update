@@ -15,7 +15,6 @@ services:
     command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
     networks:
       - app_net
-      - openwa_net
 
   queue:
     build:
@@ -33,7 +32,6 @@ services:
     command: sh -c "php artisan queue:work --verbose --tries=3"
     networks:
       - app_net
-      - openwa_net
 
   scheduler:
     build:
@@ -51,7 +49,6 @@ services:
     command: sh -c "php artisan schedule:work"
     networks:
       - app_net
-      - openwa_net
 
   node:
     build:
@@ -95,9 +92,6 @@ services:
 
 networks:
   app_net:
-  openwa_net:
-    external: true
-    name: openwa-network
 
 volumes:
   dbdata:

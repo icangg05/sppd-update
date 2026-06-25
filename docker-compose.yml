@@ -19,7 +19,6 @@ services:
       "
     networks:
       - app_net
-      - openwa_net
     volumes:
       - ./storage/app:/app/storage/app
       - .env:/app/.env
@@ -40,7 +39,26 @@ services:
       "
     networks:
       - app_net
-      - openwa_net
+    volumes:
+      - ./storage/app:/app/storage/app
+      - .env:/app/.env
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: sppd_update_scheduler
+    restart: unless-stopped
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        php artisan schedule:work
+      "
+    networks:
+      - app_net
     volumes:
       - ./storage/app:/app/storage/app
       - .env:/app/.env
@@ -74,9 +92,6 @@ services:
 
 networks:
   app_net:
-  openwa_net:
-    external: true
-    name: openwa-network
 
 volumes:
   dbdata:
