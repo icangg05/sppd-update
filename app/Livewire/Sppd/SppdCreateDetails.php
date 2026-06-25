@@ -470,8 +470,20 @@ class SppdCreateDetails extends Component
     $categories = SppdCategory::all();
 
     // Followers candidate query
-    $userQuery = User::where('is_active', true);
-    if (! Auth::user()->hasRole('super_admin')) {
+    $userQuery = User::where('is_active', true)
+      // Akun administratif (super_admin & admin_opd) bukan pengikut perjalanan.
+      ->whereDoesntHave('roles', function ($q) {
+        $q->whereIn('name', ['super_admin', 'admin_opd']);
+      });
+    if (Auth::user()->hasRole('super_admin')) {
+      // Pengikut harus sesuai department pelaksana (lingkup OPD pelaksana).
+      $pelaksanaDept = $pelaksana->department;
+      if ($pelaksanaDept) {
+        $userQuery->whereIn('department_id', $pelaksanaDept->getRootDepartment()->getAllRelatedIds());
+      } else {
+        $userQuery->where('department_id', $pelaksana->department_id);
+      }
+    } else {
       $dept = Auth::user()->department;
       if ($dept) {
         $userQuery->whereIn('department_id', $dept->getAllRelatedIds());

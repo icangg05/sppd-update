@@ -142,7 +142,13 @@ class SppdCreate extends Component
 
   public function render()
   {
-    $query = User::where('is_active', true);
+    $query = User::where('is_active', true)
+      // Pegawai tanpa unit kerja tidak bisa jadi pelaksana (tak punya anggaran/alur).
+      ->whereNotNull('department_id')
+      // Akun administratif (super_admin & admin_opd) bukan pelaksana perjalanan.
+      ->whereDoesntHave('roles', function ($q) {
+        $q->whereIn('name', ['super_admin', 'admin_opd']);
+      });
 
     // Filter: Admin OPD bisa melihat pegawai di instansinya + sub-department
     if (! Auth::user()->hasRole('super_admin')) {

@@ -14,6 +14,8 @@
 12. Buat job queue tiap hari kirim pesan otomatis ke nomor sendiri agar layanan chat terlihat selalu aktif => ✅
 13. HD kan kop surat
 14. Buat akun admin tiap OPD
+15. Pada halaman create => pelaksana except role super_admin & admin_opd
+16. Pada halaman create_detail => Pengikut tampilkan data sesuai dengan department pelaksana untuk login sebagai super_admin. jika login sebagai admin_opd tidak ada masalah karna mengambil data dari department terkait.
 
 ================================================================
 
@@ -21,3 +23,8 @@ Optional:
 
 1. Redesign menggunakan claude SKILLS
 2. Hapus database yang tidak terpakai: => ✅
+
+================================================================
+
+Perintah tertunda:
+1. hapus aja 267 user tersebut. lalu di halaman index users pastikan super admin tidak ditampilkan
