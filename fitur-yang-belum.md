@@ -11,6 +11,7 @@
 8. Validasi hanya boleh ada satu jabatan => walikota, sekda, kepala opd, dan lain sebagainya => ✅
 9. Akses melalui url masih bisa padahal bukan permission dari rolenya. contoh role kepala_opd masih bisa crud data users padahal hanya admin_opd dan super_admin yang bisa. => ✅
 10. Filter data yang ditampilkan di halaman index SPPD.
+11. Buat job queue tiap hari kirim pesan otomatis ke nomor sendiri agar layanan chat terlihat selalu aktif => ✅
 
 ================================================================
 

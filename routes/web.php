@@ -13,6 +13,7 @@ use App\Http\Controllers\SppdWorkflowController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KirimChatWebhookController;
+use App\Jobs\LogQueueHeartbeatJob;
 use App\Livewire\Sppd\SppdCalendar;
 use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
@@ -133,19 +134,56 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');
     Route::get('/api/sppd/workflow-preview', [SppdController::class, 'previewWorkflow'])->name('api.sppd.workflow-preview');
 
-    // System Health Check — hanya super_admin
-    Route::get('/system/health', function () {
-        abort_unless(auth()->user()->hasRole('super_admin'), 403, 'Aksi ini tidak diizinkan.');
+    // Diagnostik queue — cukup butuh login (auth).
+    // Alur: hit /system/health/ping untuk menitipkan job heartbeat ke queue,
+    // lalu buka /system/health untuk melihat apakah worker memprosesnya.
+    Route::get('/system/health/ping', function () {
+        $token = (string) Str::uuid();
+        $dispatchedAt = now()->toDateTimeString();
 
+        Cache::store('database')->put(LogQueueHeartbeatJob::DISPATCHED_KEY, [
+            'token' => $token,
+            'dispatched_at' => $dispatchedAt,
+        ], now()->addDays(7));
+
+        LogQueueHeartbeatJob::dispatch($token, $dispatchedAt);
+
+        return response()->json([
+            'status' => 'dispatched',
+            'message' => 'Job heartbeat dikirim ke queue. Tunggu beberapa detik, lalu buka /system/health.',
+            'token' => $token,
+            'dispatched_at' => $dispatchedAt,
+        ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    })->name('system.health.ping');
+
+    // System Health Check — deteksi worker queue jalan/tidak.
+    Route::get('/system/health', function () {
         $pendingJobs = DB::table('jobs')->count();
         $failedJobs = DB::table('failed_jobs')->count();
         $recentFailed = DB::table('failed_jobs')->latest('failed_at')->limit(10)->get();
 
+        $dispatched = Cache::store('database')->get(LogQueueHeartbeatJob::DISPATCHED_KEY);
+        $processed = Cache::store('database')->get(LogQueueHeartbeatJob::PROCESSED_KEY);
+
+        $heartbeat = 'never_pinged';
+        if ($dispatched) {
+            // 'ok' jika ping terakhir sudah diproses worker; 'pending' jika belum
+            // (worker mungkin mati/lambat).
+            $heartbeat = ($processed && ($processed['token'] ?? null) === $dispatched['token'])
+                ? 'ok'
+                : 'pending';
+        }
+
         return response()->json([
             'status' => $failedJobs === 0 ? 'ok' : 'has_failures',
-            'queue_worker_note' => 'Jika pending_jobs tidak menumpuk, worker sedang berjalan.',
+            'queue_worker_note' => 'Hit /system/health/ping lalu refresh halaman ini. Jika heartbeat.status tetap "pending", worker queue tidak berjalan.',
             'pending_jobs' => $pendingJobs,
             'failed_jobs' => $failedJobs,
+            'heartbeat' => [
+                'status' => $heartbeat,
+                'last_dispatched_at' => $dispatched['dispatched_at'] ?? null,
+                'last_processed_at' => $processed['processed_at'] ?? null,
+            ],
             'failed_job_details' => $recentFailed->map(fn ($j) => [
                 'id' => $j->id,
                 'queue' => $j->queue,

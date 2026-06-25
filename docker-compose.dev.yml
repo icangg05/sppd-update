@@ -12,7 +12,43 @@ services:
       - "8004:8000"
     depends_on:
       - db
-    command: sh -c "composer install && php artisan queue:restart && php artisan queue:work --verbose --tries=3 & php artisan serve --host=0.0.0.0 --port=8000"
+    command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
+    networks:
+      - app_net
+      - openwa_net
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: php_dev
+    container_name: sppd_update_queue
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
+    depends_on:
+      - db
+      - app
+    command: sh -c "php artisan queue:work --verbose --tries=3"
+    networks:
+      - app_net
+      - openwa_net
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: php_dev
+    container_name: sppd_update_scheduler
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/uploads.ini
+    depends_on:
+      - db
+      - app
+    command: sh -c "php artisan schedule:work"
     networks:
       - app_net
       - openwa_net
