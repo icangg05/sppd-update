@@ -362,6 +362,7 @@ class DepartmentForm extends Component
 
     $selectedHead = $this->head_id ? User::find($this->head_id) : null;
 
+    /** @var \Illuminate\View\View $view */
     $view = view('livewire.departments.form', [
       'parents'      => $parents,
       'types'        => DepartmentType::cases(),
@@ -372,8 +373,7 @@ class DepartmentForm extends Component
       'parentLocked' => $this->isParentLocked(),
     ]);
 
-    // title() adalah macro runtime Livewire (View::macro), tak terlihat analisis statis.
-    /** @disregard P1013 Livewire page-title macro */
+    // title() = macro Livewire pada Illuminate\View\View (dikenali via _ide_helper.php).
     return $view->title($this->isEdit ? 'Edit Instansi' : 'Tambah Instansi');
   }
 }

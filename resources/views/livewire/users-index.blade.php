@@ -62,14 +62,14 @@
 			@endif
 
 			{{-- Reset --}}
-			@if ($search !== '' || $department_id !== '' || $partai !== '')
-				<div class="flex items-center gap-2">
-					<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
-						class="rounded-lg px-4 py-2 font-semibold text-slate-600">
-						<i class="fa-solid fa-rotate-right"></i> Reset
-					</x-ui.button>
-				</div>
-			@endif
+			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== ''; @endphp
+			<div class="flex items-center gap-2">
+				<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
+					class="rounded-lg px-4 py-2 font-semibold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+					:disabled="!$hasActiveFilters">
+					<i class="fa-solid fa-rotate-right"></i> Reset
+				</x-ui.button>
+			</div>
 		</div>
 	</div>
 
@@ -135,12 +135,9 @@
 							<td class="py-2.5 px-4">
 								<div style="padding-left: {{ $indent + 12 }}px">
 									<p class="text-sm font-semibold text-slate-900 leading-snug">{{ $user->name }}</p>
-									@if ($isDprd)
-										<span class="text-[12px] text-slate-500">NIK: {{ $user->nik ?? '-' }}</span>
-									@else
-										<span
-											class="text-[12px] text-slate-500">{{ $user->nip ? 'NIP: ' . $user->nip : ($user->nik ? 'NIK: ' . $user->nik : 'NIP: -') }}</span>
-									@endif
+									<div class="flex flex-wrap items-center gap-x-2 text-[12px] text-slate-500">
+										<span><i class="fa-solid fa-at text-[10px] mr-0.5"></i>{{ $user->username ?? '-' }}</span>
+									</div>
 								</div>
 							</td>
 

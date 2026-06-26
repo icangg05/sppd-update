@@ -108,14 +108,14 @@
 					<tr>
 						<th class="py-3 px-4 w-12 text-center">No.</th>
 						@if (auth()->user()->hasRole('super_admin'))
-							<th class="py-3 px-4">SKPD / Instansi</th>
+							<th class="py-3 px-4 min-w-44 max-w-56">SKPD / Instansi</th>
 						@endif
-						<th class="py-3 px-4 text-center">TA</th>
-						<th class="py-3 px-4">Program / Kegiatan</th>
-						<th class="py-3 px-4">Kode Rekening</th>
-						<th class="py-3 px-4">Uraian Anggaran</th>
-						<th class="py-3 px-4 text-right">Pagu Total</th>
-						<th class="py-3 px-4 text-right">Sisa Pagu</th>
+						<th class="py-3 px-4 text-center w-16">TA</th>
+						<th class="py-3 px-4 min-w-64">Program / Kegiatan</th>
+						<th class="py-3 px-4 whitespace-nowrap">Kode Rekening</th>
+						<th class="py-3 px-4 min-w-52">Uraian Anggaran</th>
+						<th class="py-3 px-4 text-right w-32">Pagu Total</th>
+						<th class="py-3 px-4 text-right w-32">Sisa Pagu</th>
 						<th class="py-3 px-4 text-center w-28">Aksi</th>
 					</tr>
 				</thead>
@@ -127,7 +127,7 @@
 							</td>
 
 							@if (auth()->user()->hasRole('super_admin'))
-								<td class="py-3.5 px-4 text-sm font-bold text-slate-900">
+								<td class="py-3.5 px-4 text-sm font-bold text-slate-900 max-w-56 whitespace-normal">
 									{{ $budget->department->name }}
 								</td>
 							@endif
@@ -136,19 +136,19 @@
 								{{ $budget->year }}
 							</td>
 
-							<td class="py-3.5 px-4 max-w-xs whitespace-normal">
+							<td class="py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
 								<div class="text-xs font-bold text-cyan-700 leading-tight mb-1">{{ $budget->program }}</div>
 								<div class="text-[11px] text-slate-500 leading-relaxed">{{ $budget->activity }}</div>
 							</td>
 
-							<td class="py-3.5 px-4">
+							<td class="py-3.5 px-4 whitespace-nowrap">
 								<span
 									class="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-mono font-medium text-slate-600 border border-slate-200/60">
 									{{ $budget->account_code }}
 								</span>
 							</td>
 
-							<td class="py-3.5 px-4 max-w-xs whitespace-normal">
+							<td class="py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
 								<div class="text-sm font-medium text-slate-700 leading-normal">{{ $budget->description }}</div>
 							</td>
 

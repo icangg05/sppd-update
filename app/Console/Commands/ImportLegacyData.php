@@ -2,10 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\DprdJabatan;
+use App\Enums\DprdPartai;
+use App\Enums\EmployeeType;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Migrasi data dari database lama (sppd-2026 / CodeIgniter, koneksi "mysql_old")
@@ -19,7 +23,7 @@ use Illuminate\Support\Facades\Hash;
 class ImportLegacyData extends Command
 {
   protected $signature = 'app:import-legacy
-    {--only=all : pegawai | dpa | all}
+    {--only=all : pegawai | dpa | dprd | all}
     {--years=2026 : Tahun anggaran yang diimpor untuk DPA, pisah koma. "all" untuk semua}
     {--password=password123 : Password default untuk semua pegawai yang diimpor}
     {--dry-run : Hitung & laporkan saja, tanpa menulis ke database}';
@@ -86,6 +90,9 @@ class ImportLegacyData extends Command
     }
     if (in_array($only, ['all', 'dpa'], true)) {
       $this->importDpa($old, $dry);
+    }
+    if (in_array($only, ['all', 'dprd'], true)) {
+      $this->importDprd($old, $dry);
     }
 
     $this->reportUnmatchedDepartments();
@@ -354,6 +361,167 @@ class ImportLegacyData extends Command
       ['Dilewati (department tak cocok)', $skippedNoDept],
       ['Dilewati (sudah ada)', $skippedExisting],
     ]);
+  }
+
+  // ──────────────────────────────────────────────────────────
+  // Impor Anggota DPRD (table_anggotadprd) -> users
+  // ──────────────────────────────────────────────────────────
+
+  /**
+   * Anggota DPRD masuk ke tabel users yang sama (employee_type = 'dprd'),
+   * di department Sekretariat DPRD (type=dprd). dprd_jabatan & partai dipetakan
+   * ke enum DprdJabatan/DprdPartai; jabatan bebas yang tak terpetakan dibiarkan null.
+   * Dedup berdasarkan nama ternormalisasi (anggota DPRD tidak punya NIP).
+   */
+  private function importDprd($old, bool $dry): void
+  {
+    $this->newLine();
+    $this->info('== Impor Anggota DPRD (table_anggotadprd) -> users ==');
+
+    $deptId = DB::table('departments')->where('type', 'dprd')->orderBy('id')->value('id');
+    if (!$deptId) {
+      $this->error('Department bertipe "dprd" tidak ditemukan, lewati impor DPRD.');
+      return;
+    }
+    $this->line('Department DPRD: id ' . $deptId);
+
+    $rolePimpinan = DB::table('roles')->where('name', 'pimpinan_dprd')->where('guard_name', 'web')->value('id');
+    $roleAnggota  = DB::table('roles')->where('name', 'anggota_dprd')->where('guard_name', 'web')->value('id');
+
+    // Dedup terhadap user DPRD yang sudah ada (mis. hasil seeder), berdasarkan nama.
+    $existingNames = DB::table('users')
+      ->where('employee_type', EmployeeType::DPRD->value)
+      ->pluck('name')
+      ->map(fn ($n) => $this->normalize((string) $n))
+      ->flip();
+
+    $usedUsernames = DB::table('users')->whereNotNull('username')->pluck('username')
+      ->map(fn ($u) => strtolower(trim((string) $u)))->flip()->all();
+
+    $rows = $old->table('table_anggotadprd')->where('status', 0)->get();
+    $this->line('Baris DPRD sumber (status aktif): ' . $rows->count());
+
+    $hash = Hash::make($this->option('password'));
+    $now = now();
+    $inserted = 0;
+    $skippedExisting = 0;
+    $noJabatan = 0;
+    $roleAssignments = [];
+
+    foreach ($rows as $r) {
+      $name = trim((string) $r->anggotadprd_name);
+      if ($name === '') continue;
+
+      $key = $this->normalize($name);
+      if (isset($existingNames[$key])) {
+        $skippedExisting++;
+        continue;
+      }
+      $existingNames[$key] = true; // cegah duplikat antar baris sumber
+
+      $jabatan = $this->mapDprdJabatan((string) $r->anggotadprd_jabatan);
+      $partai  = $this->mapDprdPartai((string) $r->anggotadprd_partai);
+      if ($jabatan === null) $noJabatan++;
+
+      $username = $this->uniqueUsername($name, $usedUsernames);
+
+      if (!$dry) {
+        $id = DB::table('users')->insertGetId([
+          'name'          => $name,
+          'username'      => $username,
+          'password'      => $hash,
+          'employee_type' => EmployeeType::DPRD->value,
+          'department_id' => $deptId,
+          'dprd_jabatan'  => $jabatan?->value,
+          'partai'        => $partai?->value,
+          'is_active'     => 1,
+          'created_at'    => $now,
+          'updated_at'    => $now,
+        ]);
+
+        // Pimpinan = Ketua/Wakil Ketua DPRD; selain itu anggota biasa.
+        $roleId = in_array($jabatan, [DprdJabatan::KETUA, DprdJabatan::WAKIL_1, DprdJabatan::WAKIL_2, DprdJabatan::WAKIL_3], true)
+          ? $rolePimpinan
+          : $roleAnggota;
+        if ($roleId) {
+          $roleAssignments[] = ['role_id' => $roleId, 'model_type' => User::class, 'model_id' => $id];
+        }
+      }
+      $inserted++;
+    }
+
+    if (!$dry && $roleAssignments) {
+      foreach (array_chunk($roleAssignments, 1000) as $chunk) {
+        DB::table('model_has_roles')->insert($chunk);
+      }
+      app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    $this->table(['Metrik', 'Jumlah'], [
+      ['Akan diinsert', $inserted],
+      ['Dilewati (nama sudah ada)', $skippedExisting],
+      ['Tanpa dprd_jabatan (null)', $noJabatan],
+      ['Role DPRD diberikan', count($roleAssignments)],
+    ]);
+  }
+
+  /** Petakan jabatan bebas lama ke enum DprdJabatan. Mengembalikan null bila tak terpetakan. */
+  private function mapDprdJabatan(string $raw): ?DprdJabatan
+  {
+    $s = $this->normalize($raw); // huruf besar, alfanumerik+spasi
+
+    // Pimpinan DPRD (mengandung "DPRD" agar tidak tertukar dgn "wakil ketua komisi").
+    if (str_contains($s, 'KETUA DPRD')) return DprdJabatan::KETUA;
+    if (str_contains($s, 'DPRD')) {
+      if (str_contains($s, 'WAKIL KETUA III')) return DprdJabatan::WAKIL_3;
+      if (str_contains($s, 'WAKIL KETUA II')) return DprdJabatan::WAKIL_2;
+      if (str_contains($s, 'WAKIL KETUA I')) return DprdJabatan::WAKIL_1;
+    }
+
+    // Keanggotaan komisi (anggota/ketua/wakil/sekretaris komisi). Cek angka terbesar dulu.
+    if (preg_match('/KOMISI?\s*IV\b/', $s) || str_contains($s, 'KOMISI 4')) return DprdJabatan::KOMISI_4;
+    if (preg_match('/KOMISI?\s*III\b/', $s) || str_contains($s, 'KOMISI 3')) return DprdJabatan::KOMISI_3;
+    if (preg_match('/KOMISI?\s*II\b/', $s) || str_contains($s, 'KOMISI 2')) return DprdJabatan::KOMISI_2;
+    if (preg_match('/KOMISI?\s*I\b/', $s) || str_contains($s, 'KOMISI 1')) return DprdJabatan::KOMISI_1;
+
+    return null; // mis. "ANGGOTA" tanpa komisi
+  }
+
+  /** Petakan nama partai/fraksi bebas lama ke enum DprdPartai. */
+  private function mapDprdPartai(string $raw): ?DprdPartai
+  {
+    $s = $this->normalize($raw); // mis. "F PDI P", "F GOLONGAN KARYA", "F PKS"
+
+    if (str_contains($s, 'GOLONGAN KARYA') || str_contains($s, 'GOLKAR')) return DprdPartai::GOLKAR;
+    if (str_contains($s, 'PDI') || str_contains($s, 'PDIP')) return DprdPartai::PDIP;
+    if (str_contains($s, 'GERINDRA')) return DprdPartai::GERINDRA;
+    if (str_contains($s, 'NASDEM')) return DprdPartai::NASDEM;
+    if (str_contains($s, 'PERINDO')) return DprdPartai::PERINDO;
+    if (str_contains($s, 'PKS')) return DprdPartai::PKS;
+    if (str_contains($s, 'PKB')) return DprdPartai::PKB;
+    if (str_contains($s, 'PAN')) return DprdPartai::PAN;
+    if (str_contains($s, 'PPP')) return DprdPartai::PPP;
+    if (str_contains($s, 'PSI')) return DprdPartai::PSI;
+    if (str_contains($s, 'HANURA')) return DprdPartai::HANURA;
+    if (str_contains($s, 'DEMOKRAT')) return DprdPartai::DEMOKRAT;
+
+    return null;
+  }
+
+  /** Buat username unik dari nama (slug), hindari bentrok dengan yang sudah dipakai. */
+  private function uniqueUsername(string $name, array &$used): string
+  {
+    $base = Str::slug($name, '_');
+    if ($base === '') $base = 'dprd';
+    $base = substr($base, 0, 40);
+
+    $candidate = $base;
+    $i = 1;
+    while (isset($used[$candidate])) {
+      $candidate = $base . '_' . (++$i);
+    }
+    $used[$candidate] = true;
+    return $candidate;
   }
 
   // ──────────────────────────────────────────────────────────
