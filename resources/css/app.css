@@ -105,6 +105,32 @@ html {
   /* darker medium gray */
 }
 
+/* Scrollbar sidebar: menyatu dengan latar gelap slate-900 (override scrollbar
+   global yang bertema terang). Track transparan, thumb tipis & halus. */
+#sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+#sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+#sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  /* slate-400 transparan */
+  border-radius: 9999px;
+  transition: background 0.15s ease-in-out;
+}
+
+#sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+}
+
 /* ───── Sidebar ───── */
 .sidebar {
   position: fixed;

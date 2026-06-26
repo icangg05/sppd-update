@@ -42,8 +42,30 @@
 						</div>
 
 						<div class="space-y-1">
-							<x-form.input wire:model="username" name="username" label="Username" required
-								placeholder="Contoh: budi.santoso" class="focus:border-cyan-500 focus:ring-cyan-500" />
+							{{-- Username dengan tombol generate username unik --}}
+							<label for="username" class="block text-xs font-bold tracking-wide text-slate-600 uppercase">
+								Username <span class="text-rose-500">*</span>
+							</label>
+							<div class="flex gap-2">
+								<input wire:model="username" type="text" id="username" name="username" required
+									placeholder="Contoh: budi.santoso"
+									class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 @error('username') border-red-400 @else border-slate-300 @enderror" />
+
+								<button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
+									wire:target="generateUsername" title="Buat username unik otomatis dari Nama Lengkap"
+									class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:opacity-50">
+									<span wire:loading.remove wire:target="generateUsername">
+										<i class="fa-solid fa-wand-magic-sparkles text-sm"></i> Generate
+									</span>
+									<span wire:loading wire:target="generateUsername">
+										<i class="fa-solid fa-spinner fa-spin text-sm"></i> Membuat...
+									</span>
+								</button>
+							</div>
+
+							@error('username')
+								<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+							@enderror
 						</div>
 
 						<div class="space-y-1">
@@ -414,131 +436,7 @@
 			</div>
 		</form>
 
-		{{-- Polling component for verification status --}}
-		@if ($isPolling)
-			<div wire:poll.1s.keep-alive="checkVerification"></div>
-		@endif
-
-		{{-- Modal Verifikasi WhatsApp --}}
-		<x-ui.modal show="$wire.showVerifyModal" :closeable="false" title="Verifikasi Nomor WhatsApp"
-			description="Kirim pesan ke operator untuk konfirmasi" icon="fa-brands fa-whatsapp text-emerald-600">
-			<div class="space-y-4">
-				{{-- Instruksi singkat --}}
-				<p class="text-xs text-slate-500">Kirim pesan verifikasi di bawah ini melalui WhatsApp. Status akan diperbarui
-					otomatis setelah pesan diterima.</p>
-
-				{{-- Template pesan --}}
-				<div>
-					<p class="text-xs font-semibold text-slate-600 mb-1.5">Pesan Verifikasi:</p>
-					<div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">{{ $verificationTemplate }}</div>
-				</div>
-
-				{{-- Status Polling: 3 states --}}
-				<div
-					class="rounded-lg p-3 text-center text-xs font-medium border
-					{{ $isVerified ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : '' }}
-					{{ $isFailed ? 'bg-red-50 text-red-800 border-red-200' : '' }}
-					{{ !$isVerified && !$isFailed && !$isTimedOut ? 'bg-amber-50 text-amber-800 border-amber-200' : '' }}
-					{{ $isTimedOut && !$isFailed && !$isVerified ? 'bg-slate-50 text-slate-600 border-slate-200' : '' }}">
-
-					{{-- Pending --}}
-					@if (!$isVerified && !$isFailed && !$isTimedOut)
-						<span class="flex items-center justify-center gap-2">
-							<i class="fa-solid fa-circle-notch fa-spin text-amber-600"></i>
-							Menunggu pesan WhatsApp dikirim...
-						</span>
-					@endif
-
-					{{-- Verified --}}
-					@if ($isVerified)
-						<span class="flex items-center justify-center gap-2">
-							<i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-							Nomor WhatsApp Berhasil Diverifikasi.
-						</span>
-					@endif
-
-					{{-- Failed --}}
-					@if ($isFailed)
-						<div class="space-y-2">
-							<span class="flex items-center justify-center gap-2">
-								<i class="fa-solid fa-circle-xmark text-red-600 text-base"></i>
-								Verifikasi Gagal
-							</span>
-							<p class="text-[11px] text-red-600 leading-relaxed">{{ $failedMessage }}</p>
-						</div>
-					@endif
-
-					{{-- Timed out --}}
-					@if ($isTimedOut && !$isFailed && !$isVerified)
-						<div class="space-y-2">
-							<span class="flex items-center justify-center gap-2">
-								<i class="fa-solid fa-clock text-slate-500 text-base"></i>
-								Waktu verifikasi habis (5 menit)
-							</span>
-							<p class="text-[11px] text-slate-500">Silakan coba lagi dengan menekan tombol di bawah.</p>
-						</div>
-					@endif
-				</div>
-			</div>
-
-			<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
-				<button type="button" wire:click="closeVerifyModal"
-					class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
-					Tutup
-				</button>
-
-				{{-- Kirim via WhatsApp (pending) --}}
-				@if (!$isVerified && !$isFailed && !$isTimedOut)
-					<a href="{{ $deeplinkUrl }}" target="_blank" rel="noopener"
-						class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-green-700 whitespace-nowrap">
-						<i class="fa-brands fa-whatsapp shrink-0"></i>
-						<span>Kirim via WhatsApp</span>
-					</a>
-				@endif
-
-				{{-- Terverifikasi --}}
-				@if ($isVerified)
-					<button type="button" disabled
-						class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-xs font-bold text-white shadow cursor-not-allowed whitespace-nowrap">
-						<i class="fa-solid fa-circle-check text-sm shrink-0"></i>
-						<span>Terverifikasi</span>
-					</button>
-				@endif
-
-				{{-- Coba Lagi (failed / timed out) --}}
-				@if ($isFailed || $isTimedOut)
-					<button type="button" wire:click="retryVerification"
-						class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600 whitespace-nowrap">
-						<i class="fa-solid fa-rotate-right text-sm shrink-0"></i>
-						<span>Coba Lagi</span>
-					</button>
-				@endif
-			</x-slot>
-		</x-ui.modal>
-
-		{{-- Modal Konfirmasi Ganti Nomor --}}
-		<x-ui.modal show="showResetModal" :closeable="false" title="Konfirmasi Ganti Nomor"
-			description="Tindakan ini membutuhkan verifikasi ulang" icon="fa-solid fa-triangle-exclamation text-amber-600">
-			<div class="space-y-4">
-				<p class="text-sm text-slate-600">
-					Apakah Anda yakin ingin mengganti nomor WhatsApp?
-					<br><br>
-					Status verifikasi pada nomor sebelumnya akan <strong>dihapus</strong> dan Anda harus melakukan proses verifikasi
-					ulang untuk nomor yang baru.
-				</p>
-			</div>
-
-			<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
-				<button type="button" @click="showResetModal = false"
-					class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
-					Batal
-				</button>
-				<button type="button" wire:click="resetPhoneVerification" @click="showResetModal = false"
-					class="flex-1 rounded-lg bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600">
-					Ya, Ganti Nomor
-				</button>
-			</x-slot>
-		</x-ui.modal>
+		@include('livewire.partials.phone-verification')
 
 	</div>
 </div>

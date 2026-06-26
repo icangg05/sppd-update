@@ -6,11 +6,13 @@ use App\Enums\DprdJabatan;
 use App\Enums\DprdPartai;
 use App\Enums\EmployeeType;
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Livewire\Concerns\InteractsWithPhoneVerification;
 use App\Enums\PositionScope;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
 use App\Models\User;
+use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +22,7 @@ use Spatie\Permission\Models\Role;
 class UserForm extends Component
 {
   use InteractsWithToast;
+  use InteractsWithPhoneVerification;
 
   public ?User $user = null;
   public bool $isEdit = false;
@@ -49,19 +52,7 @@ class UserForm extends Component
   public $dprd_jabatan = '';
   public $partai = '';
 
-  // WhatsApp Verification state
-  public bool $phoneVerified = false;
-  public bool $showVerifyModal = false;
-  public bool $isPolling = false;
-  public string $verificationNumber = '';
-  public string $verificationTemplate = '';
-  public string $deeplinkUrl = '';
-  public string $verificationToken = '';
-  public bool $isVerified = false;
-  public bool $isFailed = false;
-  public bool $isTimedOut = false;
-  public string $failedMessage = '';
-  public int $pollingCount = 0;
+  // State verifikasi WhatsApp disediakan oleh InteractsWithPhoneVerification.
 
   public function mount(?User $user = null)
   {
@@ -103,20 +94,32 @@ class UserForm extends Component
       }
     }
 
-    // Memulihkan state verifikasi jika halaman di-refresh
-    $token = session()->get('wa_verification_token');
-    if ($token && !$this->phoneVerified) {
-      $cached = Cache::get("wa_verification:{$token}");
-      if ($cached) {
-        $this->verificationToken = $token;
-        // Hanya memulihkan phone jika saat ini kosong agar input user tidak tertimpa tanpa alasan
-        if (empty($this->phone)) {
-          $this->phone = $cached['phone'];
-        }
-        $this->isPolling = true;
-      } else {
-        session()->forget('wa_verification_token');
-      }
+    // Memulihkan state verifikasi jika halaman di-refresh saat menunggu balasan.
+    $this->restorePhoneVerificationState();
+  }
+
+  protected function verificationUserId(): ?int
+  {
+    return $this->isEdit ? $this->user->id : null;
+  }
+
+  protected function onPhoneVerified(string $phone): void
+  {
+    if ($this->isEdit && $this->user) {
+      $this->user->update([
+        'phone' => $phone,
+        'phone_verified' => true,
+      ]);
+    }
+  }
+
+  protected function onPhoneReset(): void
+  {
+    if ($this->isEdit && $this->user) {
+      $this->user->update([
+        'phone' => null,
+        'phone_verified' => false,
+      ]);
     }
   }
 
@@ -310,128 +313,26 @@ class UserForm extends Component
     $this->position_id = '';
   }
 
-  public function openVerifyModal()
-  {
-    $this->resetErrorBag('phone');
+  // Metode verifikasi WhatsApp (openVerifyModal, checkVerification, dll.)
+  // disediakan oleh InteractsWithPhoneVerification.
 
-    if (empty(trim($this->phone))) {
-      $this->addError('phone', 'Masukkan nomor telepon terlebih dahulu.');
+  /**
+   * Membuat username ringkas & unik dari Nama Lengkap memakai UsernameGenerator
+   * (format "depan.belakang", gelar dibuang, sufiks angka bila bentrok).
+   */
+  public function generateUsername(): void
+  {
+    $username = app(UsernameGenerator::class)
+      ->generate($this->name, $this->isEdit ? $this->user->id : null);
+
+    if ($username === null) {
+      $this->toastError('Isi Nama Lengkap terlebih dahulu untuk membuat username.');
       return;
     }
 
-    $this->verificationNumber = config('kirimchat.verification_number', '6281376111919');
-    $this->verificationToken = 'V-' . rand(10000, 99999);
-    $normalizedPhone = $this->normalizePhone($this->phone);
-
-    $userId = $this->isEdit ? $this->user->id : null;
-
-    if ($userId) {
-      $prevToken = Cache::get("wa_verification_user:{$userId}");
-      if ($prevToken) {
-        $prevCached = Cache::get("wa_verification:{$prevToken}");
-        if ($prevCached) {
-          $prevNormalized = $this->normalizePhone($prevCached['phone']);
-          Cache::forget("wa_verification_phone:{$prevNormalized}");
-        }
-        Cache::forget("wa_verification:{$prevToken}");
-        Cache::forget("wa_verified_status:{$prevToken}");
-        Cache::forget("wa_verification_failed:{$prevToken}");
-      }
-      Cache::put("wa_verification_user:{$userId}", $this->verificationToken, now()->addMinutes(15));
-    }
-
-    Cache::put("wa_verification:{$this->verificationToken}", [
-      'phone'   => $this->phone,
-      'user_id' => $userId,
-      'name'    => $this->name ?: 'Pegawai',
-      'email'   => $this->email ?: '-',
-    ], now()->addMinutes(15));
-
-    Cache::put("wa_verification_phone:{$normalizedPhone}", $this->verificationToken, now()->addMinutes(15));
-
-    $this->verificationTemplate = "Verifikasi WhatsApp SPPD Kendari\n" .
-      "📱 *Nomor:* {$normalizedPhone}\n\n" .
-      "Kirim pesan ini untuk memverifikasi nomor WhatsApp Anda.\n\n" .
-      "_Sistem akan mencocokkan nomor pengirim secara otomatis. Mohon periksa status verifikasi pada browser Anda secara berkala jika belum menerima balasan._";
-
-    $this->deeplinkUrl = 'https://wa.me/' . $this->verificationNumber . '?text=' . urlencode($this->verificationTemplate);
-
-    session()->put('wa_verification_token', $this->verificationToken);
-
-    $this->isVerified = false;
-    $this->isFailed = false;
-    $this->isTimedOut = false;
-    $this->failedMessage = '';
-    $this->pollingCount = 0;
-
-    $this->showVerifyModal = true;
-    $this->isPolling = true;
-  }
-
-  public function checkVerification()
-  {
-    if (!$this->isPolling) return;
-
-    $this->pollingCount++;
-    if ($this->pollingCount > 300) { // 5 mins with 1s interval
-      $this->isTimedOut = true;
-      $this->isPolling = false;
-      return;
-    }
-
-    $verified = Cache::get("wa_verified_status:{$this->verificationToken}");
-    if ($verified && !empty($verified['verified'])) {
-      $this->isVerified = true;
-      $this->phone = $verified['phone'];
-      $this->phoneVerified = true;
-      $this->isPolling = false;
-      session()->forget('wa_verification_token');
-
-      // Auto update user verification status if edit mode
-      if ($this->isEdit && $this->user) {
-        $this->user->update([
-          'phone' => $this->phone,
-          'phone_verified' => true,
-        ]);
-      }
-      return;
-    }
-
-    $failed = Cache::get("wa_verification_failed:{$this->verificationToken}");
-    if ($failed) {
-      $this->isFailed = true;
-      $this->failedMessage = $failed['message'] ?? 'Verifikasi gagal.';
-      $this->isPolling = false;
-      session()->forget('wa_verification_token');
-      return;
-    }
-  }
-
-  public function closeVerifyModal()
-  {
-    $this->showVerifyModal = false;
-  }
-
-  public function retryVerification()
-  {
-    $this->closeVerifyModal();
-    $this->openVerifyModal();
-  }
-
-  public function resetPhoneVerification()
-  {
-    $this->phoneVerified = false;
-    $this->phone = '';
-    $this->isVerified = false;
-    $this->isPolling = false;
-    session()->forget('wa_verification_token');
-
-    if ($this->isEdit && $this->user) {
-      $this->user->update([
-        'phone' => null,
-        'phone_verified' => false,
-      ]);
-    }
+    $this->username = $username;
+    $this->resetErrorBag('username');
+    $this->toastSuccess('Username dibuat: ' . $this->username);
   }
 
   public function save()
@@ -536,20 +437,6 @@ class UserForm extends Component
     foreach ($dept->children()->orderBy('name')->get() as $child) {
       $this->flattenDepartment($child, $level + 1, $list);
     }
-  }
-
-  private function normalizePhone(string $phone): string
-  {
-    if (str_contains($phone, '@')) {
-      [$phone] = explode('@', $phone, 2);
-    }
-    $phone = preg_replace('/\D/', '', $phone);
-    if (str_starts_with($phone, '0')) {
-      $phone = '62' . substr($phone, 1);
-    } elseif (str_starts_with($phone, '8') && strlen($phone) >= 9 && strlen($phone) <= 13) {
-      $phone = '62' . $phone;
-    }
-    return $phone;
   }
 
   public function render()

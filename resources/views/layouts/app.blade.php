@@ -74,6 +74,23 @@
 			overlay.classList.toggle('hidden');
 		}
 
+		// Jaga posisi scroll sidebar agar tidak balik ke atas saat pindah halaman
+		// lewat wire:navigate (terasa seperti SPA). wire:navigate menukar seluruh
+		// DOM termasuk <nav>, jadi scrollTop disimpan sebelum navigasi lalu
+		// dipulihkan setelah DOM baru terpasang.
+		const SIDEBAR_SCROLL_KEY = 'sidebar-nav-scroll';
+
+		document.addEventListener('livewire:navigating', function() {
+			const nav = document.getElementById('sidebar-nav');
+			if (nav) sessionStorage.setItem(SIDEBAR_SCROLL_KEY, nav.scrollTop);
+		});
+
+		document.addEventListener('livewire:navigated', function() {
+			const nav = document.getElementById('sidebar-nav');
+			const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+			if (nav && saved !== null) nav.scrollTop = parseInt(saved, 10) || 0;
+		});
+
 		document.addEventListener('livewire:navigated', function() {
 			const submenuToggles = document.querySelectorAll('[data-sidebar-toggle]');
 			submenuToggles.forEach((toggle) => {

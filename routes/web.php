@@ -48,6 +48,19 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Profil sendiri
+    Route::get('/profile', \App\Livewire\Profile::class)->name('profile');
+
+    // Panduan fitur
+    Route::view('/panduan/whatsapp', 'guides.whatsapp')->name('guide.whatsapp');
+
+    // Tandai changelog sudah dibaca (badge notifikasi per-user)
+    Route::post('/notifications/seen', function () {
+        auth()->user()->update(['changelog_seen_version' => config('changelog.version')]);
+
+        return response()->json(['ok' => true]);
+    })->name('notifications.seen');
+
     // SPPD — Livewire Full-Page Components
     Route::get('/sppd', SppdIndex::class)->name('sppd.index');
     Route::get('/sppd/create', SppdCreate::class)->name('sppd.create');

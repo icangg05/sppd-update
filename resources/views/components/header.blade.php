@@ -15,12 +15,8 @@
 		</div>
 
 		<div class="flex items-center gap-3 sm:gap-5">
-			<button
-				class="relative inline-flex size-9 items-center justify-center rounded-full bg-cyan-600/30 text-white transition-all hover:bg-cyan-600 focus:outline-none"
-				aria-label="Notifikasi" title="Notifikasi">
-				<i class="fa-regular fa-bell"></i>
-				<span class="absolute right-2 top-2 size-2.5 rounded-full border-2 border-cyan-700 bg-red-500"></span>
-			</button>
+			{{-- Notifikasi: log pembaruan sistem (changelog) --}}
+			<x-notifications />
 
 			<div class="hidden h-6 w-px bg-cyan-500/50 sm:block"></div>
 
@@ -53,17 +49,11 @@
 
 					{{-- Menu Links --}}
 					<div class="px-1.5 space-y-0.5">
-						<a href="#"
+						<a href="{{ route('profile') }}" wire:navigate
 							class="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
 							<i
 								class="fa-regular fa-user mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-cyan-600"></i>
 							Profil Saya
-						</a>
-						<a href="#"
-							class="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
-							<i
-								class="fa-solid fa-gear mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-cyan-600"></i>
-							Pengaturan
 						</a>
 					</div>
 

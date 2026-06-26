@@ -23,6 +23,9 @@
 21. Tambah validasi form indonesia (id) => ✅
 22. Buat mekanisme pengajuan jabatan baru jika admin opd ingin menambahkan jabatan. Lalu super_admin perlu memverifikasi dan pastikan jabatan tersebut unique tidak ada duplikat => ✅
 23. Migrasi anggota DPRD => ✅
+24. Validasi pastikan worker aktif sebelum mengklik verifikasi di halaman users => ✅
+25. Saat login super_admin menunya sidebar kan banyal, usahakan posisi scrooll di sidebarnya tidak balik ke atas saat pindah halaman agar terlihat seperti SPA => ✅
+26. 
 
 
 ================================================================

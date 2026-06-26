@@ -25,7 +25,7 @@
 	</div>
 
 	<!-- Konten Navigasi Menu -->
-	<nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 lg:pb-16">
+	<nav id="sidebar-nav" class="flex-1 space-y-1 overflow-y-auto px-3 py-4 lg:pb-16">
 		<div class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
 		<a href="{{ route('dashboard') }}" wire:navigate

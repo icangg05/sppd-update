@@ -28,6 +28,7 @@ class User extends Authenticatable
     'password',
     'phone',
     'phone_verified',
+    'changelog_seen_version',
     'employee_type',
     'department_id',
     'rank_id',
