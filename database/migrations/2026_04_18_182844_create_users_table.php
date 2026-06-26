@@ -23,6 +23,7 @@ return new class extends Migration
       $table->string('password');
       $table->string('phone')->nullable()->unique();
       $table->boolean('phone_verified')->default(false);
+      $table->string('changelog_seen_version')->nullable();
       $table->string('employee_type')->default('pns');
       $table->foreignId('rank_id')->nullable()->constrained()->nullOnDelete();
       $table->foreignId('position_id')->nullable()->constrained()->nullOnDelete();

@@ -127,10 +127,12 @@ class DatabaseBackupService
 
     $files = glob($dir . '/*.sql.gz') ?: [];
 
+    // createFromTimestamp() default-nya UTC (Carbon 3); paksa ke timezone aplikasi
+    // agar kolom "Dibuat" konsisten dengan zona waktu sistem (mis. WITA).
     $list = array_map(fn($path) => [
       'name' => basename($path),
       'size' => filesize($path),
-      'created_at' => Carbon::createFromTimestamp(filemtime($path)),
+      'created_at' => Carbon::createFromTimestamp(filemtime($path), config('app.timezone')),
     ], $files);
 
     usort($list, fn($a, $b) => $b['created_at'] <=> $a['created_at']);

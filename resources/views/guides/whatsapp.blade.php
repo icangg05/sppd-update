@@ -15,7 +15,7 @@
       <i class="fa-brands fa-whatsapp pointer-events-none absolute -right-4 -top-4 text-[8rem] text-white/10"></i>
       <div class="relative">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide">
-          <i class="fa-solid fa-star text-[10px]"></i> Fitur Unggulan
+          <i class="fa-solid fa-star text-[10px]"></i> Fitur Terbaru
         </span>
         <h1 class="mt-3 text-2xl font-extrabold sm:text-3xl">Notifikasi WhatsApp</h1>
         <p class="mt-2 max-w-xl text-sm leading-relaxed text-emerald-50">

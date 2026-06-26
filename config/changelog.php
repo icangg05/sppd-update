@@ -25,7 +25,7 @@ return [
       'icon' => 'fa-brands fa-whatsapp',
       'color' => 'emerald',
       'date' => '2026-06-26',
-      // Sorot sebagai fitur unggulan + tautan ke halaman panduan khusus.
+      // Sorot sebagai fitur terbaru + tautan ke halaman panduan khusus.
       'featured' => true,
       'badge' => 'Terbaru',
       'guide' => 'guide.whatsapp',

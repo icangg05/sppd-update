@@ -127,9 +127,17 @@
             <td>{{ $backup['created_at']->translatedFormat('d M Y, H:i') }}</td>
             <td>
               <div class="flex items-center justify-end gap-2">
+                {{-- Disable + spinner selama server menyiapkan file (cegah spam klik).
+                     wire:target memuat argumen agar hanya tombol baris ini yang terkunci. --}}
                 <button wire:click="download('{{ $backup['name'] }}')"
-                  class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white">
-                  <i class="fa-solid fa-download"></i> Unduh
+                  wire:loading.attr="disabled" wire:target="download('{{ $backup['name'] }}')"
+                  class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60">
+                  <span wire:loading.remove wire:target="download('{{ $backup['name'] }}')">
+                    <i class="fa-solid fa-download"></i> Unduh
+                  </span>
+                  <span wire:loading wire:target="download('{{ $backup['name'] }}')">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...
+                  </span>
                 </button>
                 <button type="button" x-on:click="openDelete('{{ $backup['name'] }}')"
                   class="inline-flex items-center gap-1.5 rounded border border-red-400 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-600 hover:text-white">
