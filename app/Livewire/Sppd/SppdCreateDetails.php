@@ -12,6 +12,7 @@ use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Models\User;
 use App\Services\ApproverNotifier;
+use App\Services\QueueHealthService;
 use App\Services\SppdWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -197,6 +198,13 @@ class SppdCreateDetails extends Component
 
   public function openConfirmModal(): void
   {
+    // Umpan balik dini: jangan buka modal konfirmasi bila worker queue mati,
+    // karena notifikasi ke pejabat tidak akan terkirim.
+    if (! app(QueueHealthService::class)->isWorkerHealthy()) {
+      $this->toastError($this->queueDownMessage());
+      return;
+    }
+
     $this->validate([
       'budget_id' => 'required|exists:budgets,id',
       'category_id' => 'required|exists:sppd_categories,id',
@@ -233,6 +241,14 @@ class SppdCreateDetails extends Component
 
   public function submit()
   {
+    // Gerbang otoritatif: tolak bila worker queue tidak berjalan, sehingga
+    // notifikasi WhatsApp ke approver dijamin dapat dikirim.
+    if (! app(QueueHealthService::class)->isWorkerHealthy()) {
+      $this->toastError($this->queueDownMessage());
+      $this->showConfirmModal = false;
+      return;
+    }
+
     $user = User::with('department')->findOrFail($this->user_id);
     $isInspektorat = str_contains(strtolower($user->department?->name ?? ''), 'inspektorat');
 
@@ -426,6 +442,13 @@ class SppdCreateDetails extends Component
       $this->toastError($e->getMessage());
       $this->showConfirmModal = false;
     }
+  }
+
+  protected function queueDownMessage(): string
+  {
+    return 'Pengajuan ditolak: layanan antrian (queue worker) sedang tidak berjalan, '
+      . 'sehingga notifikasi ke pejabat tidak dapat dikirim. Hubungi administrator sistem '
+      . 'dan coba lagi setelah layanan aktif.';
   }
 
   protected function notifyApprover(SppdRequest $sppd, $approval): void

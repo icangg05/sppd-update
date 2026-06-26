@@ -145,7 +145,7 @@
 					{{-- Sektor Unggah & Pratinjau Kop Surat Utama (SPPD) --}}
 					<div class="{{ $department->type->value === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }} space-y-1.5"
 						id="letterhead_field">
-						<x-form.file name="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG)" accept="image/*"
+						<x-form.file name="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
 							class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
 							hint="Rekomendasi ukuran cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD." />
 

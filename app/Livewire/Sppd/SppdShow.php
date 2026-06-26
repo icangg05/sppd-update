@@ -11,6 +11,7 @@ use App\Jobs\SendWhatsAppNotificationJob;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Services\ApproverNotifier;
+use App\Services\QueueHealthService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Livewire\Component;
@@ -68,8 +69,42 @@ class SppdShow extends Component
     ])->findOrFail($this->sppdId);
   }
 
+  public function openApproveModal(): void
+  {
+    if (! $this->ensureQueueHealthy()) {
+      return;
+    }
+
+    $this->showApproveModal = true;
+  }
+
+  public function openRejectModal(): void
+  {
+    if (! $this->ensureQueueHealthy()) {
+      return;
+    }
+
+    $this->showRejectModal = true;
+  }
+
+  public function openRevisionModal(): void
+  {
+    if (! $this->ensureQueueHealthy()) {
+      return;
+    }
+
+    $this->showRevisionModal = true;
+  }
+
   public function approve(): void
   {
+    // Jaring pengaman: worker bisa mati setelah modal terbuka. Notifikasi WA
+    // (dan TTE) di-dispatch ke queue yang tidak akan diproses.
+    if (! $this->ensureQueueHealthy()) {
+      $this->showApproveModal = false;
+      return;
+    }
+
     $sppd = $this->getSppd();
 
     $approval = $sppd->approvals()
@@ -151,6 +186,11 @@ class SppdShow extends Component
 
   public function reject(): void
   {
+    if (! $this->ensureQueueHealthy()) {
+      $this->showRejectModal = false;
+      return;
+    }
+
     $this->validate(['rejectNotes' => 'required|string|max:500']);
 
     $sppd = $this->getSppd();
@@ -182,6 +222,11 @@ class SppdShow extends Component
 
   public function revision(): void
   {
+    if (! $this->ensureQueueHealthy()) {
+      $this->showRevisionModal = false;
+      return;
+    }
+
     $this->validate(['revisionNotes' => 'required|string|max:500']);
 
     $sppd = $this->getSppd();
@@ -404,6 +449,22 @@ class SppdShow extends Component
   protected function notifyApprover(SppdRequest $sppd, $approval): void
   {
     app(ApproverNotifier::class)->notifyNewRequest($sppd, $approval);
+  }
+
+  /**
+   * Pastikan worker queue berjalan sebelum aksi yang men-dispatch job
+   * (notifikasi WA / TTE). Bila tidak, tampilkan toast dan kembalikan false.
+   */
+  protected function ensureQueueHealthy(): bool
+  {
+    if (app(QueueHealthService::class)->isWorkerHealthy()) {
+      return true;
+    }
+
+    $this->toastError('Aksi ditolak: layanan antrian (queue worker) sedang tidak berjalan, '
+      . 'sehingga notifikasi tidak dapat dikirim. Hubungi administrator sistem dan coba lagi setelah layanan aktif.');
+
+    return false;
   }
 
   public function parseTteError(?string $rawError): array

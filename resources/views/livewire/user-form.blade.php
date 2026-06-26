@@ -198,19 +198,140 @@
 							</div>
 
 							<div class="space-y-1">
-								@php
-									$positionOptions = collect($positions)
-										->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
-										->prepend(['value' => '', 'label' => '— Tidak dipilih —'])
-										->all();
-								@endphp
-								<x-form.searchable-select wire:model="position_id" name="position_id"
-									label="Jabatan Struktural / Fungsional" :options="$positionOptions"
-									placeholder="— Pilih Jabatan —" searchPlaceholder="Cari jabatan..." />
+									{{-- Jabatan: dropdown dengan pencarian server-side (live) agar tidak memuat seluruh data jabatan --}}
+								<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
+									Jabatan Struktural / Fungsional
+								</label>
+								<div x-data="{
+										open: false,
+										dropUp: false,
+										highlighted: 0,
+										coords: { top: 0, left: 0, width: 0 },
+										position() {
+											const r = this.$refs.trigger.getBoundingClientRect();
+											const margin = 4;
+											const panelH = this.$refs.panel?.offsetHeight || 320;
+											const spaceBelow = window.innerHeight - r.bottom;
+											const spaceAbove = r.top;
+											this.dropUp = spaceBelow < panelH + margin && spaceAbove > spaceBelow;
+											this.coords = {
+												top: this.dropUp ? Math.max(margin, r.top - panelH - margin) : r.bottom + margin,
+												left: r.left,
+												width: r.width,
+											};
+										},
+										items() {
+											return this.$refs.list ? Array.from(this.$refs.list.querySelectorAll('[data-opt]')) : [];
+										},
+										move(dir) {
+											const len = this.items().length;
+											if (!len) return;
+											let n = this.highlighted + dir;
+											if (n < 0) n = len - 1;
+											if (n >= len) n = 0;
+											this.highlighted = n;
+											this.$nextTick(() => this.items()[this.highlighted]?.scrollIntoView({ block: 'nearest' }));
+										},
+										pick() {
+											(this.items()[this.highlighted] || this.items()[0])?.click();
+										},
+										canAutoFocus() {
+											return window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+										},
+										toggle() {
+											this.open = !this.open;
+											if (this.open) {
+												this.highlighted = 0;
+												this.$nextTick(() => { this.position(); if (this.canAutoFocus()) this.$refs.searchPosition?.focus(); });
+											}
+										},
+										onOutside(e) {
+											if (!this.open) return;
+											if (this.$refs.trigger.contains(e.target)) return;
+											if (this.$refs.panel?.contains(e.target)) return;
+											this.open = false;
+										},
+									}"
+									@keydown.escape.window="open = false"
+									@click.window="onOutside($event)"
+									@scroll.window.capture="if (open) position()"
+									@resize.window="if (open) position()"
+									class="relative">
+									@php
+										$selectedPositionLabel = $selectedPosition?->name;
+									@endphp
+									<button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
+										class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
+										<span class="truncate text-left {{ $selectedPositionLabel ? 'text-slate-800' : 'text-slate-400' }}">
+											{{ $selectedPositionLabel ?? '— Pilih Jabatan —' }}
+										</span>
+										<i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+											:class="open && 'rotate-180'"></i>
+									</button>
+
+									<div x-ref="panel" x-show="open" x-cloak
+										x-transition:enter="transition ease-out duration-100"
+										x-transition:enter-start="opacity-0 scale-95"
+										x-transition:enter-end="opacity-100 scale-100"
+										x-transition:leave="transition ease-in duration-75"
+										x-transition:leave-start="opacity-100 scale-100"
+										x-transition:leave-end="opacity-0 scale-95"
+										:style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
+										class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
+										<div class="border-b border-slate-100 p-2">
+											<div class="relative">
+												<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+												<input x-ref="searchPosition" type="text" wire:model.live.debounce.300ms="searchPosition"
+													@input="highlighted = 0"
+													@keydown.arrow-down.prevent="move(1)"
+													@keydown.arrow-up.prevent="move(-1)"
+													@keydown.enter.prevent="pick()"
+													@keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
+													placeholder="Cari jabatan..."
+													class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+											</div>
+										</div>
+										<ul x-ref="list" class="max-h-56 overflow-auto py-1">
+											<li wire:key="position-opt-none">
+												<button type="button" data-opt wire:click="clearPosition"
+													@click="open = false" @mouseenter="highlighted = 0"
+													class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
+													:class="highlighted === 0
+														? 'bg-cyan-100 text-cyan-800'
+														: ({{ empty($position_id) ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-500 italic hover:bg-cyan-50')">
+													— Tanpa Jabatan —
+												</button>
+											</li>
+											@foreach ($positions as $p)
+												<li wire:key="position-opt-{{ $p->id }}">
+													<button type="button" data-opt wire:click="selectPosition({{ $p->id }})"
+														@click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
+														class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
+														:class="highlighted === {{ $loop->index + 1 }}
+															? 'bg-cyan-100 text-cyan-800'
+															: ({{ $position_id == $p->id ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+														{{ $p->name }}
+													</button>
+												</li>
+											@endforeach
+											@if ($positions->isEmpty() && trim($searchPosition) !== '')
+												<li class="px-3 py-2 text-xs text-slate-400">Jabatan tidak ditemukan.</li>
+											@endif
+											@if ($positionsHasMore)
+												<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
+													Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
+												</li>
+											@endif
+										</ul>
+									</div>
+								</div>
+								@error('position_id')
+									<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+								@enderror
 								<p class="text-xs text-slate-400">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
 									dipangku satu pegawai aktif sesuai lingkupnya.</p>
 								<p class="text-xs text-slate-400">Jabatan tidak ada?
-									<a href="{{ route('master.position-requests.index', ['new' => 1]) }}" target="_blank"
+									<a href="{{ route('master.position-requests.index') }}#ajukan-jabatan" target="_blank"
 										class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
 										Ajukan jabatan baru <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
 									</a>

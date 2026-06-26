@@ -9,21 +9,6 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
-  public function create()
-  {
-    $types = DepartmentType::cases();
-    $parents = $this->getHierarchicalDepartments();
-    
-    // Hanya tampilkan user yang belum menjadi pimpinan di instansi manapun
-    $assignedHeadIds = Department::whereNotNull('head_id')->pluck('head_id')->toArray();
-    $users = User::where('is_active', true)
-        ->whereNotIn('id', $assignedHeadIds)
-        ->orderBy('name')
-        ->get();
-
-    return view('master.departments.create', compact('types', 'parents', 'users'));
-  }
-
   private function getHierarchicalDepartments($excludeId = null)
   {
     $user = auth()->user();

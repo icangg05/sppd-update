@@ -42,6 +42,9 @@ class UserForm extends Component
   public $position_id = '';
   public $role = '';
 
+  // Pencarian server-side untuk jabatan (agar tidak memuat seluruh data jabatan sekaligus).
+  public string $searchPosition = '';
+
   // Data khusus Anggota DPRD
   public $dprd_jabatan = '';
   public $partai = '';
@@ -297,6 +300,16 @@ class UserForm extends Component
     }
   }
 
+  public function selectPosition($id): void
+  {
+    $this->position_id = (int) $id;
+  }
+
+  public function clearPosition(): void
+  {
+    $this->position_id = '';
+  }
+
   public function openVerifyModal()
   {
     $this->resetErrorBag('phone');
@@ -541,10 +554,26 @@ class UserForm extends Component
 
   public function render()
   {
+    // Pencarian jabatan server-side: hanya memuat sebagian data (bukan seluruh jabatan).
+    $positionQuery = Position::query();
+    if (trim($this->searchPosition) !== '') {
+      $positionQuery->where('name', 'like', '%' . trim($this->searchPosition) . '%');
+    }
+
+    $limit = 25;
+    $positions = $positionQuery->orderBy('level')->limit($limit + 1)->get();
+    $positionsHasMore = $positions->count() > $limit;
+    $positions = $positions->take($limit);
+
+    // Jabatan terpilih tetap tampil di trigger walau di luar hasil pencarian.
+    $selectedPosition = $this->position_id ? Position::find($this->position_id) : null;
+
     return view('livewire.user-form', [
       'departments' => $this->getHierarchicalDepartments(),
       'ranks' => Rank::orderBy('group')->get(),
-      'positions' => Position::orderBy('level')->get(),
+      'positions' => $positions,
+      'positionsHasMore' => $positionsHasMore,
+      'selectedPosition' => $selectedPosition,
       'roles' => Role::all(),
       'employeeTypes' => EmployeeType::cases(),
       'dprdJabatans' => DprdJabatan::cases(),

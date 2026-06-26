@@ -36,17 +36,6 @@ class PositionRequestIndex extends Component
   public string $verifyScope = PositionScope::NONE->value;
   public string $verifyNote = '';
 
-  // Dibuka otomatis dari shortcut form pegawai (?new=1).
-  #[Url]
-  public string $new = '';
-
-  public function mount(): void
-  {
-    if ($this->new !== '') {
-      $this->showCreateModal = true;
-    }
-  }
-
   public function updatedSearch(): void
   {
     $this->resetPage();

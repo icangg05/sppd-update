@@ -20,6 +20,7 @@ use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetIndex;
+use App\Livewire\DepartmentCreate;
 use App\Livewire\DepartmentIndex;
 use App\Livewire\PositionRequestIndex;
 use App\Livewire\UsersIndex;
@@ -104,8 +105,7 @@ Route::middleware('auth')->group(function () {
 
         // Departments / Instansi / OPD
         Route::get('/departments', DepartmentIndex::class)->name('departments.index');
-        Route::get('/departments/create', [DepartmentController::class, 'create'])->name('departments.create');
-        Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+        Route::get('/departments/create', DepartmentCreate::class)->name('departments.create');
         Route::get('/departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
         Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
         Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
@@ -190,6 +190,9 @@ Route::middleware('auth')->group(function () {
                 'last_dispatched_at' => $dispatched['dispatched_at'] ?? null,
                 'last_processed_at' => $processed['processed_at'] ?? null,
             ],
+            // Penilaian otomatis berbasis kesegaran heartbeat terjadwal — sumber
+            // yang sama dipakai gerbang pembuatan SPPD (QueueHealthService).
+            'worker_healthy' => app(\App\Services\QueueHealthService::class)->isWorkerHealthy(),
             'failed_job_details' => $recentFailed->map(fn ($j) => [
                 'id' => $j->id,
                 'queue' => $j->queue,

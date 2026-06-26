@@ -78,9 +78,16 @@
                     this.resetHighlight();
                     this.$nextTick(() => {
                         this.position();
-                        this.$refs.search && this.$refs.search.focus();
+                        // Jangan auto-focus di perangkat sentuh (mobile/tablet) agar
+                        // keyboard tidak muncul otomatis; user fokus manual saat mengetik.
+                        if (this.canAutoFocus()) {
+                            this.$refs.search && this.$refs.search.focus();
+                        }
                     });
                 }
+            },
+            canAutoFocus() {
+                return window.matchMedia && window.matchMedia('(pointer: fine)').matches;
             },
             resetHighlight() {
                 // Default sorot ke item pertama (atau item yang sedang terpilih bila ada).

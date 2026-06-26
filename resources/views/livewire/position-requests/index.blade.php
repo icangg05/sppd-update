@@ -1,4 +1,10 @@
-<div class="p-1 space-y-4">
+<div class="p-1 space-y-4"
+  x-data
+  x-init="if (window.location.hash === '#ajukan-jabatan') {
+    $wire.openCreateModal();
+    // Hapus fragment agar modal tidak terbuka lagi saat refresh / tombol back.
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }">
 
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">

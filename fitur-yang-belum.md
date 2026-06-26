@@ -19,9 +19,10 @@
 17. Halaman create users diberi keterangan pass default jika dikosongkan saat membuat data. simpan diconfig pass defaulnya => ✅
 18. Halaman create/edit department, beri keterangan yang jelas cara buat struktur yang baik dan benar => ✅
 19. Halaman create users beri keterangn yang jelas untuk pemilihan department, jika butuh space untuk menjelaskan lebih baik sediakan tombol modal => ✅
-20. Pastikan qeue worker berjalan saat membuat sppd baru. tolak jika queue belum berfungsi/jalan => xxxxxxxxxxxxxx
+20. Pastikan qeue worker berjalan saat membuat sppd baru. tolak jika queue belum berfungsi/jalan => ✅
 21. Tambah validasi form indonesia (id) => ✅
 22. Buat mekanisme pengajuan jabatan baru jika admin opd ingin menambahkan jabatan. Lalu super_admin perlu memverifikasi dan pastikan jabatan tersebut unique tidak ada duplikat => ✅
+
 
 ================================================================
 

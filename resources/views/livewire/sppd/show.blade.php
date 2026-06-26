@@ -491,7 +491,7 @@
 										<i class="fa-solid fa-lock"></i> Setujui Dokumen (NIK Belum Ada)
 									</button>
 								@else
-									<button type="button" @click="showApproveModal = true"
+									<button type="button" wire:click="openApproveModal" wire:loading.attr="disabled"
 										class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-emerald-700">
 										<i class="fa-solid fa-check-double"></i> Setujui Dokumen
 									</button>
@@ -499,11 +499,11 @@
 							</div>
 
 							<div class="flex flex-col gap-2">
-								<button type="button" @click="showRejectModal = true"
+								<button type="button" wire:click="openRejectModal" wire:loading.attr="disabled"
 									class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer">
 									<i class="fa-solid fa-ban"></i> Tolak Dokumen
 								</button>
-								<button type="button" @click="showRevisionModal = true"
+								<button type="button" wire:click="openRevisionModal" wire:loading.attr="disabled"
 									class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 cursor-pointer">
 									<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
 								</button>
