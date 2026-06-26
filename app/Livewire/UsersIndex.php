@@ -26,6 +26,15 @@ class UsersIndex extends Component
   public string $department_id = '';
 
   #[Url(keep: true)]
+  public string $position_id = '';
+
+  #[Url(keep: true)]
+  public string $rank_id = '';
+
+  #[Url(keep: true)]
+  public string $role = '';
+
+  #[Url(keep: true)]
   public string $partai = '';
 
   public function isDprd(): bool
@@ -50,6 +59,21 @@ class UsersIndex extends Component
     $this->resetPage();
   }
 
+  public function updatedPositionId(): void
+  {
+    $this->resetPage();
+  }
+
+  public function updatedRankId(): void
+  {
+    $this->resetPage();
+  }
+
+  public function updatedRole(): void
+  {
+    $this->resetPage();
+  }
+
   public function updatedPartai(): void
   {
     $this->resetPage();
@@ -59,6 +83,9 @@ class UsersIndex extends Component
   {
     $this->search = '';
     $this->department_id = '';
+    $this->position_id = '';
+    $this->rank_id = '';
+    $this->role = '';
     $this->partai = '';
     $this->resetPage();
   }
@@ -135,7 +162,11 @@ class UsersIndex extends Component
       }
     }
 
-    if ($this->isDprd()) {
+    // Saat memfilter berdasarkan role (dari halaman Kelola Role), tampilkan semua
+    // pegawai dengan role tersebut tanpa pemisahan DPRD/non-DPRD.
+    if ($this->role !== '') {
+      $query->whereHas('roles', fn($r) => $r->where('name', $this->role));
+    } elseif ($this->isDprd()) {
       $query->where(function ($q) {
         $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
           ->orWhere('employee_type', 'dprd')
@@ -171,6 +202,19 @@ class UsersIndex extends Component
 
     if ($this->department_id !== '' && auth()->user()->hasRole('super_admin')) {
       $query->where('department_id', $this->department_id);
+    }
+
+    // Filter berdasarkan jabatan (dipakai dari halaman Kelola Data Jabatan).
+    // ID di URL berbentuk hashids, jadi perlu di-decode dulu.
+    $positionId = \App\Models\Position::decodeHashid($this->position_id);
+    if ($positionId !== null) {
+      $query->where('position_id', $positionId);
+    }
+
+    // Filter berdasarkan pangkat (dipakai dari halaman Kelola Data Pangkat).
+    $rankId = \App\Models\Rank::decodeHashid($this->rank_id);
+    if ($rankId !== null) {
+      $query->where('rank_id', $rankId);
     }
 
     // Untuk daftar DPRD, filter instansi diganti filter partai/fraksi.
@@ -214,12 +258,27 @@ class UsersIndex extends Component
 
     $departments = $this->getHierarchicalDepartments();
 
+    // Nama jabatan aktif (untuk indikator filter saat datang dari Data Jabatan).
+    $activePosition = $positionId !== null
+      ? \App\Models\Position::find($positionId)
+      : null;
+
+    // Nama pangkat aktif (untuk indikator filter saat datang dari Data Pangkat).
+    $activeRank = $rankId !== null
+      ? \App\Models\Rank::find($rankId)
+      : null;
+
+    // Role aktif (untuk indikator filter saat datang dari Kelola Role).
+    $activeRole = $this->role !== ''
+      ? \Spatie\Permission\Models\Role::where('name', $this->role)->first()
+      : null;
+
     // Daftar partai/fraksi unik untuk filter searchable select pada daftar DPRD.
     $partaiList = $this->isDprd()
       ? User::whereNotNull('partai')->where('partai', '!=', '')->distinct()->orderBy('partai')->pluck('partai')
       : collect();
 
-    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList'))
+    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'activePosition', 'activeRank', 'activeRole'))
       ->title('Data Pegawai');
   }
 }

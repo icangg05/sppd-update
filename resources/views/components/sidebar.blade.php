@@ -25,7 +25,7 @@
 	</div>
 
 	<!-- Konten Navigasi Menu -->
-	<nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+	<nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 lg:pb-16">
 		<div class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
 		<a href="{{ route('dashboard') }}" wire:navigate
@@ -108,6 +108,30 @@
 		</a>
 
 		@if (auth()->user()->hasRole('super_admin'))
+			<a href="{{ route('master.positions.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.positions.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-id-badge fa-fw"></i></span>
+				<span>Data Jabatan</span>
+			</a>
+
+			<a href="{{ route('master.ranks.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.ranks.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-ranking-star fa-fw"></i></span>
+				<span>Data Pangkat</span>
+			</a>
+
+			<a href="{{ route('master.provinces.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.provinces.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-map fa-fw"></i></span>
+				<span>Data Provinsi</span>
+			</a>
+
+			<a href="{{ route('master.regencies.index') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.regencies.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-city fa-fw"></i></span>
+				<span>Data Kabupaten/Kota</span>
+			</a>
+
 			<a href="{{ route('master.workflows.index') }}" wire:navigate
 				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-diagram-project fa-fw"></i></span>

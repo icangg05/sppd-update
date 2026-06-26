@@ -73,7 +73,7 @@
       <table class="w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
-            <th class="py-2.5 px-3 w-12 text-center">No</th>
+            <th class="py-2.5 px-3 w-12 text-center">No.</th>
             <th class="py-2.5 px-4">Nama Jabatan</th>
             <th class="py-2.5 px-4">Alasan</th>
             @if($isSuperAdmin)
@@ -81,18 +81,26 @@
               <th class="py-2.5 px-4">OPD</th>
             @endif
             <th class="py-2.5 px-4 w-28">Status</th>
-            <th class="py-2.5 px-4 w-24 text-center">Aksi</th>
+            <th class="py-2.5 px-4 w-36 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($requests as $i => $req)
             <tr wire:key="req-{{ $req->id }}" class="transition-colors hover:bg-slate-50/50">
               <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
-                {{ $requests->firstItem() + $i }}
+                {{ $requests->firstItem() + $i }}.
               </td>
               <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $req->name }}</td>
-              <td class="py-2.5 px-4 text-slate-500 text-[11px] max-w-xs truncate" title="{{ $req->reason }}">
-                {{ $req->reason ?? '—' }}
+              <td class="py-2.5 px-4 text-[11px] max-w-xs">
+                @if($req->status === \App\Enums\PositionRequestStatus::REJECTED && $req->review_note)
+                  <span class="font-semibold text-rose-600">Ditolak:</span>
+                  <span class="text-rose-500 whitespace-normal" title="{{ $req->review_note }}">{{ $req->review_note }}</span>
+                @elseif($req->status === \App\Enums\PositionRequestStatus::APPROVED && $req->review_note)
+                  <span class="font-semibold text-emerald-600">Catatan:</span>
+                  <span class="text-emerald-600 whitespace-normal" title="{{ $req->review_note }}">{{ $req->review_note }}</span>
+                @else
+                  <span class="text-slate-500 block truncate" title="{{ $req->reason }}">{{ $req->reason ?? '—' }}</span>
+                @endif
               </td>
               @if($isSuperAdmin)
                 <td class="py-2.5 px-4 text-slate-600 font-medium">{{ $req->requester?->name ?? '—' }}</td>
@@ -100,22 +108,43 @@
               @endif
               <td class="py-2.5 px-4">
                 <x-ui.badge :color="$req->status->color()">{{ $req->status->label() }}</x-ui.badge>
-                @if($req->status === \App\Enums\PositionRequestStatus::REJECTED && $req->review_note)
-                  <p class="mt-1 text-[10px] text-rose-500 max-w-40 whitespace-normal" title="{{ $req->review_note }}">
-                    {{ $req->review_note }}
-                  </p>
-                @endif
               </td>
-              <td class="py-2.5 px-4 text-center">
-                @if($isSuperAdmin && $req->status === \App\Enums\PositionRequestStatus::PENDING)
-                  <button type="button" wire:click="openVerifyModal({{ $req->id }})"
-                    class="inline-flex items-center gap-1 rounded border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100"
-                    title="Verifikasi">
-                    <i class="fa-solid fa-gavel text-[10px]"></i> Verifikasi
-                  </button>
-                @else
-                  <span class="text-slate-300">—</span>
-                @endif
+              @php
+                $isPending  = $req->status === \App\Enums\PositionRequestStatus::PENDING;
+                $canManage  = $isSuperAdmin || $req->requested_by === auth()->id();
+                $canEdit    = $canManage && $isPending;
+                $canDelete  = $canManage;
+              @endphp
+              <td class="py-2.5 px-4">
+                <div class="flex items-center justify-center gap-1.5">
+                  @if($isSuperAdmin && $isPending)
+                    <button type="button" wire:click="openVerifyModal({{ $req->id }})"
+                      class="inline-flex items-center gap-1 rounded border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100"
+                      title="Verifikasi">
+                      <i class="fa-solid fa-gavel text-[10px]"></i> Verifikasi
+                    </button>
+                  @endif
+
+                  @if($canEdit)
+                    <button type="button" wire:click="openEditModal({{ $req->id }})"
+                      class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
+                      title="Edit">
+                      <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                    </button>
+                  @endif
+
+                  @if($canDelete)
+                    <button type="button" wire:click="confirmDelete({{ $req->id }})"
+                      class="inline-flex items-center justify-center rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                      title="Hapus">
+                      <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    </button>
+                  @endif
+
+                  @unless(($isSuperAdmin && $isPending) || $canEdit || $canDelete)
+                    <span class="text-slate-300">—</span>
+                  @endunless
+                </div>
               </td>
             </tr>
           @empty
@@ -139,9 +168,10 @@
     @endif
   </div>
 
-  {{-- Modal Ajukan Jabatan --}}
-  <x-ui.modal show="$wire.showCreateModal" title="Ajukan Jabatan Baru"
-    description="Usulkan jabatan yang belum tersedia" icon="fa-solid fa-id-badge text-cyan-600">
+  {{-- Modal Ajukan / Edit Jabatan --}}
+  <x-ui.modal show="$wire.showCreateModal" :title="$editingId ? 'Edit Pengajuan Jabatan' : 'Ajukan Jabatan Baru'"
+    :description="$editingId ? 'Perbarui usulan jabatan yang masih menunggu' : 'Usulkan jabatan yang belum tersedia'"
+    icon="fa-solid fa-id-badge text-cyan-600" :closeable="false">
     <form wire:submit="submit" class="space-y-4">
       <x-form.input name="name" label="Nama Jabatan" wire:model="name" required
         placeholder="Contoh: Analis Sumber Daya Manusia Aparatur"
@@ -153,17 +183,43 @@
       <div class="flex items-center justify-end gap-2 pt-1">
         <x-ui.button type="button" variant="secondary" x-on:click="$wire.showCreateModal = false">Batal</x-ui.button>
         <x-ui.button type="submit">
-          <span wire:loading.remove wire:target="submit"><i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan</span>
-          <span wire:loading wire:target="submit"><i class="fa-solid fa-spinner fa-spin"></i> Mengirim...</span>
+          @if($editingId)
+            <span wire:loading.remove wire:target="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</span>
+            <span wire:loading wire:target="submit"><i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...</span>
+          @else
+            <span wire:loading.remove wire:target="submit"><i class="fa-solid fa-paper-plane"></i> Kirim Pengajuan</span>
+            <span wire:loading wire:target="submit"><i class="fa-solid fa-spinner fa-spin"></i> Mengirim...</span>
+          @endif
         </x-ui.button>
       </div>
     </form>
   </x-ui.modal>
 
+  {{-- Modal Konfirmasi Hapus — hanya bisa ditutup lewat tombol --}}
+  <x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Pengajuan"
+    description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600"
+    :closeable="false">
+    <div class="space-y-4">
+      <p class="text-sm text-slate-600">
+        Yakin ingin menghapus pengajuan
+        <span class="font-bold text-slate-800">{{ $deletingName ?? 'jabatan ini' }}</span>?
+        Data yang sudah dihapus tidak dapat dikembalikan.
+      </p>
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <x-ui.button type="button" variant="secondary" wire:click="closeDeleteModal">Tutup</x-ui.button>
+        <x-ui.button type="button" variant="danger" wire:click="delete">
+          <span wire:loading.remove wire:target="delete"><i class="fa-solid fa-trash-can"></i> Hapus</span>
+          <span wire:loading wire:target="delete"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
+        </x-ui.button>
+      </div>
+    </div>
+  </x-ui.modal>
+
   {{-- Modal Verifikasi (Super Admin) --}}
   @if($isSuperAdmin)
     <x-ui.modal show="$wire.showVerifyModal" title="Verifikasi Pengajuan Jabatan"
-      description="Tetapkan cakupan keunikan lalu setujui atau tolak" icon="fa-solid fa-gavel text-cyan-600">
+      description="Tetapkan cakupan keunikan lalu setujui atau tolak" icon="fa-solid fa-gavel text-cyan-600" :closeable="false">
       @if($selected)
         <div class="space-y-4">
           <div class="rounded border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">

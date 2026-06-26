@@ -62,7 +62,7 @@
 			@endif
 
 			{{-- Reset --}}
-			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== ''; @endphp
+			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== '' || $position_id !== '' || $rank_id !== '' || $role !== ''; @endphp
 			<div class="flex items-center gap-2">
 				<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
 					class="rounded-lg px-4 py-2 font-semibold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
@@ -71,11 +71,44 @@
 				</x-ui.button>
 			</div>
 		</div>
+
+		{{-- Indikator filter dari halaman master (Data Jabatan / Data Pangkat / Kelola Role) --}}
+		@if ($activePosition || $activeRank || $activeRole)
+			<div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+				@if ($activePosition)
+					<span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-50 px-3 py-1 font-semibold text-cyan-700 ring-1 ring-cyan-600/20">
+						<i class="fa-solid fa-id-badge text-[10px]"></i>
+						Jabatan: {{ $activePosition->name }}
+						<button type="button" wire:click="$set('position_id', '')" class="ml-1 text-cyan-500 hover:text-cyan-800" title="Hapus filter">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					</span>
+				@endif
+				@if ($activeRank)
+					<span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-700 ring-1 ring-indigo-600/20">
+						<i class="fa-solid fa-ranking-star text-[10px]"></i>
+						Pangkat: {{ $activeRank->name }}{{ $activeRank->group ? ' (' . $activeRank->group . ')' : '' }}
+						<button type="button" wire:click="$set('rank_id', '')" class="ml-1 text-indigo-500 hover:text-indigo-800" title="Hapus filter">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					</span>
+				@endif
+				@if ($activeRole)
+					<span class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-600/20">
+						<i class="fa-solid fa-shield-halved text-[10px]"></i>
+						Role: {{ $activeRole->label ?? $activeRole->name }}
+						<button type="button" wire:click="$set('role', '')" class="ml-1 text-violet-500 hover:text-violet-800" title="Hapus filter">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					</span>
+				@endif
+			</div>
+		@endif
 	</div>
 
 	{{-- Table --}}
 	<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" wire:loading.class="opacity-60"
-		wire:target="search,department_id,partai">
+		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-auto custom-scrollbar">
 			<table class="w-full text-left whitespace-nowrap">
 				<thead

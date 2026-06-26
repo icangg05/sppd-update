@@ -3,10 +3,12 @@
 namespace App\Livewire;
 
 use App\Support\BadgeColor;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
+#[Layout('layouts.app')]
 class RoleForm extends Component
 {
     public ?Role $role = null;
@@ -95,6 +97,6 @@ class RoleForm extends Component
     {
         return view('livewire.role-form', [
             'permissions' => Permission::orderBy('name')->get(),
-        ]);
+        ])->title($this->isEdit ? 'Edit Role' : 'Tambah Role');
     }
 }

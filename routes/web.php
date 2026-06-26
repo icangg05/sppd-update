@@ -9,8 +9,6 @@ use App\Http\Controllers\SppdAdvanceReceiptController;
 use App\Http\Controllers\SppdController;
 use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
-use App\Http\Controllers\SppdWorkflowController;
-use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KirimChatWebhookController;
 use App\Jobs\LogQueueHeartbeatJob;
@@ -22,7 +20,15 @@ use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
+use App\Livewire\PositionIndex;
 use App\Livewire\PositionRequestIndex;
+use App\Livewire\ProvinceIndex;
+use App\Livewire\RankIndex;
+use App\Livewire\RegencyIndex;
+use App\Livewire\RoleForm;
+use App\Livewire\RoleIndex;
+use App\Livewire\WorkflowForm;
+use App\Livewire\WorkflowIndex;
 use App\Livewire\UsersIndex;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -93,9 +99,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
     Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
 
-    // Workflows Preview
-    Route::get('/workflows/preview', [SppdWorkflowController::class, 'preview'])->name('workflows.preview');
-
     // Master Data — hanya dapat diakses oleh Super Admin & Admin OPD.
     // Mencegah akses lewat URL langsung oleh role lain (mis. kepala_opd).
     Route::prefix('master')->name('master.')->middleware('role:super_admin|admin_opd')->group(function () {
@@ -127,13 +130,23 @@ Route::middleware('auth')->group(function () {
 
         // Workflows SPPD & Roles/Permissions — hanya super_admin.
         Route::middleware('role:super_admin')->group(function () {
-            Route::resource('workflows', SppdWorkflowController::class)->except(['show']);
+            // Master Data Jabatan — kelola penuh oleh Super Admin.
+            Route::get('/positions', PositionIndex::class)->name('positions.index');
 
-            // Roles & Permissions — create/edit ditangani oleh Livewire RoleForm component
-            Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
-            Route::get('/roles/create', fn () => view('master.roles.create'))->name('roles.create');
-            Route::get('/roles/{role}/edit', fn (\Spatie\Permission\Models\Role $role) => view('master.roles.edit', compact('role')))->name('roles.edit');
-            Route::delete('/roles/{role}', [RolePermissionController::class, 'destroy'])->name('roles.destroy');
+            // Master Data Wilayah & Pangkat — kelola penuh oleh Super Admin.
+            Route::get('/provinces', ProvinceIndex::class)->name('provinces.index');
+            Route::get('/regencies', RegencyIndex::class)->name('regencies.index');
+            Route::get('/ranks', RankIndex::class)->name('ranks.index');
+
+            // Workflow SPPD — Livewire full-page (index, create, edit).
+            Route::get('/workflows', WorkflowIndex::class)->name('workflows.index');
+            Route::get('/workflows/create', WorkflowForm::class)->name('workflows.create');
+            Route::get('/workflows/{workflow}/edit', WorkflowForm::class)->name('workflows.edit');
+
+            // Roles & Permissions — Livewire full-page (index, create, edit).
+            Route::get('/roles', RoleIndex::class)->name('roles.index');
+            Route::get('/roles/create', RoleForm::class)->name('roles.create');
+            Route::get('/roles/{role}/edit', RoleForm::class)->name('roles.edit');
         });
     });
 

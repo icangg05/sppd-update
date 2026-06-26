@@ -25,10 +25,16 @@ class PositionRequestIndex extends Component
   #[Url(keep: true)]
   public string $statusFilter = '';
 
-  // Form pengajuan
+  // Form pengajuan / edit
   public bool $showCreateModal = false;
+  public ?int $editingId = null;
   public string $name = '';
   public string $reason = '';
+
+  // Konfirmasi hapus via modal
+  public bool $showDeleteModal = false;
+  public ?int $deletingId = null;
+  public ?string $deletingName = null;
 
   // Form verifikasi (super admin)
   public bool $showVerifyModal = false;
@@ -55,7 +61,18 @@ class PositionRequestIndex extends Component
 
   public function openCreateModal(): void
   {
-    $this->reset(['name', 'reason']);
+    $this->reset(['name', 'reason', 'editingId']);
+    $this->resetValidation();
+    $this->showCreateModal = true;
+  }
+
+  public function openEditModal(int $id): void
+  {
+    $request = $this->editableRequest($id);
+
+    $this->editingId = $request->id;
+    $this->name      = $request->name;
+    $this->reason    = $request->reason ?? '';
     $this->resetValidation();
     $this->showCreateModal = true;
   }
@@ -73,8 +90,23 @@ class PositionRequestIndex extends Component
       return;
     }
 
-    if (PositionRequest::pendingByName($this->name)) {
+    $pending = PositionRequest::pendingByName($this->name);
+    if ($pending && $pending->id !== $this->editingId) {
       $this->toastError('Jabatan dengan nama serupa sedang menunggu verifikasi. Mohon tunggu hasilnya.');
+      return;
+    }
+
+    if ($this->editingId) {
+      $request = $this->editableRequest($this->editingId);
+      $request->update([
+        'name'   => trim($this->name),
+        'reason' => $this->reason !== '' ? trim($this->reason) : null,
+      ]);
+
+      $this->reset(['name', 'reason', 'editingId']);
+      $this->showCreateModal = false;
+      $this->dispatch('position-request-updated');
+      $this->toastSuccess('Pengajuan jabatan berhasil diperbarui.');
       return;
     }
 
@@ -86,11 +118,76 @@ class PositionRequestIndex extends Component
       'status'        => PositionRequestStatus::PENDING,
     ]);
 
-    $this->reset(['name', 'reason']);
+    $this->reset(['name', 'reason', 'editingId']);
     $this->showCreateModal = false;
     $this->resetPage();
     $this->dispatch('position-request-updated');
     $this->toastSuccess('Pengajuan jabatan terkirim dan menunggu verifikasi Super Admin.');
+  }
+
+  public function confirmDelete(int $id): void
+  {
+    $request = $this->ownedRequest($id);
+
+    $this->deletingId      = $request->id;
+    $this->deletingName    = $request->name;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId      = null;
+    $this->deletingName    = null;
+  }
+
+  public function delete(): void
+  {
+    $this->showDeleteModal = false;
+
+    if (! $this->deletingId) {
+      return;
+    }
+
+    $request = $this->ownedRequest($this->deletingId);
+
+    // Hapus hanya record pengajuannya. Jabatan hasil persetujuan (jika ada)
+    // tetap dipertahankan karena sudah menjadi data master.
+    $name = $request->name;
+    $request->delete();
+
+    $this->deletingId   = null;
+    $this->deletingName = null;
+    $this->dispatch('position-request-updated');
+    $this->toastSuccess("Pengajuan jabatan \"{$name}\" berhasil dihapus.");
+  }
+
+  /**
+   * Ambil pengajuan yang boleh diedit: harus berstatus menunggu dan milik
+   * pengusul sendiri (atau Super Admin).
+   */
+  private function editableRequest(int $id): PositionRequest
+  {
+    $request = $this->ownedRequest($id);
+
+    abort_unless($request->status === PositionRequestStatus::PENDING, 403);
+
+    return $request;
+  }
+
+  /**
+   * Ambil pengajuan milik pengusul sendiri, atau apa pun jika Super Admin.
+   */
+  private function ownedRequest(int $id): PositionRequest
+  {
+    $request = PositionRequest::findOrFail($id);
+
+    abort_unless(
+      auth()->user()->hasRole('super_admin') || $request->requested_by === auth()->id(),
+      403
+    );
+
+    return $request;
   }
 
   public function openVerifyModal(int $id): void
@@ -201,7 +298,7 @@ class PositionRequestIndex extends Component
       $query->where('status', $this->statusFilter);
     }
 
-    $requests   = $query->paginate(20);
+    $requests   = $query->paginate(20)->onEachSide(1);
     $statuses   = PositionRequestStatus::cases();
     $scopes     = PositionScope::cases();
     $selected   = $this->selectedId ? PositionRequest::find($this->selectedId) : null;
