@@ -9,6 +9,17 @@
   display: none !important;
 }
 
+/* Goyangan untuk modal non-closeable: memberi tahu user agar menutup lewat tombol */
+@keyframes modal-shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 55% { transform: translateX(-7px); }
+  35%, 75% { transform: translateX(7px); }
+}
+
+.animate-modal-shake {
+  animation: modal-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --color-primary-50: #f0f9ff;

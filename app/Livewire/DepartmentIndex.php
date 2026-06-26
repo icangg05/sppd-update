@@ -24,6 +24,11 @@ class DepartmentIndex extends Component
   #[Url(keep: true)]
   public string $type = '';
 
+  // Konfirmasi hapus via modal (hanya bisa ditutup lewat tombol).
+  public bool $showDeleteModal = false;
+  public ?int $deletingId = null;
+  public ?string $deletingName = null;
+
   public function updatedSearch(): void
   {
     $this->resetPage();
@@ -41,9 +46,35 @@ class DepartmentIndex extends Component
     $this->resetPage();
   }
 
-  public function delete(int $id): void
+  public function confirmDelete(int $id): void
   {
-    $department   = Department::findOrFail($id);
+    $department = Department::find($id);
+    if (! $department) {
+      return;
+    }
+
+    $this->deletingId      = $department->id;
+    $this->deletingName    = $department->name;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId      = null;
+    $this->deletingName    = null;
+  }
+
+  public function delete(): void
+  {
+    // Tutup modal lebih dulu agar toast hasil terlihat jelas.
+    $this->showDeleteModal = false;
+
+    if (! $this->deletingId) {
+      return;
+    }
+
+    $department   = Department::findOrFail($this->deletingId);
     $user         = auth()->user();
     $isSuperAdmin = $user->hasRole('super_admin');
 
@@ -80,6 +111,9 @@ class DepartmentIndex extends Component
 
     $name = $department->name;
     $department->delete();
+
+    $this->deletingId   = null;
+    $this->deletingName = null;
 
     $this->toastSuccess("Instansi/OPD {$name} berhasil dihapus.");
   }

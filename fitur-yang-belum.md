@@ -22,6 +22,7 @@
 20. Pastikan qeue worker berjalan saat membuat sppd baru. tolak jika queue belum berfungsi/jalan => ✅
 21. Tambah validasi form indonesia (id) => ✅
 22. Buat mekanisme pengajuan jabatan baru jika admin opd ingin menambahkan jabatan. Lalu super_admin perlu memverifikasi dan pastikan jabatan tersebut unique tidak ada duplikat => ✅
+23. Migrasi anggota DPRD
 
 
 ================================================================

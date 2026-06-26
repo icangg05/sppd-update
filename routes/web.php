@@ -20,10 +20,12 @@ use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetIndex;
-use App\Livewire\DepartmentCreate;
+use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
 use App\Livewire\PositionRequestIndex;
 use App\Livewire\UsersIndex;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -105,10 +107,9 @@ Route::middleware('auth')->group(function () {
 
         // Departments / Instansi / OPD
         Route::get('/departments', DepartmentIndex::class)->name('departments.index');
-        Route::get('/departments/create', DepartmentCreate::class)->name('departments.create');
+        Route::get('/departments/create', DepartmentForm::class)->name('departments.create');
         Route::get('/departments/{department}', [DepartmentController::class, 'show'])->name('departments.show');
-        Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])->name('departments.edit');
-        Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
+        Route::get('/departments/{department}/edit', DepartmentForm::class)->name('departments.edit');
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
 
         // Pengajuan Jabatan — Admin OPD mengajukan, Super Admin memverifikasi.

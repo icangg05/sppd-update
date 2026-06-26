@@ -1,6 +1,11 @@
 @props(['show', 'title', 'description' => null, 'icon' => null, 'maxWidth' => 'max-w-md', 'closeable' => true])
 
-<div x-show="{{ $show }}" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+@php
+	// Klik di luar card: tutup bila closeable; bila tidak, goyangkan card sebagai
+	// isyarat bahwa modal harus ditutup lewat tombol.
+	$outsideClick = $closeable ? ($show . ' = false') : 'shake = false; $nextTick(() => shake = true)';
+@endphp
+<div x-data="{ shake: false }" x-show="{{ $show }}" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
 	<!-- Backdrop -->
 	<div x-show="{{ $show }}"
 		x-transition:enter="transition ease-out duration-200"
@@ -10,12 +15,12 @@
 		x-transition:leave-start="opacity-100"
 		x-transition:leave-end="opacity-0"
 		class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
-		@click="{{ $closeable ? $show . ' = false' : '' }}">
+		@click="{{ $outsideClick }}">
 	</div>
 
 	<!-- Modal Container (to center the modal) -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-		@click.self="{{ $show }} = false">
+		@click.self="{{ $outsideClick }}">
 
 		<div x-show="{{ $show }}"
 			x-transition:enter="transition ease-out duration-300"
@@ -24,6 +29,8 @@
 			x-transition:leave="transition ease-in duration-200"
 			x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
 			x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+			:class="shake && 'animate-modal-shake'"
+			@animationend="shake = false"
 			class="w-full {{ $maxWidth }} rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
 			@keydown.escape.window="{{ $closeable ? $show . ' = false' : '' }}">
 

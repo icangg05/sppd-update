@@ -19,12 +19,10 @@
       </div>
 
       <div class="flex items-center gap-1.5 self-end sm:self-auto">
-        @if (auth()->user()->hasRole('super_admin'))
-          <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary"
-            class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-            <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
-          </x-ui.button>
-        @endif
+        <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary"
+          class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+          <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
+        </x-ui.button>
         <a wire:navigate href="{{ route('master.departments.edit', $department->id) }}"
           class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
           <i class="fa-solid fa-pen-to-square text-[11px]"></i> Edit Profil

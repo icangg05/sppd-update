@@ -1,4 +1,4 @@
-<div class="p-1 space-y-4">
+<div class="p-1 space-y-4" x-data>
 
   {{-- Header Halaman Compact --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -162,8 +162,7 @@
 
                   {{-- Tombol Hapus kondisional --}}
                   @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
-                    <button type="button" wire:click="delete({{ $dept->id }})"
-                      wire:confirm="Yakin ingin menghapus data unit kerja ini?"
+                    <button type="button" wire:click="confirmDelete({{ $dept->id }})"
                       class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
@@ -193,5 +192,28 @@
       </div>
     @endif
   </div>
+
+  {{-- Modal Konfirmasi Hapus — hanya bisa ditutup lewat tombol (tidak closeable) --}}
+  <x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Unit Kerja"
+    description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600"
+    :closeable="false">
+    <div class="space-y-4">
+      <p class="text-sm text-slate-600">
+        Yakin ingin menghapus
+        <span class="font-bold text-slate-800">{{ $deletingName ?? 'unit kerja ini' }}</span>?
+        Data yang sudah dihapus tidak dapat dikembalikan.
+      </p>
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <x-ui.button type="button" variant="secondary" wire:click="closeDeleteModal">
+          Tutup
+        </x-ui.button>
+        <x-ui.button type="button" variant="danger" wire:click="delete">
+          <span wire:loading.remove wire:target="delete"><i class="fa-solid fa-trash-can"></i> Hapus</span>
+          <span wire:loading wire:target="delete"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
+        </x-ui.button>
+      </div>
+    </div>
+  </x-ui.modal>
 
 </div>

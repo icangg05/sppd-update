@@ -1,18 +1,28 @@
 <div class="p-1 space-y-4">
 
+  @php
+    $backUrl = route('master.departments.index');
+  @endphp
+
   {{-- Header Halaman Compact --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
       <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
-        <i class="fa-solid fa-folder-plus text-base"></i>
+        <i class="fa-solid {{ $isEdit ? 'fa-building-gear' : 'fa-folder-plus' }} text-base"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Tambah Instansi</h1>
-        <p class="text-[11px] text-slate-500 font-medium">Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung</p>
+        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
+          {{ $isEdit ? 'Edit Profil Instansi' : 'Tambah Instansi' }}
+        </h1>
+        <p class="text-[11px] text-slate-500 font-medium">
+          {{ $isEdit
+            ? 'Perbarui atribut informasi profil instansi atau sub-unit kerja terkait'
+            : 'Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung' }}
+        </p>
       </div>
     </div>
 
-    <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary"
+    <x-ui.button href="{{ $backUrl }}" variant="secondary"
       class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
       <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
     </x-ui.button>
@@ -35,6 +45,9 @@
           <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
           <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
           <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
+          @if ($parentLocked)
+            <li class="text-amber-600">Instansi induk & tipe hanya dapat diubah oleh Super Admin.</li>
+          @endif
         </ul>
       </div>
     </div>
@@ -51,25 +64,35 @@
             class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
         </div>
 
-        {{-- Dropdown Instansi Induk (searchable) --}}
+        {{-- Instansi Induk --}}
         <div class="space-y-0.5">
-          @php
-            $parentOptions = collect($parents)
-              ->map(fn($p) => ['value' => (string) $p->id, 'label' => $p->display_name])
-              ->when($isSuperAdmin, fn($c) => $c->prepend(['value' => '', 'label' => '— Tidak ada (OPD induk baru) —']))
-              ->values()
-              ->all();
-          @endphp
-          <x-form.searchable-select wire:model.live="parent_id" name="parent_id"
-            label="Instansi Induk Pengampu" :options="$parentOptions"
-            placeholder="— Pilih Instansi Induk —" searchPlaceholder="Cari instansi induk..."
-            :required="! $isSuperAdmin" />
-          <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-            <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Kosongkan untuk membuat OPD induk baru; pilih induk untuk membuat sub-unit di bawahnya.
-          </p>
+          @if ($parentLocked)
+            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Instansi Induk Pengampu</label>
+            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              {{ $department->parent?->name ?? 'Tidak ada (Top-level)' }}
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Hanya dapat diubah oleh Super Admin.
+            </p>
+          @else
+            @php
+              $parentOptions = collect($parents)
+                ->map(fn($p) => ['value' => (string) $p->id, 'label' => $p->display_name])
+                ->when($isSuperAdmin, fn($c) => $c->prepend(['value' => '', 'label' => '— Tidak ada (OPD induk baru) —']))
+                ->values()
+                ->all();
+            @endphp
+            <x-form.searchable-select wire:model.live="parent_id" name="parent_id"
+              label="Instansi Induk Pengampu" :options="$parentOptions"
+              placeholder="— Pilih Instansi Induk —" searchPlaceholder="Cari instansi induk..."
+              :required="! $isSuperAdmin" />
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Kosongkan untuk membuat OPD induk baru; pilih induk untuk membuat sub-unit di bawahnya.
+            </p>
+          @endif
         </div>
 
-        {{-- Kode & Tipe — hanya untuk OPD induk baru (super admin) --}}
+        {{-- Kode & Tipe — hanya untuk OPD induk --}}
         @if ($isRoot)
           <div class="space-y-0.5">
             <x-form.input wire:model="code" name="code" label="Kode Singkatan Instansi"
@@ -78,13 +101,20 @@
           </div>
 
           <div class="space-y-0.5">
-            @php
-              $typeOptions = collect($types)
-                ->map(fn($t) => ['value' => $t->value, 'label' => $t->label()])
-                ->all();
-            @endphp
-            <x-form.searchable-select wire:model.live="type" name="type" label="Tipe Entitas Wilayah" required
-              :options="$typeOptions" placeholder="— Pilih Tipe —" searchPlaceholder="Cari tipe..." />
+            @if ($isSuperAdmin)
+              @php
+                $typeOptions = collect($types)
+                  ->map(fn($t) => ['value' => $t->value, 'label' => $t->label()])
+                  ->all();
+              @endphp
+              <x-form.searchable-select wire:model.live="type" name="type" label="Tipe Entitas Wilayah" required
+                :options="$typeOptions" placeholder="— Pilih Tipe —" searchPlaceholder="Cari tipe..." />
+            @else
+              <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Tipe Entitas Wilayah</label>
+              <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
+              </div>
+            @endif
           </div>
         @else
           <div class="space-y-0.5">
@@ -215,8 +245,10 @@
                     </button>
                   </li>
                 @endforeach
-                @if ($heads->isEmpty() && trim($searchHead) !== '')
-                  <li class="px-3 py-2 text-xs text-slate-400">Pegawai tidak ditemukan.</li>
+                @if ($heads->isEmpty())
+                  <li class="px-3 py-2 text-xs text-slate-400">
+                    {{ trim($searchHead) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai pada instansi induk pengampu.' }}
+                  </li>
                 @endif
                 @if ($headsHasMore)
                   <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
@@ -226,31 +258,48 @@
               </ul>
             </div>
           </div>
+          <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+            <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Hanya memuat pegawai yang terdaftar di instansi induk pengampu.
+          </p>
           @error('head_id')
             <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
           @enderror
         </div>
 
-        {{-- Unggah Kop Surat — hanya untuk OPD induk baru (super admin) --}}
+        {{-- Unggah Kop Surat — hanya untuk OPD induk --}}
         @if ($isRoot)
-          <div class="space-y-0.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
+          <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
             <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
               class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
               hint="Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD." />
-            <div wire:loading wire:target="letterhead" class="text-[10px] text-cyan-600 mt-0.5">
+            <div wire:loading wire:target="letterhead" class="text-[10px] text-cyan-600">
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
             </div>
+            @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPPD):</p>
+                <img src="{{ asset('storage/' . $department->letterhead) }}"
+                  class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
+              </div>
+            @endif
           </div>
 
           {{-- Kop Surat Kedua — Khusus DPRD --}}
           @if ($type === 'dprd')
-            <div class="md:col-span-1 space-y-2">
+            <div class="md:col-span-1 space-y-1.5">
               <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
                 class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
                 hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
-              <div wire:loading wire:target="letterhead_second" class="text-[10px] text-cyan-600 mt-0.5">
+              <div wire:loading wire:target="letterhead_second" class="text-[10px] text-cyan-600">
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
               </div>
+              @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPT):</p>
+                  <img src="{{ asset('storage/' . $department->letterhead_second) }}"
+                    class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
+                </div>
+              @endif
             </div>
           @endif
         @endif
@@ -258,14 +307,14 @@
 
       {{-- Form Actions Footer Compact --}}
       <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-        <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary" class="gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600">
+        <x-ui.button href="{{ $backUrl }}" variant="secondary" class="gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600">
           Batal
         </x-ui.button>
 
         <x-ui.button type="submit" class="gap-1.5 px-4 py-1.5 text-xs font-bold shadow-md shadow-cyan-200 hover:shadow-lg"
           wire:loading.attr="disabled" wire:target="save">
           <i class="fa-solid fa-floppy-disk text-[11px]"></i>
-          <span wire:loading.remove wire:target="save">Simpan Instansi</span>
+          <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}</span>
           <span wire:loading wire:target="save">Menyimpan...</span>
         </x-ui.button>
       </div>
