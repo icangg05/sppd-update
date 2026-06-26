@@ -160,6 +160,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/roles', RoleIndex::class)->name('roles.index');
             Route::get('/roles/create', RoleForm::class)->name('roles.create');
             Route::get('/roles/{role}/edit', RoleForm::class)->name('roles.edit');
+
+            // Backup Database — hanya super_admin.
+            Route::get('/database/backup', \App\Livewire\DatabaseBackup::class)->name('database.backup');
         });
     });
 

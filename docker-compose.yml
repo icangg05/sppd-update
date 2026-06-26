@@ -35,7 +35,7 @@ services:
       - db
     command: >
       sh -c "
-        php artisan queue:work --verbose --tries=3 --sleep=3 --timeout=120
+        php artisan queue:work --verbose --tries=3 --sleep=3 --timeout=600
       "
     networks:
       - app_net

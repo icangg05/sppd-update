@@ -33,7 +33,10 @@ RUN apt-get update && apt-get install -y \
   libzip-dev \
   zip \
   unzip \
-  curl
+  curl \
+  bash \
+  gzip \
+  default-mysql-client
 
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
@@ -72,7 +75,10 @@ RUN apt-get update && apt-get install -y \
   libzip-dev \
   zip \
   unzip \
-  curl
+  curl \
+  bash \
+  gzip \
+  default-mysql-client
 
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp

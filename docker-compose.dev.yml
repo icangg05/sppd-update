@@ -29,7 +29,7 @@ services:
     depends_on:
       - db
       - app
-    command: sh -c "php artisan queue:work --verbose --tries=3"
+    command: sh -c "php artisan queue:work --verbose --tries=3 --timeout=600"
     networks:
       - app_net
 

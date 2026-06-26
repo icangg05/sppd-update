@@ -156,6 +156,17 @@ class SppdCreateDetails extends Component
     }
   }
 
+  /**
+   * Saat provinsi sebuah tujuan diganti, kosongkan kabupaten/kota-nya agar tidak
+   * tertinggal pilihan dari provinsi sebelumnya (yang kini tidak valid).
+   */
+  public function updated($name, $value): void
+  {
+    if (preg_match('/^destinations\.(\d+)\.province_id$/', $name, $m)) {
+      $this->destinations[(int) $m[1]]['regency_id'] = '';
+    }
+  }
+
   public function getRegenciesForProvince($provinceId)
   {
     if (empty($provinceId)) {

@@ -143,6 +143,12 @@
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-shield-halved fa-fw"></i></span>
 				<span>Role & Permission</span>
 			</a>
+
+			<a href="{{ route('master.database.backup') }}" wire:navigate
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.database.backup') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-database fa-fw"></i></span>
+				<span>Backup Database</span>
+			</a>
 		@endif
 		@endif
 	</nav>

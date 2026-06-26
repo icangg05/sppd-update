@@ -135,7 +135,10 @@
 											<x-form.searchable-select wire:model.live="destinations.{{ $index }}.province_id"
 												:options="$provinceOptions" placeholder="— Provinsi —" searchPlaceholder="Cari provinsi..." required />
 										</div>
-										<div>
+										{{-- wire:key memuat province_id agar komponen di-render ulang saat
+										     provinsi berubah, sehingga opsi kabupaten (yang di-init Alpine
+										     sekali saat mount) ikut diperbarui. --}}
+										<div wire:key="regency-{{ $index }}-{{ $dest['province_id'] ?: 'none' }}">
 											<x-form.searchable-select wire:model="destinations.{{ $index }}.regency_id"
 												:options="$regencyOptions" placeholder="— Kabupaten/Kota —" searchPlaceholder="Cari kabupaten/kota..." required />
 										</div>
