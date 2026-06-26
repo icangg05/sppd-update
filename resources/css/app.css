@@ -20,6 +20,21 @@
   animation: modal-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
+/* Bilah progres durasi toast: menyusut dari penuh ke kosong, jeda saat di-hover */
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.toast-progress {
+  transform-origin: left;
+  animation: toast-progress linear forwards;
+}
+
+.toast-card:hover .toast-progress {
+  animation-play-state: paused;
+}
+
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --color-primary-50: #f0f9ff;

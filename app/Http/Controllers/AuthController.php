@@ -32,7 +32,10 @@ class AuthController extends Controller
       }
 
       $request->session()->regenerate();
-      return redirect()->intended(route('dashboard'));
+
+      $name = $user->name ?? $user->username;
+      return redirect()->intended(route('dashboard'))
+        ->with('success', "Selamat datang kembali, {$name}!");
     }
 
     return back()->withErrors([
@@ -46,6 +49,7 @@ class AuthController extends Controller
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
-    return redirect()->route('login');
+    return redirect()->route('login')
+      ->with('success', 'Anda berhasil keluar dari sistem.');
   }
 }

@@ -102,13 +102,14 @@
 		class="fixed top-3 right-3 left-3 sm:top-5 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-9999 flex flex-col items-center gap-2 sm:gap-3.5 sm:w-full sm:max-w-sm pointer-events-none">
 		<template x-for="toast in toasts" :key="toast.id">
 			<div x-show="toast.show"
+				@mouseenter="pause(toast.id)" @mouseleave="resume(toast.id)"
 				x-transition:enter="transition ease-out duration-300 transform"
 				x-transition:enter-start="-translate-y-3 opacity-0 scale-95"
 				x-transition:enter-end="translate-y-0 opacity-100 scale-100"
 				x-transition:leave="transition ease-in duration-200 transform"
 				x-transition:leave-start="translate-y-0 opacity-100 scale-100"
 				x-transition:leave-end="-translate-y-3 opacity-0 scale-95"
-				class="pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5">
+				class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5">
 
 				<!-- Icon (lingkaran berisi) -->
 				<div class="shrink-0 flex size-6 sm:size-7 items-center justify-center rounded-full text-white shadow-sm"
@@ -138,12 +139,23 @@
 					class="shrink-0 self-start -mr-0.5 -mt-0.5 rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 cursor-pointer">
 					<i class="fa-solid fa-xmark text-xs"></i>
 				</button>
+
+				<!-- Bilah progres durasi -->
+				<div class="toast-progress absolute bottom-0 left-0 h-1 w-full"
+					:class="{
+					    'bg-emerald-500': toast.type === 'success',
+					    'bg-rose-500': toast.type === 'error',
+					    'bg-cyan-500': toast.type === 'info',
+					    'bg-amber-500': toast.type === 'warning'
+					}"
+					:style="`animation-duration: ${duration}ms`"></div>
 			</div>
 		</template>
 	</div>
 
 	<script>
 		function toastManager() {
+			const DURATION = 4000;
 			const defaultTitles = {
 				success: 'Berhasil!',
 				error: 'Terjadi Kesalahan',
@@ -152,6 +164,7 @@
 			};
 			return {
 				toasts: [],
+				duration: DURATION,
 				add(detail) {
 					const id = Date.now() + Math.random().toString(36).substr(2, 9);
 					const type = detail.type || 'success';
@@ -160,23 +173,51 @@
 						type: type,
 						title: detail.title || defaultTitles[type] || defaultTitles.success,
 						message: detail.message || '',
-						show: false
+						show: false,
+						timer: null,
+						startedAt: null,
+						remaining: DURATION
 					});
 
 					this.$nextTick(() => {
 						const toast = this.toasts.find(t => t.id === id);
 						if (toast) {
 							toast.show = true;
+							this.startTimer(id);
 						}
 					});
-
-					setTimeout(() => {
+				},
+				startTimer(id) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast) return;
+					toast.startedAt = Date.now();
+					toast.timer = setTimeout(() => this.remove(id), toast.remaining);
+				},
+				// Saat di-hover: bekukan hitung mundur penghilangan toast.
+				pause(id) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast || !toast.timer) return;
+					clearTimeout(toast.timer);
+					toast.timer = null;
+					toast.remaining -= Date.now() - toast.startedAt;
+				},
+				// Saat mouse keluar: lanjutkan dari sisa waktu yang tersimpan.
+				resume(id) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast || toast.timer) return;
+					if (toast.remaining <= 0) {
 						this.remove(id);
-					}, 4000);
+						return;
+					}
+					this.startTimer(id);
 				},
 				remove(id) {
 					const index = this.toasts.findIndex(t => t.id === id);
 					if (index !== -1) {
+						if (this.toasts[index].timer) {
+							clearTimeout(this.toasts[index].timer);
+							this.toasts[index].timer = null;
+						}
 						this.toasts[index].show = false;
 						setTimeout(() => {
 							this.toasts = this.toasts.filter(t => t.id !== id);
