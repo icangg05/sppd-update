@@ -53,12 +53,14 @@ if (config('queue_health.enabled')) {
 | Backup Database Mingguan
 |--------------------------------------------------------------------------
 |
-| Tiap hari Minggu pukul 06:00 men-dispatch BackupDatabaseJob ke queue agar
-| proses backup berjalan di worker (bukan di scheduler). Job menyimpan satu
-| file per minggu & menjaga retensi 8 backup (2 bulan terakhir).
+| Men-dispatch BackupDatabaseJob ke queue agar proses backup berjalan di worker
+| (bukan di scheduler). Hari & jam diatur lewat config('backup.*') (BACKUP_DAY,
+| BACKUP_TIME) — default Minggu 03:00 agar tidak bertabrakan dengan keepalive
+| Kirim.Chat (06:00). Job menyimpan satu file per minggu & menjaga retensi
+| sebanyak BACKUP_KEEP backup terbaru.
 |
 */
 Schedule::job(new BackupDatabaseJob())
-    ->weeklyOn(0, '06:00')
+    ->weeklyOn((int) config('backup.day', 0), (string) config('backup.time', '03:00'))
     ->name('weekly-db-backup')
     ->withoutOverlapping();

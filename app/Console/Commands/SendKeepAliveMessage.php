@@ -2,57 +2,48 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\SendWhatsAppNotificationJob;
+use App\Services\KirimChatService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Mengirim pesan WhatsApp "keep-alive" ke nomor di config secara terjadwal.
+ * Menjaga akun Kirim.Chat tetap aktif secara terjadwal.
  *
- * Kirim.Chat menonaktifkan layanan bila tidak ada aktivitas kirim minimal 7 hari,
- * jadi command ini dijalankan berkala (lihat jadwal di routes/console.php) untuk
- * menjaga akun WA Business tetap "aktif". Nomor, status aktif, dan isi pesan
- * diambil dari config('kirimchat.keepalive.*'). Pengiriman dititipkan ke
- * SendWhatsAppNotificationJob agar memakai retry & service Kirim.Chat yang sama.
+ * Kirim.Chat menonaktifkan layanan bila tidak ada aktivitas minimal 7 hari.
+ * Alih-alih mengirim pesan WhatsApp (teks bebas tunduk pada window 24-jam Meta
+ * sehingga sering ditolak `WindowClosed`, sedangkan template berbiaya), command
+ * ini melakukan ping API ter-autentikasi yang bebas dari kedua batasan tersebut.
+ * Jadwal diatur di routes/console.php via config('kirimchat.keepalive.*').
  */
 class SendKeepAliveMessage extends Command
 {
   protected $signature = 'wa:keepalive';
 
-  protected $description = 'Kirim pesan WA keep-alive ke nomor config agar akun Kirim.Chat tetap aktif';
+  protected $description = 'Ping aktivitas Kirim.Chat agar akun tetap aktif (tanpa kirim pesan)';
 
-  public function handle(): int
+  public function handle(KirimChatService $kirimChat): int
   {
     if (! config('kirimchat.keepalive.enabled')) {
-      $this->info('Keep-alive WA dinonaktifkan (kirimchat.keepalive.enabled=false). Dilewati.');
+      $this->info('Keep-alive dinonaktifkan (kirimchat.keepalive.enabled=false). Dilewati.');
 
       return self::SUCCESS;
     }
 
-    $phone = (string) config('kirimchat.keepalive.phone');
+    $result = $kirimChat->pingActivity();
 
-    if ($phone === '') {
-      $this->warn('Nomor keep-alive (kirimchat.keepalive.phone) kosong. Dilewati.');
+    if ($result['success']) {
+      Log::info('Keep-alive Kirim.Chat: ping aktivitas berhasil.', [
+        'authenticated' => $result['authenticated'],
+      ]);
+      $this->info('Ping aktivitas Kirim.Chat berhasil. '.$result['message']);
 
       return self::SUCCESS;
     }
 
-    // Bungkus catatan dari config dengan template ber-emoji yang menarik.
-    // Timestamp (berbeda tiap kirim) juga menghindari deteksi pesan identik berulang.
-    $note = trim((string) config('kirimchat.keepalive.message'));
-    $waktu = now()->locale('id')->isoFormat('dddd, D MMMM Y • HH:mm').' WITA';
-
-    $message = "🟢 *LAYANAN SPPD KOTA KENDARI*\n"
-      ."━━━━━━━━━━━━━━━━\n"
-      ."🤖 {$note}\n\n"
-      ."✅ *Status:* Sistem Aktif\n"
-      ."🕒 {$waktu}\n\n"
-      ."_Pesan otomatis — tidak perlu dibalas._ 🙏";
-
-    SendWhatsAppNotificationJob::dispatch($phone, $message);
-
-    Log::info('Keep-alive WA dijadwalkan untuk dikirim.', ['phone' => $phone]);
-    $this->info("Pesan keep-alive WA dijadwalkan ke {$phone}.");
+    Log::warning('Keep-alive Kirim.Chat: ping aktivitas gagal.', [
+      'message' => $result['message'],
+    ]);
+    $this->warn('Ping aktivitas Kirim.Chat gagal: '.$result['message']);
 
     return self::SUCCESS;
   }

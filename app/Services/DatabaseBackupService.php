@@ -21,7 +21,7 @@ class DatabaseBackupService
   /** Jumlah baris per statement INSERT (multi-row) agar file ringkas. */
   private const ROWS_PER_INSERT = 100;
 
-  /** Simpan maksimal 8 backup (1 per minggu = 2 bulan terakhir). */
+  /** Default retensi bila config('backup.keep') tidak diset (1 per minggu). */
   public const MAX_BACKUPS = 8;
 
   /**
@@ -167,9 +167,10 @@ class DatabaseBackupService
     return "backup-{$database}-week-{$weekStart}.sql.gz";
   }
 
-  /** Sisakan hanya $keep backup terbaru; hapus selebihnya (retensi 2 bulan). */
-  public function prune(int $keep = self::MAX_BACKUPS): int
+  /** Sisakan hanya $keep backup terbaru; hapus selebihnya. */
+  public function prune(?int $keep = null): int
   {
+    $keep = $keep ?? (int) config('backup.keep', self::MAX_BACKUPS);
     $all = $this->all();
     $deleted = 0;
 

@@ -192,9 +192,15 @@
 							->map(fn($c) => ['value' => $c->id, 'label' => $c->name])
 							->values();
 					@endphp
-					<x-form.searchable-select wire:model.live="budget_id" name="budget_id"
-						label="Sumber Anggaran / Kegiatan SKPD" required :options="$budgetOptions"
-						placeholder="— Pilih Program / Kegiatan —" searchPlaceholder="Cari program / kegiatan..." />
+					<div>
+						<x-form.searchable-select wire:model.live="budget_id" name="budget_id"
+							label="Sumber Anggaran / Kegiatan SKPD" required :options="$budgetOptions"
+							placeholder="— Pilih Program / Kegiatan —" searchPlaceholder="Cari program / kegiatan..." />
+						<p class="mt-1 text-[10px] text-slate-400">
+							<i class="fa-solid fa-circle-info"></i>
+							DPA anggaran yang tersedia merupakan DPA tahun anggaran berjalan ({{ now()->year }}).
+						</p>
+					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<x-form.searchable-select wire:model="category_id" name="category_id" label="Kategori Dinas"
 							required :options="$categoryOptions" placeholder="— Pilih Kategori —" searchPlaceholder="Cari kategori..." />
@@ -285,7 +291,7 @@
 
 	{{-- MODAL KONFIRMASI --}}
 	@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
-	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-3xl">
+	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-3xl" :closeable="false">
 		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
 
 			{{-- Kolom Kiri: Anggaran Tersedia --}}

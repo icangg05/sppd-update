@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Membuat backup database di latar belakang (diproses worker queue), lalu
- * memangkas backup lama sehingga hanya tersisa 8 file terbaru (1 per minggu,
- * total 2 bulan terakhir).
+ * memangkas backup lama sehingga hanya tersisa sejumlah file terbaru sesuai
+ * config('backup.keep') (1 per minggu).
  *
- * Dipicu oleh: jadwal mingguan (Minggu 06:00, lihat routes/console.php) atau
- * tombol manual di halaman Backup Database.
+ * Dipicu oleh: jadwal mingguan (hari & jam via config('backup.*'), lihat
+ * routes/console.php) atau tombol manual di halaman Backup Database.
  */
 class BackupDatabaseJob implements ShouldQueue, ShouldBeUnique
 {

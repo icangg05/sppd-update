@@ -21,7 +21,9 @@
   ];
 @endphp
 
-<div x-data="notificationCenter({{ $count }}, {{ $unread ? 'true' : 'false' }}, @js($seenUrl))" class="relative">
+<div x-data="notificationCenter({{ $count }}, {{ $unread ? 'true' : 'false' }}, @js($seenUrl))" class="relative"
+  {{-- Kunci scroll halaman saat panel dibuka di mobile; scroll di dalam panel tetap jalan. --}}
+  x-effect="document.body.classList.toggle('overflow-hidden', open && window.matchMedia('(max-width: 639px)').matches)">
   {{-- Tombol lonceng --}}
   <button type="button" @click="toggle()"
     class="relative inline-flex size-9 items-center justify-center rounded-full bg-cyan-600/30 text-white transition-all hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-white/40"

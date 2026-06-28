@@ -341,6 +341,8 @@ class DepartmentForm extends Component
 
     $headQuery = User::where('is_active', true)
       ->whereNotIn('id', $assignedElsewhere)
+      // Akun administratif bukan kandidat pimpinan instansi.
+      ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']))
       ->when(
         $scopeDeptId !== null,
         fn ($q) => $q->where('department_id', $scopeDeptId),

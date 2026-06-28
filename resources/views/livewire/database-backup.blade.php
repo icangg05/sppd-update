@@ -89,9 +89,15 @@
   {{-- Catatan --}}
   <div class="flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
     <i class="fa-solid fa-robot mt-0.5 shrink-0"></i>
+    @php
+      $backupDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      $backupDay = $backupDays[(int) config('backup.day', 0)] ?? 'Minggu';
+      $backupTime = config('backup.time', '03:00');
+      $backupKeep = (int) config('backup.keep', 8);
+    @endphp
     <p>
-      <strong>Backup otomatis</strong> berjalan tiap <strong>Minggu pukul 06:00</strong> di latar belakang (worker).
-      Sistem menyimpan <strong>1 backup per minggu</strong> dan hanya menjaga <strong>8 terbaru</strong> (2 bulan terakhir).
+      <strong>Backup otomatis</strong> berjalan tiap <strong>{{ $backupDay }} pukul {{ $backupTime }}</strong> di latar belakang (worker).
+      Sistem menyimpan <strong>1 backup per minggu</strong> dan hanya menjaga <strong>{{ $backupKeep }} terbaru</strong> (± {{ $backupKeep }} minggu terakhir).
       Menekan tombol di minggu yang sama akan <strong>menimpa</strong> backup minggu itu.
     </p>
   </div>

@@ -122,14 +122,28 @@
 										type="button"
 										disabled
 										class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 whitespace-nowrap cursor-default">
-										<i class="fa-solid fa-check-circle text-sm"></i> Terverifikasi
+										<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
+									</button>
+									<button
+										type="button"
+										wire:click="sendTestMessage"
+										wire:loading.attr="disabled"
+										wire:target="sendTestMessage"
+										title="Tes kirim pesan ke nomor pegawai ini"
+										class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white whitespace-nowrap disabled:opacity-50">
+										<span wire:loading.remove wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
+											<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
+										</span>
+										<span wire:loading wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
+											<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Mengirim...</span>
+										</span>
 									</button>
 									<button
 										type="button"
 										@click="showResetModal = true"
 										title="Ganti nomor WhatsApp"
 										class="inline-flex items-center gap-1.5 rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white whitespace-nowrap">
-										<i class="fa-solid fa-rotate text-sm"></i> Ganti
+										<i class="fa-solid fa-rotate text-sm"></i> <span class="hidden sm:inline">Ganti</span>
 									</button>
 								@else
 									<button
@@ -139,11 +153,11 @@
 										wire:target="openVerifyModal"
 										title="Verifikasi nomor WhatsApp ini"
 										class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white whitespace-nowrap disabled:opacity-50">
-										<span wire:loading.remove wire:target="openVerifyModal">
-											<i class="fa-brands fa-whatsapp text-sm"></i> Verifikasi
+										<span wire:loading.remove wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
+											<i class="fa-brands fa-whatsapp text-sm"></i> <span class="hidden sm:inline">Verifikasi</span>
 										</span>
-										<span wire:loading wire:target="openVerifyModal">
-											<i class="fa-solid fa-spinner fa-spin text-sm"></i> Memuat...
+										<span wire:loading wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
+											<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Memuat...</span>
 										</span>
 									</button>
 								@endif

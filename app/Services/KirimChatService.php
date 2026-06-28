@@ -77,6 +77,21 @@ class KirimChatService
     }
 
     /**
+     * Ping aktivitas untuk menjaga akun Kirim.Chat tetap aktif (Kirim.Chat
+     * menonaktifkan layanan bila tidak ada aktivitas minimal 7 hari).
+     *
+     * Sengaja TIDAK mengirim pesan WhatsApp: pesan teks bebas tunduk pada
+     * window 24-jam Meta (sering ditolak `WindowClosed`) dan pesan template
+     * berbiaya. Panggilan API ter-autentikasi ini bebas dari kedua batasan itu.
+     *
+     * @return array{success: bool, authenticated: bool, message: string}
+     */
+    public function pingActivity(): array
+    {
+        return $this->healthCheck();
+    }
+
+    /**
      * Cek kesehatan koneksi ke Kirim.Chat API.
      *
      * @return array{success: bool, authenticated: bool, message: string}

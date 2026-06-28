@@ -70,7 +70,7 @@
 
     @if ($detail)
       {{-- Ringkasan item --}}
-      <div class="mb-4 grid grid-cols-3 gap-3">
+      <div class="mb-4 grid grid-cols-1 gap-3">
         <div class="rounded border border-slate-100 bg-slate-50 p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pagu</p>
           <p class="mt-0.5 font-mono text-sm font-bold text-slate-800">Rp {{ number_format($detail['pagu'], 0, ',', '.') }}</p>

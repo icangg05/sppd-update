@@ -489,15 +489,15 @@ class SppdCreateDetails extends Component
       }
     }
 
-    // Budget query
-    $budgetQuery = Budget::with('department');
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $budgetQuery->whereIn('department_id', $dept->getAllRelatedIds());
-      } else {
-        $budgetQuery->where('department_id', Auth::user()->department_id);
-      }
+    // Budget query — DPA mengikuti OPD induk pelaksana, bukan department
+    // akun yang login. Akun admin OPD induk bisa mengakses banyak department,
+    // sehingga scoping harus berdasarkan OPD root pelaksana yang dipilih.
+    $budgetQuery = Budget::with('department')->where('year', now()->year);
+    $pelaksanaDept = $pelaksana->department;
+    if ($pelaksanaDept) {
+      $budgetQuery->whereIn('department_id', $pelaksanaDept->getRootDepartment()->getAllRelatedIds());
+    } else {
+      $budgetQuery->where('department_id', $pelaksana->department_id);
     }
     $budgets = $budgetQuery->get();
 

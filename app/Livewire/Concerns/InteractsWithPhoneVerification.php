@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Jobs\SendWhatsAppNotificationJob;
 use App\Services\QueueHealthService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Alur verifikasi nomor WhatsApp yang dipakai bersama oleh formulir pegawai
@@ -179,6 +181,45 @@ trait InteractsWithPhoneVerification
   public function closeVerifyModal()
   {
     $this->showVerifyModal = false;
+  }
+
+  /**
+   * Kirim pesan tes ke nomor yang sudah terverifikasi untuk memastikan jalur
+   * notifikasi WhatsApp ke pegawai berfungsi. Pesan dititipkan ke worker queue
+   * (jalur yang sama dgn notifikasi asli), jadi worker harus hidup lebih dulu.
+   */
+  public function sendTestMessage()
+  {
+    if (! $this->phoneVerified || empty(trim($this->phone))) {
+      $this->toastError('Nomor belum terverifikasi.');
+      return;
+    }
+
+    // Batasi 1 kirim per 30 detik per pengguna agar tidak bisa di-spam.
+    $rateKey = 'wa-test:' . (auth()->id() ?? request()->ip());
+    if (RateLimiter::tooManyAttempts($rateKey, 1)) {
+      $this->toastWarning('Tunggu ' . RateLimiter::availableIn($rateKey) . ' detik sebelum mengirim pesan tes lagi.');
+      return;
+    }
+
+    // Pesan tes diproses worker queue; bila worker mati, pesan tak akan terkirim.
+    if (! app(QueueHealthService::class)->isWorkerHealthy()) {
+      $this->toastError('Pesan tes gagal dikirim: layanan antrian (queue worker) '
+        . 'sedang tidak berjalan. Hubungi administrator sistem dan coba lagi setelah aktif.');
+      return;
+    }
+
+    $normalizedPhone = $this->normalizePhone($this->phone);
+    $name = $this->verificationName();
+
+    $message = "🔔 *Tes Notifikasi SPPD Kendari*\n"
+      . "Halo {$name}, notifikasi WhatsApp ke nomor Anda aktif. ✅\n\n"
+      . "_Pesan otomatis — tidak perlu dibalas._";
+
+    SendWhatsAppNotificationJob::dispatch($normalizedPhone, $message);
+    RateLimiter::hit($rateKey, 30);
+
+    $this->toastSuccess("Pesan tes sedang dikirim ke {$normalizedPhone}. Periksa WhatsApp nomor tersebut.");
   }
 
   protected function queueDownMessage(): string

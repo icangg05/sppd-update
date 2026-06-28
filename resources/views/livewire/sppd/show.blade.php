@@ -610,29 +610,38 @@
 				</a>
 			@endif
 
-			@foreach ($sppd->followers as $follower)
-				@php
-					$sppdFollowerSig = $sppd->digitalSignatures
-					    ->where('document_type', 'sppd_' . $follower->user_id)
-					    ->where('status', 'signed')
-					    ->first();
-				@endphp
-				@if ($sppdFollowerSig && $sppdFollowerSig->signed_file_path)
-					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
-						class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
-						<i class="fa-solid fa-user-group"></i>
-						<span>SPPD {{ $follower->user->name }} <span
-								class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
-					</a>
-				@else
-					<a
-						href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
-						target="_blank"
-						class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
-						<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
-					</a>
-				@endif
-			@endforeach
+			@if ($sppd->followers->count())
+				<div class="border-t border-slate-200 my-2 pt-2">
+					<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+						SPPD Pengikut <span class="text-slate-500">({{ $sppd->followers->count() }})</span>
+					</p>
+					<div class="max-h-64 space-y-2 overflow-y-auto pr-1">
+						@foreach ($sppd->followers as $follower)
+							@php
+								$sppdFollowerSig = $sppd->digitalSignatures
+								    ->where('document_type', 'sppd_' . $follower->user_id)
+								    ->where('status', 'signed')
+								    ->first();
+							@endphp
+							@if ($sppdFollowerSig && $sppdFollowerSig->signed_file_path)
+								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
+									class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+									<i class="fa-solid fa-user-group"></i>
+									<span>SPPD {{ $follower->user->name }} <span
+											class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
+								</a>
+							@else
+								<a
+									href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
+									target="_blank"
+									class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+									<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
+								</a>
+							@endif
+						@endforeach
+					</div>
+				</div>
+			@endif
 
 			@if ($sppd->attachment)
 				<div class="border-t border-slate-200 my-2 pt-2">
