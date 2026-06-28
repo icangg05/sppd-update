@@ -90,6 +90,34 @@
 		</x-slot>
 	</x-ui.modal>
 
+	{{-- Modal Konfirmasi Hapus SPPD --}}
+	<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus SPPD?"
+		description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-rose-600">
+		<p class="text-sm text-slate-600">
+			@if (auth()->user()->hasRole('super_admin'))
+				Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dihapus secara permanen</strong> beserta seluruh datanya. Lanjutkan?
+			@else
+				Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dibatalkan dan dihapus permanen</strong>. Lanjutkan?
+			@endif
+		</p>
+
+		<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+			<button type="button" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
+				class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
+				Batal
+			</button>
+			<button type="button" wire:click="deleteSppd" wire:loading.attr="disabled" wire:target="deleteSppd"
+				class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-rose-700 disabled:opacity-50">
+				<span wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-trash"></i> Ya, Hapus
+				</span>
+				<span wire:loading wire:target="deleteSppd" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...
+				</span>
+			</button>
+		</x-slot>
+	</x-ui.modal>
+
 	{{-- Header Halaman --}}
 	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 		<div class="leading-tight">
@@ -397,13 +425,20 @@
 									@endif
 								@endif
 
-								@if (
-									$sppd->status->value === 'in_progress' &&
-										auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+								@if (auth()->user()->hasRole('super_admin'))
+									{{-- Super admin dapat menghapus SPPD apa pun secara permanen. --}}
 									<button
 										type="button"
-										wire:click="deleteSppd({{ $sppd->id }})"
-										wire:confirm="Hapus/Batalkan pengajuan SPPD ini secara permanen?"
+										wire:click="confirmDelete({{ $sppd->id }})"
+										title="Hapus SPPD"
+										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
+										<i class="fa-solid fa-trash text-[10px]"></i>
+										<span>Hapus</span>
+									</button>
+								@elseif ($sppd->status->value === 'in_progress' && auth()->user()->hasRole('admin_opd'))
+									<button
+										type="button"
+										wire:click="confirmDelete({{ $sppd->id }})"
 										title="Batalkan Pengajuan"
 										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
 										<i class="fa-solid fa-trash text-[10px]"></i>

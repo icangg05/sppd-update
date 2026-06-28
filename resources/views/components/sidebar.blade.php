@@ -52,14 +52,15 @@
 					Daftar SPPD
 				</a>
 
-				@can('sppd.approve')
+				{{-- Super admin tidak ikut alur persetujuan, sembunyikan menunya. --}}
+				@if (auth()->user()->can('sppd.approve') && ! auth()->user()->hasRole('super_admin'))
 					<a href="{{ route('sppd.index', ['filter' => 'approval']) }}" wire:navigate
 						class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' || request('from') === 'approval' ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">
 						<span class="size-1 rounded-sm bg-current"></span>
 						<span class="flex-1">Persetujuan</span>
 						<livewire:pending-approval-badge />
 					</a>
-				@endcan
+				@endif
 
 				<a href="{{ route('sppd.calendar') }}" wire:navigate
 					class="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.calendar') ? 'text-cyan-400 bg-slate-800/40' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/20' }}">

@@ -126,17 +126,10 @@
 									</button>
 									<button
 										type="button"
-										wire:click="sendTestMessage"
-										wire:loading.attr="disabled"
-										wire:target="sendTestMessage"
+										wire:click="confirmTestMessage"
 										title="Tes kirim pesan ke nomor pegawai ini"
-										class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white whitespace-nowrap disabled:opacity-50">
-										<span wire:loading.remove wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
-											<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
-										</span>
-										<span wire:loading wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
-											<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Mengirim...</span>
-										</span>
+										class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white whitespace-nowrap">
+										<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
 									</button>
 									<button
 										type="button"

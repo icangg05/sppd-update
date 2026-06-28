@@ -218,21 +218,9 @@ class SppdController extends Controller
 
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
 
-    // Kandidat PPTK: pegawai di OPD yang sama (termasuk sub-unit)
-    $dept = $sppd->user->department;
-    $opdId = $dept->parent_id ?? $dept->id; // naik ke OPD induk jika di sub-unit
-
-    // Kumpulkan ID OPD induk + semua sub-unit
-    $deptIds = Department::where('id', $opdId)
-      ->orWhere('parent_id', $opdId)
-      ->pluck('id');
-
-    $pptkCandidates = User::whereIn('department_id', $deptIds)
-      ->where('is_active', true)
-      ->orderBy('name')
-      ->get(['id', 'name', 'nip']);
-
-    return view('sppd.costs.actuals', compact('sppd', 'pptkCandidates'));
+    // Kandidat PPTK dipilih lewat komponen Livewire PptkSelector (pencarian
+    // server-side, lingkup OPD induk pelaksana).
+    return view('sppd.costs.actuals', compact('sppd'));
   }
 
   /**
@@ -244,13 +232,12 @@ class SppdController extends Controller
     $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
-    // PPTK harus pegawai aktif di lingkup OPD pemohon (induk + sub-unit) — sama dengan kandidat di actualExpenses().
+    // PPTK harus pegawai aktif di lingkup OPD induk pemohon (root + seluruh
+    // sub-unit) — sama dengan kandidat di komponen PptkSelector.
     $dept = $sppd->user->department;
-    $opdId = $dept?->parent_id ?? $dept?->id;
-    $allowedDeptIds = Department::where('id', $opdId)
-      ->orWhere('parent_id', $opdId)
-      ->pluck('id')
-      ->all();
+    $allowedDeptIds = $dept
+      ? $dept->getRootDepartment()->getAllRelatedIds()->all()
+      : array_filter([$sppd->user->department_id]);
 
     $request->validate([
       'pptk_id' => [

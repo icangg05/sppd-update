@@ -663,7 +663,7 @@
 	</x-ui.modal>
 
 	{{-- Modal Konfirmasi Setujui --}}
-	<x-ui.modal show="showApproveModal" title="Konfirmasi Persetujuan"
+	<x-ui.modal show="showApproveModal" title="Konfirmasi Persetujuan" :closeable="false"
 		description="Pastikan data dokumen sudah benar sebelum menyetujui" icon="fa-solid fa-check-double text-emerald-600">
 		<p class="text-sm text-slate-600 leading-relaxed">
 			Apakah Anda yakin ingin menyetujui dokumen SPPD ini?
@@ -689,7 +689,7 @@
 
 	{{-- Modal Tolak --}}
 	<x-ui.modal show="showRejectModal" title="Tolak Pengajuan SPPD" description="Berikan alasan penolakan dokumen ini"
-		icon="fa-solid fa-ban text-rose-600">
+		icon="fa-solid fa-ban text-rose-600" :closeable="false">
 		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Alasan Penolakan <span
 				class="text-rose-500">*</span></label>
 		<textarea wire:model="rejectNotes" required
@@ -712,7 +712,7 @@
 	</x-ui.modal>
 
 	{{-- Modal Revisi --}}
-	<x-ui.modal show="showRevisionModal" title="Kembalikan untuk Revisi"
+	<x-ui.modal show="showRevisionModal" title="Kembalikan untuk Revisi" :closeable="false"
 		description="Berikan catatan perbaikan yang diperlukan" icon="fa-solid fa-rotate-left text-amber-600">
 		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Keterangan / Catatan Revisi
 			<span class="text-rose-500">*</span></label>

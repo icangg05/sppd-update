@@ -82,15 +82,9 @@
 								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 cursor-default">
 								<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
 							</button>
-							<button type="button" wire:click="sendTestMessage" wire:loading.attr="disabled"
-								wire:target="sendTestMessage" title="Tes kirim pesan ke nomor ini"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:opacity-50">
-								<span wire:loading.remove wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
-									<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
-								</span>
-								<span wire:loading wire:target="sendTestMessage" class="inline-flex items-center gap-1.5">
-									<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Mengirim...</span>
-								</span>
+							<button type="button" wire:click="confirmTestMessage" title="Tes kirim pesan ke nomor ini"
+								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white">
+								<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
 							</button>
 							<button type="button" @click="showResetModal = true" title="Ganti nomor WhatsApp"
 								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white">

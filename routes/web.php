@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BudgetController;
+use App\Livewire\Auth\Login;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\SppdActualExpenseController;
@@ -37,8 +38,7 @@ use Illuminate\Support\Str;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/login', Login::class)->name('login');
 });
 
 // Auth routes
@@ -55,8 +55,10 @@ Route::middleware('auth')->group(function () {
     Route::view('/panduan/whatsapp', 'guides.whatsapp')->name('guide.whatsapp');
 
     // Tandai changelog sudah dibaca (badge notifikasi per-user)
-    Route::post('/notifications/seen', function () {
-        auth()->user()->update(['changelog_seen_version' => config('changelog.version')]);
+    Route::post('/notifications/seen', function (\Illuminate\Http\Request $request) {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $user->update(['changelog_seen_version' => config('changelog.version')]);
 
         return response()->json(['ok' => true]);
     })->name('notifications.seen');

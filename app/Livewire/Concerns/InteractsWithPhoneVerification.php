@@ -4,6 +4,7 @@ namespace App\Livewire\Concerns;
 
 use App\Jobs\SendWhatsAppNotificationJob;
 use App\Services\QueueHealthService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -24,6 +25,7 @@ trait InteractsWithPhoneVerification
   // State verifikasi WhatsApp
   public bool $phoneVerified = false;
   public bool $showVerifyModal = false;
+  public bool $showTestConfirm = false;
   public bool $isPolling = false;
   public string $verificationNumber = '';
   public string $verificationTemplate = '';
@@ -183,6 +185,21 @@ trait InteractsWithPhoneVerification
     $this->showVerifyModal = false;
   }
 
+  /** Buka modal konfirmasi sebelum mengirim pesan tes. */
+  public function confirmTestMessage(): void
+  {
+    if (! $this->phoneVerified || empty(trim($this->phone))) {
+      $this->toastError('Nomor belum terverifikasi.');
+      return;
+    }
+    $this->showTestConfirm = true;
+  }
+
+  public function closeTestConfirm(): void
+  {
+    $this->showTestConfirm = false;
+  }
+
   /**
    * Kirim pesan tes ke nomor yang sudah terverifikasi untuk memastikan jalur
    * notifikasi WhatsApp ke pegawai berfungsi. Pesan dititipkan ke worker queue
@@ -190,13 +207,16 @@ trait InteractsWithPhoneVerification
    */
   public function sendTestMessage()
   {
+    // Tutup modal konfirmasi; hasil disampaikan lewat toast.
+    $this->showTestConfirm = false;
+
     if (! $this->phoneVerified || empty(trim($this->phone))) {
       $this->toastError('Nomor belum terverifikasi.');
       return;
     }
 
     // Batasi 1 kirim per 30 detik per pengguna agar tidak bisa di-spam.
-    $rateKey = 'wa-test:' . (auth()->id() ?? request()->ip());
+    $rateKey = 'wa-test:' . (Auth::id() ?? request()->ip());
     if (RateLimiter::tooManyAttempts($rateKey, 1)) {
       $this->toastWarning('Tunggu ' . RateLimiter::availableIn($rateKey) . ' detik sebelum mengirim pesan tes lagi.');
       return;

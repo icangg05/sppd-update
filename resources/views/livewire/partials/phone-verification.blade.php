@@ -104,6 +104,30 @@
 	</x-slot>
 </x-ui.modal>
 
+{{-- Modal Konfirmasi Kirim Pesan Tes --}}
+<x-ui.modal show="$wire.showTestConfirm" :closeable="false" title="Kirim Pesan Tes?"
+	description="Konfirmasi sebelum pesan dikirim" icon="fa-solid fa-paper-plane text-cyan-600">
+	<p class="text-sm text-slate-600">
+		Pesan tes notifikasi WhatsApp akan dikirim ke nomor <strong>{{ $phone }}</strong>. Lanjutkan?
+	</p>
+
+	<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+		<button type="button" wire:click="closeTestConfirm" wire:loading.attr="disabled" wire:target="sendTestMessage"
+			class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
+			Batal
+		</button>
+		<button type="button" wire:click="sendTestMessage" wire:loading.attr="disabled" wire:target="sendTestMessage"
+			class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-cyan-700 disabled:opacity-50">
+			<span wire:loading.remove wire:target="sendTestMessage" class="inline-flex items-center gap-2">
+				<i class="fa-solid fa-paper-plane"></i> Ya, Kirim
+			</span>
+			<span wire:loading wire:target="sendTestMessage" class="inline-flex items-center gap-2">
+				<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...
+			</span>
+		</button>
+	</x-slot>
+</x-ui.modal>
+
 {{-- Modal Konfirmasi Ganti Nomor --}}
 <x-ui.modal show="showResetModal" :closeable="false" title="Konfirmasi Ganti Nomor"
 	description="Tindakan ini membutuhkan verifikasi ulang" icon="fa-solid fa-triangle-exclamation text-amber-600">

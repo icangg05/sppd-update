@@ -7,7 +7,8 @@
 	<meta name="google" content="notranslate">
 	<meta name="robots" content="index, follow">
 	<title>{{ config('app.name') }}</title>
-	@vite(['resources/css/app.css'])
+	@vite(['resources/css/app.css', 'resources/js/app.js'])
+	@livewireStyles
 </head>
 
 <body class="font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
@@ -48,6 +49,35 @@
 					setTimeout(function () { wrap.remove(); }, 200);
 				}
 				function start() { startedAt = Date.now(); timer = setTimeout(remove, remaining); }
+
+				// Geser ke atas untuk menutup.
+				var dragStartY = 0, dragY = 0, dragging = false;
+				card.style.touchAction = 'pan-x';
+				card.addEventListener('touchstart', function (e) {
+					dragging = true;
+					dragStartY = e.touches[0].clientY;
+					if (timer) { clearTimeout(timer); timer = null; remaining -= Date.now() - startedAt; }
+					wrap.style.transition = 'none';
+				}, { passive: true });
+				card.addEventListener('touchmove', function (e) {
+					if (!dragging) return;
+					dragY = Math.min(0, e.touches[0].clientY - dragStartY);
+					wrap.style.transform = 'translate(-50%, ' + dragY + 'px)';
+					wrap.style.opacity = String(Math.max(0, 1 + dragY / 80));
+				}, { passive: true });
+				function endDrag() {
+					if (!dragging) return;
+					dragging = false;
+					if (dragY < -40) { remove(); return; }
+					wrap.style.transition = 'transform .2s ease, opacity .2s ease';
+					wrap.style.transform = 'translate(-50%, 0)';
+					wrap.style.opacity = '1';
+					dragY = 0;
+					if (remaining <= 0) { remove(); return; }
+					start();
+				}
+				card.addEventListener('touchend', endDrag);
+				card.addEventListener('touchcancel', endDrag);
 
 				window.__dismissGuestToast = function () { if (timer) clearTimeout(timer); remove(); };
 
@@ -132,7 +162,7 @@
 
 				<div
 					class="mt-6 rounded-3xl border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
-					@yield('content')
+					{{ $slot }}
 				</div>
 
 				<div class="mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
@@ -197,6 +227,8 @@
 			}
 		}
 	</style>
+
+	@livewireScripts
 </body>
 
 </html>

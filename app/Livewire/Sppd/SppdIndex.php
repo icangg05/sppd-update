@@ -28,6 +28,11 @@ class SppdIndex extends Component
   public array $simulatedSteps = [];
   public bool $showWorkflowModal = false;
 
+  // Konfirmasi hapus SPPD
+  public bool $showDeleteModal = false;
+  public ?int $deleteId = null;
+  public ?string $deleteLabel = null;
+
   #[Url(keep: true)]
   public string $search = '';
 
@@ -193,16 +198,56 @@ class SppdIndex extends Component
     $this->resetPage();
   }
 
-  public function deleteSppd(int $id): void
+  /** Buka modal konfirmasi sebelum menghapus SPPD. */
+  public function confirmDelete(int $id): void
   {
-    $sppd = SppdRequest::findOrFail($id);
+    $sppd = SppdRequest::with('user')->find($id);
 
-    if ($sppd->status->value === 'in_progress' && Auth::user()->hasAnyRole(['admin_opd', 'super_admin'])) {
+    if (! $sppd) {
+      return;
+    }
+
+    $this->deleteId = $id;
+    $this->deleteLabel = $sppd->user?->name;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deleteId = null;
+    $this->deleteLabel = null;
+  }
+
+  public function deleteSppd(): void
+  {
+    $id = $this->deleteId;
+    $this->closeDeleteModal();
+
+    if (! $id) {
+      return;
+    }
+
+    $sppd = SppdRequest::findOrFail($id);
+    $user = Auth::user();
+
+    // Super admin dapat menghapus SPPD apa pun secara permanen (apa pun statusnya).
+    if ($user->hasRole('super_admin')) {
+      $sppd->delete();
+      $this->toastSuccess('Pengajuan SPPD berhasil dihapus.');
+
+      return;
+    }
+
+    // Admin OPD hanya boleh membatalkan pengajuan yang masih berjalan.
+    if ($sppd->status->value === 'in_progress' && $user->hasRole('admin_opd')) {
       $sppd->delete();
       $this->toastSuccess('Pengajuan SPPD berhasil dibatalkan dan dihapus.');
-    } else {
-      $this->toastError('Anda tidak memiliki hak untuk membatalkan pengajuan ini atau status SPPD tidak dalam proses.');
+
+      return;
     }
+
+    $this->toastError('Anda tidak memiliki hak untuk membatalkan pengajuan ini atau status SPPD tidak dalam proses.');
   }
 
   public function render()

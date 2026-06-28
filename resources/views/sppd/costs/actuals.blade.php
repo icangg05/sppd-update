@@ -74,40 +74,8 @@
 			</a>
 		</div>
 
-		{{-- PPTK Selection --}}
-		<div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-			<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-				<div>
-					<p class="text-[10px] font-bold uppercase text-slate-400">Pejabat Pelaksana Teknis Kegiatan (PPTK)</p>
-					@if ($sppd->pptk_id)
-						<p class="text-sm font-bold text-slate-800 mt-1">{{ $sppd->pptk->name }} <span
-								class="text-slate-400 font-normal">{{ $sppd->pptk->nip ? '— NIP. ' . $sppd->pptk->nip : '' }}</span></p>
-					@else
-						<p class="text-sm font-bold text-rose-600 mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Belum
-							diatur</p>
-					@endif
-				</div>
-				@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-					<form action="{{ route('sppd.update-pptk', $sppd) }}" method="POST" class="flex items-center gap-2">
-						@csrf @method('PUT')
-						<select name="pptk_id"
-							class="rounded border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-							required>
-							<option value="">-- Pilih PPTK --</option>
-							@foreach ($pptkCandidates as $candidate)
-								<option value="{{ $candidate->id }}" {{ $sppd->pptk_id == $candidate->id ? 'selected' : '' }}>
-									{{ $candidate->name }} {{ $candidate->nip ? '(' . $candidate->nip . ')' : '' }}
-								</option>
-							@endforeach
-						</select>
-						<button type="submit"
-							class="rounded bg-slate-800 px-4 py-1.5 text-sm font-bold text-white hover:bg-slate-900 transition cursor-pointer">
-							<i class="fa-solid fa-floppy-disk mr-1"></i> Simpan
-						</button>
-					</form>
-				@endif
-			</div>
-		</div>
+		{{-- PPTK Selection (pencarian server-side, lingkup OPD induk pelaksana) --}}
+		<livewire:sppd.pptk-selector :sppd="$sppd" :key="'pptk-' . $sppd->id" />
 
 		{{-- Alert Info --}}
 		<div

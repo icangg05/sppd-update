@@ -281,10 +281,16 @@
 
 		{{-- Tombol Submit Pembuat Aksi --}}
 		<div class="mt-5 flex justify-end">
-			<button type="submit"
-				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-cyan-700">
-				<i class="fa-solid fa-paper-plane text-xs"></i>
-				<span>Buat & Ajukan SPPD</span>
+			<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
+				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+				<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-paper-plane text-xs"></i>
+					<span>Buat & Ajukan SPPD</span>
+				</span>
+				<span wire:loading wire:target="openConfirmModal" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-spinner fa-spin text-xs"></i>
+					<span>Memproses...</span>
+				</span>
 			</button>
 		</div>
 	</form>
@@ -422,9 +428,14 @@
 				class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
 				Periksa Kembali
 			</button>
-			<button type="button" wire:click="submit"
-				class="rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700">
-				{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
+			<button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
+				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+				<span wire:loading.remove wire:target="submit">
+					{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
+				</span>
+				<span wire:loading wire:target="submit" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...
+				</span>
 			</button>
 		</div>
 	</x-ui.modal>

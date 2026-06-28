@@ -62,6 +62,17 @@
         </div>
       @endforelse
     </div>
+
+    {{-- Hanya role yang berhak akses halaman anggaran yang melihat tautan ini. --}}
+    @if (count($items) && auth()->user()->hasAnyRole(['super_admin', 'admin_opd']))
+      <div class="border-t border-slate-100 p-3">
+        <a href="{{ route('master.budgets.index') }}" wire:navigate
+          class="flex items-center justify-center gap-2 rounded px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-50">
+          <span>Lihat lainnya</span>
+          <i class="fa-solid fa-arrow-right text-[11px]"></i>
+        </a>
+      </div>
+    @endif
   </div>
 
   {{-- Modal rincian (konten di-query lazy saat tombol diklik) --}}
@@ -70,7 +81,7 @@
 
     @if ($detail)
       {{-- Ringkasan item --}}
-      <div class="mb-4 grid grid-cols-1 gap-3">
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="rounded border border-slate-100 bg-slate-50 p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pagu</p>
           <p class="mt-0.5 font-mono text-sm font-bold text-slate-800">Rp {{ number_format($detail['pagu'], 0, ',', '.') }}</p>

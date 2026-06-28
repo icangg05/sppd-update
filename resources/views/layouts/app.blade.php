@@ -120,13 +120,19 @@
 		<template x-for="toast in toasts" :key="toast.id">
 			<div x-show="toast.show"
 				@mouseenter="pause(toast.id)" @mouseleave="resume(toast.id)"
+				@touchstart.passive="dragStart(toast.id, $event)"
+				@touchmove.passive="dragMove(toast.id, $event)"
+				@touchend="dragEnd(toast.id)" @touchcancel="dragEnd(toast.id)"
 				x-transition:enter="transition ease-out duration-300 transform"
 				x-transition:enter-start="-translate-y-3 opacity-0 scale-95"
 				x-transition:enter-end="translate-y-0 opacity-100 scale-100"
 				x-transition:leave="transition ease-in duration-200 transform"
 				x-transition:leave-start="translate-y-0 opacity-100 scale-100"
 				x-transition:leave-end="-translate-y-3 opacity-0 scale-95"
-				class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5">
+				:style="toast.dragY ? `transform: translateY(${toast.dragY}px); opacity: ${Math.max(0, 1 + toast.dragY / 80)}` : ''"
+				:class="!toast.dragging && 'transition-transform duration-200'"
+				class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5"
+				style="touch-action: pan-x;">
 
 				<!-- Icon (lingkaran berisi) -->
 				<div class="shrink-0 flex size-6 sm:size-7 items-center justify-center rounded-full text-white shadow-sm"
@@ -193,7 +199,10 @@
 						show: false,
 						timer: null,
 						startedAt: null,
-						remaining: DURATION
+						remaining: DURATION,
+						dragY: 0,
+						dragStartY: 0,
+						dragging: false
 					});
 
 					this.$nextTick(() => {
@@ -227,6 +236,32 @@
 						return;
 					}
 					this.startTimer(id);
+				},
+				// Geser ke atas untuk menutup: mulai membekukan timer & catat titik sentuh.
+				dragStart(id, event) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast) return;
+					this.pause(id);
+					toast.dragging = true;
+					toast.dragStartY = event.touches[0].clientY;
+				},
+				dragMove(id, event) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast || !toast.dragging) return;
+					// Hanya izinkan gerak ke atas (nilai negatif).
+					toast.dragY = Math.min(0, event.touches[0].clientY - toast.dragStartY);
+				},
+				dragEnd(id) {
+					const toast = this.toasts.find(t => t.id === id);
+					if (!toast || !toast.dragging) return;
+					toast.dragging = false;
+					// Tutup jika sudah digeser melewati ambang batas.
+					if (toast.dragY < -40) {
+						this.remove(id);
+					} else {
+						toast.dragY = 0;
+						this.resume(id);
+					}
 				},
 				remove(id) {
 					const index = this.toasts.findIndex(t => t.id === id);
