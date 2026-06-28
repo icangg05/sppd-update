@@ -62,9 +62,11 @@
 				card.addEventListener('touchmove', function (e) {
 					if (!dragging) return;
 					dragY = Math.min(0, e.touches[0].clientY - dragStartY);
+					// Cegah halaman ikut ter-scroll saat menggeser toast ke atas.
+					if (dragY < 0 && e.cancelable) e.preventDefault();
 					wrap.style.transform = 'translate(-50%, ' + dragY + 'px)';
 					wrap.style.opacity = String(Math.max(0, 1 + dragY / 80));
-				}, { passive: true });
+				}, { passive: false });
 				function endDrag() {
 					if (!dragging) return;
 					dragging = false;

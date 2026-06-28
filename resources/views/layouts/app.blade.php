@@ -121,7 +121,7 @@
 			<div x-show="toast.show"
 				@mouseenter="pause(toast.id)" @mouseleave="resume(toast.id)"
 				@touchstart.passive="dragStart(toast.id, $event)"
-				@touchmove.passive="dragMove(toast.id, $event)"
+				@touchmove="dragMove(toast.id, $event)"
 				@touchend="dragEnd(toast.id)" @touchcancel="dragEnd(toast.id)"
 				x-transition:enter="transition ease-out duration-300 transform"
 				x-transition:enter-start="-translate-y-3 opacity-0 scale-95"
@@ -249,7 +249,10 @@
 					const toast = this.toasts.find(t => t.id === id);
 					if (!toast || !toast.dragging) return;
 					// Hanya izinkan gerak ke atas (nilai negatif).
-					toast.dragY = Math.min(0, event.touches[0].clientY - toast.dragStartY);
+					const offset = Math.min(0, event.touches[0].clientY - toast.dragStartY);
+					// Cegah halaman ikut ter-scroll saat menggeser toast ke atas.
+					if (offset < 0 && event.cancelable) event.preventDefault();
+					toast.dragY = offset;
 				},
 				dragEnd(id) {
 					const toast = this.toasts.find(t => t.id === id);
