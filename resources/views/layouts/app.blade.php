@@ -124,13 +124,14 @@
 				@touchmove="dragMove(toast.id, $event)"
 				@touchend="dragEnd(toast.id)" @touchcancel="dragEnd(toast.id)"
 				x-transition:enter="transition ease-out duration-300 transform"
-				x-transition:enter-start="-translate-y-3 opacity-0 scale-95"
+				x-transition:enter-start="-translate-y-16 opacity-0 scale-90"
 				x-transition:enter-end="translate-y-0 opacity-100 scale-100"
-				x-transition:leave="transition ease-in duration-200 transform"
+				x-transition:leave="transition ease-in duration-300 transform"
 				x-transition:leave-start="translate-y-0 opacity-100 scale-100"
-				x-transition:leave-end="-translate-y-3 opacity-0 scale-95"
-				:style="toast.dragY ? `transform: translateY(${toast.dragY}px); opacity: ${Math.max(0, 1 + toast.dragY / 80)}` : ''"
-				:class="!toast.dragging && 'transition-transform duration-200'"
+				x-transition:leave-end="-translate-y-16 opacity-0 scale-90"
+				:style="toast.dragging
+					? `transform: translateY(${toast.dragY}px); opacity: ${Math.max(0, 1 + toast.dragY / 80)}`
+					: (toast.springing ? 'transform: translateY(0); opacity: 1; transition: transform 0.2s ease, opacity 0.2s ease' : '')"
 				class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5"
 				style="touch-action: pan-x;">
 
@@ -202,7 +203,8 @@
 						remaining: DURATION,
 						dragY: 0,
 						dragStartY: 0,
-						dragging: false
+						dragging: false,
+						springing: false
 					});
 
 					this.$nextTick(() => {
@@ -262,7 +264,10 @@
 					if (toast.dragY < -40) {
 						this.remove(id);
 					} else {
+						// Pantul balik ke posisi semula dengan transisi halus.
+						toast.springing = true;
 						toast.dragY = 0;
+						setTimeout(() => { toast.springing = false; }, 200);
 						this.resume(id);
 					}
 				},

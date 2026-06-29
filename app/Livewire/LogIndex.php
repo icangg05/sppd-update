@@ -269,7 +269,7 @@ class LogIndex extends Component
       })
       ->when($this->event !== '', fn ($q) => $this->applyEventFilter($q))
       ->latest()
-      ->paginate(30)
+      ->paginate(50)
       ->onEachSide(1);
 
     $eventOptions = $this->eventOptions();
