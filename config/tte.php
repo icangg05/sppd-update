@@ -31,6 +31,34 @@ return [
     ],
   ],
 
+  /*
+  |--------------------------------------------------------------------------
+  | Verifikasi Dokumen ber-TTE (keaslian PAdES via BSrE)
+  |--------------------------------------------------------------------------
+  | Verifikasi dilakukan dengan mengunggah PDF ke endpoint verify lalu BSrE
+  | memeriksa keaslian tanda tangannya. Berkas dikirim multipart field
+  | 'signed_file'. Mendukung tiga mode auth:
+  |   - 'basic'  : lewat proxy lokal /api/sign/verify (default; reuse kredensial signing)
+  |   - 'bearer' : token statis (E_SIGN_VERIFY_TOKEN), langsung ke BSrE
+  |   - 'oauth'  : client_credentials (E_SIGN_VERIFY_CLIENT_ID/SECRET), langsung ke BSrE
+  | Jika nonaktif / kredensial kosong, halaman cek dokumen menampilkan pesan
+  | bahwa verifikasi belum aktif.
+  */
+  'verify' => [
+    'enabled'        => env('TTE_VERIFY_BSRE_ENABLED', true),
+    'auth'           => env('E_SIGN_VERIFY_AUTH', 'basic'),
+    // Default lewat proxy yang sama dengan signing: {endpoint}/api/sign/verify
+    'endpoint'       => env('E_SIGN_VERIFY_ENDPOINT', rtrim(env('E_SIGN_API_ENDPOINT', 'http://103.85.5.99'), '/') . '/api/sign/verify'),
+    // Mode 'basic' — default sama dengan Basic auth signing (E_SIGN_AUTH_BASIC).
+    'basic_auth'     => env('E_SIGN_VERIFY_BASIC', env('E_SIGN_AUTH_BASIC', 'ZXNwcGQ6TUEzNDVnRmJCR0hUTWRkeDdlVXI=')),
+    // Mode 'bearer' / 'oauth' — opsional, bila verify langsung ke BSrE.
+    'token'          => env('E_SIGN_VERIFY_TOKEN'),
+    'oauth_endpoint' => env('E_SIGN_VERIFY_OAUTH_ENDPOINT', 'https://esign-bsre.bssn.go.id/oauth/token'),
+    'client_id'      => env('E_SIGN_VERIFY_CLIENT_ID'),
+    'client_secret'  => env('E_SIGN_VERIFY_CLIENT_SECRET'),
+    'timeout'        => (int) env('E_SIGN_VERIFY_TIMEOUT', 30),
+  ],
+
   'storage' => [
     'disk' => env('PDF_STORAGE_DISK', 'public'),
 

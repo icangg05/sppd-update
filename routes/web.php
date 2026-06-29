@@ -115,6 +115,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
     Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
 
+    // Cek / verifikasi keaslian dokumen TTE — hanya super_admin & admin_opd.
+    // Path '/verify/...' dipertahankan karena di-encode pada QR code dokumen
+    // (lihat PdfGeneratorService), jadi tidak diberi prefix 'master'.
+    Route::middleware('role:super_admin|admin_opd')->group(function () {
+        Route::get('/verify', \App\Livewire\VerifyDocument::class)->name('verify.index');
+        // Pratinjau inline berkas unggahan (agar tidak memicu unduhan).
+        Route::get('/verify/preview', [\App\Http\Controllers\DocumentPreviewController::class, 'tempUpload'])->name('verify.preview');
+        Route::get('/verify/{type}/{sppd}/{hash}', \App\Livewire\VerifyDocument::class)
+            ->whereIn('type', ['sppd', 'spt'])
+            ->name('verify.document');
+    });
+
     // Master Data — hanya dapat diakses oleh Super Admin & Admin OPD.
     // Mencegah akses lewat URL langsung oleh role lain (mis. kepala_opd).
     Route::prefix('master')->name('master.')->middleware('role:super_admin|admin_opd')->group(function () {

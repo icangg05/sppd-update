@@ -152,6 +152,13 @@
 			</a>
 		@endif
 
+		{{-- Cek keaslian & status TTE dokumen (target QR code) --}}
+		<a href="{{ route('verify.index') }}" wire:navigate
+			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('verify.index', 'verify.document') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-file-shield fa-fw"></i></span>
+			<span>Cek Dokumen TTE</span>
+		</a>
+
 		{{-- Logs: super_admin (semua data) & admin_opd (data unit kerjanya) --}}
 		<a href="{{ route('master.logs.index') }}" wire:navigate
 			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.logs.index') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">

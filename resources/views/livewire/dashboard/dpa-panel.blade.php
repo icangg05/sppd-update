@@ -96,7 +96,11 @@
         </div>
       </div>
 
-      <div class="mb-3">
+      <div class="mb-3 space-y-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-medium text-slate-500">Penggunaan anggaran</span>
+          <span class="font-mono font-bold text-slate-700">{{ number_format($detail['percentage'], 1, ',', '.') }}%</span>
+        </div>
         <x-ui.budget-bar :percentage="$detail['percentage']" height="h-2.5" />
       </div>
 
