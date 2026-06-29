@@ -42,7 +42,12 @@ jobs:
             echo "Restarting queue worker..."
             docker exec sppd_update_app php artisan queue:restart
 
+            echo "Pruning old Docker artifacts to free disk..."
+            docker image prune -f
+            docker builder prune -f --keep-storage=5GB
+
             echo "Verifying containers..."
             docker compose ps
+            df -h /
 
             echo "Done!"
