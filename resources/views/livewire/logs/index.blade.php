@@ -1,4 +1,4 @@
-<div class="p-1 space-y-4" x-data="{ detailOpen: false, detailTitle: '', detailJson: '' }">
+<div class="p-1 space-y-4" x-data="{ detailOpen: false, detailId: '', detailEvent: '', detailBadgeClass: '', detailHasOld: true, detailRows: [] }">
 
   @php $isTte = $this->isTte(); @endphp
 
@@ -16,10 +16,12 @@
       </div>
     </div>
 
-    <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
-      class="px-3 py-1.5 text-xs font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
-      <i class="fa-solid fa-trash-can text-[10px]"></i> Bersihkan Log
-    </x-ui.button>
+    @if ($this->isSuperAdmin())
+      <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
+        class="px-3 py-1.5 text-xs font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
+        <i class="fa-solid fa-trash-can text-[10px]"></i> Bersihkan Log
+      </x-ui.button>
+    @endif
   </div>
 
   {{-- Filter / Pencarian --}}
@@ -79,29 +81,103 @@
               'domain' => 'Wilayah', 'urgency' => 'Urgensi', 'budget_id' => 'Anggaran',
               'pptk_id' => 'PPTK', 'user_id' => 'Pegawai', 'category_id' => 'Kategori',
               'sppd_date' => 'Tgl SPPD', 'spt_date' => 'Tgl SPT', 'notes' => 'Catatan',
+              'destinations' => 'Tujuan', 'followers' => 'Pengikut',
               'revision_note' => 'Catatan Revisi', 'rejection_note' => 'Catatan Penolakan',
               'is_secretariat' => 'Sekretariat', 'name' => 'Nama', 'username' => 'Username',
-              'email' => 'Email', 'employee_type' => 'Tipe Pegawai', 'department_id' => 'OPD',
+              'email' => 'Email', 'employee_type' => 'Tipe Pegawai', 'department_id' => 'Unit Kerja',
               'is_active' => 'Aktif',
+              // Pegawai (User)
+              'nip' => 'NIP', 'nik' => 'NIK', 'phone' => 'Telepon', 'rank_id' => 'Pangkat',
+              'position_id' => 'Jabatan', 'dprd_jabatan' => 'Jabatan DPRD', 'partai' => 'Partai',
+              // Unit Kerja (Department)
+              'code' => 'Kode', 'parent_id' => 'Induk', 'head_id' => 'Kepala',
+              'type' => 'Jenis', 'level' => 'Tingkat',
+              // Anggaran (Budget)
+              'program' => 'Program', 'activity' => 'Kegiatan', 'account_code' => 'Kode Rekening',
+              'description' => 'Deskripsi', 'source' => 'Sumber', 'year' => 'Tahun',
+              'total_amount' => 'Total Anggaran',
             ];
-            // Format nilai agar ringkas & terbaca.
-            $fmtVal = function ($v) {
-              if (is_null($v) || $v === '') return '∅';
+            // Format nilai penuh (untuk modal) — null jadi penanda kosong.
+            // Jika field berupa foreign key, tampilkan nama relasinya, bukan id.
+            $fmtFull = function ($field, $v) use ($fkConfig, $fkNames) {
+              if (is_null($v) || $v === '') return '—';
+              if (isset($fkConfig[$field]) && is_numeric($v)) {
+                return $fkNames[$fkConfig[$field][0]][$v] ?? ('#' . $v);
+              }
               if (is_bool($v)) return $v ? 'Ya' : 'Tidak';
-              $v = is_scalar($v) ? (string) $v : json_encode($v, JSON_UNESCAPED_UNICODE);
+              $v = is_scalar($v) ? (string) $v : json_encode($v, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
               if (str_contains($v, 'T00:00:00')) $v = substr($v, 0, 10);
-              return \Illuminate\Support\Str::limit($v, 40);
+              return $v;
             };
           @endphp
           @forelse ($activities as $i => $activity)
             @php
-              $eventColor = match ($activity->event) {
+              $subjectName = $activity->subject_type ? class_basename($activity->subject_type) : null;
+
+              // Khusus SPPD: event 'updated' yang berupa penolakan/revisi ditampilkan
+              // sebagai 'ditolak' / 'revisi' di kolom Event (tanpa mengubah data log).
+              $displayEvent = $activity->event;
+              if ($subjectName === 'SppdRequest' && $activity->event === 'updated') {
+                $changedAttrs = (array) data_get($activity->attribute_changes, 'attributes', []);
+                if (($changedAttrs['status'] ?? null) === 'rejected') {
+                  $displayEvent = 'ditolak';
+                } elseif (! empty($changedAttrs['revision_note'])) {
+                  $displayEvent = 'revisi';
+                }
+              }
+
+              $eventColor = match ($displayEvent) {
                 'created', 'signed' => 'green',
                 'updated'           => 'amber',
-                'deleted', 'rejected' => 'rose',
+                'revisi'            => 'orange',
+                'deleted', 'rejected', 'ditolak' => 'rose',
                 default             => 'slate',
               };
-              $subjectName = $activity->subject_type ? class_basename($activity->subject_type) : null;
+              // Kelas pill badge (untuk dipakai di modal lewat Alpine).
+              $eventBadgeClass = match ($eventColor) {
+                'green'  => 'bg-green-50 text-green-700 ring-green-600/20',
+                'amber'  => 'bg-amber-50 text-amber-800 ring-amber-600/20',
+                'orange' => 'bg-orange-50 text-orange-700 ring-orange-600/20',
+                'rose'   => 'bg-rose-50 text-rose-700 ring-rose-600/20',
+                default  => 'bg-slate-50 text-slate-700 ring-slate-600/20',
+              };
+
+              // Ganti deskripsi default mentah (mis. "deleted") menjadi frasa Indonesia.
+              $subjectLabelId = match ($subjectName) {
+                'User'        => 'Pengguna',
+                'SppdRequest' => 'SPPD',
+                'Department'  => 'Unit Kerja',
+                'Budget'      => 'Anggaran',
+                'Role'        => 'Role',
+                default       => $subjectName ? \Illuminate\Support\Str::headline($subjectName) : 'Data',
+              };
+              $eventVerbId = match ($activity->event) {
+                'created'  => 'dibuat',
+                'updated'  => 'diperbarui',
+                'deleted'  => 'dihapus',
+                'signed'   => 'ditandatangani',
+                'rejected' => 'ditolak',
+                default    => $activity->event,
+              };
+              // Nama entitas: dari subjek bila masih ada, jika tidak ambil dari diff.
+              $ch0 = $activity->attribute_changes;
+              $entityName = (is_object($activity->subject) && ! empty($activity->subject->name))
+                ? $activity->subject->name
+                : (data_get($ch0, 'attributes.name') ?? data_get($ch0, 'old.name'));
+
+              $descRaw = trim((string) $activity->description);
+              $descText = mb_strtolower($descRaw) === mb_strtolower((string) $activity->event)
+                ? trim($entityName ? "{$subjectLabelId} {$entityName} {$eventVerbId}" : "{$subjectLabelId} {$eventVerbId}")
+                : $descRaw;
+
+              // Tebalkan bagian nama di tengah: "{label} **{nama}** {kata kerja}".
+              $descHtml = e($descText);
+              if ($eventVerbId && str_starts_with($descText, $subjectLabelId . ' ') && str_ends_with($descText, ' ' . $eventVerbId)) {
+                $mid = trim(mb_substr($descText, mb_strlen($subjectLabelId), mb_strlen($descText) - mb_strlen($subjectLabelId) - mb_strlen($eventVerbId)));
+                if ($mid !== '') {
+                  $descHtml = e($subjectLabelId) . ' <strong class="font-bold text-slate-800">' . e($mid) . '</strong> ' . e($eventVerbId);
+                }
+              }
             @endphp
             <tr wire:key="log-{{ $activity->id }}" class="hover:bg-slate-50/50 transition-colors align-top">
               <td class="py-2.5 px-3 text-center text-slate-400 font-medium">{{ $activities->firstItem() + $i }}.</td>
@@ -122,14 +198,14 @@
 
               <td class="py-2.5 px-4 text-center">
                 @if ($activity->event)
-                  <x-ui.badge :color="$eventColor" class="uppercase tracking-wide">{{ $activity->event }}</x-ui.badge>
+                  <x-ui.badge :color="$eventColor" class="uppercase tracking-wide">{{ $displayEvent }}</x-ui.badge>
                 @else
                   <span class="text-slate-400">-</span>
                 @endif
               </td>
 
               <td class="py-2.5 px-4 whitespace-normal max-w-md">
-                <span class="text-slate-700">{{ $activity->description }}</span>
+                <span class="text-slate-700">{!! $descHtml !!}</span>
 
                 @php
                   $sigId = data_get($activity->properties, 'signature_id');
@@ -142,44 +218,39 @@
                   $oldAttrs = (array) data_get($changes, 'old', []);
                   $changedKeys = array_values(array_unique(array_merge(array_keys($newAttrs), array_keys($oldAttrs))));
 
-                  // Sumber data untuk modal detail (utamakan diff, lalu properties TTE).
-                  $detailSource = ! empty($changedKeys)
-                    ? $changes
-                    : (($activity->properties && $activity->properties->isNotEmpty()) ? $activity->properties : null);
-                  $detailJson = $detailSource
-                    ? json_encode($detailSource, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                    : null;
+                  // Bangun baris terstruktur untuk modal (label, sebelum, sesudah).
+                  $detailRows = [];
+                  $detailHasOld = $activity->event !== 'created';
+                  if (! empty($changedKeys)) {
+                    foreach ($changedKeys as $key) {
+                      $detailRows[] = [
+                        'label' => $fieldLabels[$key] ?? \Illuminate\Support\Str::headline($key),
+                        'old'   => $fmtFull($key, $oldAttrs[$key] ?? null),
+                        'new'   => $fmtFull($key, $newAttrs[$key] ?? null),
+                      ];
+                    }
+                  } elseif ($activity->properties && $activity->properties->isNotEmpty()) {
+                    // Log TTE / properti datar: tampilkan sebagai label + nilai.
+                    $detailHasOld = false;
+                    foreach ($activity->properties as $k => $v) {
+                      $detailRows[] = [
+                        'label' => $fieldLabels[$k] ?? \Illuminate\Support\Str::headline($k),
+                        'old'   => '—',
+                        'new'   => $fmtFull($k, $v),
+                      ];
+                    }
+                  }
+                  $changedCount = count($detailRows);
                 @endphp
 
-                {{-- Ringkasan perubahan field per baris --}}
-                @if (! empty($changedKeys) && $activity->event !== 'created')
-                  <div class="mt-1.5 space-y-1">
-                    @foreach ($changedKeys as $key)
-                      <div class="flex items-start gap-1.5 text-[11px] leading-snug">
-                        <span class="font-semibold text-slate-500">{{ $fieldLabels[$key] ?? $key }}:</span>
-                        <span class="rounded bg-rose-50 px-1 text-rose-600 line-through decoration-rose-300">{{ $fmtVal($oldAttrs[$key] ?? null) }}</span>
-                        <i class="fa-solid fa-arrow-right text-[8px] text-slate-300 mt-1"></i>
-                        <span class="rounded bg-emerald-50 px-1 font-medium text-emerald-700">{{ $fmtVal($newAttrs[$key] ?? null) }}</span>
-                      </div>
-                    @endforeach
-                  </div>
-                @elseif (! empty($changedKeys) && $activity->event === 'created')
-                  <div class="mt-1.5 flex flex-wrap gap-1">
-                    @foreach ($changedKeys as $key)
-                      <span class="inline-flex items-center gap-1 rounded bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-600 ring-1 ring-slate-200">
-                        <span class="font-semibold text-slate-400">{{ $fieldLabels[$key] ?? $key }}:</span> {{ $fmtVal($newAttrs[$key] ?? null) }}
-                      </span>
-                    @endforeach
-                  </div>
-                @endif
-
-                @if ($detailJson || $signedUrl)
-                  <div class="mt-1.5 flex flex-wrap items-start gap-x-3 gap-y-1">
-                    @if ($detailJson)
+                @if ($changedCount > 0 || $signedUrl)
+                  <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    @if ($changedCount > 0)
                       <button type="button"
-                        @click="detailJson = @js($detailJson); detailTitle = @js('#' . $activity->id . ' · ' . ($activity->event ?? 'log')); detailOpen = true"
+                        @click="detailRows = @js($detailRows); detailHasOld = @js($detailHasOld); detailId = @js('#' . $activity->id); detailEvent = @js(strtoupper($displayEvent ?? 'LOG')); detailBadgeClass = @js($eventBadgeClass); detailOpen = true"
                         class="inline-flex items-center gap-1.5 rounded bg-cyan-50 px-2 py-0.5 text-[11px] font-bold text-cyan-700 transition hover:bg-cyan-100">
-                        <i class="fa-solid fa-list text-[10px]"></i> Detail perubahan
+                        <i class="fa-solid fa-table-list text-[10px]"></i> Detail perubahan
+                        <span class="rounded bg-cyan-200/60 px-1 text-[10px]">{{ $changedCount }}</span>
                       </button>
                     @endif
 
@@ -244,11 +315,44 @@
     @endif
   </div>
 
-  {{-- Modal Detail Perubahan --}}
-  <x-ui.modal show="detailOpen" title="Detail Perubahan" icon="fa-solid fa-list text-cyan-600"
-    maxWidth="max-w-2xl" :closeable="true">
-    <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400" x-text="detailTitle"></p>
-    <pre class="max-h-[60vh] overflow-auto rounded bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-200" x-text="detailJson"></pre>
+  {{-- Modal Detail Perubahan — tabel sebelum → sesudah --}}
+  <x-ui.modal show="detailOpen" title="Detail Perubahan" icon="fa-solid fa-table-list text-cyan-600"
+    maxWidth="max-w-3xl" :closeable="true">
+    <div class="mb-3 flex items-center gap-2">
+      <span class="inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium uppercase tracking-wide ring-1 ring-inset"
+        :class="detailBadgeClass" x-text="detailEvent"></span>
+      <span class="text-[11px] font-semibold text-slate-400" x-text="detailId"></span>
+    </div>
+
+    <div class="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">
+      <table class="w-full border-collapse text-left text-xs">
+        <thead class="sticky top-0 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="border-b border-slate-200 px-3 py-2 w-40">Field</th>
+            <th class="border-b border-slate-200 px-3 py-2" x-show="detailHasOld">Sebelum</th>
+            <th class="border-b border-slate-200 px-3 py-2" x-text="detailHasOld ? 'Sesudah' : 'Nilai'"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <template x-for="(row, idx) in detailRows" :key="idx">
+            <tr class="align-top">
+              <td class="px-3 py-2 font-semibold text-slate-600" x-text="row.label"></td>
+              <td class="px-3 py-2" x-show="detailHasOld">
+                <span class="inline-block rounded bg-rose-50 px-1.5 py-0.5 text-rose-600"
+                  :class="row.old === '—' && 'bg-transparent text-slate-300'"
+                  x-text="row.old"></span>
+              </td>
+              <td class="px-3 py-2">
+                <span class="inline-block rounded bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700"
+                  :class="row.new === '—' && 'bg-transparent text-slate-300'"
+                  x-text="row.new"></span>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
     <div class="flex justify-end pt-3">
       <x-ui.button type="button" variant="secondary" @click="detailOpen = false">Tutup</x-ui.button>
     </div>

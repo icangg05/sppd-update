@@ -190,8 +190,7 @@
 
 									{{-- Hapus --}}
 									@can('budget.delete')
-										<button type="button" wire:click="delete({{ $budget->id }})"
-											wire:confirm="Apakah Anda yakin ingin menghapus data anggaran ini?"
+										<button type="button" wire:click="confirmDelete({{ $budget->id }})"
 											class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
 											title="Hapus Anggaran">
 											<i class="fa-solid fa-trash-can text-xs"></i>
@@ -221,5 +220,45 @@
 			</div>
 		@endif
 	</div>
+
+	{{-- Modal Konfirmasi Hapus — tombol Hapus aktif setelah 10 detik --}}
+	<x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Anggaran"
+		description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600"
+		:closeable="false">
+		<div class="space-y-4"
+			x-data="{
+				remaining: 10,
+				timer: null,
+				startCountdown() {
+					this.remaining = 10;
+					clearInterval(this.timer);
+					this.timer = setInterval(() => {
+						if (this.remaining > 0) this.remaining--;
+						if (this.remaining <= 0) clearInterval(this.timer);
+					}, 1000);
+				},
+			}"
+			x-on:budget-delete-countdown.window="startCountdown()"
+			x-init="if ($wire.showDeleteModal) startCountdown()">
+			<p class="text-sm text-slate-600">
+				Yakin ingin menghapus data anggaran
+				<span class="font-bold text-slate-800">{{ $deletingName ?? 'ini' }}</span>?
+				Data yang sudah dihapus tidak dapat dikembalikan.
+			</p>
+
+			<div class="flex items-center justify-end gap-2 pt-1">
+				<x-ui.button type="button" variant="secondary" wire:click="closeDeleteModal">Tutup</x-ui.button>
+				<x-ui.button type="button" variant="danger" wire:click="delete"
+					x-bind:disabled="remaining > 0"
+					x-bind:class="remaining > 0 ? 'opacity-50 cursor-not-allowed' : ''">
+					<span x-show="remaining > 0"><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="remaining"></span>s</span>
+					<span x-show="remaining <= 0" x-cloak>
+						<span wire:loading.remove wire:target="delete"><i class="fa-solid fa-trash-can"></i> Hapus</span>
+						<span wire:loading wire:target="delete"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
+					</span>
+				</x-ui.button>
+			</div>
+		</div>
+	</x-ui.modal>
 
 </div>

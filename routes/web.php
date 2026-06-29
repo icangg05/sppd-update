@@ -18,6 +18,7 @@ use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
+use App\Livewire\Budgets\BudgetForm;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
@@ -134,13 +135,11 @@ Route::middleware('auth')->group(function () {
         // Aksi verifikasi (approve/reject) diguard super_admin di dalam komponen.
         Route::get('/position-requests', PositionRequestIndex::class)->name('position-requests.index');
 
-        // Budgets / Anggaran
+        // Budgets / Anggaran — form create/edit via Livewire full-page.
         Route::get('/budgets', BudgetIndex::class)->name('budgets.index');
-        Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
-        Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+        Route::get('/budgets/create', BudgetForm::class)->name('budgets.create');
         Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
-        Route::get('/budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.edit');
-        Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+        Route::get('/budgets/{budget}/edit', BudgetForm::class)->name('budgets.edit');
         Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
 
         // Workflows SPPD & Roles/Permissions — hanya super_admin.
@@ -165,11 +164,11 @@ Route::middleware('auth')->group(function () {
 
             // Backup Database — hanya super_admin.
             Route::get('/database/backup', \App\Livewire\DatabaseBackup::class)->name('database.backup');
-
-            // Logs Aktivitas — hanya super_admin. Dipisah: aktivitas umum & TTE.
-            Route::get('/logs', \App\Livewire\LogIndex::class)->defaults('scope', 'system')->name('logs.index');
-            Route::get('/logs/tte', \App\Livewire\LogIndex::class)->defaults('scope', 'tte')->name('logs.tte');
         });
+
+        // Logs Aktivitas & TTE — super_admin (semua data) & admin_opd (data department-nya).
+        Route::get('/logs', \App\Livewire\LogIndex::class)->defaults('scope', 'system')->name('logs.index');
+        Route::get('/logs/tte', \App\Livewire\LogIndex::class)->defaults('scope', 'tte')->name('logs.tte');
     });
 
     // API

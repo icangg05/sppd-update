@@ -28,6 +28,11 @@ class BudgetIndex extends Component
   #[Url(keep: true)]
   public string $department_id = '';
 
+  // Konfirmasi hapus
+  public bool $showDeleteModal = false;
+  public ?int $deletingId = null;
+  public ?string $deletingName = null;
+
   public function mount(): void
   {
     if ($this->year === '') {
@@ -64,9 +69,12 @@ class BudgetIndex extends Component
     $this->resetPage();
   }
 
-  public function delete(int $id): void
+  public function confirmDelete(int $id): void
   {
-    $budget = Budget::findOrFail($id);
+    $budget = Budget::find($id);
+    if (! $budget) {
+      return;
+    }
 
     // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
     if (! auth()->user()->hasRole('super_admin') && $budget->department_id !== auth()->user()->department_id) {
@@ -74,13 +82,52 @@ class BudgetIndex extends Component
       return;
     }
 
+    $this->deletingId      = $budget->id;
+    $this->deletingName    = $budget->activity ?: ($budget->account_code ?: "Anggaran #{$budget->id}");
+    $this->showDeleteModal = true;
+
+    // Mulai hitung mundur 10 detik sebelum tombol Hapus aktif.
+    $this->dispatch('budget-delete-countdown');
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId      = null;
+    $this->deletingName    = null;
+  }
+
+  public function delete(): void
+  {
+    $this->showDeleteModal = false;
+
+    if (! $this->deletingId) {
+      return;
+    }
+
+    $budget = Budget::find($this->deletingId);
+    if (! $budget) {
+      $this->closeDeleteModal();
+      return;
+    }
+
+    // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
+    if (! auth()->user()->hasRole('super_admin') && $budget->department_id !== auth()->user()->department_id) {
+      $this->closeDeleteModal();
+      $this->toastError('Anda tidak memiliki akses untuk menghapus data anggaran ini.');
+      return;
+    }
+
     try {
       $budget->delete();
     } catch (\Throwable $e) {
+      $this->closeDeleteModal();
       $this->toastError('Data anggaran tidak dapat dihapus karena masih terkait dengan data lain.');
       return;
     }
 
+    $this->deletingId   = null;
+    $this->deletingName = null;
     $this->toastSuccess('Data anggaran berhasil dihapus.');
   }
 

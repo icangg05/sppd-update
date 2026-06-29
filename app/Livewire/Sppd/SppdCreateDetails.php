@@ -286,6 +286,21 @@ class SppdCreateDetails extends Component
 
           $reviserId = $sppd->reviser_id;
 
+          // Ringkasan relasi (tujuan & pengikut) untuk dicatat ke log aktivitas,
+          // karena perubahannya tidak terekam otomatis (tabel terpisah, di-recreate).
+          $summarizeRelations = function (SppdRequest $s): array {
+            return [
+              'destinations' => $s->destinations()->with('regency')->orderBy('id')->get()
+                ->map(fn ($d) => collect([$d->address, $d->regency?->name])->filter()->implode(', '))
+                ->implode(' | '),
+              'followers' => $s->followers()->with('user')->orderBy('id')->get()
+                ->map(fn ($f) => $f->user?->name ?? ('#' . $f->user_id))
+                ->implode(', '),
+            ];
+          };
+          $relationsBefore = $summarizeRelations($sppd);
+          $activityMaxBefore = (int) \Spatie\Activitylog\Models\Activity::max('id');
+
           $sppd->update([
             'budget_id' => $this->budget_id,
             'category_id' => $this->category_id,
@@ -338,6 +353,41 @@ class SppdCreateDetails extends Component
                 'user_id' => $userId,
                 'travel_position' => $this->follower_positions[$userId] ?? null,
               ]);
+            }
+          }
+
+          // Catat perubahan relasi (tujuan/pengikut) ke log aktivitas bila berubah.
+          $relationsAfter = $summarizeRelations($sppd);
+          $relOld = [];
+          $relNew = [];
+          foreach (['destinations', 'followers'] as $key) {
+            if ($relationsBefore[$key] !== $relationsAfter[$key]) {
+              $relOld[$key] = $relationsBefore[$key];
+              $relNew[$key] = $relationsAfter[$key];
+            }
+          }
+          if (! empty($relNew)) {
+            // Gabungkan ke log otomatis dari update() agar tetap satu kesatuan.
+            $autoLog = \Spatie\Activitylog\Models\Activity::where('subject_type', SppdRequest::class)
+              ->where('subject_id', $sppd->id)
+              ->where('id', '>', $activityMaxBefore)
+              ->latest('id')
+              ->first();
+
+            if ($autoLog) {
+              $changes = $autoLog->attribute_changes;
+              $autoLog->attribute_changes = [
+                'old'        => array_merge((array) data_get($changes, 'old', []), $relOld),
+                'attributes' => array_merge((array) data_get($changes, 'attributes', []), $relNew),
+              ];
+              $autoLog->save();
+            } else {
+              // Tidak ada perubahan field utama → buat log baru khusus relasi.
+              activity()
+                ->performedOn($sppd)
+                ->event('updated')
+                ->withChanges(['old' => $relOld, 'attributes' => $relNew])
+                ->log('SPPD ' . ($sppd->document_number ?: '#' . $sppd->id) . ' diperbarui');
             }
           }
 

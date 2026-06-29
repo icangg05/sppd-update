@@ -150,19 +150,20 @@
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-database fa-fw"></i></span>
 				<span>Backup Database</span>
 			</a>
-
-			<a href="{{ route('master.logs.index') }}" wire:navigate
-				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.logs.index') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
-				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-clock-rotate-left fa-fw"></i></span>
-				<span>Logs Aktivitas</span>
-			</a>
-
-			<a href="{{ route('master.logs.tte') }}" wire:navigate
-				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.logs.tte') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
-				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-pen-nib fa-fw"></i></span>
-				<span>Logs TTE</span>
-			</a>
 		@endif
+
+		{{-- Logs: super_admin (semua data) & admin_opd (data unit kerjanya) --}}
+		<a href="{{ route('master.logs.index') }}" wire:navigate
+			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.logs.index') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-clock-rotate-left fa-fw"></i></span>
+			<span>Logs Aktivitas</span>
+		</a>
+
+		<a href="{{ route('master.logs.tte') }}" wire:navigate
+			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('master.logs.tte') ? 'bg-cyan-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
+			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-pen-nib fa-fw"></i></span>
+			<span>Logs TTE</span>
+		</a>
 		@endif
 	</nav>
 

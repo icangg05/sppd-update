@@ -6,9 +6,13 @@ use App\Enums\DepartmentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Department extends Model
 {
+  use LogsActivity;
+
   protected $fillable = [
     'parent_id',
     'head_id',
@@ -26,6 +30,27 @@ class Department extends Model
       'type' => DepartmentType::class,
       'level' => 'integer',
     ];
+  }
+
+  public function getActivitylogOptions(): LogOptions
+  {
+    return LogOptions::defaults()
+      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'type', 'level'])
+      ->logOnlyDirty()
+      ->dontLogEmptyChanges()
+      ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
+  }
+
+  protected function describeLogEvent(string $event): string
+  {
+    $label = $this->name ? "Unit Kerja {$this->name}" : "Unit Kerja #{$this->getKey()}";
+
+    return match ($event) {
+      'created' => "{$label} dibuat",
+      'updated' => "{$label} diperbarui",
+      'deleted' => "{$label} dihapus",
+      default   => "{$label} {$event}",
+    };
   }
 
   // ──────────────────────────────────────────────
