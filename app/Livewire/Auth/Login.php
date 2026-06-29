@@ -12,8 +12,8 @@ use Livewire\Component;
 #[Layout('layouts.guest')]
 class Login extends Component
 {
-  public string $username = '';
-  public string $password = '';
+  public string $username = 'admin_diskominfo';
+  public string $password = 'pass1234';
   public bool $remember = false;
 
   /** Sisa detik penguncian (0 = tidak terkunci). Dipakai untuk hitung mundur. */

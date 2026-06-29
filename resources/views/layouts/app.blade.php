@@ -152,7 +152,7 @@
 				</div>
 
 				<!-- Title + Message -->
-				<div class="flex-1 min-w-0 leading-tight">
+				<div class="flex-1 min-w-0 leading-tight select-none">
 					<p class="text-xs sm:text-sm font-bold text-slate-800 truncate" x-text="toast.title"></p>
 					<p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 line-clamp-2 sm:line-clamp-none" x-show="toast.message" x-text="toast.message"></p>
 				</div>

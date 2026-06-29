@@ -22,7 +22,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
 					</svg>
 				</div>
-				<div class="min-w-0 flex-1 leading-tight">
+				<div class="min-w-0 flex-1 leading-tight select-none">
 					<p class="text-sm font-bold text-slate-800">Berhasil</p>
 					<p class="mt-0.5 text-xs text-slate-500">{{ session('success') ?? session('status') }}</p>
 				</div>

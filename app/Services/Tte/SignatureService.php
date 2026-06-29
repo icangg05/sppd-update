@@ -49,6 +49,7 @@ class SignatureService
         'status'        => SignatureStatus::REJECTED,
         'error_message' => $message,
       ]);
+      $this->logTteActivity($signature, 'rejected', 'Penandatanganan elektronik gagal (permintaan provider ditolak)');
       // Hapus draft agar tidak membebani server
       $this->deleteDraftFile($draftFile);
 
@@ -62,6 +63,7 @@ class SignatureService
         'status'        => SignatureStatus::REJECTED,
         'error_message' => 'Provider returned no PDF output.',
       ]);
+      $this->logTteActivity($signature, 'rejected', 'Penandatanganan elektronik gagal (provider tidak mengembalikan PDF)');
       $this->deleteDraftFile($draftFile);
 
       return ['details' => 'Provider returned no PDF output.'];
@@ -96,6 +98,7 @@ class SignatureService
           'status'        => SignatureStatus::REJECTED,
           'error_message' => $message,
         ]);
+        $this->logTteActivity($signature, 'rejected', 'Penandatanganan elektronik gagal (permintaan kedua provider ditolak)');
         $this->deleteDraftFile($draftFile);
 
         return ['details' => $result2];
@@ -117,10 +120,41 @@ class SignatureService
       'error_message'    => null,
     ]);
 
+    $docLabel = SignatureDocumentType::tryFrom($signature->document_type)?->label() ?? strtoupper($signature->document_type);
+    $this->logTteActivity(
+      $signature,
+      'signed',
+      "Menandatangani dokumen {$docLabel} {$signature->sppdRequest->document_number} secara elektronik",
+    );
+
     // Poin 4: Hapus file draft (doc_dummy) setelah signing berhasil
     $this->deleteDraftFile($draftFile);
 
     return true;
+  }
+
+  /**
+   * Catat aktivitas TTE ke activity log (log_name "tte").
+   * Causer di-set eksplisit ke penanda tangan karena proses berjalan di queue
+   * (tanpa konteks auth), sehingga "siapa yang TTE" tetap terekam.
+   */
+  private function logTteActivity(SppdDigitalSignature $signature, string $event, string $description): void
+  {
+    $docLabel = SignatureDocumentType::tryFrom($signature->document_type)?->label() ?? strtoupper($signature->document_type);
+
+    activity('tte')
+      ->performedOn($signature->sppdRequest)
+      ->causedBy($signature->signer)
+      ->event($event)
+      ->withProperties([
+        'signature_id'      => $signature->id,
+        'document_type'     => $docLabel,
+        'document_number'   => $signature->sppdRequest->document_number,
+        'signer'            => $signature->signer?->name,
+        'signed_file_url'   => $signature->signed_file_url,
+        'error_message'     => $signature->error_message,
+      ])
+      ->log($description);
   }
 
   /**

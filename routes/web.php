@@ -165,6 +165,10 @@ Route::middleware('auth')->group(function () {
 
             // Backup Database — hanya super_admin.
             Route::get('/database/backup', \App\Livewire\DatabaseBackup::class)->name('database.backup');
+
+            // Logs Aktivitas — hanya super_admin. Dipisah: aktivitas umum & TTE.
+            Route::get('/logs', \App\Livewire\LogIndex::class)->defaults('scope', 'system')->name('logs.index');
+            Route::get('/logs/tte', \App\Livewire\LogIndex::class)->defaults('scope', 'tte')->name('logs.tte');
         });
     });
 

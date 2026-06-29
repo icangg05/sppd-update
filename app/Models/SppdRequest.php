@@ -63,8 +63,46 @@ class SppdRequest extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'document_number'])
-            ->logOnlyDirty();
+            ->logOnly([
+                'status',
+                'document_number',
+                'purpose',
+                'start_date',
+                'end_date',
+                'departure_place',
+                'transport_type',
+                'transport_name',
+                'domain',
+                'urgency',
+                'budget_id',
+                'pptk_id',
+                'user_id',
+                'category_id',
+                'sppd_date',
+                'spt_date',
+                'notes',
+                'revision_note',
+                'rejection_note',
+                'is_secretariat',
+            ])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
+    }
+
+    /**
+     * Deskripsi aktivitas yang mudah dibaca (mis. "SPPD 090/123 diperbarui").
+     */
+    protected function describeLogEvent(string $event): string
+    {
+        $label = $this->document_number ? "SPPD {$this->document_number}" : "SPPD #{$this->getKey()}";
+
+        return match ($event) {
+            'created' => "{$label} dibuat",
+            'updated' => "{$label} diperbarui",
+            'deleted' => "{$label} dihapus",
+            default   => "{$label} {$event}",
+        };
     }
 
     protected static function booted(): void
