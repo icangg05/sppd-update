@@ -175,7 +175,8 @@
 			</div>
 		</div>
 
-		{{-- Pembebanan Anggaran & Pencarian Pengikut --}}
+		{{-- Pembebanan Anggaran & Informasi Anggaran Tersedia --}}
+		@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
@@ -216,6 +217,70 @@
 				</div>
 			</div>
 
+			{{-- Informasi Anggaran Tersedia (muncul saat program / kegiatan dipilih) --}}
+			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden flex flex-col">
+				<div class="border-b border-slate-100 bg-emerald-50/60 px-5 py-3">
+					<h3 class="text-xs font-bold tracking-wider text-emerald-700 uppercase flex items-center gap-1.5">
+						<i class="fa-solid fa-wallet text-emerald-600"></i> Informasi Anggaran Tersedia
+					</h3>
+				</div>
+				@if ($selectedBudget)
+					<div class="p-5 space-y-3.5 flex-1">
+						{{-- Sisa Pagu (Anggaran Tersedia) --}}
+						<div class="rounded border {{ $selectedBudget->balance < 0 ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50' }} px-3 py-2.5">
+							<span class="block text-[10px] font-bold uppercase tracking-wider {{ $selectedBudget->balance < 0 ? 'text-rose-600' : 'text-emerald-600' }}">Sisa Pagu Tersedia</span>
+							<p class="mt-0.5 text-lg font-bold {{ $selectedBudget->balance < 0 ? 'text-rose-700' : 'text-emerald-700' }}">
+								Rp {{ number_format($selectedBudget->balance, 0, ',', '.') }}
+							</p>
+						</div>
+
+						{{-- Bar Realisasi --}}
+						<div>
+							<div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
+								<span>Realisasi {{ $selectedBudget->realization_percentage }}%</span>
+								<span>Rp {{ number_format($selectedBudget->realization, 0, ',', '.') }}</span>
+							</div>
+							<div class="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-cyan-500' }}"
+									style="width: {{ min($selectedBudget->realization_percentage, 100) }}%"></div>
+							</div>
+						</div>
+
+						{{-- Pagu Total --}}
+						<div class="flex items-center justify-between border-t border-slate-200/70 pt-2.5 text-xs">
+							<span class="font-medium text-slate-500">Pagu Total</span>
+							<span class="font-bold text-slate-800">Rp {{ number_format($selectedBudget->total_amount, 0, ',', '.') }}</span>
+						</div>
+
+						{{-- Detail Program / Kegiatan --}}
+						<div class="space-y-2 border-t border-slate-200/70 pt-2.5 leading-tight">
+							<div>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Program</span>
+								<p class="text-xs font-semibold text-cyan-700">{{ $selectedBudget->program ?? '-' }}</p>
+							</div>
+							<div>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kegiatan</span>
+								<p class="text-xs text-slate-600">{{ $selectedBudget->activity ?? '-' }}</p>
+							</div>
+							@if ($selectedBudget->account_code)
+								<div>
+									<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kode Rekening</span>
+									<span class="inline-block mt-0.5 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-medium text-slate-600 border border-slate-200/60">{{ $selectedBudget->account_code }}</span>
+								</div>
+							@endif
+						</div>
+					</div>
+				@else
+					<div class="flex flex-1 flex-col items-center justify-center p-8 text-center text-xs text-slate-400 italic">
+						<i class="fa-solid fa-hand-pointer mb-2 block text-xl text-slate-300"></i>
+						Pilih program / kegiatan anggaran untuk menampilkan informasi anggaran tersedia.
+					</div>
+				@endif
+			</div>
+		</div>
+
+		{{-- Daftar Pengikut & Penomoran Dokumen Resmi --}}
+		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden flex flex-col">
 				<div
 					class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -261,37 +326,39 @@
 					</div>
 				</div>
 			</div>
-		</div>
 
-		{{-- Administrasi Tanggal Pengesahan --}}
-		<div class="mt-4 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
-			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-					<i class="fa-solid fa-calendar-check text-cyan-600"></i> Penomoran & Penanggalan Dokumen Resmi
-				</h3>
-			</div>
-			<div class="p-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-				@if ($isInspektorat)
-					<x-form.input type="text" wire:model="document_number" label="Nomor Surat Tugas" placeholder="Contoh: 700/100/Insp/V/2026" wrapperClass="md:col-span-2" />
-				@endif
-					<x-form.input type="date" wire:model="spt_date" label="Tanggal Penerbitan SPT" required />
-					<x-form.input type="date" wire:model="sppd_date" label="Tanggal Penerbitan SPPD" required />
-			</div>
-		</div>
+			{{-- Administrasi Tanggal Pengesahan --}}
+			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
+					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
+						<i class="fa-solid fa-calendar-check text-cyan-600"></i> Penomoran & Penanggalan Dokumen Resmi
+					</h3>
+				</div>
+				<div class="p-5 space-y-4">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						@if ($isInspektorat)
+							<x-form.input type="text" wire:model="document_number" label="Nomor Surat Tugas" placeholder="Contoh: 700/100/Insp/V/2026" wrapperClass="md:col-span-2" />
+						@endif
+							<x-form.input type="date" wire:model="spt_date" label="Tanggal Penerbitan SPT" required />
+							<x-form.input type="date" wire:model="sppd_date" label="Tanggal Penerbitan SPPD" required />
+					</div>
 
-		{{-- Tombol Submit Pembuat Aksi --}}
-		<div class="mt-5 flex justify-end">
-			<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
-				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
-				<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
-					<i class="fa-solid fa-paper-plane text-xs"></i>
-					<span>Buat & Ajukan SPPD</span>
-				</span>
-				<span wire:loading wire:target="openConfirmModal" class="inline-flex items-center gap-2">
-					<i class="fa-solid fa-spinner fa-spin text-xs"></i>
-					<span>Memproses...</span>
-				</span>
-			</button>
+					{{-- Tombol Submit Pembuat Aksi --}}
+					<div class="flex justify-end border-t border-slate-100 pt-4">
+						<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
+							class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+							<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
+								<i class="fa-solid fa-paper-plane text-xs"></i>
+								<span>Buat & Ajukan SPPD</span>
+							</span>
+							<span wire:loading wire:target="openConfirmModal" class="inline-flex items-center gap-2">
+								<i class="fa-solid fa-spinner fa-spin text-xs"></i>
+								<span>Memproses...</span>
+							</span>
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	</form>
 

@@ -43,7 +43,7 @@
 			:class="shake && 'animate-modal-shake'"
 			@animationend="shake = false"
 			class="w-full {{ $maxWidth }} rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
-			@keydown.escape.window="{{ $closeable ? $show . ' = false' : '' }}">
+			@keydown.escape.window="if ({{ $show }}) { {{ $show }} = false }">
 
 			{{-- Header --}}
 			<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">

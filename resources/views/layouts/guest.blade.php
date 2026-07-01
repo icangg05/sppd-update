@@ -7,98 +7,16 @@
 	<meta name="google" content="notranslate">
 	<meta name="robots" content="index, follow">
 	<title>{{ config('app.name') }}</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 	@livewireStyles
 </head>
 
 <body class="font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
 
-	{{-- Toast (mandiri tanpa Alpine) — mis. notifikasi setelah logout --}}
-	@if (session('success') || session('status'))
-		<div id="guestToast" class="fixed left-1/2 top-5 z-9999 w-full max-w-sm -translate-x-1/2 px-3">
-			<div class="toast-card relative flex items-center gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-lg shadow-slate-900/20 ring-1 ring-black/5">
-				<div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-					<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-					</svg>
-				</div>
-				<div class="min-w-0 flex-1 leading-tight select-none">
-					<p class="text-sm font-bold text-slate-800">Berhasil</p>
-					<p class="mt-0.5 text-xs text-slate-500">{{ session('success') ?? session('status') }}</p>
-				</div>
-				<button type="button" onclick="window.__dismissGuestToast && window.__dismissGuestToast()"
-					class="-mr-0.5 -mt-0.5 shrink-0 self-start rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-500">
-					<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-					</svg>
-				</button>
-				<div class="toast-progress absolute bottom-0 left-0 h-1 w-full bg-emerald-500" style="animation-duration: 4000ms"></div>
-			</div>
-		</div>
-		<script>
-			(function () {
-				var wrap = document.getElementById('guestToast');
-				if (!wrap) return;
-				var card = wrap.querySelector('.toast-card');
-				var DURATION = 4000, remaining = DURATION, startedAt = Date.now(), timer = null;
-
-				function remove() {
-					wrap.style.transition = 'opacity .2s ease, transform .2s ease';
-					wrap.style.opacity = '0';
-					wrap.style.transform = 'translate(-50%, -12px)';
-					setTimeout(function () { wrap.remove(); }, 200);
-				}
-				function start() { startedAt = Date.now(); timer = setTimeout(remove, remaining); }
-
-				// Geser ke atas untuk menutup.
-				var dragStartY = 0, dragY = 0, dragging = false;
-				card.style.touchAction = 'pan-x';
-				card.addEventListener('touchstart', function (e) {
-					dragging = true;
-					dragStartY = e.touches[0].clientY;
-					if (timer) { clearTimeout(timer); timer = null; remaining -= Date.now() - startedAt; }
-					wrap.style.transition = 'none';
-				}, { passive: true });
-				card.addEventListener('touchmove', function (e) {
-					if (!dragging) return;
-					dragY = Math.min(0, e.touches[0].clientY - dragStartY);
-					// Cegah halaman ikut ter-scroll saat menggeser toast ke atas.
-					if (dragY < 0 && e.cancelable) e.preventDefault();
-					wrap.style.transform = 'translate(-50%, ' + dragY + 'px)';
-					wrap.style.opacity = String(Math.max(0, 1 + dragY / 80));
-				}, { passive: false });
-				function endDrag() {
-					if (!dragging) return;
-					dragging = false;
-					if (dragY < -40) { remove(); return; }
-					wrap.style.transition = 'transform .2s ease, opacity .2s ease';
-					wrap.style.transform = 'translate(-50%, 0)';
-					wrap.style.opacity = '1';
-					dragY = 0;
-					if (remaining <= 0) { remove(); return; }
-					start();
-				}
-				card.addEventListener('touchend', endDrag);
-				card.addEventListener('touchcancel', endDrag);
-
-				window.__dismissGuestToast = function () { if (timer) clearTimeout(timer); remove(); };
-
-				// Saat di-hover: bekukan hitung mundur; saat keluar: lanjutkan dari sisa waktu.
-				card.addEventListener('mouseenter', function () {
-					if (!timer) return;
-					clearTimeout(timer); timer = null;
-					remaining -= Date.now() - startedAt;
-				});
-				card.addEventListener('mouseleave', function () {
-					if (timer) return;
-					if (remaining <= 0) { remove(); return; }
-					start();
-				});
-
-				start();
-			})();
-		</script>
-	@endif
+	{{-- Notifikasi Toast global (mis. setelah logout) --}}
+	<x-ui.toast />
 
 	<div class="h-dvh lg:h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8">
 
