@@ -23,7 +23,9 @@ class SignatureService
   public function sign(SppdDigitalSignature $signature, string $passphrase): bool|array
   {
     $draftFile = $this->pdfGenerator->generateDraft($signature);
-    $linkQr    = url('/verify/' . $signature->document_type . '/' . $signature->sppdRequest->id . '/' . md5($signature->sppdRequest->document_number . $signature->sppdRequest->id));
+    // Link QR yang dikirim ke provider TTE: arahkan ke halaman publik (read-only)
+    // detail SPPD, konsisten dengan QR yang dirender pada dokumen.
+    $linkQr    = $signature->sppdRequest->publicUrl();
 
     // Buat tampilan TTE dari provider selalu invisible untuk semua jenis dokumen
     // agar tidak memunculkan QR Code duplikat kecil dari provider di bagian bawah.

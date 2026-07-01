@@ -78,17 +78,34 @@
 		// lewat wire:navigate (terasa seperti SPA). wire:navigate menukar seluruh
 		// DOM termasuk <nav>, jadi scrollTop disimpan sebelum navigasi lalu
 		// dipulihkan setelah DOM baru terpasang.
+		//
+		// Posisi hanya dipulihkan pada navigasi SPA. Saat full page load
+		// (mis. setelah login/logout) event livewire:navigated tetap terpicu,
+		// tapi livewire:navigating TIDAK, jadi flag di bawah membedakannya
+		// supaya scroll direset ke atas alih-alih memakai posisi sesi lama.
 		const SIDEBAR_SCROLL_KEY = 'sidebar-nav-scroll';
+		let sidebarNavigating = false;
 
 		document.addEventListener('livewire:navigating', function() {
+			sidebarNavigating = true;
 			const nav = document.getElementById('sidebar-nav');
 			if (nav) sessionStorage.setItem(SIDEBAR_SCROLL_KEY, nav.scrollTop);
 		});
 
 		document.addEventListener('livewire:navigated', function() {
 			const nav = document.getElementById('sidebar-nav');
-			const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
-			if (nav && saved !== null) nav.scrollTop = parseInt(saved, 10) || 0;
+			if (!nav) return;
+
+			if (sidebarNavigating) {
+				// Pindah halaman via SPA: pulihkan posisi scroll.
+				const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+				if (saved !== null) nav.scrollTop = parseInt(saved, 10) || 0;
+				sidebarNavigating = false;
+			} else {
+				// Full page load (login/logout/refresh): reset ke atas.
+				sessionStorage.removeItem(SIDEBAR_SCROLL_KEY);
+				nav.scrollTop = 0;
+			}
 		});
 
 		document.addEventListener('livewire:navigated', function() {

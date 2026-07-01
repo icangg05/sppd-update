@@ -313,6 +313,23 @@ class SppdRequest extends Model
     }
 
     /**
+     * Token rahasia untuk tautan publik (read-only) SPPD. Diturunkan dari
+     * app.key sehingga tidak dapat ditebak walau id/hashids-nya diketahui.
+     */
+    public function publicToken(): string
+    {
+        return hash_hmac('sha256', 'sppd-public|' . $this->getKey(), config('app.key'));
+    }
+
+    /**
+     * URL halaman publik (read-only) SPPD, lengkap dengan token.
+     */
+    public function publicUrl(): string
+    {
+        return route('sppd.public', ['sppd' => $this, 'token' => $this->publicToken()]);
+    }
+
+    /**
      * Retrieve the model for a bound value.
      *
      * @param  mixed  $value

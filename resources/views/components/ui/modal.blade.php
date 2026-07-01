@@ -5,7 +5,18 @@
 	// isyarat bahwa modal harus ditutup lewat tombol.
 	$outsideClick = $closeable ? ($show . ' = false') : 'shake = false; $nextTick(() => shake = true)';
 @endphp
-<div x-data="{ shake: false }" x-show="{{ $show }}" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+<div x-data="{ shake: false }" x-show="{{ $show }}"
+	{{-- Kunci scroll body selama modal terbuka. Pakai counter global agar aman
+	     bila ada beberapa modal: body baru bisa discroll lagi setelah semua tutup. --}}
+	x-init="
+		const lock = (open) => {
+			window.__modalOpenCount = Math.max(0, (window.__modalOpenCount || 0) + (open ? 1 : -1));
+			document.body.style.overflow = window.__modalOpenCount > 0 ? 'hidden' : '';
+		};
+		if ({{ $show }}) lock(true);
+		$watch('{{ $show }}', (open) => lock(open));
+	"
+	class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
 	<!-- Backdrop -->
 	<div x-show="{{ $show }}"
 		x-transition:enter="transition ease-out duration-200"

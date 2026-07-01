@@ -253,18 +253,6 @@ class RoleAndPermissionSeeder extends Seeder
       'report.view',
     ]);
 
-    // Inspektorat
-    Role::firstOrCreate(
-      ['name' => 'inspektorat'],
-      ['label' => 'Inspektorat', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
     // Anggota DPRD
     Role::firstOrCreate(
       ['name' => 'anggota_dprd'],
@@ -311,8 +299,6 @@ class RoleAndPermissionSeeder extends Seeder
       'sekcam'            => 'yellow',
       'lurah'             => 'sky',
       'kapus'             => 'purple',
-      // 'rose' dipakai ulang dgn walikota — keduanya tak pernah satu OPD.
-      'inspektorat'       => 'rose',
       'staf'              => 'slate',
     ];
 

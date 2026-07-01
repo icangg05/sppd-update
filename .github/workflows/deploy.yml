@@ -24,13 +24,29 @@ jobs:
           script: |
             set -e
             cd /var/www/sppd-update
+            # Jangan cetak attestation/provenance manifest yang menumpuk di disk.
+            export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 
             echo "Pull latest code..."
             git pull origin main
 
-            echo "Rebuild Docker..."
-            docker compose down
-            docker compose up -d --build
+            # ── Bebaskan disk SEBELUM build ──
+            # Build gagal paling sering karena disk penuh; bersihkan dulu agar
+            # ruang tersedia, bukan setelah build (yang tak pernah tercapai bila gagal).
+            echo "Freeing disk before build..."
+            docker image prune -f
+            docker builder prune -f --reserved-space=3GB
+            df -h /
+
+            # ── Build dulu, baru recreate ──
+            # Container lama tetap MELAYANI selama build. Bila build gagal,
+            # `set -e` menghentikan skrip di sini dengan situs tetap HIDUP —
+            # bukan mati seperti pola `docker compose down` + build.
+            echo "Building images..."
+            docker compose build
+
+            echo "Recreating containers (minimal downtime)..."
+            docker compose up -d
 
             echo "Waiting for app container to be ready..."
             sleep 5
@@ -42,9 +58,9 @@ jobs:
             echo "Restarting queue worker..."
             docker exec sppd_update_app php artisan queue:restart
 
-            echo "Pruning old Docker artifacts to free disk..."
+            echo "Final cleanup of dangling artifacts..."
             docker image prune -f
-            docker builder prune -f --keep-storage=5GB
+            docker builder prune -f --reserved-space=3GB
 
             echo "Verifying containers..."
             docker compose ps

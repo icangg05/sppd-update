@@ -42,6 +42,15 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', Login::class)->name('login');
 });
 
+// Halaman publik (read-only) detail SPPD — tanpa login, dilindungi token rahasia.
+Route::get('/publik/sppd/{sppd}/{token}', [SppdController::class, 'publicShow'])->name('sppd.public');
+
+// Kompatibilitas QR lama: dokumen ber-TTE yang sudah terbit menyimpan QR ke
+// /verify/{type}/{sppd}/{hash}. Arahkan langsung ke halaman publik tanpa login.
+Route::get('/verify/{type}/{sppd}/{hash}', [SppdController::class, 'publicVerifyRedirect'])
+    ->whereIn('type', ['sppd', 'spt'])
+    ->name('verify.document');
+
 // Auth routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -115,16 +124,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
     Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
 
-    // Cek / verifikasi keaslian dokumen TTE — hanya super_admin & admin_opd.
-    // Path '/verify/...' dipertahankan karena di-encode pada QR code dokumen
-    // (lihat PdfGeneratorService), jadi tidak diberi prefix 'master'.
+    // Cek / verifikasi keaslian dokumen TTE (unggah berkas) — super_admin & admin_opd.
     Route::middleware('role:super_admin|admin_opd')->group(function () {
         Route::get('/verify', \App\Livewire\VerifyDocument::class)->name('verify.index');
         // Pratinjau inline berkas unggahan (agar tidak memicu unduhan).
         Route::get('/verify/preview', [\App\Http\Controllers\DocumentPreviewController::class, 'tempUpload'])->name('verify.preview');
-        Route::get('/verify/{type}/{sppd}/{hash}', \App\Livewire\VerifyDocument::class)
-            ->whereIn('type', ['sppd', 'spt'])
-            ->name('verify.document');
     });
 
     // Master Data — hanya dapat diakses oleh Super Admin & Admin OPD.

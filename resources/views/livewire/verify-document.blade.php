@@ -53,8 +53,10 @@
     {{-- 2 kolom: pratinjau dokumen (tampil saat dipilih) | hasil verifikasi (setelah diklik) --}}
     @if ($file)
       <div class="grid items-start gap-4 lg:grid-cols-2">
-        {{-- Pratinjau dokumen — langsung tampil saat berkas dipilih --}}
-        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {{-- Pratinjau dokumen — langsung tampil saat berkas dipilih.
+             Disembunyikan di mobile (iframe PDF kurang berguna di layar kecil),
+             tampil mulai breakpoint lg sesuai grid 2 kolom. --}}
+        <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
           <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-600">
             <i class="fa-regular fa-file-pdf text-rose-500"></i> Pratinjau Dokumen
           </div>

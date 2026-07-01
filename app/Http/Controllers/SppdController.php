@@ -153,6 +153,38 @@ class SppdController extends Controller
   }
 
   /**
+   * Kompatibilitas QR lama: dokumen ber-TTE yang sudah terbit menyimpan QR
+   * ke /verify/{type}/{sppd}/{hash} (butuh login). Arahkan langsung ke halaman
+   * publik (read-only) tanpa login, konsisten dengan QR dokumen baru.
+   */
+  public function publicVerifyRedirect(string $type, SppdRequest $sppd, string $hash): \Illuminate\Http\RedirectResponse
+  {
+    return redirect()->to($sppd->publicUrl());
+  }
+
+  /**
+   * Halaman publik (read-only) detail SPPD — informasi sama seperti halaman
+   * show, tetapi TANPA alur persetujuan dan status TTE. Diakses tanpa login,
+   * dilindungi token rahasia (lihat SppdRequest::publicToken()).
+   */
+  public function publicShow(SppdRequest $sppd, string $token): View
+  {
+    abort_unless(hash_equals($sppd->publicToken(), $token), 404);
+
+    $sppd->load([
+      'user',
+      'creator',
+      'budget.department',
+      'category',
+      'destinations.province',
+      'destinations.regency',
+      'followers.user',
+    ]);
+
+    return view('sppd.public', compact('sppd'));
+  }
+
+  /**
    * Halaman Kelola SPPD (Image 1)
    */
   public function manageSppd(SppdRequest $sppd)
@@ -470,8 +502,8 @@ class SppdController extends Controller
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('spt')) {
-      $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
-      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
+      // QR mengarah ke halaman publik (read-only) detail SPPD.
+      $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 65);
     }
 
     $isDprdMember = $sppd->user->department?->getRootDepartment()?->type === DepartmentType::DPRD && $sppd->user->isDprdMember();
@@ -545,8 +577,8 @@ class SppdController extends Controller
     ];
 
     if ($pdfData['is_approved'] && $sppd->isSigned('sppd')) {
-      $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
-      $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 50);
+      // QR mengarah ke halaman publik (read-only) detail SPPD.
+      $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 50);
     }
 
     return Pdf::loadView('exports.sppd', [
@@ -657,11 +689,8 @@ class SppdController extends Controller
     }
 
     // QR Code
-    $pdfUrl = route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    if ($dateParam) {
-      $pdfUrl .= '&date=' . urlencode($dateParam);
-    }
-    $qrImage = QrSimulator::generate($pdfUrl);
+    // QR mengarah ke halaman publik (read-only) detail SPPD.
+    $qrImage = QrSimulator::generate($sppd->publicUrl());
 
     $pdfData = [
       // Data anggaran
@@ -766,11 +795,8 @@ class SppdController extends Controller
     }
 
     // QR Code
-    $pdfUrl = route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    if ($dateParam) {
-      $pdfUrl .= '&date=' . urlencode($dateParam);
-    }
-    $qrImage = QrSimulator::generate($pdfUrl);
+    // QR mengarah ke halaman publik (read-only) detail SPPD.
+    $qrImage = QrSimulator::generate($sppd->publicUrl());
 
     $pdfData = [
       // Data anggaran
@@ -860,11 +886,8 @@ class SppdController extends Controller
     }
 
     // QR Code
-    $pdfUrl = route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    if ($dateParam) {
-      $pdfUrl .= '&date=' . urlencode($dateParam);
-    }
-    $qrImage = QrSimulator::generate($pdfUrl);
+    // QR mengarah ke halaman publik (read-only) detail SPPD.
+    $qrImage = QrSimulator::generate($sppd->publicUrl());
 
     $pdfData = [
       'pptk_name' => $pptk?->name ?? '_________________________',
@@ -960,11 +983,8 @@ class SppdController extends Controller
     }
 
     // QR Code
-    $pdfUrl = route('sppd.stream.rincian-biaya', ['sppd' => $sppd->id, 'user_id' => $userId]);
-    if ($dateParam) {
-      $pdfUrl .= '&date=' . urlencode($dateParam);
-    }
-    $qrImage = QrSimulator::generate($pdfUrl);
+    // QR mengarah ke halaman publik (read-only) detail SPPD.
+    $qrImage = QrSimulator::generate($sppd->publicUrl());
 
     $pdfData = [
       'pptk_name' => $pptk?->name ?? '_________________________',

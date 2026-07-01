@@ -395,11 +395,14 @@
 				</tr>
 
 				<!-- Baris II - V (Dinamis berdasarkan destinasi, maks 4 tujuan) -->
+				{{-- Perjalanan dalam daerah: dari tempat kedudukan (I) langsung berakhir di
+				     tempat kedudukan (VI), jadi baris II-V dikosongkan (template saja). --}}
+				@php $isDalamDaerah = $sppd->domain === \App\Enums\SppdDomain::DALAM_DAERAH; @endphp
 				@for ($i = 2; $i <= 5; $i++)
 					@php
 						$destIndex = $i - 2; // index 0 = destinasi pertama (untuk baris II)
-						$dest = $sppd->destinations->get($destIndex);
-						$nextDest = $sppd->destinations->get($destIndex + 1);
+						$dest = $isDalamDaerah ? null : $sppd->destinations->get($destIndex);
+						$nextDest = $isDalamDaerah ? null : $sppd->destinations->get($destIndex + 1);
 					@endphp
 					<tr>
 						<td style="height: 100px; position: relative;">
@@ -585,25 +588,20 @@
 		<div class="clear"></div>
 	</div>
 
-	<footer style="font-size: 7pt;">
-		<div style="position: fixed; bottom: 5px; width: 100%;">
-			<div style="width: 100%; border-top: 1px solid black; padding: 0 0 5px 0;"></div>
-
-			<table style="width: 100%; font-style: italic;">
-				<tr>
-					<td>
-						<div style="width: 100%; float: left;">
-							Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
-						</div>
-					</td>
-					<td>
-						<div style="width: 100%; float: right; text-align: right;">
-							Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
-						</div>
-					</td>
-				</tr>
-			</table>
-		</div>
+	{{-- Footer dokumen: garis di atas, lalu teks gratifikasi (kiri) sejajar dengan
+	     teks tanda tangan elektronik (kanan). Gaya selaras dengan cetak SPT. --}}
+	<footer style="position: fixed; bottom: -8px; left: 0; right: 0; width: 100%; font-size: 8pt; color: #6b7280; font-family: Arial, Helvetica, sans-serif;">
+		<div style="border-top: 1px solid #d1d5db; margin: 0 0 5px 0"></div>
+		<table style="width: 100%; font-style: italic;">
+			<tr>Tidak Mener
+				<td style="text-align: left;">
+					Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
+				</td>
+				<td style="text-align: right;">
+					Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
+				</td>
+			</tr>
+		</table>
 	</footer>
 </body>
 

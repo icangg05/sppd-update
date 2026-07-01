@@ -32,6 +32,5 @@ return [
     'sekcam',
     'lurah',
     'kapus',
-    'inspektorat',
   ],
 ];

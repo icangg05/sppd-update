@@ -8,7 +8,7 @@
 			<h1 class="text-lg font-bold text-slate-800">Detail Surat Perjalanan Dinas</h1>
 			<p class="text-sm font-mono text-slate-500 mt-1">
 				<i class="fa-solid fa-hashtag text-xs text-slate-400 mr-1"></i>
-				{{ $sppd->document_number ?? 'Belum memiliki nomor seri' }}
+				{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
 			</p>
 		</div>
 
@@ -49,6 +49,13 @@
 				<i class="fa-solid fa-file-pdf text-cyan-600 text-[13px]"></i>
 				Lihat Dokumen
 			</button>
+
+			{{-- Link Publik (read-only, tanpa alur persetujuan & status TTE) --}}
+			<a href="{{ $sppd->publicUrl() }}" target="_blank" rel="noopener"
+				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
+				<i class="fa-solid fa-share-nodes text-cyan-600 text-[13px]"></i>
+				Link Publik
+			</a>
 
 			{{-- Garis Pemisah --}}
 			<div class="hidden sm:block border-l border-slate-300 h-5 self-center mx-0.5"></div>
@@ -572,7 +579,7 @@
 		$sptIsApproved = $sptSig && $sptSig->status->value === 'signed' && $sptSig->signed_file_path;
 	@endphp
 	<x-ui.modal show="showDocModal" title="Dokumen SPPD" description="Pilih dokumen yang ingin dibuka"
-		icon="fa-solid fa-folder-open text-cyan-600">
+		icon="fa-solid fa-folder-open text-cyan-600" :closeable="false">
 		<div class="space-y-2">
 			@if ($sptIsApproved)
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"

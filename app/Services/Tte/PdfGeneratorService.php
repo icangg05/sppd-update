@@ -100,8 +100,8 @@ class PdfGeneratorService
             'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
         ];
 
-        $verifyUrl = url('/verify/sppd/' . $sppd->id . '/' . md5($sppd->document_number . $targetUser->id));
-        $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 50);
+        // QR mengarah ke halaman publik (read-only) detail SPPD.
+        $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 50);
 
         return [
             'view' => 'exports.sppd',
@@ -143,8 +143,8 @@ class PdfGeneratorService
                 : $sppd->user->department?->getInheritedLetterhead()
         ];
 
-        $verifyUrl = url('/verify/spt/' . $sppd->id . '/' . md5($sppd->document_number . $sppd->id));
-        $pdfData['qr_image'] = QrSimulator::generate($verifyUrl, 65);
+        // QR mengarah ke halaman publik (read-only) detail SPPD.
+        $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 65);
 
         $viewName = $isDprd ? 'exports.spt_dprd' : 'exports.spt';
 

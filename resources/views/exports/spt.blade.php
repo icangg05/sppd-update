@@ -6,7 +6,9 @@
 	<title>{{ 'SPT - ' . config('app.name') }}</title>
 	<style>
 		@page {
-			margin: 1cm 2.5cm;
+			/* margin-bottom diperbesar untuk menyediakan ruang footer tetap
+			   (fixed) yang tampil di SETIAP halaman tanpa menimpa isi. */
+			margin: 1cm 2.5cm 2.2cm 2.5cm;
 			size: 21.5cm 33cm;
 		}
 
@@ -75,6 +77,8 @@
 		.footer {
 			margin-top: 10px;
 			width: 100%;
+			/* Jaga blok tanda tangan tidak terpotong antar-halaman. */
+			page-break-inside: avoid;
 		}
 
 		.signature-wrap {
@@ -155,76 +159,65 @@
 		<tr>
 			<td colspan="3" style="text-align: center; padding: 15px 0; font-weight: bold; font-size: 14pt">MEMERINTAHKAN</td>
 		</tr>
-		<tr>
-			<td class="label">Kepada</td>
-			<td class="separator">:</td>
-			<td style="padding-left: 2px;">
-				<table style="width: 100%; margin-top: 16px">
-					{{-- Pelaksana Utama --}}
-					<tr>
-						<td style="padding: 0 0; width: 20px">1.</td>
-						<td style="padding: 0 0; width: 150px">Nama</td>
-						<td style="padding: 0 0; width: 10px">:</td>
-						<td style="padding: 0 0;">{{ $sppd->user->name }}</td>
-					</tr>
-					@if ($sppd->user->nip)
+		{{-- Daftar peserta digabung (pelaksana utama + pengikut) menjadi satu koleksi
+		     agar tiap orang bisa dirender sebagai baris tabel terpisah. Ini membuat
+		     Dompdf dapat memecah halaman DI ANTARA orang (bukan menendang seluruh
+		     daftar ke halaman berikutnya), sehingga pergantian halaman rapi. --}}
+		@php
+			$peserta = [];
+			$peserta[] = [
+				'name'    => $sppd->user->name,
+				'rank'    => $sppd->user->rank->name ?? '-',
+				'group'   => $sppd->user->rank->group ?? '-',
+				'nip'     => $sppd->user->nip,
+				'jabatan' => $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-'),
+			];
+			foreach ($sppd->followers as $follower) {
+				$peserta[] = [
+					'name'    => $follower->user->name,
+					'rank'    => $follower->user->rank->name ?? '-',
+					'group'   => $follower->user->rank->group ?? '-',
+					'nip'     => $follower->user->nip,
+					'jabatan' => $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')),
+				];
+			}
+		@endphp
+		@foreach ($peserta as $i => $p)
+			<tr style="page-break-inside: avoid;">
+				<td class="label" style="vertical-align: top; {{ $i === 0 ? 'padding-top: 16px;' : '' }}">{{ $i === 0 ? 'Kepada' : '' }}</td>
+				<td class="separator" style="vertical-align: top; {{ $i === 0 ? 'padding-top: 16px;' : '' }}">{{ $i === 0 ? ':' : '' }}</td>
+				<td style="padding-left: 2px; {{ $i === 0 ? 'padding-top: 16px;' : '' }}">
+					<table style="width: 100%;">
 						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">Pangkat/Golongan</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $sppd->user->rank->name ?? '-' }}, Gol. {{ $sppd->user->rank->group ?? '-' }}</td>
+							<td style="padding: 0 0; width: 20px">{{ $i + 1 }}.</td>
+							<td style="padding: 0 0; width: 150px">Nama</td>
+							<td style="padding: 0 0; width: 10px">:</td>
+							<td style="padding: 0 0;">{{ $p['name'] }}</td>
 						</tr>
-						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">NIP</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $sppd->user->nip ?? '-' }}</td>
-						</tr>
-					@endif
-					<tr>
-						<td style="padding: 0 0;"></td>
-						<td style="padding: 0 0;">Jabatan</td>
-						<td style="padding: 0 0;">:</td>
-						<td style="padding: 0 0; text-transform: uppercase;">
-							{{ $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-') }}
-						</td>
-					</tr>
-
-					{{-- Pengikut --}}
-					@foreach ($sppd->followers as $index => $follower)
-						<tr>
-							<td style="padding: 0 0;">{{ $index + 2 }}.</td>
-							<td style="padding: 0 0;">Nama</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $follower->user->name }}</td>
-						</tr>
-						@if ($follower->user->nip)
+						@if ($p['nip'])
 							<tr>
 								<td style="padding: 0 0;"></td>
-								<td style="padding: 0 0;">Pangkat/Gol</td>
+								<td style="padding: 0 0;">Pangkat/Golongan</td>
 								<td style="padding: 0 0;">:</td>
-								<td style="padding: 0 0;">{{ $follower->user->rank->name ?? '-' }}, Gol.
-									{{ $follower->user->rank->group ?? '-' }}</td>
+								<td style="padding: 0 0;">{{ $p['rank'] }}, Gol. {{ $p['group'] }}</td>
 							</tr>
 							<tr>
 								<td style="padding: 0 0;"></td>
 								<td style="padding: 0 0;">NIP</td>
 								<td style="padding: 0 0;">:</td>
-								<td style="padding: 0 0;">{{ $follower->user->nip ?? '-' }}</td>
+								<td style="padding: 0 0;">{{ $p['nip'] }}</td>
 							</tr>
 						@endif
 						<tr>
 							<td style="padding: 0 0;"></td>
 							<td style="padding: 0 0;">Jabatan</td>
 							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0; text-transform: uppercase;">
-								{{ $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')) }}
-							</td>
+							<td style="padding: 0 0; text-transform: uppercase;">{{ $p['jabatan'] }}</td>
 						</tr>
-					@endforeach
-				</table>
-			</td>
-		</tr>
+					</table>
+				</td>
+			</tr>
+		@endforeach
 		<tr>
 			<td class="label" style="padding-top: 20px;">Untuk</td>
 			<td class="separator" style="padding-top: 20px;">:</td>
@@ -295,13 +288,15 @@
 		</div>
 	@endif
 
+	{{-- Footer dokumen: gaya lebih halus (abu-abu) khas footer dokumen,
+	     position fixed => diulang Dompdf di SETIAP halaman. --}}
 	<footer
-		style="font-size: 9pt; position: absolute; bottom: -10px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
-		<div style="font-style: italic; margin-bottom: 10px;">
+		style="font-size: 8pt; color: #6b7280; position: fixed; bottom: -65px; left: 0; right: 0; font-family: Arial, Helvetica, sans-serif">
+		<div style="font-style: italic; margin-bottom: 6px;">
 			Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
 		</div>
-		<div style="border-top: 1px solid #000; margin: 5px 0"></div>
-		<div style="font-style: italic; margin-top: 8px; text-align: right;">
+		<div style="border-top: 1px solid #d1d5db; margin: 4px 0"></div>
+		<div style="font-style: italic; margin-top: 5px; text-align: right;">
 			Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
 		</div>
 	</footer>

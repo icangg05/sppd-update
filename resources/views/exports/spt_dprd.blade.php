@@ -6,7 +6,8 @@
 	<title>{{ 'SPT - ' . config('app.name') }}</title>
 	<style>
 		@page {
-			margin: 1cm 2.5cm;
+			/* margin-bottom diperbesar untuk ruang footer tetap (fixed) di tiap halaman. */
+			margin: 1cm 2.5cm 2.2cm 2.5cm;
 			size: 21.5cm 33cm;
 		}
 
@@ -53,12 +54,25 @@
 			font-size: 10pt;
 		}
 
+		/* Cegah satu baris peserta terpotong saat pindah halaman. */
+		.data-table tr {
+			page-break-inside: avoid;
+		}
+
+		/* Jaga blok tanda tangan tidak terpotong antar-halaman. */
+		.signature-block {
+			page-break-inside: avoid;
+		}
+
+		/* Footer dokumen: gaya lebih halus (abu-abu) khas footer dokumen,
+		   position fixed => diulang Dompdf di SETIAP halaman. */
 		.footer-note {
-			position: absolute;
-			bottom: -10px;
+			position: fixed;
+			bottom: -65px;
 			left: 0;
 			right: 0;
-			font-size: 9pt;
+			font-size: 8pt;
+			color: #6b7280;
 			font-family: Arial, Helvetica, sans-serif;
 		}
 	</style>
@@ -162,7 +176,7 @@
 		bersangkutan dan/atau penerima Surat Perintah Tugas ini yang akan bertanggung jawab.
 	</div>
 
-	<div style="margin-top: 25px;">
+	<div class="signature-block" style="margin-top: 25px;">
 		<div style="float: right; width: 270px; text-align: left;">
 			<div>Kendari,
 				{{ \Carbon\Carbon::parse($sppd->spt_date)->translatedFormat('d F Y') }}
@@ -201,11 +215,11 @@
 	</div>
 
 	<footer class="footer-note">
-		<div style="font-style: italic; margin-bottom: 10px; text-align: center;">
+		<div style="font-style: italic; margin-bottom: 6px; text-align: center;">
 			Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
 		</div>
-		<div style="border-top: 1px solid #000; margin: 5px 0;"></div>
-		<div style="font-style: italic; margin-top: 8px; text-align: right;">
+		<div style="border-top: 1px solid #d1d5db; margin: 4px 0;"></div>
+		<div style="font-style: italic; margin-top: 5px; text-align: right;">
 			Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
 		</div>
 	</footer>
