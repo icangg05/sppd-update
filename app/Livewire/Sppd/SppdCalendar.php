@@ -19,7 +19,7 @@ class SppdCalendar extends Component
         if (! Auth::user()->hasRole('super_admin')) {
             $dept = Auth::user()->department;
             if ($dept) {
-                $allowedIds = $dept->getAllRelatedIds();
+                $allowedIds = $dept->getScopedRelatedIds();
                 $baseQuery->whereHas('user', function ($q) use ($allowedIds) {
                     $q->whereIn('department_id', $allowedIds);
                 });

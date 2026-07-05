@@ -64,6 +64,18 @@ Route::middleware('auth')->group(function () {
     // Panduan fitur
     Route::view('/panduan/whatsapp', 'guides.whatsapp')->name('guide.whatsapp');
 
+    // Menu pejabat kepemimpinan (daftar role dari config/menu_access.php)
+    $leadershipRoles = implode('|', config('menu_access.leadership')) . '|super_admin';
+    Route::middleware("role:{$leadershipRoles}")->group(function () {
+        Route::get('/riwayat-persetujuan', \App\Livewire\Leadership\ApprovalHistory::class)->name('leadership.history');
+        Route::get('/rekap-sppd', \App\Livewire\Leadership\SppdRecap::class)->name('leadership.recap');
+    });
+
+    // Menu sekretariat (sekretaris OPD/kecamatan/DPRD)
+    $secretariatRoles = implode('|', config('menu_access.secretariat')) . '|super_admin';
+    Route::get('/monitoring-opd', \App\Livewire\Secretariat\OpdMonitoring::class)
+        ->middleware("role:{$secretariatRoles}")->name('secretariat.monitoring');
+
     // Tandai changelog sudah dibaca (badge notifikasi per-user)
     Route::post('/notifications/seen', function (\Illuminate\Http\Request $request) {
         /** @var \App\Models\User $user */
@@ -259,3 +271,42 @@ Route::middleware('auth')->group(function () {
 
 // Kirim.Chat Webhook
 Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])->name('webhook.kirimchat');
+
+// ---------------------------------------------------------------------------
+// UJI COBA — ambil 20 berita terbaru dari WordPress berita.kendarikota.go.id.
+// Route terpisah & tanpa auth, hanya untuk percobaan. Bebas dihapus nanti.
+// Sumber: WordPress REST API (/wp-json/wp/v2/posts).
+// ---------------------------------------------------------------------------
+Route::get('/uji-coba/berita', function () {
+    $response = \Illuminate\Support\Facades\Http::timeout(15)
+        ->acceptJson()
+        ->get('https://berita.kendarikota.go.id/wp-json/wp/v2/posts', [
+            'per_page' => 20,
+            'orderby' => 'date',
+            'order' => 'desc',
+            '_embed' => 1, // sertakan data ternaut (penulis, kategori, gambar unggulan)
+        ]);
+
+    if ($response->failed()) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Gagal mengambil berita dari sumber WordPress.',
+            'status' => $response->status(),
+        ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    $berita = collect($response->json())->map(fn ($post) => [
+        'id' => $post['id'] ?? null,
+        'judul' => html_entity_decode(strip_tags($post['title']['rendered'] ?? '')),
+        'tanggal' => $post['date'] ?? null,
+        'tautan' => $post['link'] ?? null,
+        'ringkasan' => trim(html_entity_decode(strip_tags($post['excerpt']['rendered'] ?? ''))),
+        'gambar' => $post['_embedded']['wp:featuredmedia'][0]['source_url'] ?? null,
+    ])->values();
+
+    return response()->json([
+        'ok' => true,
+        'jumlah' => $berita->count(),
+        'data' => $berita,
+    ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+})->name('uji-coba.berita');

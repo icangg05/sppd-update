@@ -154,7 +154,7 @@ class SppdCreate extends Component
     if (! Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $query->whereIn('department_id', $dept->getAllRelatedIds());
+        $query->whereIn('department_id', $dept->getScopedRelatedIds());
       } else {
         $query->where('department_id', Auth::user()->department_id);
       }

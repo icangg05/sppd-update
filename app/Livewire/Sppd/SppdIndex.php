@@ -82,7 +82,7 @@ class SppdIndex extends Component
       DepartmentType::KECAMATAN => ['camat', 'eselon_staf'],
       DepartmentType::KELURAHAN => ['lurah', 'eselon_staf'],
       DepartmentType::PUSKESMAS => ['kapus', 'eselon_staf'],
-      DepartmentType::DINKES    => ['kepala_opd', 'eselon_staf', 'kapus'],
+      DepartmentType::DINKES    => ['kepala_opd', 'eselon_staf'],
       default                   => ['kepala_opd', 'eselon_staf'],
     };
   }
@@ -93,6 +93,19 @@ class SppdIndex extends Component
   protected function rootDepartmentType(): ?DepartmentType
   {
     return Auth::user()->department?->getRootDepartment()?->type;
+  }
+
+  /**
+   * Tab jabatan untuk user saat ini. Puskesmas (anak Dinkes) memakai konteksnya
+   * sendiri — filter "Kepala Puskesmas" muncul di puskesmas, bukan di Dinkes induknya.
+   */
+  protected function currentJabatanTabs(): array
+  {
+    if (Auth::user()->department?->type === DepartmentType::PUSKESMAS) {
+      return self::jabatanTabsFor(DepartmentType::PUSKESMAS);
+    }
+
+    return self::jabatanTabsFor($this->rootDepartmentType());
   }
 
   public static function savedFilters(): array
@@ -264,7 +277,7 @@ class SppdIndex extends Component
       if (! Auth::user()->hasRole('super_admin')) {
         $dept = Auth::user()->department;
         if ($dept) {
-          $allowedIds = $dept->getAllRelatedIds();
+          $allowedIds = $dept->getScopedRelatedIds();
           $query->whereHas('user', function ($q) use ($allowedIds) {
             $q->whereIn('department_id', $allowedIds);
           });
@@ -346,9 +359,25 @@ class SppdIndex extends Component
     // Super admin memakai select-search (semua jabatan), selain itu tab sesuai jenis OPD.
     $isSuperAdmin = Auth::user()->hasRole('super_admin');
     $jabatanLabels = self::jabatanLabels();
-    $jabatanTabs = $this->jabatanTabsFor($this->rootDepartmentType());
+    $jabatanTabs = $this->currentJabatanTabs();
     $jabatanOptions = collect($jabatanLabels)
       ->map(fn($label, $value) => ['value' => $value, 'label' => $label])
+      ->values()
+      ->all();
+
+    $statusOptions = collect([['value' => '', 'label' => 'Semua Status']])
+      ->concat(collect($statuses)->map(fn($st) => [
+        'value' => $st->value,
+        'label' => \App\Helpers\SmartTitle::convert($st->label()),
+      ]))
+      ->values()
+      ->all();
+
+    $domainOptions = collect([['value' => '', 'label' => 'Semua Domain']])
+      ->concat(collect($domains)->map(fn($dom) => [
+        'value' => $dom->value,
+        'label' => $dom->label(),
+      ]))
       ->values()
       ->all();
 
@@ -362,6 +391,8 @@ class SppdIndex extends Component
       'jabatanLabels',
       'jabatanTabs',
       'jabatanOptions',
+      'statusOptions',
+      'domainOptions',
     ))->title($title);
   }
 

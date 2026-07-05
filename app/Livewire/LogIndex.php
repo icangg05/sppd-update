@@ -72,7 +72,7 @@ class LogIndex extends Component
     $user = auth()->user();
     $dept = $user->department;
     $deptIds = $dept
-      ? $dept->getAllRelatedIds()->map(fn ($id) => (int) $id)->all()
+      ? $dept->getScopedRelatedIds()->map(fn ($id) => (int) $id)->all()
       : array_filter([(int) $user->department_id]);
 
     $userIds   = User::whereIn('department_id', $deptIds)->pluck('id')->all();

@@ -61,6 +61,19 @@
 				</div>
 			@endif
 
+			{{-- Filter Role (searchable) — hanya role yang tersedia pada konteks halaman ini --}}
+			@php
+				$roleFilterOptions = collect($availableRoles)
+					->map(fn($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
+					->prepend(['value' => '', 'label' => 'Semua Role'])
+					->all();
+			@endphp
+			<div class="w-full sm:w-56">
+				<x-form.searchable-select wire:model.live="role" name="role"
+					:options="$roleFilterOptions" placeholder="Semua Role"
+					searchPlaceholder="Cari role..." class="bg-slate-50" />
+			</div>
+
 			{{-- Reset --}}
 			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== '' || $position_id !== '' || $rank_id !== '' || $role !== ''; @endphp
 			<div class="flex items-center gap-2">

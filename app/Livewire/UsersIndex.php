@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Department;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -45,8 +46,8 @@ class UsersIndex extends Component
   public function searchPlaceholder(): string
   {
     return $this->isDprd()
-      ? 'Cari nama, jabatan, role, atau partai...'
-      : 'Cari nama, jabatan, atau role...';
+      ? 'Cari nama, username, jabatan, role, atau partai...'
+      : 'Cari nama, username, jabatan, atau role...';
   }
 
   public function updatedSearch(): void
@@ -118,55 +119,63 @@ class UsersIndex extends Component
   {
     $user = auth()->user();
 
+    // Batas zona data untuk admin OPD (null = tanpa batas, super admin).
+    $allowedIds = null;
+
     if ($user->hasRole('super_admin')) {
       $roots = Department::whereNull('parent_id')->orderBy('name')->get();
     } else {
-      // Admin OPD bisa melihat OPD induknya dan semua sub-department di bawahnya
-      $dept  = $user->department;
-      $roots = $dept ? Department::where('id', $dept->id)->get() : collect();
+      // Admin OPD hanya melihat departemennya + turunan dalam zona datanya
+      $dept       = $user->department;
+      $roots      = $dept ? Department::where('id', $dept->id)->get() : collect();
+      $allowedIds = $dept?->getScopedRelatedIds();
     }
 
     $list = [];
     foreach ($roots as $root) {
-      $this->flattenDepartment($root, 0, $list);
+      $this->flattenDepartment($root, 0, $list, $allowedIds);
     }
 
     return $list;
   }
 
-  private function flattenDepartment($dept, $level, &$list): void
+  private function flattenDepartment($dept, $level, &$list, $allowedIds = null): void
   {
+    if ($allowedIds !== null && ! $allowedIds->contains($dept->id)) {
+      return;
+    }
+
     $dept->display_name = str_repeat('— ', $level) . $dept->name;
     $list[]             = $dept;
 
     foreach ($dept->children()->orderBy('name')->get() as $child) {
-      $this->flattenDepartment($child, $level + 1, $list);
+      $this->flattenDepartment($child, $level + 1, $list, $allowedIds);
     }
   }
 
-  public function render()
+  /**
+   * Batasan dasar daftar: kecualikan super_admin, batasi lingkup instansi
+   * (non super admin), dan pisahkan konteks halaman DPRD vs pegawai biasa.
+   * Dipakai bersama oleh query utama & penyusunan daftar role yang tersedia.
+   */
+  private function applyUserScope(Builder $query): void
   {
-    $query = User::with(['department', 'rank', 'position', 'roles'])
-      // Akun super_admin tidak ditampilkan di daftar pegawai.
-      ->whereDoesntHave('roles', fn($r) => $r->where('name', 'super_admin'));
+    // Akun super_admin tidak ditampilkan di daftar pegawai.
+    $query->whereDoesntHave('roles', fn($r) => $r->where('name', 'super_admin'));
 
     // Filter berdasarkan instansi user jika bukan super admin
     // Termasuk semua pegawai di sub-department (bidang/subbidang)
     if (! auth()->user()->hasRole('super_admin')) {
       $dept = auth()->user()->department;
       if ($dept) {
-        $relatedIds = $dept->getAllRelatedIds();
-        $query->whereIn('department_id', $relatedIds);
+        $query->whereIn('department_id', $dept->getScopedRelatedIds());
       } else {
         $query->where('department_id', auth()->user()->department_id);
       }
     }
 
-    // Saat memfilter berdasarkan role (dari halaman Kelola Role), tampilkan semua
-    // pegawai dengan role tersebut tanpa pemisahan DPRD/non-DPRD.
-    if ($this->role !== '') {
-      $query->whereHas('roles', fn($r) => $r->where('name', $this->role));
-    } elseif ($this->isDprd()) {
+    // Pisahkan konteks halaman: anggota DPRD vs pegawai biasa.
+    if ($this->isDprd()) {
       $query->where(function ($q) {
         $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
           ->orWhere('employee_type', 'dprd')
@@ -179,13 +188,25 @@ class UsersIndex extends Component
           ->whereNull('dprd_jabatan');
       });
     }
+  }
+
+  public function render()
+  {
+    $query = User::with(['department', 'rank', 'position', 'roles']);
+    $this->applyUserScope($query);
+
+    // Filter tambahan berdasarkan role yang dipilih (menyaring di dalam konteks halaman).
+    if ($this->role !== '') {
+      $query->whereHas('roles', fn($r) => $r->where('name', $this->role));
+    }
 
     if ($this->search !== '') {
       $s = $this->search;
       $isDprd = $this->isDprd();
       $query->where(function ($q) use ($s, $isDprd) {
-        // Cari nama & role (cocokkan label maupun nama teknis role)
+        // Cari nama, username & role (cocokkan label maupun nama teknis role)
         $q->where('name', 'like', "%{$s}%")
+          ->orWhere('username', 'like', "%{$s}%")
           ->orWhereHas('roles', fn($r) => $r->where('label', 'like', "%{$s}%")
             ->orWhere('name', 'like', "%{$s}%"));
 
@@ -278,7 +299,15 @@ class UsersIndex extends Component
       ? User::whereNotNull('partai')->where('partai', '!=', '')->distinct()->orderBy('partai')->pluck('partai')
       : collect();
 
-    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'activePosition', 'activeRank', 'activeRole'))
+    // Role yang tersedia (dipakai user) pada konteks halaman ini & lingkup user —
+    // untuk opsi filter searchable select role.
+    $availableRoles = \Spatie\Permission\Models\Role::query()
+      ->where('name', '!=', 'super_admin')
+      ->whereHas('users', fn($q) => $this->applyUserScope($q))
+      ->orderBy('label')
+      ->get(['id', 'name', 'label']);
+
+    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole'))
       ->title('Data Pegawai');
   }
 }

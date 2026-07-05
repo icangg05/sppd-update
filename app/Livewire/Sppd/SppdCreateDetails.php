@@ -146,7 +146,7 @@ class SppdCreateDetails extends Component
     if (! Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $allowedIds = $dept->getAllRelatedIds();
+        $allowedIds = $dept->getScopedRelatedIds();
         if (! $allowedIds->contains($user->department_id)) {
           abort(403, 'Unauthorized action.');
         }
@@ -530,7 +530,7 @@ class SppdCreateDetails extends Component
     if (! Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $allowedIds = $dept->getAllRelatedIds();
+        $allowedIds = $dept->getScopedRelatedIds();
         if (! $allowedIds->contains($pelaksana->department_id)) {
           abort(403, 'Unauthorized action.');
         }
@@ -539,13 +539,13 @@ class SppdCreateDetails extends Component
       }
     }
 
-    // Budget query — DPA mengikuti OPD induk pelaksana, bukan department
+    // Budget query — DPA mengikuti zona data OPD pelaksana, bukan department
     // akun yang login. Akun admin OPD induk bisa mengakses banyak department,
-    // sehingga scoping harus berdasarkan OPD root pelaksana yang dipilih.
+    // sehingga scoping harus berdasarkan root zona pelaksana yang dipilih.
     $budgetQuery = Budget::with('department')->where('year', now()->year);
     $pelaksanaDept = $pelaksana->department;
     if ($pelaksanaDept) {
-      $budgetQuery->whereIn('department_id', $pelaksanaDept->getRootDepartment()->getAllRelatedIds());
+      $budgetQuery->whereIn('department_id', $pelaksanaDept->getScopeRootDepartment()->getScopedRelatedIds());
     } else {
       $budgetQuery->where('department_id', $pelaksana->department_id);
     }
@@ -560,17 +560,17 @@ class SppdCreateDetails extends Component
         $q->whereIn('name', ['super_admin', 'admin_opd']);
       });
     if (Auth::user()->hasRole('super_admin')) {
-      // Pengikut harus sesuai department pelaksana (lingkup OPD pelaksana).
+      // Pengikut harus sesuai department pelaksana (zona data OPD pelaksana).
       $pelaksanaDept = $pelaksana->department;
       if ($pelaksanaDept) {
-        $userQuery->whereIn('department_id', $pelaksanaDept->getRootDepartment()->getAllRelatedIds());
+        $userQuery->whereIn('department_id', $pelaksanaDept->getScopeRootDepartment()->getScopedRelatedIds());
       } else {
         $userQuery->where('department_id', $pelaksana->department_id);
       }
     } else {
       $dept = Auth::user()->department;
       if ($dept) {
-        $userQuery->whereIn('department_id', $dept->getAllRelatedIds());
+        $userQuery->whereIn('department_id', $dept->getScopedRelatedIds());
       } else {
         $userQuery->where('department_id', Auth::user()->department_id);
       }

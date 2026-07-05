@@ -102,7 +102,7 @@ class DashboardController extends Controller
       return null;
     }
 
-    return $user->department?->getRootDepartment()->getAllRelatedIds() ?? collect([0]);
+    return $user->department?->getScopeRootDepartment()->getScopedRelatedIds() ?? collect([0]);
   }
 
   /**

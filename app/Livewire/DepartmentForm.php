@@ -31,11 +31,16 @@ class DepartmentForm extends Component
   public $head_id = '';
   public $letterhead = null;
   public $letterhead_second = null;
+  public bool $can_view_children_data = true;
 
   // Pencarian pimpinan (server-side) agar tidak memuat seluruh pegawai sekaligus.
   public string $searchHead = '';
 
   public bool $isSuperAdmin = false;
+
+  // Konfirmasi hapus kop surat (modal). Target: 'primary' | 'secondary'.
+  public bool $showDeleteKopModal = false;
+  public string $deleteKopTarget = '';
 
   public function mount(?Department $department = null): void
   {
@@ -50,6 +55,7 @@ class DepartmentForm extends Component
       $this->type      = $department->type->value;
       $this->parent_id = $department->parent_id ?? '';
       $this->head_id   = $department->head_id ?? '';
+      $this->can_view_children_data = (bool) $department->can_view_children_data;
 
       $this->authorizeEdit();
 
@@ -76,21 +82,21 @@ class DepartmentForm extends Component
     }
 
     $dept = $this->currentUser()->department;
-    $allowedIds = $dept ? $dept->getAllRelatedIds() : collect([$this->currentUser()->department_id]);
+    $allowedIds = $dept ? $dept->getScopedRelatedIds() : collect([$this->currentUser()->department_id]);
 
     abort_unless($allowedIds->contains($this->department->id), 403, 'Anda tidak memiliki akses ke unit ini.');
   }
 
   /**
-   * Induk OPD top-level (root) tidak boleh dipindah oleh admin OPD — itu akan
-   * menggeser seluruh instansinya. Sub-unit (non-root) tetap boleh dipindah
-   * di dalam lingkup organisasinya. Super admin selalu bebas mengubah.
+   * Instansi milik admin sendiri (puncak lingkupnya) tidak boleh dipindah/di-rename
+   * oleh admin OPD — induknya berada di luar kewenangannya. Sub-unit di bawah instansi
+   * itu (yang ia buat) tetap boleh dipindah di dalam lingkupnya. Super admin bebas.
    */
   public function isParentLocked(): bool
   {
     return $this->isEdit
       && ! $this->isSuperAdmin
-      && $this->department->parent_id === null;
+      && (int) $this->department->id === (int) $this->currentUser()->department_id;
   }
 
   public function updatedParentId(): void
@@ -155,13 +161,21 @@ class DepartmentForm extends Component
       'name'      => ['required', 'string', 'max:255', $this->uniqueNameAtSameLevelRule()],
       'type'      => ['required', 'in:' . implode(',', array_column(DepartmentType::cases(), 'value'))],
       'head_id'   => ['nullable', 'exists:users,id'],
-      'parent_id' => [$this->isSuperAdmin ? 'nullable' : 'required', 'exists:departments,id'],
+      // OPD induk (root) tidak punya parent_id — jangan wajibkan, termasuk untuk admin OPD
+      // yang mengedit instansinya sendiri. Sub-unit tetap wajib memilih induk.
+      'parent_id' => [$this->isSuperAdmin || $this->isRoot() ? 'nullable' : 'required', 'exists:departments,id'],
+      'can_view_children_data' => ['boolean'],
+      // Kop utama boleh diunggah semua unit (sub-unit yang kosong akan mewarisi induk).
+      'letterhead' => ['nullable', 'image', 'max:2048'],
     ];
 
-    // Kode & kop surat hanya relevan di tingkat induk (OPD).
+    // Kode hanya relevan di tingkat induk (OPD).
     if ($this->isRoot()) {
       $rules['code'] = ['nullable', 'string', 'max:30', $codeUnique];
-      $rules['letterhead'] = ['nullable', 'image', 'max:2048'];
+    }
+
+    // Kop kedua (SPT) khusus DPRD.
+    if ($this->type === DepartmentType::DPRD->value) {
       $rules['letterhead_second'] = ['nullable', 'image', 'max:2048'];
     }
 
@@ -210,14 +224,27 @@ class DepartmentForm extends Component
       throw $e;
     }
 
+    // Nama OPD induk terkunci untuk admin OPD — jaga agar tidak berubah walau field di-bypass.
+    if ($this->isParentLocked()) {
+      $this->name = $this->department->name;
+    }
+
     // Batasi induk pada lingkup instansi sendiri untuk admin OPD (saat create).
     if (! $this->isSuperAdmin && ! $this->isParentLocked()) {
       $dept = $this->currentUser()->department;
-      $allowedIds = $dept ? $dept->getAllRelatedIds() : collect([$this->currentUser()->department_id]);
+      $allowedIds = $dept ? $dept->getScopedRelatedIds() : collect([$this->currentUser()->department_id]);
       if (! $allowedIds->contains((int) $this->parent_id)) {
         $this->addError('parent_id', 'Anda hanya dapat menempatkan unit di bawah instansi Anda sendiri.');
         return;
       }
+    }
+
+    // Hanya super admin yang boleh mengubah kebijakan zona data —
+    // paksa nilai lama (edit) / bawaan aktif (create) untuk admin OPD.
+    if (! $this->isSuperAdmin) {
+      $this->can_view_children_data = $this->isEdit
+        ? (bool) $this->department->can_view_children_data
+        : true;
     }
 
     $data = [
@@ -225,42 +252,69 @@ class DepartmentForm extends Component
       'type'      => $this->type,
       'parent_id' => $this->parent_id ?: null,
       'head_id'   => $this->head_id ?: null,
+      'can_view_children_data' => $this->can_view_children_data,
     ];
 
     // Hitung level & warisi atribut dari induk.
     if ($data['parent_id']) {
       $parent = Department::find($data['parent_id']);
       $data['level'] = ($parent->level ?? 1) + 1;
-      $data['type']  = $parent->type->value; // sub-unit selalu ikut tipe induk
+      // Sub-unit BARU ikut tipe induk; saat edit, tipe unit yang sudah ada
+      // dipertahankan agar tidak tertimpa (mis. kelurahan tidak berubah jadi kecamatan).
+      if (! $this->isEdit) {
+        $data['type'] = $parent->type->value;
+      }
     } else {
       $data['level'] = 1;
       $data['code']  = $this->code ?: null;
-
-      $cleanName = $this->cleanName($data['name']);
-
-      if ($this->letterhead) {
-        $this->deleteOldFile($this->department?->letterhead);
-        $ext = $this->letterhead->getClientOriginalExtension();
-        $data['letterhead'] = $this->letterhead->storeAs('kop_surat', "{$cleanName}_primary.{$ext}", 'public');
-      }
-      if ($this->letterhead_second) {
-        $this->deleteOldFile($this->department?->letterhead_second);
-        $ext = $this->letterhead_second->getClientOriginalExtension();
-        $data['letterhead_second'] = $this->letterhead_second->storeAs('kop_surat', "{$cleanName}_secondary.{$ext}", 'public');
-      }
     }
+
+    // Persist dulu agar berkas kop bisa dinamai berdasarkan id (cegah tabrakan
+    // nama antar unit yang namanya sama di induk berbeda).
+    $dept = $this->isEdit
+      ? tap($this->department)->update($data)
+      : Department::create($data);
+
+    $this->storeLetterheads($dept);
 
     if ($this->isEdit) {
-      $this->department->update($data);
+      // Bersihkan berkas upload sementara agar preview memakai kop yang baru
+      // tersimpan dan indikator "Mengunggah" tidak tertinggal.
+      $this->letterhead = null;
+      $this->letterhead_second = null;
 
-      return redirect()->route('master.departments.index')
-        ->with('success', "Instansi/OPD {$this->department->name} berhasil diperbarui.");
+      $this->toastSuccess("Instansi/OPD {$dept->name} berhasil diperbarui.");
+
+      return;
     }
 
-    Department::create($data);
-
     return redirect()->route('master.departments.index')
-      ->with('success', "Instansi {$data['name']} berhasil ditambahkan.");
+      ->with('success', "Instansi {$dept->name} berhasil ditambahkan.");
+  }
+
+  /**
+   * Simpan berkas kop surat untuk unit apa pun. Kop utama berlaku untuk semua
+   * unit (yang kosong akan mewarisi induk saat render); kop kedua khusus DPRD.
+   */
+  private function storeLetterheads(Department $dept): void
+  {
+    $files = [];
+
+    if ($this->letterhead) {
+      $this->deleteOldFile($dept->letterhead);
+      $ext = $this->letterhead->getClientOriginalExtension();
+      $files['letterhead'] = $this->letterhead->storeAs('kop_surat', "{$dept->id}_primary.{$ext}", 'public');
+    }
+
+    if ($this->letterhead_second && $dept->type === DepartmentType::DPRD) {
+      $this->deleteOldFile($dept->letterhead_second);
+      $ext = $this->letterhead_second->getClientOriginalExtension();
+      $files['letterhead_second'] = $this->letterhead_second->storeAs('kop_surat', "{$dept->id}_secondary.{$ext}", 'public');
+    }
+
+    if ($files) {
+      $dept->update($files);
+    }
   }
 
   private function deleteOldFile(?string $path): void
@@ -270,12 +324,42 @@ class DepartmentForm extends Component
     }
   }
 
-  private function cleanName(string $name): string
+  /**
+   * Buka modal konfirmasi hapus kop surat untuk target tertentu.
+   */
+  public function confirmDeleteKop(string $target): void
   {
-    $clean = strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '_', $name));
-    $clean = preg_replace('/_+/', '_', $clean);
+    $this->deleteKopTarget = in_array($target, ['primary', 'secondary'], true) ? $target : 'primary';
+    $this->showDeleteKopModal = true;
+  }
 
-    return trim($clean, '_');
+  public function closeDeleteKopModal(): void
+  {
+    $this->showDeleteKopModal = false;
+    $this->deleteKopTarget = '';
+  }
+
+  /**
+   * Hapus berkas kop surat milik instansi ini (bukan yang diwarisi dari induk).
+   * Setelah dihapus, unit kembali mewarisi kop induk (bila ada).
+   */
+  public function deleteKop(): void
+  {
+    $this->showDeleteKopModal = false;
+
+    if (! $this->isEdit) {
+      return;
+    }
+
+    $column = $this->deleteKopTarget === 'secondary' ? 'letterhead_second' : 'letterhead';
+
+    $this->deleteOldFile($this->department->{$column});
+    $this->department->update([$column => null]);
+
+    $label = $this->deleteKopTarget === 'secondary' ? 'Kop surat kedua (SPT)' : 'Kop surat utama';
+    $this->deleteKopTarget = '';
+
+    $this->toastSuccess("{$label} berhasil dihapus.");
   }
 
   /**
@@ -292,25 +376,34 @@ class DepartmentForm extends Component
       $excludeIds = $this->department->getAllRelatedIds();
     }
 
+    // Admin OPD: opsi induk hanya dalam zona datanya (unit di luar zona disembunyikan).
+    $allowedIds = null;
+
     if ($user->hasRole('super_admin')) {
       $roots = Department::whereNull('parent_id')->orderBy('name')->get();
     } else {
       $roots = $user->department_id
         ? Department::where('id', $user->department_id)->get()
         : collect();
+
+      $allowedIds = $user->department?->getScopedRelatedIds();
     }
 
     $list = [];
     foreach ($roots as $root) {
-      $this->flattenDepartment($root, 0, $list, $excludeIds);
+      $this->flattenDepartment($root, 0, $list, $excludeIds, $allowedIds);
     }
 
     return $list;
   }
 
-  private function flattenDepartment($dept, int $level, array &$list, $excludeIds): void
+  private function flattenDepartment($dept, int $level, array &$list, $excludeIds, $allowedIds = null): void
   {
     if ($excludeIds->contains($dept->id)) {
+      return;
+    }
+
+    if ($allowedIds !== null && ! $allowedIds->contains($dept->id)) {
       return;
     }
 
@@ -318,7 +411,7 @@ class DepartmentForm extends Component
     $list[] = $dept;
 
     foreach ($dept->children()->orderBy('name')->get() as $child) {
-      $this->flattenDepartment($child, $level + 1, $list, $excludeIds);
+      $this->flattenDepartment($child, $level + 1, $list, $excludeIds, $allowedIds);
     }
   }
 
@@ -364,6 +457,12 @@ class DepartmentForm extends Component
 
     $selectedHead = $this->head_id ? User::find($this->head_id) : null;
 
+    // Kop yang sedang diwarisi dari induk (untuk preview di unit yang belum
+    // punya kop sendiri). Hanya relevan saat edit.
+    $inheritedLetterhead = ($this->isEdit && empty($this->department->letterhead))
+      ? $this->department->getInheritedLetterhead()
+      : null;
+
     /** @var \Illuminate\View\View $view */
     $view = view('livewire.departments.form', [
       'parents'      => $parents,
@@ -373,6 +472,7 @@ class DepartmentForm extends Component
       'selectedHead' => $selectedHead,
       'isRoot'       => $this->isRoot(),
       'parentLocked' => $this->isParentLocked(),
+      'inheritedLetterhead' => $inheritedLetterhead,
     ]);
 
     // title() = macro Livewire pada Illuminate\View\View (dikenali via _ide_helper.php).

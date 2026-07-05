@@ -29,6 +29,18 @@
     </x-ui.button>
   </div>
 
+  {{-- Keterangan: pengajuan menunggu persetujuan administrator sistem (Admin OPD) --}}
+  @unless($isSuperAdmin)
+    <div class="flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-800">
+      <i class="fa-solid fa-circle-info mt-0.5 text-sm text-amber-500"></i>
+      <p class="text-[11px] leading-relaxed">
+        Setiap jabatan yang Anda ajukan berstatus
+        <span class="font-semibold">menunggu persetujuan administrator sistem</span>
+        sebelum dapat digunakan. Pantau perkembangannya melalui kolom <span class="font-semibold">Status</span> di bawah.
+      </p>
+    </div>
+  @endunless
+
   {{-- Filter --}}
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-center gap-2">

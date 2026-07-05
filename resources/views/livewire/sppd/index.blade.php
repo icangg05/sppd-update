@@ -183,22 +183,12 @@
 			</div>
 			@if (!$isApprovalMode)
 				<div class="w-full sm:w-44">
-					<select name="status" wire:model.live="status"
-						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-						<option value="">Semua Status</option>
-						@foreach ($statuses as $st)
-							<option value="{{ $st->value }}">{{ \App\Helpers\SmartTitle::convert($st->label()) }}</option>
-						@endforeach
-					</select>
+					<x-form.searchable-select wire:model.live="status" name="status" :options="$statusOptions"
+						placeholder="Semua Status" searchPlaceholder="Cari status..." />
 				</div>
 				<div class="w-full sm:w-44">
-					<select name="domain" wire:model.live="domain"
-						class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-						<option value="">Semua Domain</option>
-						@foreach ($domains as $dom)
-							<option value="{{ $dom->value }}">{{ $dom->label() }}</option>
-						@endforeach
-					</select>
+					<x-form.searchable-select wire:model.live="domain" name="domain" :options="$domainOptions"
+						placeholder="Semua Domain" searchPlaceholder="Cari domain..." />
 				</div>
 			@endif
 

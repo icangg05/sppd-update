@@ -60,7 +60,7 @@ class SppdController extends Controller
     if (! Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {
-        $allowedIds = $dept->getAllRelatedIds();
+        $allowedIds = $dept->getScopedRelatedIds();
         $query->whereHas('user', function ($q) use ($allowedIds) {
           $q->whereIn('department_id', $allowedIds);
         });
@@ -264,11 +264,11 @@ class SppdController extends Controller
     $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
-    // PPTK harus pegawai aktif di lingkup OPD induk pemohon (root + seluruh
-    // sub-unit) — sama dengan kandidat di komponen PptkSelector.
+    // PPTK harus pegawai aktif di zona data OPD pemohon (root zona + sub-unit
+    // yang berbagi data) — sama dengan kandidat di komponen PptkSelector.
     $dept = $sppd->user->department;
     $allowedDeptIds = $dept
-      ? $dept->getRootDepartment()->getAllRelatedIds()->all()
+      ? $dept->getScopeRootDepartment()->getScopedRelatedIds()->all()
       : array_filter([$sppd->user->department_id]);
 
     $request->validate([
@@ -439,7 +439,7 @@ class SppdController extends Controller
     $authUser = Auth::user();
     if (! $authUser->hasRole('super_admin')) {
       $dept = $authUser->department;
-      $allowedIds = $dept ? $dept->getAllRelatedIds() : collect([$authUser->department_id]);
+      $allowedIds = $dept ? $dept->getScopedRelatedIds() : collect([$authUser->department_id]);
       abort_unless($allowedIds->contains($user->department_id), 403, 'Anda tidak memiliki akses ke data pegawai ini.');
     }
 

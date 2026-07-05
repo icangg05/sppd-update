@@ -36,7 +36,7 @@ class PptkSelector extends Component
     return Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
   }
 
-  /** ID department: OPD induk pelaksana + seluruh sub-unitnya. */
+  /** ID department: zona data OPD pelaksana (root zona + sub-unit yang berbagi data). */
   protected function allowedDeptIds(): array
   {
     $dept = $this->sppd->user->department;
@@ -45,7 +45,7 @@ class PptkSelector extends Component
       return array_filter([$this->sppd->user->department_id]);
     }
 
-    return $dept->getRootDepartment()->getAllRelatedIds()->all();
+    return $dept->getScopeRootDepartment()->getScopedRelatedIds()->all();
   }
 
   /**

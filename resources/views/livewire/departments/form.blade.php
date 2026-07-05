@@ -60,15 +60,20 @@
         {{-- Input Nama Unit Kerja --}}
         <div class="space-y-0.5">
           <x-form.input wire:model="name" name="name" label="Nama Unit Kerja / Struktur"
-            placeholder="Misal: Bidang Tata Usaha" required
+            placeholder="Misal: Bidang Tata Usaha" required :disabled="$parentLocked"
             class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
+          @if ($parentLocked)
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Nama instansi Anda hanya dapat diubah oleh Super Admin.
+            </p>
+          @endif
         </div>
 
         {{-- Instansi Induk --}}
         <div class="space-y-0.5">
           @if ($parentLocked)
             <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Instansi Induk Pengampu</label>
-            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
               {{ $department->parent?->name ?? 'Tidak ada (Top-level)' }}
             </div>
             <p class="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -95,8 +100,8 @@
         {{-- Kode & Tipe — hanya untuk OPD induk --}}
         @if ($isRoot)
           <div class="space-y-0.5">
-            <x-form.input wire:model="code" name="code" label="Kode Singkatan Instansi"
-              placeholder="Misal: DISDIK / KOMINFO"
+            <x-form.input wire:model="code" name="code" label="Kode Unit Kerja"
+              placeholder="Misal: 15.42.5"
               class="font-mono text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
           </div>
 
@@ -111,17 +116,29 @@
                 :options="$typeOptions" placeholder="— Pilih Tipe —" searchPlaceholder="Cari tipe..." />
             @else
               <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Tipe Entitas Wilayah</label>
-              <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
                 {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
               </div>
+              <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+                <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Hanya dapat diubah oleh Super Admin.
+              </p>
             @endif
           </div>
         @else
           <div class="space-y-0.5">
             <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Tipe Entitas (mengikuti induk)</label>
-            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
               {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
             </div>
+          </div>
+        @endif
+
+        {{-- Akses Data Unit di Bawahnya (zona data) — hanya Super Admin --}}
+        @if ($isSuperAdmin)
+          <div class="md:col-span-2 space-y-0.5">
+            <x-form.checkbox wire:model="can_view_children_data"
+              label="Dapat Melihat Data Unit di Bawahnya"
+              hint="Bila dinonaktifkan, instansi ini tidak melihat data (SPPD, anggaran, pegawai) milik unit-unit di bawahnya — tiap unit tersebut mengelola datanya sendiri secara independen." />
           </div>
         @endif
 
@@ -266,42 +283,64 @@
           @enderror
         </div>
 
-        {{-- Unggah Kop Surat — hanya untuk OPD induk --}}
-        @if ($isRoot)
-          <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
-            <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
+        {{-- Unggah Kop Surat Utama — tersedia untuk semua unit. Sub-unit yang
+             dikosongkan akan otomatis mewarisi kop instansi induknya. --}}
+        <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
+          <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
+            class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
+            hint="{{ $isRoot
+              ? 'Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD.'
+              : 'Rekomendasi rasio cetak 1000x200 pixel. Kosongkan untuk mengikuti kop instansi induk.' }}" />
+          <div wire:loading wire:target="letterhead" class="text-[10px] text-cyan-600">
+            <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
+          </div>
+          @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
+            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kop Aktif (SPPD):</p>
+                <x-ui.button type="button" variant="danger" wire:click="confirmDeleteKop('primary')"
+                  class="gap-1 px-2 py-0.5 text-[10px] font-bold">
+                  <i class="fa-solid fa-trash-can text-[9px]"></i> Hapus Kop
+                </x-ui.button>
+              </div>
+              <img src="{{ asset('storage/' . $department->letterhead) }}"
+                class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
+            </div>
+          @elseif ($inheritedLetterhead && \Illuminate\Support\Str::contains($inheritedLetterhead, '/'))
+            <div class="p-2.5 bg-amber-50 border border-amber-200 rounded w-full">
+              <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
+                <i class="fa-solid fa-link mr-1"></i>Kop Saat Ini (diwarisi dari induk):
+              </p>
+              <img src="{{ asset('storage/' . $inheritedLetterhead) }}"
+                class="max-h-16 rounded border border-amber-300/70 p-1 bg-white shadow-sm w-full object-contain">
+              <p class="text-[10px] text-amber-600/80 mt-1.5">Unggah berkas di atas untuk memberi unit ini kop sendiri.</p>
+            </div>
+          @endif
+        </div>
+
+        {{-- Kop Surat Kedua — Khusus DPRD --}}
+        @if ($type === 'dprd')
+          <div class="md:col-span-1 space-y-1.5">
+            <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
               class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
-              hint="Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD." />
-            <div wire:loading wire:target="letterhead" class="text-[10px] text-cyan-600">
+              hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
+            <div wire:loading wire:target="letterhead_second" class="text-[10px] text-cyan-600">
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
             </div>
-            @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
+            @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
               <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPPD):</p>
-                <img src="{{ asset('storage/' . $department->letterhead) }}"
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kop Aktif (SPT):</p>
+                  <x-ui.button type="button" variant="danger" wire:click="confirmDeleteKop('secondary')"
+                    class="gap-1 px-2 py-0.5 text-[10px] font-bold">
+                    <i class="fa-solid fa-trash-can text-[9px]"></i> Hapus Kop
+                  </x-ui.button>
+                </div>
+                <img src="{{ asset('storage/' . $department->letterhead_second) }}"
                   class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
               </div>
             @endif
           </div>
-
-          {{-- Kop Surat Kedua — Khusus DPRD --}}
-          @if ($type === 'dprd')
-            <div class="md:col-span-1 space-y-1.5">
-              <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
-                class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
-                hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
-              <div wire:loading wire:target="letterhead_second" class="text-[10px] text-cyan-600">
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
-              </div>
-              @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
-                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
-                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kop Aktif (SPT):</p>
-                  <img src="{{ asset('storage/' . $department->letterhead_second) }}"
-                    class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
-                </div>
-              @endif
-            </div>
-          @endif
         @endif
       </div>
 
@@ -320,4 +359,29 @@
       </div>
     </form>
   </div>
+
+  {{-- Modal Konfirmasi Hapus Kop Surat — hanya bisa ditutup lewat tombol (tidak closeable) --}}
+  <x-ui.modal show="$wire.showDeleteKopModal" title="Konfirmasi Hapus Kop Surat"
+    description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600"
+    :closeable="false">
+    <div class="space-y-4">
+      <p class="text-sm text-slate-600">
+        Yakin ingin menghapus
+        <span class="font-bold text-slate-800">
+          {{ $deleteKopTarget === 'secondary' ? 'kop surat kedua (SPT)' : 'kop surat utama' }}
+        </span>
+        instansi ini? Berkas kop akan dihapus permanen dan unit akan kembali mengikuti kop instansi induk (bila ada).
+      </p>
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <x-ui.button type="button" variant="secondary" wire:click="closeDeleteKopModal">
+          Tutup
+        </x-ui.button>
+        <x-ui.button type="button" variant="danger" wire:click="deleteKop">
+          <span wire:loading.remove wire:target="deleteKop"><i class="fa-solid fa-trash-can"></i> Hapus</span>
+          <span wire:loading wire:target="deleteKop"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
+        </x-ui.button>
+      </div>
+    </div>
+  </x-ui.modal>
 </div>

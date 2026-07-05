@@ -68,12 +68,12 @@
   </div>
 
   {{-- Table Container --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
+  <div class="bg-white rounded border border-slate-200 shadow-sm"
     wire:loading.class="opacity-60" wire:target="search,type">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+    <div class="overflow-x-clip">
+      <table class="w-full text-left border-collapse">
         <thead
-          class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+          class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm [&_th]:pt-5 [&_th]:pb-3">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No</th>
             <th class="py-2.5 px-4">Nama Unit Kerja / Struktur</th>
@@ -112,6 +112,13 @@
                   <span class="{{ $isOwnDept ? 'text-cyan-700 font-bold' : 'text-slate-900' }}">
                     {{ $dept->name }}
                   </span>
+                  @unless($dept->has_kop)
+                    <span
+                      class="ml-2 inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200"
+                      title="Unit ini belum memiliki kop surat, dan tidak mewarisi kop dari instansi induk.">
+                      <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Belum ada kop
+                    </span>
+                  @endunless
                 </div>
               </td>
 

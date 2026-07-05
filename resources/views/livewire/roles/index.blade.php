@@ -97,7 +97,7 @@
 
               <td class="py-2.5 px-4 text-center">
                 @if ($role->users_count > 0)
-                  <a href="{{ route('master.users.index', ['role' => $role->name]) }}" wire:navigate
+                  <a href="{{ route('master.users.index', array_filter(['role' => $role->name, 'type' => in_array($role->name, ['anggota_dprd', 'pimpinan_dprd']) ? 'dprd' : ''])) }}" wire:navigate
                     class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-600/20 transition hover:bg-violet-100"
                     title="Lihat pegawai dengan role ini">
                     <i class="fa-solid fa-users text-[10px]"></i> {{ $role->users_count }}

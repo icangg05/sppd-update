@@ -20,7 +20,7 @@ trait AuthorizesSppdAccess
         }
 
         $dept = $user->department;
-        $allowedIds = $dept ? $dept->getAllRelatedIds() : collect([$user->department_id]);
+        $allowedIds = $dept ? $dept->getScopedRelatedIds() : collect([$user->department_id]);
 
         abort_unless($allowedIds->contains($sppd->user->department_id), 403, 'Anda tidak memiliki akses ke SPPD ini.');
     }

@@ -118,15 +118,18 @@ class DepartmentIndex extends Component
     $this->toastSuccess("Instansi/OPD {$name} berhasil dihapus.");
   }
 
-  private function flattenDepartment($dept, int $level, array &$list): void
+  private function flattenDepartment($dept, int $level, array &$list, $allowedIds = null): void
   {
     if (! $dept) return;
+
+    // Batasi pada zona data user (unit di luar zona tidak ditampilkan).
+    if ($allowedIds !== null && ! $allowedIds->contains($dept->id)) return;
 
     $dept->tree_level = $level;
     $list[]           = $dept;
 
     foreach ($dept->children()->withCount(['users', 'budgets', 'children'])->with('head')->orderBy('name')->get() as $child) {
-      $this->flattenDepartment($child, $level + 1, $list);
+      $this->flattenDepartment($child, $level + 1, $list, $allowedIds);
     }
   }
 
@@ -151,16 +154,18 @@ class DepartmentIndex extends Component
 
     $query = Department::withCount(['users', 'budgets', 'children'])->with('head');
 
+    $scopedIds = null;
     if (! $isSuperAdmin) {
-      // Admin OPD hanya bisa melihat unit di bawah departemennya sendiri
+      // Admin OPD hanya bisa melihat unit dalam zona datanya sendiri
+      // (departemennya + turunan yang berbagi data).
       $myDeptId = $user->department_id;
       if (! $myDeptId) abort(403, 'Anda belum memiliki instansi terkait.');
 
-      $query->where(function ($q) use ($myDeptId) {
-        $q->where('id', $myDeptId)
-          ->orWhere('parent_id', $myDeptId)
-          ->orWhereIn('parent_id', Department::where('parent_id', $myDeptId)->pluck('id'));
-      });
+      $scopedIds = $user->department
+        ? $user->department->getScopedRelatedIds()
+        : collect([$myDeptId]);
+
+      $query->whereIn('id', $scopedIds);
     }
 
     if ($this->search !== '') {
@@ -190,11 +195,27 @@ class DepartmentIndex extends Component
       }
     } else {
       $root = (clone $query)->find($user->department_id);
-      $this->flattenDepartment($root, 0, $list);
+      $this->flattenDepartment($root, 0, $list, $scopedIds);
       $departments = $list;
     }
 
-    $departments = $this->paginateItems($departments, 50);
+    $departments = $this->paginateItems($departments, 100);
+
+    // Tandai unit yang belum punya kop surat. Kop hanya di-set di tingkat OPD
+    // induk, sub-unit mewarisi dari induknya — jadi unit dianggap "sudah punya
+    // kop" bila dirinya atau salah satu leluhurnya memiliki kop.
+    // Resolusi warisan lewat satu peta (id, parent_id, letterhead) agar bebas N+1.
+    $kopLookup = Department::get(['id', 'parent_id', 'letterhead'])->keyBy('id');
+    $hasInheritedKop = function ($id) use (&$hasInheritedKop, $kopLookup) {
+      $node = $kopLookup->get($id);
+      if (! $node) return false;
+      if (! empty($node->letterhead)) return true;
+
+      return $node->parent_id ? $hasInheritedKop($node->parent_id) : false;
+    };
+    foreach ($departments as $dept) {
+      $dept->has_kop = $hasInheritedKop($dept->id);
+    }
 
     $types = DepartmentType::cases();
 

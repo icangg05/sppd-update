@@ -12,6 +12,14 @@
 				<h1 class="text-sm font-bold tracking-wide sm:text-base">@yield('page-title', 'Dashboard')</h1>
 				<p class="text-xs font-medium text-cyan-200">Sistem Perjalanan Dinas</p>
 			</div>
+
+			@if (auth()->user()?->hasRole('super_admin'))
+				<span
+					class="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-900 shadow-sm">
+					<i class="fa-solid fa-shield-halved text-[10px]"></i>
+					Super Admin
+				</span>
+			@endif
 		</div>
 
 		<div class="flex items-center gap-3 sm:gap-5">

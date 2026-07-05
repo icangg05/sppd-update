@@ -22,6 +22,7 @@ class Department extends Model
     'letterhead_second',
     'type',
     'level',
+    'can_view_children_data',
   ];
 
   protected function casts(): array
@@ -29,13 +30,14 @@ class Department extends Model
     return [
       'type' => DepartmentType::class,
       'level' => 'integer',
+      'can_view_children_data' => 'boolean',
     ];
   }
 
   public function getActivitylogOptions(): LogOptions
   {
     return LogOptions::defaults()
-      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'type', 'level'])
+      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'type', 'level', 'can_view_children_data'])
       ->logOnlyDirty()
       ->dontLogEmptyChanges()
       ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
@@ -127,6 +129,53 @@ class Department extends Model
     }
 
     return $dept;
+  }
+
+  /**
+   * Root zona data untuk instansi ini: naik ke atas selama induknya masih
+   * berbagi data ke bawah (can_view_children_data). Berhenti di bawah induk
+   * yang tidak berbagi — instansi ini menjadi root zonanya sendiri.
+   */
+  public function getScopeRootDepartment(): self
+  {
+    $dept = $this;
+    while ($dept->parent !== null && $dept->parent->can_view_children_data) {
+      $dept = $dept->parent;
+    }
+
+    return $dept;
+  }
+
+  /**
+   * ID turunan dalam zona data: kosong bila instansi ini tidak melihat data
+   * di bawahnya; rekursif tapi tidak menurun melewati unit yang flag-nya off.
+   *
+   * @return \Illuminate\Support\Collection<int, int>
+   */
+  public function getScopedDescendantIds(): \Illuminate\Support\Collection
+  {
+    if (! $this->can_view_children_data) {
+      return collect();
+    }
+
+    $ids = collect();
+    foreach ($this->children as $child) {
+      $ids->push($child->id);
+      $ids = $ids->merge($child->getScopedDescendantIds());
+    }
+
+    return $ids;
+  }
+
+  /**
+   * ID instansi ini plus seluruh turunan dalam zona data
+   * (versi getAllRelatedIds yang menghormati can_view_children_data).
+   *
+   * @return \Illuminate\Support\Collection<int, int>
+   */
+  public function getScopedRelatedIds(): \Illuminate\Support\Collection
+  {
+    return collect([$this->id])->merge($this->getScopedDescendantIds());
   }
 
   /**

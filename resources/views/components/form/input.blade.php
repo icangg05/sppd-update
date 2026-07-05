@@ -19,7 +19,15 @@ $wireModel = $attributes->whereStartsWith('wire:model')->first();
 $key = $name ?? $wireModel;
 $id = $id ?? $key;
 $resolvedValue = $wireModel ? null : ($value ?? old($name));
-$resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 ' . $class);
+
+// Field disabled otomatis berlatar abu-abu — ubah di satu tempat ini saja.
+$disabledAttr = $attributes->get('disabled');
+$isDisabled = $disabledAttr !== null && $disabledAttr !== false;
+$stateClass = $isDisabled
+    ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
+    : 'bg-white text-slate-800';
+
+$resolvedClass = trim('w-full rounded border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 ' . $stateClass . ' ' . $class);
 @endphp
 
 <div class="{{ $wrapperClass }}">

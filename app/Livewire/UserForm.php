@@ -354,7 +354,7 @@ class UserForm extends Component
     if (!$currentUser->hasRole('super_admin')) {
       $dept = $currentUser->department;
       if ($dept && !empty($this->department_id)) {
-        $allowedIds = $dept->getAllRelatedIds();
+        $allowedIds = $dept->getScopedRelatedIds();
         if (!$allowedIds->contains($this->department_id)) {
           $this->department_id = $currentUser->department_id;
         }
@@ -400,7 +400,8 @@ class UserForm extends Component
     if ($this->isEdit) {
       $this->user->update($data);
       $this->user->syncRoles([$this->role]);
-      return redirect()->route('master.users.index', $typeParam)->with('success', "Pegawai {$this->user->name} berhasil diperbarui.");
+      $this->toastSuccess("Pegawai {$this->user->name} berhasil diperbarui.");
+      return;
     } else {
       $data['is_active'] = true;
       $data['phone_verified'] = $this->phoneVerified;
