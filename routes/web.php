@@ -328,23 +328,18 @@ Route::get('/uji-coba/berita', function () {
                 . 'Coba sesuaikan BERITA_SCRAPER_EXTRA (aktifkan proxy premium/residensial, matikan render JS untuk endpoint API).',
             'via' => $via,
             'status' => $response->status(),
-            'preview' => \Illuminate\Support\Str::limit(trim(strip_tags($response->body())), 300),
+            'preview' => Str::limit(trim(strip_tags($response->body())), 300),
         ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 
-    $berita = collect($posts)->map(fn ($post) => [
-        'id' => $post['id'] ?? null,
-        'judul' => html_entity_decode(strip_tags($post['title']['rendered'] ?? '')),
-        'tanggal' => $post['date'] ?? null,
-        'tautan' => $post['link'] ?? null,
-        'ringkasan' => trim(html_entity_decode(strip_tags($post['excerpt']['rendered'] ?? ''))),
-        'gambar' => $post['_embedded']['wp:featuredmedia'][0]['source_url'] ?? null,
-    ])->values();
-
+    // Kembalikan payload WordPress PENUH apa adanya (termasuk content.rendered &
+    // _embedded: gambar, kategori, penulis). Konsumen (kiosk slides-berita)
+    // menormalisasi sendiri sesuai kebutuhan tampilannya, jadi API ini tetap
+    // jadi "sumber mentah" tunggal dan tak perlu ikut berubah saat UI berubah.
     return response()->json([
         'ok' => true,
         'via' => $via,
-        'jumlah' => $berita->count(),
-        'data' => $berita,
-    ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        'jumlah' => count($posts),
+        'data' => $posts,
+    ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 })->name('uji-coba.berita');
