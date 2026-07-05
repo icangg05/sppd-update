@@ -278,24 +278,61 @@ Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])
 // Sumber: WordPress REST API (/wp-json/wp/v2/posts).
 // ---------------------------------------------------------------------------
 Route::get('/uji-coba/berita', function () {
-    $response = \Illuminate\Support\Facades\Http::timeout(15)
-        ->acceptJson()
-        ->get('https://berita.kendarikota.go.id/wp-json/wp/v2/posts', [
-            'per_page' => 20,
-            'orderby' => 'date',
-            'order' => 'desc',
-            '_embed' => 1, // sertakan data ternaut (penulis, kategori, gambar unggulan)
-        ]);
+    // URL target WordPress (20 berita terbaru + data ternaut/gambar unggulan).
+    $target = 'https://berita.kendarikota.go.id/wp-json/wp/v2/posts?' . http_build_query([
+        'per_page' => 20,
+        'orderby'  => 'date',
+        'order'    => 'desc',
+        '_embed'   => 1,
+    ]);
+
+    // IP VPS diblokir WAF Cloudflare situs berita. Bila layanan scraper
+    // dikonfigurasi (BERITA_SCRAPER_ENDPOINT) kita lewat situ (IP residensial);
+    // kalau kosong (mis. tes dari laptop yang lolos) tembak WordPress langsung.
+    $endpoint = config('services.berita.scraper_endpoint');
+
+    if ($endpoint) {
+        // Bungkus target sebagai satu parameter di layanan scraper.
+        $query = [
+            config('services.berita.scraper_key_param') => config('services.berita.scraper_key'),
+            config('services.berita.scraper_url_param') => $target,
+        ];
+        // Flag tambahan spesifik provider (mis. "premium=true&render=false").
+        parse_str((string) config('services.berita.scraper_extra'), $extra);
+
+        // Scraper (apalagi dgn anti-bot) bisa lambat — beri waktu lebih longgar.
+        $response = \Illuminate\Support\Facades\Http::timeout(60)
+            ->get(rtrim($endpoint, '/'), array_merge($query, $extra));
+        $via = 'scraper';
+    } else {
+        $response = \Illuminate\Support\Facades\Http::timeout(15)->acceptJson()->get($target);
+        $via = 'langsung';
+    }
 
     if ($response->failed()) {
         return response()->json([
             'ok' => false,
             'message' => 'Gagal mengambil berita dari sumber WordPress.',
+            'via' => $via,
             'status' => $response->status(),
         ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 
-    $berita = collect($response->json())->map(fn ($post) => [
+    // Bila lewat scraper tapi Cloudflare masih menghadang, body bisa berupa
+    // HTML (halaman blokir/challenge), bukan JSON. Deteksi & beri petunjuk.
+    $posts = $response->json();
+    if (! is_array($posts)) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Respons bukan JSON berita — kemungkinan scraper belum menembus Cloudflare. '
+                . 'Coba sesuaikan BERITA_SCRAPER_EXTRA (aktifkan proxy premium/residensial, matikan render JS untuk endpoint API).',
+            'via' => $via,
+            'status' => $response->status(),
+            'preview' => \Illuminate\Support\Str::limit(trim(strip_tags($response->body())), 300),
+        ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    $berita = collect($posts)->map(fn ($post) => [
         'id' => $post['id'] ?? null,
         'judul' => html_entity_decode(strip_tags($post['title']['rendered'] ?? '')),
         'tanggal' => $post['date'] ?? null,
@@ -306,6 +343,7 @@ Route::get('/uji-coba/berita', function () {
 
     return response()->json([
         'ok' => true,
+        'via' => $via,
         'jumlah' => $berita->count(),
         'data' => $berita,
     ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
