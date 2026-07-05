@@ -52,6 +52,12 @@ return [
         'scraper_key_param' => env('BERITA_SCRAPER_KEY_PARAM', 'api_key'),
         'scraper_url_param' => env('BERITA_SCRAPER_URL_PARAM', 'url'),
         'scraper_extra' => env('BERITA_SCRAPER_EXTRA', ''),
+        // Cache "last-good": sajikan hasil baik yang di-cache bila usianya masih
+        // di bawah TTL ini (menit) tanpa memanggil scraper lagi (hemat kredit).
+        // Salinan baik terakhir juga disimpan permanen sebagai cadangan saat
+        // scraper mengembalikan payload rusak. 0 = matikan serve-fresh (tetap
+        // selalu fetch), cadangan last-good tetap aktif.
+        'cache_minutes' => (int) env('BERITA_CACHE_MINUTES', 30),
     ],
 
 ];

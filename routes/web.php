@@ -278,29 +278,44 @@ Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])
 // Sumber: WordPress REST API (/wp-json/wp/v2/posts).
 // ---------------------------------------------------------------------------
 Route::get('/uji-coba/berita', function () {
-    // URL target WordPress (20 berita terbaru + data ternaut/gambar unggulan).
+    $cacheKey = 'uji_coba_berita:last_good';
+    $ttlMinutes = (int) config('services.berita.cache_minutes', 30);
+    $minValid = 5; // ambang minimum post ber-title agar batch dianggap "baik".
+
+    // Pembungkus respons JSON yang konsisten (payload WordPress PENUH apa adanya:
+    // content.rendered & _embedded; konsumen menormalisasi sendiri).
+    $respond = fn (array $posts, string $via, ?int $at = null) => response()->json([
+        'ok' => true,
+        'via' => $via,
+        'jumlah' => count($posts),
+        'cached_at' => $at ? date('c', $at) : null,
+        'data' => $posts,
+    ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    /** @var array{data: array, at: int}|null $cached */
+    $cached = Cache::get($cacheKey);
+
+    // 1) Serve-fresh: salinan baik masih segar → sajikan tanpa memanggil scraper.
+    if ($cached && $ttlMinutes > 0 && (time() - ($cached['at'] ?? 0)) < $ttlMinutes * 60) {
+        return $respond($cached['data'], 'cache', $cached['at'] ?? null);
+    }
+
+    // 2) Ambil segar dari sumber. IP VPS diblokir WAF Cloudflare, jadi lewat
+    //    scraper (IP residensial) bila dikonfigurasi; kalau tidak, tembak langsung.
     $target = 'https://berita.kendarikota.go.id/wp-json/wp/v2/posts?' . http_build_query([
         'per_page' => 20,
         'orderby'  => 'date',
         'order'    => 'desc',
         '_embed'   => 1,
     ]);
-
-    // IP VPS diblokir WAF Cloudflare situs berita. Bila layanan scraper
-    // dikonfigurasi (BERITA_SCRAPER_ENDPOINT) kita lewat situ (IP residensial);
-    // kalau kosong (mis. tes dari laptop yang lolos) tembak WordPress langsung.
     $endpoint = config('services.berita.scraper_endpoint');
 
     if ($endpoint) {
-        // Bungkus target sebagai satu parameter di layanan scraper.
         $query = [
             config('services.berita.scraper_key_param') => config('services.berita.scraper_key'),
             config('services.berita.scraper_url_param') => $target,
         ];
-        // Flag tambahan spesifik provider (mis. "premium=true&render=false").
         parse_str((string) config('services.berita.scraper_extra'), $extra);
-
-        // Scraper (apalagi dgn anti-bot) bisa lambat — beri waktu lebih longgar.
         $response = \Illuminate\Support\Facades\Http::timeout(60)
             ->get(rtrim($endpoint, '/'), array_merge($query, $extra));
         $via = 'scraper';
@@ -309,37 +324,36 @@ Route::get('/uji-coba/berita', function () {
         $via = 'langsung';
     }
 
-    if ($response->failed()) {
-        return response()->json([
-            'ok' => false,
-            'message' => 'Gagal mengambil berita dari sumber WordPress.',
-            'via' => $via,
-            'status' => $response->status(),
-        ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    // 3) Validasi batch: array berisi >= $minValid post dengan id + title.rendered.
+    //    scraper (scrape.do) sesekali balas 200 tapi payload rusak (post tanpa
+    //    judul); gerbang ini mencegah data sampah menimpa salinan baik.
+    $posts = $response->successful() ? $response->json() : null;
+    $validCount = is_array($posts)
+        ? collect($posts)->filter(fn ($p) => is_array($p)
+            && isset($p['id']) && is_numeric($p['id'])
+            && is_array($p['title'] ?? null)
+            && trim(strip_tags((string) ($p['title']['rendered'] ?? ''))) !== '')->count()
+        : 0;
+
+    // 4) Baik → simpan permanen sebagai last-good + sajikan.
+    if ($validCount >= $minValid) {
+        Cache::forever($cacheKey, ['data' => $posts, 'at' => time()]);
+
+        return $respond($posts, $via, time());
     }
 
-    // Bila lewat scraper tapi Cloudflare masih menghadang, body bisa berupa
-    // HTML (halaman blokir/challenge), bukan JSON. Deteksi & beri petunjuk.
-    $posts = $response->json();
-    if (! is_array($posts)) {
-        return response()->json([
-            'ok' => false,
-            'message' => 'Respons bukan JSON berita — kemungkinan scraper belum menembus Cloudflare. '
-                . 'Coba sesuaikan BERITA_SCRAPER_EXTRA (aktifkan proxy premium/residensial, matikan render JS untuk endpoint API).',
-            'via' => $via,
-            'status' => $response->status(),
-            'preview' => Str::limit(trim(strip_tags($response->body())), 300),
-        ], 502, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    // 5) Rusak/gagal → sajikan salinan baik terakhir (stale) bila ada.
+    if ($cached) {
+        return $respond($cached['data'], 'cache-stale', $cached['at'] ?? null);
     }
 
-    // Kembalikan payload WordPress PENUH apa adanya (termasuk content.rendered &
-    // _embedded: gambar, kategori, penulis). Konsumen (kiosk slides-berita)
-    // menormalisasi sendiri sesuai kebutuhan tampilannya, jadi API ini tetap
-    // jadi "sumber mentah" tunggal dan tak perlu ikut berubah saat UI berubah.
+    // 6) Belum ada cache baik sama sekali → error informatif.
     return response()->json([
-        'ok' => true,
+        'ok' => false,
+        'message' => 'Sumber mengembalikan payload rusak/gagal dan belum ada cache baik. Coba lagi sebentar.',
         'via' => $via,
-        'jumlah' => count($posts),
-        'data' => $posts,
-    ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        'status' => $response->status(),
+        'valid_count' => $validCount,
+        'preview' => Str::limit(trim(strip_tags((string) $response->body())), 300),
+    ], 502, [], JSON_UNESCAPED_UNICODE);
 })->name('uji-coba.berita');
