@@ -277,33 +277,43 @@ Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])
 // Route terpisah & tanpa auth, hanya untuk percobaan. Bebas dihapus nanti.
 // Sumber: WordPress REST API (/wp-json/wp/v2/posts).
 // ---------------------------------------------------------------------------
-Route::get('/uji-coba/berita', function () {
+Route::get('/uji-coba/berita', function (\Illuminate\Http\Request $request) {
     $cacheKey = 'uji_coba_berita:last_good';
     $ttlMinutes = (int) config('services.berita.cache_minutes', 30);
-    $minValid = 5; // ambang minimum post ber-title agar batch dianggap "baik".
+    $expected = 20;                       // jumlah berita diminta (per_page).
+    $force = $request->boolean('force');  // /admin & sync terjadwal kirim ?force=1.
 
-    // Pembungkus respons JSON yang konsisten (payload WordPress PENUH apa adanya:
-    // content.rendered & _embedded; konsumen menormalisasi sendiri).
-    $respond = fn (array $posts, string $via, ?int $at = null) => response()->json([
-        'ok' => true,
-        'via' => $via,
-        'jumlah' => count($posts),
-        'cached_at' => $at ? date('c', $at) : null,
-        'data' => $posts,
-    ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // Pembungkus respons konsisten. `fetch_status` membedakan 3 keadaan untuk
+    // /admin: success (lengkap) | incomplete (kurang lengkap→data lama) | failed
+    // (gagal total→data lama). Data = payload WordPress PENUH apa adanya.
+    $respond = fn (array $posts, string $status, string $served, ?int $at, int $returned, int $complete) =>
+        response()->json([
+            'ok' => count($posts) > 0,
+            'fetch_status' => $status,
+            'served' => $served,          // fresh | last-good | cache | none
+            'expected' => $expected,
+            'returned' => $returned,      // jumlah post dari upstream pada fetch ini
+            'complete' => $complete,      // jumlah post lengkap pada fetch ini
+            'cached_at' => $at ? date('c', $at) : null,
+            'jumlah' => count($posts),
+            'data' => $posts,
+        ], count($posts) > 0 ? 200 : 502, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     /** @var array{data: array, at: int}|null $cached */
     $cached = Cache::get($cacheKey);
 
-    // 1) Serve-fresh: salinan baik masih segar → sajikan tanpa memanggil scraper.
-    if ($cached && $ttlMinutes > 0 && (time() - ($cached['at'] ?? 0)) < $ttlMinutes * 60) {
-        return $respond($cached['data'], 'cache', $cached['at'] ?? null);
+    // Serve-fresh HANYA untuk permintaan non-force. Kiosk (sync terjadwal & tombol
+    // /admin) selalu kirim force=1 → selalu ambil langsung ke scraper.
+    if (! $force && $cached && $ttlMinutes > 0 && (time() - ($cached['at'] ?? 0)) < $ttlMinutes * 60) {
+        $n = count($cached['data']);
+
+        return $respond($cached['data'], 'success', 'cache', $cached['at'] ?? null, $n, $n);
     }
 
-    // 2) Ambil segar dari sumber. IP VPS diblokir WAF Cloudflare, jadi lewat
-    //    scraper (IP residensial) bila dikonfigurasi; kalau tidak, tembak langsung.
+    // Ambil segar dari sumber. IP VPS diblokir WAF Cloudflare, jadi lewat scraper
+    // (IP residensial) bila dikonfigurasi; kalau tidak, tembak langsung.
     $target = 'https://berita.kendarikota.go.id/wp-json/wp/v2/posts?' . http_build_query([
-        'per_page' => 20,
+        'per_page' => $expected,
         'orderby'  => 'date',
         'order'    => 'desc',
         '_embed'   => 1,
@@ -318,42 +328,43 @@ Route::get('/uji-coba/berita', function () {
         parse_str((string) config('services.berita.scraper_extra'), $extra);
         $response = \Illuminate\Support\Facades\Http::timeout(60)
             ->get(rtrim($endpoint, '/'), array_merge($query, $extra));
-        $via = 'scraper';
     } else {
         $response = \Illuminate\Support\Facades\Http::timeout(15)->acceptJson()->get($target);
-        $via = 'langsung';
     }
 
-    // 3) Validasi batch: array berisi >= $minValid post dengan id + title.rendered.
-    //    scraper (scrape.do) sesekali balas 200 tapi payload rusak (post tanpa
-    //    judul); gerbang ini mencegah data sampah menimpa salinan baik.
-    $posts = $response->successful() ? $response->json() : null;
-    $validCount = is_array($posts)
-        ? collect($posts)->filter(fn ($p) => is_array($p)
-            && isset($p['id']) && is_numeric($p['id'])
-            && is_array($p['title'] ?? null)
-            && trim(strip_tags((string) ($p['title']['rendered'] ?? ''))) !== '')->count()
-        : 0;
+    // Sebuah post LENGKAP bila punya id numerik + judul + isi (content) tak kosong.
+    $isComplete = fn ($p) => is_array($p)
+        && isset($p['id']) && is_numeric($p['id'])
+        && is_array($p['title'] ?? null) && trim(strip_tags((string) ($p['title']['rendered'] ?? ''))) !== ''
+        && is_array($p['content'] ?? null) && trim(strip_tags((string) ($p['content']['rendered'] ?? ''))) !== '';
 
-    // 4) Baik → simpan permanen sebagai last-good + sajikan.
-    if ($validCount >= $minValid) {
+    $posts = $response->successful() ? $response->json() : null;
+    $returned = is_array($posts) ? count($posts) : 0;
+    $complete = is_array($posts) ? collect($posts)->filter($isComplete)->count() : 0;
+
+    // success    → dapat >= $expected post & SEMUANYA lengkap.
+    // failed     → HTTP gagal / body bukan array JSON (mis. HTML blokir Cloudflare).
+    // incomplete → dapat array tapi jumlah kurang / ada post tidak lengkap.
+    if (is_array($posts) && $returned >= $expected && $complete === $returned) {
+        $status = 'success';
+    } elseif (! $response->successful() || ! is_array($posts)) {
+        $status = 'failed';
+    } else {
+        $status = 'incomplete';
+    }
+
+    // Sukses penuh → simpan last-good + sajikan data baru.
+    if ($status === 'success') {
         Cache::forever($cacheKey, ['data' => $posts, 'at' => time()]);
 
-        return $respond($posts, $via, time());
+        return $respond($posts, 'success', 'fresh', time(), $returned, $complete);
     }
 
-    // 5) Rusak/gagal → sajikan salinan baik terakhir (stale) bila ada.
+    // Gagal / kurang lengkap → PAKAI DATA LAMA (last-good) bila ada.
     if ($cached) {
-        return $respond($cached['data'], 'cache-stale', $cached['at'] ?? null);
+        return $respond($cached['data'], $status, 'last-good', $cached['at'] ?? null, $returned, $complete);
     }
 
-    // 6) Belum ada cache baik sama sekali → error informatif.
-    return response()->json([
-        'ok' => false,
-        'message' => 'Sumber mengembalikan payload rusak/gagal dan belum ada cache baik. Coba lagi sebentar.',
-        'via' => $via,
-        'status' => $response->status(),
-        'valid_count' => $validCount,
-        'preview' => Str::limit(trim(strip_tags((string) $response->body())), 300),
-    ], 502, [], JSON_UNESCAPED_UNICODE);
+    // Belum pernah ada data baik → tak ada yang bisa disajikan (HTTP 502).
+    return $respond([], $status, 'none', null, $returned, $complete);
 })->name('uji-coba.berita');
