@@ -204,7 +204,7 @@
 									@endif
 									@if ($expenses->count() > 0)
 										<a
-											:href="'{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' +
+											:href="'{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($person['id'])]) }}' +
 											'&date=' + printDate"
 											target="_blank"
 											class="inline-flex items-center gap-1 rounded bg-slate-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-slate-700 shadow-xs transition {{ !$sppd->pptk_id ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'hover:scale-[1.03] active:scale-[0.97]' }}">

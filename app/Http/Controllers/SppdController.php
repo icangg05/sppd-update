@@ -642,26 +642,10 @@ class SppdController extends Controller
     $budget = $sppd->budget;
     $deptName = $department?->name ?? '-';
 
-    // Pimpinan OPD = Pengguna Anggaran
-    // Cari user role kepala_opd di department user (atau parent OPD jika di sub-unit)
-    $opdDept = $department;
-    if ($opdDept && $opdDept->parent_id) {
-      // Jika user berada di sub-unit, naik ke OPD induk
-      $opdDept = $opdDept->parent ?? $opdDept;
-    }
-
-    $pimpinan = User::role('kepala_opd')
-      ->where('department_id', $opdDept?->id)
-      ->where('is_active', true)
-      ->first();
-
-    // Fallback: cari di department user langsung jika tidak ditemukan di induk
-    if (! $pimpinan && $opdDept?->id !== $department?->id) {
-      $pimpinan = User::role('kepala_opd')
-        ->where('department_id', $department?->id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
+    ['user' => $pimpinan, 'label' => $setujuBayarLabel, 'opd' => $opdDept] = $department
+      ? $department->resolveSetujuBayar()
+      : ['user' => null, 'label' => null, 'opd' => null];
 
     // Bendahara pengeluaran berdasarkan jabatan
     $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
@@ -702,9 +686,10 @@ class SppdController extends Controller
       'uang_sebesar' => $uangSebesar,
       'terbilang_uang' => Terbilang::rupiah($uangSebesar),
 
-      // Pengguna Anggaran = Pimpinan OPD (role kepala_opd)
+      // Setuju Bayar: setting per instansi, fallback Pimpinan OPD (kepala_opd)
       'approver_name' => $pimpinan?->name ?? '................................',
       'approver_nip' => $pimpinan?->nip,
+      'approver_label' => $setujuBayarLabel ?? 'PENGGUNA ANGGARAN',
       'approver_dept' => $opdDept?->name ?? $deptName,
 
       // Bendahara Pengeluaran
@@ -751,23 +736,10 @@ class SppdController extends Controller
     $budget = $sppd->budget;
     $deptName = $department?->name ?? '-';
 
-    // Pimpinan OPD = Pengguna Anggaran
-    $opdDept = $department;
-    if ($opdDept && $opdDept->parent_id) {
-      $opdDept = $opdDept->parent ?? $opdDept;
-    }
-
-    $pimpinan = User::role('kepala_opd')
-      ->where('department_id', $opdDept?->id)
-      ->where('is_active', true)
-      ->first();
-
-    if (! $pimpinan && $opdDept?->id !== $department?->id) {
-      $pimpinan = User::role('kepala_opd')
-        ->where('department_id', $department?->id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
+    ['user' => $pimpinan, 'label' => $setujuBayarLabel, 'opd' => $opdDept] = $department
+      ? $department->resolveSetujuBayar()
+      : ['user' => null, 'label' => null, 'opd' => null];
 
     // Bendahara pengeluaran berdasarkan jabatan
     $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
@@ -808,9 +780,10 @@ class SppdController extends Controller
       'uang_sebesar' => $panjarAmount,
       'terbilang_uang' => Terbilang::rupiah($panjarAmount),
 
-      // Pengguna Anggaran = Pimpinan OPD (role kepala_opd)
+      // Setuju Bayar: setting per instansi, fallback Pimpinan OPD (kepala_opd)
       'approver_name' => $pimpinan?->name ?? '................................',
       'approver_nip' => $pimpinan?->nip,
+      'approver_label' => $setujuBayarLabel ?? 'PENGGUNA ANGGARAN',
       'approver_dept' => $opdDept?->name ?? $deptName,
 
       // Bendahara Pengeluaran
@@ -844,7 +817,16 @@ class SppdController extends Controller
       'approvals.approver',
     ]);
 
-    $userId = $request->query('user_id', $sppd->user_id);
+    // user_id di query dikirim sebagai hashid; decode dulu (default: pelaksana SPPD).
+    $userIdParam = $request->query('user_id');
+    if ($userIdParam !== null && $userIdParam !== '') {
+      $decoded = Hashids::decode($userIdParam);
+      abort_if(empty($decoded), 404);
+      $userId = $decoded[0];
+    } else {
+      $userId = $sppd->user_id;
+    }
+
     $targetUser = User::with(['rank', 'position', 'roles'])->findOrFail($userId);
     $expenses = $sppd->actualExpenses->where('user_id', $userId)->values();
 
@@ -853,23 +835,10 @@ class SppdController extends Controller
     // Data instansi
     $department = $sppd->user->department;
 
-    // Pimpinan OPD (Kepala Dinas)
-    $opdDept = $department;
-    if ($opdDept && $opdDept->parent_id) {
-      $opdDept = $opdDept->parent ?? $opdDept;
-    }
-
-    $pimpinan = User::role('kepala_opd')
-      ->where('department_id', $opdDept?->id)
-      ->where('is_active', true)
-      ->first();
-
-    if (! $pimpinan && $opdDept?->id !== $department?->id) {
-      $pimpinan = User::role('kepala_opd')
-        ->where('department_id', $department?->id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
+    ['user' => $pimpinan, 'label' => $setujuBayarLabel] = $department
+      ? $department->resolveSetujuBayar()
+      : ['user' => null, 'label' => null];
 
     $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
     $approver = $lastApproval?->approver;
@@ -894,7 +863,7 @@ class SppdController extends Controller
       'pptk_nip' => $pptk?->nip,
       'pimpinan_name' => $pimpinan?->name ?? '_________________________',
       'pimpinan_nip' => $pimpinan?->nip,
-      'pimpinan_role' => $pimpinan?->position?->name ?? 'Kepala Dinas',
+      'pimpinan_role' => $setujuBayarLabel ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
       'is_walikota' => ($approver && $approver->hasRole('walikota')) || ($pimpinan && $pimpinan->hasRole('walikota')),
       'qr_image' => $qrImage,
       'date' => $dateValue->translatedFormat('d F Y'),
@@ -936,23 +905,10 @@ class SppdController extends Controller
     // Data instansi
     $department = $sppd->user->department;
 
-    // Pimpinan OPD (Kepala Dinas)
-    $opdDept = $department;
-    if ($opdDept && $opdDept->parent_id) {
-      $opdDept = $opdDept->parent ?? $opdDept;
-    }
-
-    $pimpinan = User::role('kepala_opd')
-      ->where('department_id', $opdDept?->id)
-      ->where('is_active', true)
-      ->first();
-
-    if (! $pimpinan && $opdDept?->id !== $department?->id) {
-      $pimpinan = User::role('kepala_opd')
-        ->where('department_id', $department?->id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
+    ['user' => $pimpinan, 'label' => $setujuBayarLabel] = $department
+      ? $department->resolveSetujuBayar()
+      : ['user' => null, 'label' => null];
 
     // Bendahara Pengeluaran berdasarkan jabatan
     $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
@@ -991,7 +947,7 @@ class SppdController extends Controller
       'pptk_nip' => $pptk?->nip,
       'pimpinan_name' => $pimpinan?->name ?? '_________________________',
       'pimpinan_nip' => $pimpinan?->nip,
-      'pimpinan_role' => $pimpinan?->position?->name ?? 'Kepala Dinas',
+      'pimpinan_role' => $setujuBayarLabel ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
       'bendahara_name' => $bendahara?->name ?? '_________________________',
       'bendahara_nip' => $bendahara?->nip,
       'panjar_amount' => $panjarAmount,

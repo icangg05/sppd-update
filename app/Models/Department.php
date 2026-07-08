@@ -16,6 +16,8 @@ class Department extends Model
   protected $fillable = [
     'parent_id',
     'head_id',
+    'setuju_bayar_user_id',
+    'setuju_bayar_label',
     'name',
     'code',
     'letterhead',
@@ -37,7 +39,7 @@ class Department extends Model
   public function getActivitylogOptions(): LogOptions
   {
     return LogOptions::defaults()
-      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'type', 'level', 'can_view_children_data'])
+      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'setuju_bayar_user_id', 'setuju_bayar_label', 'type', 'level', 'can_view_children_data'])
       ->logOnlyDirty()
       ->dontLogEmptyChanges()
       ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
@@ -67,6 +69,11 @@ class Department extends Model
   public function head(): BelongsTo
   {
     return $this->belongsTo(User::class, 'head_id');
+  }
+
+  public function setujuBayarUser(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'setuju_bayar_user_id');
   }
 
   public function children(): HasMany
@@ -176,6 +183,50 @@ class Department extends Model
   public function getScopedRelatedIds(): \Illuminate\Support\Collection
   {
     return collect([$this->id])->merge($this->getScopedDescendantIds());
+  }
+
+  /**
+   * Penandatangan "Setuju Bayar" pada dokumen cetak (kuitansi, pengeluaran
+   * riil, rincian biaya) untuk pegawai di department ini.
+   *
+   * Urutan resolusi user: setting department sendiri → setting OPD induk
+   * (naik satu level, sama seperti logika cetak lama) → user role kepala_opd
+   * di OPD induk → di department sendiri. User tersimpan yang nonaktif dilewati.
+   * Label di-resolve terpisah (department sendiri → OPD induk) agar tetap
+   * berlaku walau kolom user kosong; null = label bawaan per dokumen.
+   *
+   * @return array{user: ?User, label: ?string, opd: Department}
+   */
+  public function resolveSetujuBayar(): array
+  {
+    $opd = $this->parent_id ? ($this->parent ?? $this) : $this;
+
+    $user = null;
+    foreach ([$this, $opd] as $dept) {
+      $candidate = $dept->setujuBayarUser;
+      if ($candidate && $candidate->is_active) {
+        $user = $candidate;
+        break;
+      }
+    }
+
+    if (! $user) {
+      $user = User::role('kepala_opd')
+        ->where('department_id', $opd->id)
+        ->where('is_active', true)
+        ->first();
+
+      if (! $user && $opd->id !== $this->id) {
+        $user = User::role('kepala_opd')
+          ->where('department_id', $this->id)
+          ->where('is_active', true)
+          ->first();
+      }
+    }
+
+    $label = $this->setuju_bayar_label ?? $opd->setuju_bayar_label;
+
+    return ['user' => $user, 'label' => $label, 'opd' => $opd];
   }
 
   /**

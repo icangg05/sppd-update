@@ -46,8 +46,8 @@ class UsersIndex extends Component
   public function searchPlaceholder(): string
   {
     return $this->isDprd()
-      ? 'Cari nama, username, jabatan, role, atau partai...'
-      : 'Cari nama, username, jabatan, atau role...';
+      ? 'Cari nama, NIP, NIK, username, jabatan, role, atau partai...'
+      : 'Cari nama, NIP, NIK, username, jabatan, atau role...';
   }
 
   public function updatedSearch(): void
@@ -204,8 +204,10 @@ class UsersIndex extends Component
       $s = $this->search;
       $isDprd = $this->isDprd();
       $query->where(function ($q) use ($s, $isDprd) {
-        // Cari nama, username & role (cocokkan label maupun nama teknis role)
+        // Cari nama, NIP, NIK, username & role (cocokkan label maupun nama teknis role)
         $q->where('name', 'like', "%{$s}%")
+          ->orWhere('nip', 'like', "%{$s}%")
+          ->orWhere('nik', 'like', "%{$s}%")
           ->orWhere('username', 'like', "%{$s}%")
           ->orWhereHas('roles', fn($r) => $r->where('label', 'like', "%{$s}%")
             ->orWhere('name', 'like', "%{$s}%"));
@@ -262,7 +264,7 @@ class UsersIndex extends Component
         ->orderByRaw("FIELD(department_id, {$idsString})");
     }
 
-    $users = $query->orderBy('name')->paginate(20)->onEachSide(1);
+    $users = $query->orderBy('name')->paginate(25)->onEachSide(1);
 
     // Build a depth map for department indentation — avoids N+1 by using in-memory lookup
     $allDepts     = Department::all()->keyBy('id');

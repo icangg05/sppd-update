@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 700" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L7 3 L0 6 z" fill="#274f5f"/>
+    </marker>
+    <marker id="arwR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L7 3 L0 6 z" fill="#b03030"/>
+    </marker>
+    <marker id="arwN" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L6 3 L0 6 z" fill="#d98a2b"/>
+    </marker>
+  </defs>
+  <style>
+    .flow{stroke:#274f5f;stroke-width:1.6;fill:none;}
+    .loop{stroke:#b03030;stroke-width:1.6;fill:none;stroke-dasharray:1 0;}
+    .ntf{stroke:#d98a2b;stroke-width:1.4;fill:none;stroke-dasharray:5 4;}
+    .proc{fill:#eef2f4;stroke:#274f5f;stroke-width:1.5;}
+    .dia{fill:#f2f7f9;stroke:#2b6cb0;stroke-width:1.6;}
+    .term{fill:#2e5c6e;stroke:#274f5f;stroke-width:1.5;}
+    .tt{fill:#ffffff;font-size:13px;font-weight:bold;}
+    .pt{fill:#1a1a1a;font-size:13px;font-weight:bold;}
+    .dt{fill:#1a4e73;font-size:12.5px;font-weight:bold;}
+    .lbl{fill:#b03030;font-size:11.5px;font-weight:bold;}
+    .ok{fill:#1f7a4d;font-size:11.5px;font-weight:bold;}
+    .badge{fill:#fff4e6;stroke:#d98a2b;stroke-width:1.4;}
+    .bt{fill:#8a5316;font-size:12px;font-weight:bold;}
+  </style>
+
+  <!-- ============ ALUR UTAMA ============ -->
+  <!-- T1 mulai -->
+  <rect class="term" x="120" y="20" width="260" height="50" rx="25"/>
+  <text class="tt" x="250" y="41" text-anchor="middle">Mulai — Pengaju membuat</text>
+  <text class="tt" x="250" y="58" text-anchor="middle">pengajuan (Draft)</text>
+  <line class="flow" x1="250" y1="70" x2="250" y2="108" marker-end="url(#arw)"/>
+
+  <!-- P1 diajukan -->
+  <rect class="proc" x="120" y="110" width="260" height="46" rx="4"/>
+  <text class="pt" x="250" y="138" text-anchor="middle">Pengajuan diajukan</text>
+  <line class="flow" x1="250" y1="156" x2="250" y2="186" marker-end="url(#arw)"/>
+
+  <!-- D1 verifikasi -->
+  <polygon class="dia" points="250,186 362,238 250,290 138,238"/>
+  <text class="dt" x="250" y="234" text-anchor="middle">Verifikasi /</text>
+  <text class="dt" x="250" y="250" text-anchor="middle">Telaah</text>
+  <text class="ok" x="262" y="308">Disetujui</text>
+  <line class="flow" x1="250" y1="290" x2="250" y2="322" marker-end="url(#arw)"/>
+
+  <!-- P2 SPD -->
+  <rect class="proc" x="120" y="324" width="260" height="46" rx="4"/>
+  <text class="pt" x="250" y="352" text-anchor="middle">Penerbitan SPD</text>
+  <line class="flow" x1="250" y1="370" x2="250" y2="400" marker-end="url(#arw)"/>
+
+  <!-- P3 TTE latar -->
+  <rect class="proc" x="120" y="402" width="260" height="56" rx="4"/>
+  <text class="pt" x="250" y="425" text-anchor="middle">TTE diproses di latar</text>
+  <text class="pt" x="250" y="444" text-anchor="middle">(Queue / Worker)</text>
+  <line class="flow" x1="250" y1="458" x2="250" y2="486" marker-end="url(#arw)"/>
+
+  <!-- D2 berhasil? -->
+  <polygon class="dia" points="250,486 362,536 250,586 138,536"/>
+  <text class="dt" x="250" y="532" text-anchor="middle">TTE</text>
+  <text class="dt" x="250" y="548" text-anchor="middle">berhasil?</text>
+  <text class="ok" x="262" y="604">Berhasil</text>
+  <line class="flow" x1="250" y1="586" x2="250" y2="616" marker-end="url(#arw)"/>
+
+  <!-- T2 selesai -->
+  <rect class="term" x="120" y="618" width="260" height="50" rx="25"/>
+  <text class="tt" x="250" y="639" text-anchor="middle">Selesai — dokumen</text>
+  <text class="tt" x="250" y="656" text-anchor="middle">tertandatangani</text>
+
+  <!-- ============ LOOP: DITOLAK / REVISI ============ -->
+  <polyline class="loop" points="138,238 60,238 60,90 120,90" marker-end="url(#arwR)"/>
+  <text class="lbl" x="30" y="200" transform="rotate(-90 30 200)">Ditolak / revisi</text>
+
+  <!-- ============ LOOP: TTE GAGAL -> RETRY ============ -->
+  <polyline class="loop" points="138,536 60,536 60,430 120,430" marker-end="url(#arwR)"/>
+  <text class="lbl" x="30" y="500" transform="rotate(-90 30 500)">Gagal &#8594; retry otomatis</text>
+
+  <!-- ============ TITIK NOTIFIKASI ============ -->
+  <!-- B1 ke verifikator (dari P1) -->
+  <line class="ntf" x1="380" y1="133" x2="452" y2="133" marker-end="url(#arwN)"/>
+  <g>
+    <rect class="badge" x="454" y="110" width="270" height="46" rx="6"/>
+    <g transform="translate(468,120)"><path d="M8 2 a4 4 0 0 1 4 4 v3 l2 3 h-12 l2 -3 v-3 a4 4 0 0 1 4 -4 z" fill="none" stroke="#d98a2b" stroke-width="1.4"/><circle cx="8" cy="15" r="1.6" fill="#d98a2b"/></g>
+    <text class="bt" x="490" y="130">Notifikasi ke</text>
+    <text class="bt" x="490" y="146">Verifikator / Penelaah</text>
+  </g>
+
+  <!-- B2 hasil telaah ke pengaju (dari D1) -->
+  <line class="ntf" x1="362" y1="238" x2="452" y2="238" marker-end="url(#arwN)"/>
+  <g>
+    <rect class="badge" x="454" y="212" width="270" height="52" rx="6"/>
+    <g transform="translate(468,225)"><path d="M8 2 a4 4 0 0 1 4 4 v3 l2 3 h-12 l2 -3 v-3 a4 4 0 0 1 4 -4 z" fill="none" stroke="#d98a2b" stroke-width="1.4"/><circle cx="8" cy="15" r="1.6" fill="#d98a2b"/></g>
+    <text class="bt" x="490" y="234">Notifikasi hasil telaah</text>
+    <text class="bt" x="490" y="250">ke Pengaju (setuju/revisi)</text>
+  </g>
+
+  <!-- B3 SPD terbit (dari P2) -->
+  <line class="ntf" x1="380" y1="347" x2="452" y2="347" marker-end="url(#arwN)"/>
+  <g>
+    <rect class="badge" x="454" y="324" width="270" height="46" rx="6"/>
+    <g transform="translate(468,334)"><path d="M8 2 a4 4 0 0 1 4 4 v3 l2 3 h-12 l2 -3 v-3 a4 4 0 0 1 4 -4 z" fill="none" stroke="#d98a2b" stroke-width="1.4"/><circle cx="8" cy="15" r="1.6" fill="#d98a2b"/></g>
+    <text class="bt" x="490" y="344">Notifikasi:</text>
+    <text class="bt" x="490" y="360">SPD diterbitkan</text>
+  </g>
+
+  <!-- B4 status TTE (dari D2) -->
+  <line class="ntf" x1="362" y1="536" x2="452" y2="536" marker-end="url(#arwN)"/>
+  <g>
+    <rect class="badge" x="454" y="510" width="270" height="52" rx="6"/>
+    <g transform="translate(468,523)"><path d="M8 2 a4 4 0 0 1 4 4 v3 l2 3 h-12 l2 -3 v-3 a4 4 0 0 1 4 -4 z" fill="none" stroke="#d98a2b" stroke-width="1.4"/><circle cx="8" cy="15" r="1.6" fill="#d98a2b"/></g>
+    <text class="bt" x="490" y="532">Notifikasi status TTE</text>
+    <text class="bt" x="490" y="548">(berhasil / gagal)</text>
+  </g>
+
+  <!-- ============ LEGENDA ============ -->
+  <g font-size="12px">
+    <line class="flow" x1="454" y1="600" x2="490" y2="600"/>
+    <text class="pt" x="498" y="604" font-weight="normal">Alur utama</text>
+    <line class="loop" x1="454" y1="622" x2="490" y2="622"/>
+    <text class="pt" x="498" y="626" font-weight="normal">Perulangan (revisi / retry)</text>
+    <line class="ntf" x1="454" y1="644" x2="490" y2="644"/>
+    <text class="pt" x="498" y="648" font-weight="normal">Pemicu notifikasi — kanal ditentukan kemudian</text>
+  </g>
+</svg>

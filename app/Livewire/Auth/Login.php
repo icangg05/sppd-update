@@ -12,7 +12,7 @@ use Livewire\Component;
 #[Layout('layouts.guest')]
 class Login extends Component
 {
-  public string $username = 'admin_diskominfo';
+  public string $username = 'admin.diskominfo';
   public string $password = 'pass1234';
   public bool $remember = false;
 

@@ -175,7 +175,7 @@
 	<table class="signature-table" style="font-size: 9pt;">
 		<tr>
 			<td style="width: 33%;">
-				<p>SETUJU BAYAR<br />PENGGUNA ANGGARAN</p>
+				<p>SETUJU BAYAR<br />{{ strtoupper($pdfData['approver_label'] ?? 'PENGGUNA ANGGARAN') }}</p>
 				<div style="height: 55px;"></div>
 				<p>
 					<span style="font-weight: bold; text-decoration: underline;">

@@ -120,28 +120,28 @@
 	</div>
 
 	{{-- Table --}}
-	<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden" wire:loading.class="opacity-60"
+	<div class="rounded-xl border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
 		wire:target="search,department_id,partai,position_id,rank_id,role">
-		<div class="overflow-x-auto custom-scrollbar">
-			<table class="w-full text-left whitespace-nowrap">
+		<div class="overflow-x-clip">
+			<table class="w-full text-left table-fixed">
 				<thead
-					class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+					class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm">
 					<tr>
 						<th class="py-3 px-4 w-12 text-center">No.</th>
-						<th class="py-3 px-4">Pegawai</th>
+						<th class="py-3 px-4 w-[22%]">Pegawai</th>
 						@if (auth()->user()->hasRole('super_admin'))
-							<th class="py-3 px-4">Instansi</th>
+							<th class="py-3 px-4 w-[20%]">Instansi</th>
 						@endif
 						@if ($isDprd)
 							<th class="py-3 px-4">Jabatan DPRD</th>
-							<th class="py-3 px-4">Partai / Fraksi</th>
+							<th class="py-3 px-4 w-40">Partai / Fraksi</th>
 						@else
 							<th class="py-3 px-4">Jabatan</th>
-							<th class="py-3 px-4">Pangkat / Gol.</th>
+							<th class="py-3 px-4 w-32">Pangkat / Gol.</th>
 						@endif
-						<th class="py-3 px-4">Role</th>
-						<th class="py-3 px-4 text-center">Status</th>
-						<th class="py-3 px-4 text-right">Aksi</th>
+						<th class="py-3 px-4 w-28">Role</th>
+						<th class="py-3 px-4 w-28 text-center">Status</th>
+						<th class="py-3 px-4 w-36 text-right">Aksi</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-slate-100 text-slate-700">
@@ -151,7 +151,7 @@
 							$deptId = $user->department_id;
 							$depth = $deptDepthMap[$deptId] ?? 0;
 							$indent = $depth * 16;
-							$colCount = auth()->user()->hasRole('super_admin') ? 9 : 8;
+							$colCount = auth()->user()->hasRole('super_admin') ? 8 : 7;
 						@endphp
 
 						{{-- Department group header row when department changes --}}
@@ -180,15 +180,15 @@
 							{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
 							<td class="py-2.5 px-4">
 								<div style="padding-left: {{ $indent + 12 }}px">
-									<p class="text-sm font-semibold text-slate-900 leading-snug">{{ $user->name }}</p>
+									<p class="text-sm font-semibold text-slate-900 leading-snug wrap-break-word">{{ $user->name }}</p>
 									<div class="flex flex-wrap items-center gap-x-2 text-[12px] text-slate-500">
-										<span><i class="fa-solid fa-at text-[10px] mr-0.5"></i>{{ $user->username ?? '-' }}</span>
+										<span class="break-all"><i class="fa-solid fa-at text-[10px] mr-0.5"></i>{{ $user->username ?? '-' }}</span>
 									</div>
 								</div>
 							</td>
 
 							@if (auth()->user()->hasRole('super_admin'))
-								<td class="py-3 px-4 text-sm text-slate-600">{{ $user->department?->name ?? '-' }}</td>
+								<td class="py-3 px-4 text-sm text-slate-600 wrap-break-word">{{ $user->department?->name ?? '-' }}</td>
 							@endif
 
 							@if ($isDprd)
@@ -215,9 +215,9 @@
 							@endif
 
 							<td class="py-3 px-4">
-								<div class="flex flex-wrap gap-1">
+								<div class="flex flex-nowrap gap-1">
 									@foreach ($user->roles as $role)
-										<x-ui.badge :color="$role->color ?? 'slate'">{{ $role->label }}</x-ui.badge>
+										<x-ui.badge :color="$role->color ?? 'slate'" class="whitespace-nowrap">{{ $role->label }}</x-ui.badge>
 									@endforeach
 								</div>
 							</td>
@@ -271,7 +271,7 @@
 						</tr>
 					@empty
 						<tr>
-							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '9' : '8' }}" class="py-12 text-center">
+							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '8' : '7' }}" class="py-12 text-center">
 								<div class="flex flex-col items-center justify-center text-slate-400">
 									<i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
 									<p class="text-sm font-medium">Belum ada data pegawai yang ditemukan</p>

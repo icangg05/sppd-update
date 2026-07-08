@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perancangan Website SPPD — Ruang Lingkup Lanjutan</title>
+<style>
+  :root{
+    --teal:#2e5c6e;
+    --teal-dark:#274f5f;
+    --blue:#2b6cb0;
+    --ink:#1a1a1a;
+    --line:#000;
+    --err-bg:#fdf3f3;
+    --err-border:#e07a7a;
+    --err-text:#b03030;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+    color:var(--ink);
+    background:#e9e9e9;
+    line-height:1.55;
+    font-size:12pt;
+  }
+  .page{
+    width:210mm;
+    min-height:297mm;
+    margin:16px auto;
+    background:#fff;
+    padding:22mm 20mm 18mm 20mm;
+    position:relative;
+    box-shadow:0 2px 14px rgba(0,0,0,.18);
+  }
+  /* Header bar */
+  .doc-header{
+    background:var(--teal);
+    color:#fff;
+    letter-spacing:.12em;
+    font-weight:700;
+    font-size:12pt;
+    padding:7px 14px;
+    margin:-6mm -6mm 10mm -6mm;
+    font-family:Arial,Helvetica,sans-serif;
+  }
+  /* Footer */
+  .doc-footer{
+    position:absolute;
+    left:20mm;right:20mm;bottom:12mm;
+    border-top:none;
+    display:flex;
+    justify-content:space-between;
+    color:#b06a2c;
+    font-size:9.5pt;
+    font-family:Arial,Helvetica,sans-serif;
+  }
+  .doc-footer::before{
+    content:"";
+    position:absolute;
+    left:0;right:0;top:-10px;
+    height:8px;
+    background:var(--teal);
+  }
+  h1.sec{
+    font-size:14pt;
+    color:var(--ink);
+    margin:0 0 14px 0;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+  }
+  h1.sec .num{color:var(--teal);font-weight:800;}
+  h2.sub{
+    color:var(--blue);
+    font-size:12.5pt;
+    margin:22px 0 8px 0;
+    font-weight:700;
+  }
+  h3.subsub{
+    color:var(--ink);
+    font-size:12pt;
+    margin:16px 0 6px 0;
+    font-weight:700;
+  }
+  p{margin:0 0 10px 0;text-align:justify;}
+  ul{margin:0 0 10px 0;padding-left:20px;}
+  li{margin:0 0 6px 0;text-align:justify;}
+  .flow{
+    text-align:center;
+    font-weight:700;
+    color:var(--teal-dark);
+    background:#f2f7f9;
+    border:1px solid #cfe0e6;
+    border-radius:4px;
+    padding:10px 8px;
+    margin:12px 0;
+    font-size:11.5pt;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0 14px 0;
+    font-size:11pt;
+  }
+  caption{
+    text-align:left;
+    color:var(--blue);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  th,td{
+    border:1px solid #333;
+    padding:6px 9px;
+    vertical-align:top;
+    text-align:left;
+  }
+  thead th{
+    background:#eef2f4;
+    text-align:center;
+    font-weight:700;
+  }
+  /* error box like reference */
+  .errbox{
+    border:1px solid var(--err-border);
+    background:var(--err-bg);
+    border-radius:4px;
+    padding:12px 14px;
+    margin:12px 0;
+  }
+  .errbox .title{
+    color:var(--err-text);
+    font-weight:700;
+    font-family:Arial,Helvetica,sans-serif;
+    margin-bottom:6px;
+    font-size:11pt;
+  }
+  .errbox code{
+    display:block;
+    font-family:"Courier New",monospace;
+    color:#555;
+    font-size:10pt;
+    white-space:pre-wrap;
+    line-height:1.4;
+  }
+  .note{
+    border-left:4px solid var(--teal);
+    background:#f4f8fa;
+    padding:10px 14px;
+    margin:14px 0;
+    font-size:11pt;
+  }
+  .lampiran-img{
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    margin:10px auto 6px auto;
+    border:1px solid #d7dde0;
+    border-radius:4px;
+    padding:8px;
+    background:#fff;
+  }
+  .cap{
+    text-align:center;
+    font-size:10.5pt;
+    font-style:italic;
+    color:#555;
+    margin:0 0 10px 0;
+  }
+  @media print{
+    body{background:#fff;}
+    .page{margin:0;box-shadow:none;width:auto;min-height:auto;}
+    @page{size:A4;margin:16mm;}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="doc-header">LAPORAN TENAGA TEKNIS</div>
+
+  <h1 class="sec"><span class="num">5.</span><span>Perancangan Website SPPD (Sistem Informasi Perjalanan Dinas) Terbaru — Ruang Lingkup Perancangan Lanjutan</span></h1>
+
+  <p>Pada tahap perancangan awal, fokus utama masih pada pemilihan <em>technology stack</em> dan gambaran arsitektur umum. Setelah ditelaah lebih lanjut, perancangan perlu diperluas agar mencakup empat aspek yang belum terurai secara rinci, yaitu <strong>(1) perombakan alur proses</strong>, <strong>(2) optimasi struktur basis data</strong>, <strong>(3) mekanisme Tanda Tangan Elektronik (TTE) berbasis proses latar</strong>, dan <strong>(4) rencana implementasi notifikasi</strong>. Keempat aspek ini merupakan akar dari sebagian besar kendala yang dilaporkan pada sistem lama, termasuk kegagalan cetak dokumen dan TTE sebagaimana tercatat pada <em>Laporan Kendala Teknis Dinas Kesehatan Kota Kendari (17 Juni 2026)</em>.</p>
+
+  <div class="errbox">
+    <div class="title">Rujukan Galat Sistem Lama (FPDF) — Berdampak pada Kegagalan TTE</div>
+    <code>Type: Exception
+Message: FPDF error: Image file has no extension and no type was specified
+Filename: /var/www/html/application/third_party/fpdf/fpdf.php  (Line 541)
+Backtrace: .../controllers/telaah/laporan → Function: cetak_spd</code>
+  </div>
+
+  <h2 class="sub">Rancangan Technology Stack (Usulan)</h2>
+  <table>
+    <thead>
+      <tr><th style="width:26%">Komponen</th><th style="width:28%">Teknologi</th><th>Keterangan</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Bahasa Pemrograman</td><td>PHP 8.4</td><td>Versi terbaru, performa &amp; keamanan lebih baik</td></tr>
+      <tr><td>Framework Backend</td><td>Laravel</td><td>Kerangka kerja modern, aktif diperbarui, ekosistem luas</td></tr>
+      <tr><td>Template / UI</td><td>Blade + Tailwind CSS</td><td>Antarmuka responsif &amp; modern</td></tr>
+      <tr><td>Basis Data</td><td>MySQL / PostgreSQL</td><td>RDBMS matang untuk data transaksi dinas</td></tr>
+      <tr><td>Cetak Dokumen</td><td>Pustaka PDF modern</td><td>Penanganan gambar/kop &amp; galat lebih baik</td></tr>
+      <tr><td>Tanda Tangan Elektronik</td><td>Integrasi TTE (mis. BSrE)</td><td>Penandatanganan dokumen resmi yang sah</td></tr>
+      <tr><td>Kontainerisasi</td><td>Docker</td><td>Konsistensi lingkungan dev &amp; produksi</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub">5.1 Perombakan Alur Proses (Business Process Reengineering)</h2>
+  <p>Pada sistem lama, seluruh tahapan — mulai dari input data, verifikasi/telaah, cetak dokumen, hingga pemrosesan TTE — dijalankan dalam satu rangkaian proses yang saling bergantung dan terkonsentrasi pada satu kontroler berukuran besar (mis. <em>controllers/telaah/laporan</em> yang memuat fungsi <em>cetak_spd</em>). Akibatnya, ketika satu langkah gagal — seperti galat pemuatan gambar kop pada pustaka FPDF — seluruh rantai proses ikut terhenti, termasuk penerbitan dokumen dan TTE.</p>
+  <p>Perancangan sistem baru memisahkan proses tersebut menjadi <strong>tahapan berstatus (state-based workflow)</strong> yang berdiri sendiri dan dapat diaudit:</p>
+
+  <div class="flow">Pengajuan &rarr; Verifikasi/Telaah &rarr; Penerbitan SPD &rarr; Tanda Tangan Elektronik &rarr; Selesai</div>
+
+  <p>Setiap tahapan memiliki status eksplisit yang tersimpan di basis data, bukan sekadar hasil eksekusi berurutan dalam satu fungsi. Dengan pendekatan ini:</p>
+  <ul>
+    <li>Kegagalan pada satu tahap (mis. cetak PDF) tidak lagi membatalkan tahap sebelumnya yang sudah berhasil; data pengajuan dan verifikasi tetap aman, dan proses dapat diulang dari titik yang gagal saja.</li>
+    <li>Setiap perpindahan status dicatat dalam <strong>riwayat persetujuan (approval history)</strong> lengkap dengan pelaku, waktu, dan catatan, sehingga alur telaah maupun penolakan (revisi) dapat ditelusuri.</li>
+    <li>Pembagian peran (pengaju, verifikator/penelaah, penandatangan) menjadi tegas dan dikendalikan oleh hak akses, menggantikan logika bercabang yang tercampur pada kontroler lama.</li>
+  </ul>
+
+  <table>
+    <caption>Tabel 5.1 Perbandingan Alur Sistem Lama dan Sistem Baru</caption>
+    <thead>
+      <tr><th style="width:22%">Aspek</th><th>Sistem Lama (CodeIgniter 3)</th><th>Sistem Baru (Laravel + Livewire)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Struktur proses</td><td>Terpusat pada satu kontroler besar, eksekusi berurutan</td><td>Tahapan berstatus yang terpisah dan mandiri</td></tr>
+      <tr><td>Dampak kegagalan</td><td>Satu galat menghentikan seluruh rantai proses</td><td>Kegagalan terisolasi per tahap, dapat diulang</td></tr>
+      <tr><td>Keterlacakan</td><td>Tidak ada riwayat perpindahan status</td><td>Riwayat persetujuan lengkap (pelaku, waktu, catatan)</td></tr>
+      <tr><td>Peran pengguna</td><td>Bercampur dalam logika kontroler</td><td>Terpisah tegas melalui hak akses</td></tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer"><span>Copyright &copy;diskominfo kendari 2026</span><span>22</span></div>
+</div>
+
+<div class="page">
+  <div class="doc-header">LAPORAN TENAGA TEKNIS</div>
+
+  <h2 class="sub">5.2 Optimasi Struktur Basis Data</h2>
+  <p>Struktur basis data sistem lama menyulitkan pemeliharaan karena data induk dan data transaksi bercampur serta minim relasi yang tegas. Perancangan baru menata ulang struktur dengan prinsip normalisasi dan keterlacakan:</p>
+  <ul>
+    <li><strong>Pemisahan data induk dan transaksi:</strong> entitas induk seperti <em>pegawai</em> dan unit kerja dipisahkan dari entitas transaksi seperti <em>perjalanan_dinas</em>, <em>surat_perintah (SPD)</em>, dan <em>rincian_biaya</em>, sehingga satu pegawai dapat direferensikan berulang tanpa duplikasi data.</li>
+    <li><strong>Relasi &amp; integritas data:</strong> penggunaan <em>foreign key</em> dan relasi yang jelas antar-tabel untuk menjaga konsistensi (mis. satu SPD wajib terkait pada satu pengajuan yang valid).</li>
+    <li><strong>Pengindeksan (indexing):</strong> penambahan indeks pada kolom yang sering dicari/diurutkan (mis. NIP, nomor SPD, tanggal, status) untuk mempercepat pencarian dan pelaporan seiring bertambahnya volume data.</li>
+    <li><strong>Tabel log &amp; audit:</strong> entitas terpisah untuk <em>riwayat_persetujuan</em> dan <em>log_tte</em> guna merekam setiap aktivitas penting, mendukung akuntabilitas dan penelusuran insiden.</li>
+    <li><strong>Migrasi terkelola (migration):</strong> seluruh perubahan skema dikelola melalui berkas migrasi berversi, sehingga struktur basis data dapat direplikasi secara konsisten antara lingkungan pengembangan dan produksi.</li>
+  </ul>
+  <p>Optimasi ini menjadi fondasi agar sistem tetap responsif saat menangani data pegawai dan transaksi perjalanan dinas dalam jumlah besar.</p>
+
+  <h2 class="sub">5.3 Tanda Tangan Elektronik (TTE) Berbasis Proses Latar (Background Processing)</h2>
+  <p>Kendala TTE pada sistem lama (berstatus <em>“Masih Gagal”</em> pada laporan Dinas Kesehatan) sebagian bersumber dari pemrosesan TTE yang dijalankan <strong>secara langsung (sinkron)</strong> bersamaan dengan permintaan cetak pengguna. Model ini rapuh: bila pembuatan PDF gagal atau proses penandatanganan berjalan lama, permintaan pengguna ikut menggantung hingga <em>timeout</em>, dan beban meningkat tajam ketika banyak dokumen ditandatangani dalam waktu bersamaan.</p>
+  <p>Perancangan baru memindahkan proses TTE ke <strong>antrean proses latar (background job/queue)</strong> yang ditangani oleh pekerja (<em>worker</em>) terpisah dari permintaan pengguna. Alurnya:</p>
+  <ul>
+    <li>Pengguna cukup mengajukan permintaan TTE; sistem segera memberi respons “sedang diproses” tanpa menunggu proses selesai.</li>
+    <li>Tugas penandatanganan dimasukkan ke antrean dan dikerjakan di latar belakang, termasuk pembentukan PDF dan pemanggilan layanan TTE (mis. BSrE).</li>
+    <li>Status setiap dokumen diperbarui (<em>antre &rarr; diproses &rarr; berhasil/gagal</em>) dan dapat dipantau pengguna.</li>
+    <li>Bila terjadi kegagalan, tugas dapat <strong>diulang otomatis (retry)</strong> tanpa mengganggu dokumen lain.</li>
+  </ul>
+  <div class="note">Manfaat utama pendekatan ini adalah <strong>kemampuan menangani penandatanganan massal untuk banyak pegawai sekaligus</strong> secara paralel dan bertahap, tanpa membebani antarmuka atau menghentikan operasional. Kegagalan pada satu dokumen bersifat terisolasi dan tidak lagi menjatuhkan seluruh proses, sebagaimana yang terjadi pada sistem lama.</div>
+
+  <div class="doc-footer"><span>Copyright &copy;diskominfo kendari 2026</span><span>23</span></div>
+</div>
+
+<div class="page">
+  <div class="doc-header">LAPORAN TENAGA TEKNIS</div>
+
+  <h2 class="sub">5.4 Rencana Implementasi Notifikasi</h2>
+  <p>Sistem lama tidak memiliki mekanisme pemberitahuan, sehingga pengguna harus memeriksa status secara manual dan sering tidak menyadari adanya kegagalan (mis. TTE gagal) hingga dilaporkan belakangan. Perancangan baru menyertakan <strong>subsistem notifikasi berbasis peristiwa (event-driven)</strong> yang memicu pemberitahuan otomatis pada titik-titik penting alur, antara lain: pengajuan diterima, dokumen perlu diverifikasi, SPD diterbitkan, serta keberhasilan atau kegagalan TTE.</p>
+  <p>Notifikasi dirancang dengan <strong>arsitektur yang tidak terikat pada satu kanal tertentu (channel-agnostic)</strong>, artinya mekanisme pengiriman dipisahkan dari logika pemicunya. Dengan demikian, penentuan kanal pengiriman yang tepat akan dikaji pada tahap berikutnya dan dapat ditambahkan tanpa mengubah alur inti. Notifikasi juga dijalankan melalui antrean latar yang sama, sehingga pengirimannya tidak memperlambat proses utama.</p>
+
+  <table>
+    <caption>Tabel 5.2 Titik Pemicu Notifikasi pada Alur SPPD</caption>
+    <thead>
+      <tr><th style="width:34%">Peristiwa</th><th>Penerima</th><th>Tujuan</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Pengajuan diterima</td><td>Verifikator/Penelaah</td><td>Menandai adanya dokumen baru untuk ditelaah</td></tr>
+      <tr><td>Dokumen diverifikasi/ditolak</td><td>Pengaju</td><td>Menginformasikan hasil telaah atau permintaan revisi</td></tr>
+      <tr><td>SPD diterbitkan</td><td>Pengaju &amp; Penandatangan</td><td>Menandai dokumen siap ditandatangani</td></tr>
+      <tr><td>TTE berhasil/gagal</td><td>Pengaju &amp; Admin</td><td>Konfirmasi penyelesaian atau penanganan kegagalan</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub">Hasil dan Tindak Lanjut Ruang Lingkup Lanjutan</h2>
+  <ul>
+    <li>Rancangan alur proses berstatus, struktur basis data teroptimasi, mekanisme TTE berbasis proses latar, dan kerangka notifikasi berbasis peristiwa telah dirumuskan sebagai bagian dari perancangan SPPD baru.</li>
+    <li>Rancangan ini secara langsung menjawab akar kendala pada sistem lama, khususnya kegagalan cetak dan TTE yang dilaporkan Dinas Kesehatan.</li>
+    <li>Tindak lanjut: melanjutkan ke tahap pembangunan modul inti dengan prioritas pada alur berstatus dan pemrosesan TTE latar, disusul finalisasi kanal notifikasi.</li>
+  </ul>
+
+  <div class="doc-footer"><span>Copyright &copy;diskominfo kendari 2026</span><span>24</span></div>
+</div>
+
+<div class="page">
+  <div class="doc-header">LAPORAN TENAGA TEKNIS</div>
+
+  <h1 class="sec"><span class="num">6.</span><span>Lampiran</span></h1>
+
+  <h2 class="sub">Lampiran A — Rancangan Struktur Basis Data (Ringkas)</h2>
+  <p>Gambaran umum entitas utama dan relasinya pada perancangan basis data SPPD baru. Data induk (<em>pegawai</em>) dipisahkan dari data transaksi (<em>perjalanan_dinas</em>, <em>surat_perintah</em>, <em>rincian_biaya</em>), dengan tabel <em>riwayat_persetujuan</em> dan <em>log_tte</em> untuk keterlacakan.</p>
+  <img class="lampiran-img" src="./lampiran-struktur-database.svg" alt="Diagram struktur basis data SPPD">
+  <p class="cap">Gambar A.1 — Diagram relasi antar-entitas (ERD ringkas) SPPD baru.</p>
+
+  <div class="doc-footer"><span>Copyright &copy;diskominfo kendari 2026</span><span>25</span></div>
+</div>
+
+<div class="page">
+  <div class="doc-header">LAPORAN TENAGA TEKNIS</div>
+
+  <h2 class="sub">Lampiran B — Alur Pengajuan Terbaru &amp; Penempatan Notifikasi</h2>
+  <p>Alur proses berstatus dari pengajuan hingga penyelesaian, termasuk perulangan revisi/telaah dan pemrosesan TTE di latar dengan <em>retry</em> otomatis. Titik-titik pemicu notifikasi ditandai di sisi kanan; kanal pengiriman ditentukan pada tahap berikutnya.</p>
+  <img class="lampiran-img" src="./lampiran-alur-pengajuan.svg" alt="Diagram alur pengajuan SPPD dengan titik notifikasi">
+  <p class="cap">Gambar B.1 — Alur pengajuan SPPD baru beserta penempatan titik notifikasi.</p>
+
+  <div class="doc-footer"><span>Copyright &copy;diskominfo kendari 2026</span><span>26</span></div>
+</div>
+
+</body>
+</html>

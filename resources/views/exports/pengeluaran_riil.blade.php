@@ -131,14 +131,15 @@
 
 	<div class="header"
 		style="{{ $pdfData['is_walikota'] || ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/')) ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
-		@if ($pdfData['is_walikota'])
+		@if ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/'))
+			{{-- Utamakan kop surat instansi bila tersedia (termasuk untuk walikota) --}}
+			<img src="{{ storage_path('app/public/' . $sppd->user->department->letterhead) }}"
+				style="width: 100%; height: auto;">
+		@elseif ($pdfData['is_walikota'])
 			<div style="text-align: center; margin-bottom: 10px;">
 				<img src="{{ public_path('img/garuda.png') }}" style="width: 110px; height: auto;">
 			</div>
 			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
-		@elseif ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/'))
-			<img src="{{ storage_path('app/public/' . $sppd->user->department->letterhead) }}"
-				style="width: 100%; height: auto;">
 		@elseif ($sppd->user->department->parent_id == null)
 			{{-- Jika level OPD/Walikota --}}
 			<img src="{{ public_path('img/aruda.png') }}" class="logo">
