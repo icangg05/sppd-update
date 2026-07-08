@@ -54,6 +54,7 @@ class SppdIndex extends Component
   {
     return [
       ''              => 'Semua Jabatan',
+      'walikota'      => 'Walikota & Wakil',
       'kepala_opd'    => 'Kepala OPD',
       'eselon_staf'   => 'Eselon III, IV & Staf',
       'sekda_asisten' => 'Sekda, Asisten & Kabag',
@@ -78,7 +79,7 @@ class SppdIndex extends Component
     return match ($type) {
       DepartmentType::DPRD      => ['anggota_dprd', 'staff_dprd', 'sekwan'],
       DepartmentType::SETDA,
-      DepartmentType::ASISTEN   => ['sekda_asisten', 'staf_setda'],
+      DepartmentType::ASISTEN   => ['walikota', 'sekda_asisten', 'staf_setda'],
       DepartmentType::KECAMATAN => ['camat', 'eselon_staf'],
       DepartmentType::KELURAHAN => ['lurah', 'eselon_staf'],
       DepartmentType::PUSKESMAS => ['kapus', 'eselon_staf'],
@@ -299,7 +300,9 @@ class SppdIndex extends Component
       if ($this->jabatan !== '') {
         $jabatan = $this->jabatan;
         $query->whereHas('user', function ($q) use ($jabatan) {
-          if ($jabatan === 'kepala_opd') {
+          if ($jabatan === 'walikota') {
+            $q->role(['walikota', 'wakil_walikota']);
+          } elseif ($jabatan === 'kepala_opd') {
             $q->role('kepala_opd');
           } elseif ($jabatan === 'eselon_ii') {
             $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);

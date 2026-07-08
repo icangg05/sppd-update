@@ -107,9 +107,7 @@
 					class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
 					<tr>
 						<th class="py-3 px-4 w-12 text-center">No.</th>
-						@if (auth()->user()->hasRole('super_admin'))
-							<th class="py-3 px-4 min-w-44 max-w-56">SKPD / Instansi</th>
-						@endif
+						<th class="py-3 px-4 min-w-44 max-w-56">SKPD / Instansi</th>
 						<th class="py-3 px-4 text-center w-16">TA</th>
 						<th class="py-3 px-4 min-w-64">Program / Kegiatan</th>
 						<th class="py-3 px-4 whitespace-nowrap">Kode Rekening</th>
@@ -126,11 +124,12 @@
 								{{ $loop->iteration + ($budgets->currentPage() - 1) * $budgets->perPage() }}.
 							</td>
 
-							@if (auth()->user()->hasRole('super_admin'))
-								<td class="py-3.5 px-4 text-sm font-bold text-slate-900 max-w-56 whitespace-normal">
-									{{ $budget->department->name }}
-								</td>
-							@endif
+							<td class="py-3.5 px-4 max-w-56 whitespace-normal">
+								<div class="text-sm font-bold text-slate-900 leading-tight">{{ $budget->department?->name ?? '-' }}</div>
+								@if ($budget->department?->parent)
+									<div class="text-[11px] text-slate-400 leading-tight mt-0.5">{{ $budget->department->parent->name }}</div>
+								@endif
+							</td>
 
 							<td class="py-3.5 px-4 text-center text-xs font-mono font-medium text-slate-500">
 								{{ $budget->year }}
@@ -201,7 +200,7 @@
 						</tr>
 					@empty
 						<tr>
-							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '9' : '8' }}" class="py-12 text-center">
+							<td colspan="9" class="py-12 text-center">
 								<div class="flex flex-col items-center justify-center text-slate-400">
 									<i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
 									<p class="text-sm font-medium">Belum ada data anggaran yang ditemukan</p>

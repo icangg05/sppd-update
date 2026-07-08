@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\InteractsWithPhoneVerification;
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -48,14 +49,17 @@ class Profile extends Component
 
   protected function rules(): array
   {
-    $id = auth()->id();
+    $user = auth()->user();
+    $id = $user->id;
 
     return [
       'name' => 'required|string|max:255',
       'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($id)],
       'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
-      'nip' => ['nullable', 'string', 'max:20', Rule::unique('users', 'nip')->ignore($id)],
-      'nik' => ['nullable', 'string', 'max:20', Rule::unique('users', 'nik')->ignore($id)],
+      // NIP/NIK unik per instansi (bukan global) — pegawai yang sama boleh
+      // berakun di dua instansi berbeda dengan NIP/NIK yang sama.
+      'nip' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nip', 'NIP', $user->department_id, $id)],
+      'nik' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nik', 'NIK', $user->department_id, $id)],
       'phone' => 'nullable|string|max:20',
       'current_password' => ['nullable', 'required_with:password', 'current_password'],
       'password' => ['nullable', 'string', 'min:6', 'confirmed'],

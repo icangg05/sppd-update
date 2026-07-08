@@ -51,6 +51,13 @@ Route::get('/verify/{type}/{sppd}/{hash}', [SppdController::class, 'publicVerify
     ->whereIn('type', ['sppd', 'spt'])
     ->name('verify.document');
 
+// Impersonasi: super_admin masuk sebagai pegawai lain lewat tautan bertanda-tangan
+// (signed URL, kedaluwarsa singkat). Sengaja di luar middleware auth/role agar bisa
+// dibuka di jendela incognito — sesi super_admin di tab utama tetap utuh.
+Route::get('/impersonate/{user}', [UserController::class, 'impersonate'])
+    ->middleware('signed')
+    ->name('users.impersonate');
+
 // Auth routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

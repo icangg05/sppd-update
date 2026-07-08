@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
 use App\Models\User;
+use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -131,8 +132,10 @@ class UserForm extends Component
       'username' => 'required|string|max:255|unique:users,username,' . $userId,
       'email' => 'nullable|email|unique:users,email,' . $userId,
       'password' => 'nullable|string|min:6',
-      'nip' => 'nullable|string|max:20|unique:users,nip,' . $userId,
-      'nik' => 'nullable|string|max:20|unique:users,nik,' . $userId,
+      // NIP/NIK boleh sama di instansi berbeda (pegawai bisa berakun di dua
+      // instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
+      'nip' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nip', 'NIP')],
+      'nik' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nik', 'NIK')],
       'phone' => 'nullable|string|max:20',
       'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
       'department_id' => 'required|exists:departments,id',
@@ -153,6 +156,16 @@ class UserForm extends Component
     }
 
     return $rules;
+  }
+
+  protected function uniqueIdentityRule(string $column, string $label): UniqueIdentityInInstansi
+  {
+    return new UniqueIdentityInInstansi(
+      $column,
+      $label,
+      $this->department_id ? (int) $this->department_id : null,
+      $this->isEdit ? $this->user->id : null,
+    );
   }
 
   /**

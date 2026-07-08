@@ -3,12 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
   public function create()
   {
     return view('master.users.create');
+  }
+
+  /**
+   * Masuk sebagai pegawai lain (impersonasi). Otorisasi ditangani oleh signature
+   * pada URL — tautan hanya dibuat pada halaman detail yang diguard super_admin —
+   * sehingga rute ini tetap dapat diakses tanpa sesi (mis. jendela incognito).
+   *
+   * Pengamanan berlapis:
+   *  - Signature (middleware `signed`) mencegah pemalsuan & memberi masa berlaku singkat.
+   *  - Nonce sekali-pakai mencegah tautan diputar ulang bila bocor (referrer/riwayat).
+   *  - Akun nonaktif ditolak, konsisten dengan aturan login normal.
+   *  - Setiap penggunaan dicatat ke activity log lengkap dengan pelaku (super_admin).
+   */
+  public function impersonate(User $user)
+  {
+    abort_if(! $user->is_active, 403, 'Akun tidak aktif tidak dapat diakses.');
+
+    // Sekali pakai: tandai nonce agar tautan yang sama tidak bisa dipakai dua kali.
+    // TTL lebih panjang dari masa berlaku tautan agar tidak bisa diputar ulang.
+    $nonce = (string) request('nonce');
+    if ($nonce === '' || ! Cache::add("impersonate_used:{$nonce}", true, now()->addMinutes(15))) {
+      abort(403, 'Tautan masuk sebagai pengguna sudah tidak berlaku.');
+    }
+
+    // Pelaku (super_admin) diambil dari parameter bertanda-tangan — tidak bisa
+    // dipalsukan karena ikut dihitung dalam signature.
+    $initiator = User::find((int) request('by'));
+
+    Auth::login($user);
+    request()->session()->regenerate();
+    session(['impersonator_id' => $initiator?->id]);
+
+    activity('impersonation')
+      ->performedOn($user)
+      ->causedBy($initiator)
+      ->withProperties(['ip' => request()->ip(), 'user_agent' => request()->userAgent()])
+      ->log("Masuk sebagai {$user->name} melalui impersonasi");
+
+    return redirect()->route('dashboard')
+      ->with('success', "Anda sekarang masuk sebagai {$user->name}.");
   }
 
   public function show(User $user)

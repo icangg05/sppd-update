@@ -13,13 +13,24 @@
 					{{ $isEdit ? 'Ubah informasi profile, instansi, atau kredensial pengguna sistem' : 'Tambahkan pegawai baru ke dalam sistem' }}
 				</p>
 			</div>
-			<x-ui.button href="{{ route('master.users.index', array_filter(['type' => $listType])) }}" variant="secondary"
-				class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-				<x-slot name="icon">
-					<i class="fa-solid fa-arrow-left text-xs"></i>
-				</x-slot>
-				Kembali
-			</x-ui.button>
+			<div class="flex flex-wrap items-center gap-2">
+				@if ($isEdit)
+					<x-ui.button href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $listType])) }}"
+						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+						<x-slot name="icon">
+							<i class="fa-solid fa-eye text-xs"></i>
+						</x-slot>
+						Lihat Detail
+					</x-ui.button>
+				@endif
+				<x-ui.button href="{{ route('master.users.index', array_filter(['type' => $listType])) }}" variant="secondary"
+					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+					<x-slot name="icon">
+						<i class="fa-solid fa-arrow-left text-xs"></i>
+					</x-slot>
+					Kembali
+				</x-ui.button>
+			</div>
 		</div>
 
 		{{-- Main Form --}}

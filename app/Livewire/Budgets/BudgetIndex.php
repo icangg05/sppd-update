@@ -5,6 +5,8 @@ namespace App\Livewire\Budgets;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Budget;
 use App\Models\Department;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -69,6 +71,18 @@ class BudgetIndex extends Component
     $this->resetPage();
   }
 
+  /**
+   * Pengguna login sebagai App\Models\User konkret — agar method domain
+   * (hasRole, department, dll.) dikenali analisis statis & autocomplete.
+   */
+  private function currentUser(): User
+  {
+    /** @var User $user */
+    $user = Auth::user();
+
+    return $user;
+  }
+
   public function confirmDelete(int $id): void
   {
     $budget = Budget::find($id);
@@ -77,7 +91,7 @@ class BudgetIndex extends Component
     }
 
     // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
-    if (! auth()->user()->hasRole('super_admin') && $budget->department_id !== auth()->user()->department_id) {
+    if (! $this->currentUser()->hasRole('super_admin') && $budget->department_id !== $this->currentUser()->department_id) {
       $this->toastError('Anda tidak memiliki akses untuk menghapus data anggaran ini.');
       return;
     }
@@ -112,7 +126,7 @@ class BudgetIndex extends Component
     }
 
     // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
-    if (! auth()->user()->hasRole('super_admin') && $budget->department_id !== auth()->user()->department_id) {
+    if (! $this->currentUser()->hasRole('super_admin') && $budget->department_id !== $this->currentUser()->department_id) {
       $this->closeDeleteModal();
       $this->toastError('Anda tidak memiliki akses untuk menghapus data anggaran ini.');
       return;
@@ -133,9 +147,8 @@ class BudgetIndex extends Component
 
   public function render()
   {
-    /** @var \App\Models\User $user */
-    $user  = auth()->user();
-    $query = Budget::with('department');
+    $user  = $this->currentUser();
+    $query = Budget::with('department.parent');
 
     // Admin OPD hanya melihat anggaran instansinya sendiri.
     if (! $user->hasRole('super_admin')) {
@@ -172,7 +185,10 @@ class BudgetIndex extends Component
       ? Department::orderBy('name')->get()
       : collect();
 
-    return view('livewire.budgets.budget-index', compact('budgets', 'departments'))
-      ->title('DPA - Data Anggaran');
+    /** @var \Illuminate\View\View $view */
+    $view = view('livewire.budgets.budget-index', compact('budgets', 'departments'));
+
+    // title() = macro Livewire pada Illuminate\View\View (dikenali via _ide_helper.php).
+    return $view->title('DPA - Data Anggaran');
   }
 }

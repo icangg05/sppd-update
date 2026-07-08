@@ -13,11 +13,36 @@
 				</h1>
 				<p class="mt-1 text-xs text-slate-500 font-medium">Detail informasi lengkap pegawai dan hak akses pengguna sistem</p>
 			</div>
-			<div class="flex items-center gap-2">
+			<div class="flex flex-wrap items-center gap-2">
 				<a wire:navigate href="{{ route('master.users.index', array_filter(['type' => request('type')])) }}"
 					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 					<i class="fa-solid fa-arrow-left"></i> Kembali
 				</a>
+
+				{{-- Impersonasi: hanya super_admin, dan tidak untuk dirinya sendiri. --}}
+				@if (auth()->user()->hasRole('super_admin') && $user->id !== auth()->id())
+					@php
+						$impersonateUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+							'users.impersonate',
+							now()->addMinutes(5),
+							[
+								'user' => $user,
+								'by' => auth()->id(),
+								'nonce' => \Illuminate\Support\Str::uuid()->toString(),
+							],
+						);
+					@endphp
+					<div x-data="{ copied: false }" class="inline-flex items-center gap-2">
+						<button type="button"
+							@click="navigator.clipboard.writeText(@js($impersonateUrl)); copied = true; setTimeout(() => copied = false, 2000)"
+							title="Salin tautan, lalu buka di jendela incognito untuk masuk sebagai {{ $user->name }} tanpa mengganggu sesi Anda."
+							class="inline-flex items-center gap-2 rounded bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-lg">
+							<i class="fa-solid" :class="copied ? 'fa-check' : 'fa-user-secret'"></i>
+							<span x-text="copied ? 'Tautan login tersalin' : 'Salin tautan login sebagai pengguna'"></span>
+						</button>
+					</div>
+				@endif
+
 				<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"
 					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
 					<i class="fa-solid fa-pen-to-square"></i> Edit Data
@@ -39,7 +64,7 @@
 
 					<h3 class="text-base font-bold text-slate-900 mb-0.5 px-2">{{ $user->name }}</h3>
 					<p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-						{{ $user->position?->name ?? 'Pegawai' }}</p>
+						{{ $user->roles->first()?->label ?? 'Pegawai' }}</p>
 
 					<div class="w-full pt-4 border-t border-slate-100 flex flex-col gap-3">
 
@@ -68,15 +93,6 @@
 							@endif
 						</div>
 
-						{{-- Roles Badge --}}
-						<div class="mt-1 flex flex-wrap justify-center gap-1">
-							@foreach ($user->roles as $role)
-								<span
-									class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-inset ring-slate-500/10">
-									<i class="fa-solid fa-key text-[9px] mr-1 text-slate-400"></i>{{ $role->label }}
-								</span>
-							@endforeach
-						</div>
 					</div>
 				</div>
 			</div>
@@ -139,6 +155,13 @@
 							<p class="text-sm font-semibold text-slate-800">
 								<i
 									class="fa-solid fa-award mr-1.5 text-slate-400"></i>{{ $user->rank ? $user->rank->group . ' — ' . $user->rank->name : '-' }}
+							</p>
+						</div>
+
+						<div class="sm:col-span-2 space-y-1">
+							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jabatan</label>
+							<p class="text-sm font-semibold text-slate-800">
+								<i class="fa-solid fa-briefcase mr-1.5 text-slate-400"></i>{{ $user->position?->name ?? '-' }}
 							</p>
 						</div>
 
