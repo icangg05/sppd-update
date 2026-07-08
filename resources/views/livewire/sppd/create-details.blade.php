@@ -20,20 +20,20 @@
 	<form wire:submit.prevent="openConfirmModal" enctype="multipart/form-data" id="form-sppd-store">
 		{{-- Ringkasan Informasi Pelaksana & Alur --}}
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-			<div class="rounded border border-cyan-200 bg-cyan-50/50 p-4 shadow-sm leading-tight flex flex-col justify-between">
+			<div class="rounded border border-primary-200 bg-primary-50/50 p-4 shadow-sm leading-tight flex flex-col justify-between">
 				<div>
-					<h4 class="text-xs font-bold uppercase tracking-wider text-cyan-700 flex items-center gap-1.5 mb-2">
+					<h4 class="text-xs font-bold uppercase tracking-wider text-primary-700 flex items-center gap-1.5 mb-2">
 						<i class="fa-solid fa-user-tie"></i> Pelaksana
 					</h4>
 					<p class="font-bold text-slate-800 text-sm">{{ $pelaksana->name }}</p>
 					<p class="text-xs text-slate-500 font-mono mt-0.5">{{ $pelaksana->nip }}</p>
 				</div>
-				<div class="mt-4 pt-3 border-t border-cyan-200/60">
-					<h4 class="text-xs font-bold uppercase tracking-wider text-cyan-700 flex items-center gap-1.5">
+				<div class="mt-4 pt-3 border-t border-primary-200/60">
+					<h4 class="text-xs font-bold uppercase tracking-wider text-primary-700 flex items-center gap-1.5">
 						<i class="fa-solid fa-earth-asia"></i> Domain Perjalanan
 					</h4>
 					<span
-						class="inline-block mt-1.5 rounded-sm bg-white border border-cyan-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-cyan-800">
+						class="inline-block mt-1.5 rounded-sm bg-white border border-primary-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-800">
 						{{ str_replace('_', ' ', $domain) }}
 					</span>
 				</div>
@@ -65,7 +65,7 @@
 		<div class="mt-4 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-					<i class="fa-solid fa-file-pen text-cyan-600"></i> Data Perihal & Justifikasi Perjalanan
+					<i class="fa-solid fa-file-pen text-primary-600"></i> Data Perihal & Justifikasi Perjalanan
 				</h3>
 			</div>
 			<div class="p-5">
@@ -82,7 +82,7 @@
 		<div class="mt-4 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-					<i class="fa-solid fa-route text-cyan-600"></i> Detail Logistik & Tanggal Perjalanan
+					<i class="fa-solid fa-route text-primary-600"></i> Detail Logistik & Tanggal Perjalanan
 				</h3>
 			</div>
 			<div class="p-5 space-y-5">
@@ -113,7 +113,7 @@
 								Lokasi Basis: <span class="font-bold text-slate-700">Kota Kendari, Sulawesi Tenggara</span>
 							</div>
 							<input type="text" wire:model="destinations.0.address_only"
-								class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500"
+								class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
 								required placeholder="Sebutkan instansi/tempat tujuan spesifik (misal: Kantor Gubernur, Kecamatan Poasia)">
 							@error('destinations.0.address_only') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 						</div>
@@ -144,7 +144,7 @@
 										</div>
 										<div class="flex gap-2">
 											<input type="text" wire:model="destinations.{{ $index }}.address"
-												class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 flex-1 shadow-2xs focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500"
+												class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 flex-1 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
 												placeholder="Instansi / Alamat Spesifik Tujuan" required>
 											@if (count($destinations) > 1)
 												<button type="button" wire:click="removeDestination({{ $index }})" class="text-red-500 hover:text-red-700 transition px-1">
@@ -160,7 +160,7 @@
 							<div class="flex items-center gap-3 mt-2.5">
 								@if (count($destinations) < 4)
 									<button type="button" wire:click="addDestination"
-										class="text-xs text-cyan-600 font-bold hover:text-cyan-700 flex items-center gap-1">
+										class="text-xs text-primary-600 font-bold hover:text-primary-700 flex items-center gap-1">
 										<i class="fa-solid fa-circle-plus"></i> Tambah Lokasi Tujuan Lainnya
 									</button>
 								@endif
@@ -181,7 +181,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-money-check-dollar text-cyan-600"></i> Anggaran & Dokumen Pendukung
+						<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Anggaran & Dokumen Pendukung
 					</h3>
 				</div>
 				<div class="p-5 space-y-4">
@@ -210,7 +210,7 @@
 					</div>
 					<div>
 						<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Undangan / Dokumen Pendukung</label>
-						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
 						<p class="text-[10px] text-slate-400 mt-1">Format berkas: PDF, DOCX, JPG, PNG (Maks. 2MB)</p>
 						@error('attachment') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 					</div>
@@ -241,7 +241,7 @@
 								<span>Rp {{ number_format($selectedBudget->realization, 0, ',', '.') }}</span>
 							</div>
 							<div class="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-cyan-500' }}"
+								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
 									style="width: {{ min($selectedBudget->realization_percentage, 100) }}%"></div>
 							</div>
 						</div>
@@ -256,7 +256,7 @@
 						<div class="space-y-2 border-t border-slate-200/70 pt-2.5 leading-tight">
 							<div>
 								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Program</span>
-								<p class="text-xs font-semibold text-cyan-700">{{ $selectedBudget->program ?? '-' }}</p>
+								<p class="text-xs font-semibold text-primary-700">{{ $selectedBudget->program ?? '-' }}</p>
 							</div>
 							<div>
 								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kegiatan</span>
@@ -285,7 +285,7 @@
 				<div
 					class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-users text-cyan-600"></i> Daftar Pengikut (Opsional)
+						<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut (Opsional)
 					</h3>
 					{{-- Input Live Search Pengikut --}}
 					<div class="relative w-full sm:w-48">
@@ -293,7 +293,7 @@
 							<i class="fa-solid fa-magnifying-glass text-xs"></i>
 						</span>
 						<input type="text" wire:model.live.debounce.300ms="searchFollower"
-							class="w-full rounded border border-slate-300 bg-white py-1 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-cyan-500 focus:outline-hidden"
+							class="w-full rounded border border-slate-300 bg-white py-1 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden"
 							placeholder="Cari nama pegawai...">
 					</div>
 				</div>
@@ -306,7 +306,7 @@
 								<label
 									class="follower-item flex items-start gap-2.5 rounded border border-slate-200 bg-white p-2.5 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer {{ $isActive ? 'opacity-60 cursor-not-allowed bg-rose-50/50 border-rose-200' : '' }}">
 									<input type="checkbox" wire:model.live="followers" value="{{ $u->id }}"
-										class="follower-cb rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 mt-0.5"
+										class="follower-cb rounded border-slate-300 text-primary-600 focus:ring-primary-500 mt-0.5"
 										@disabled($isActive)>
 									<div class="min-w-0 leading-tight">
 										<span class="block text-xs font-semibold text-slate-700 truncate follower-name">{{ $u->name }}</span>
@@ -331,7 +331,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-calendar-check text-cyan-600"></i> Penomoran & Penanggalan Dokumen Resmi
+						<i class="fa-solid fa-calendar-check text-primary-600"></i> Penomoran & Penanggalan Dokumen Resmi
 					</h3>
 				</div>
 				<div class="p-5 space-y-4">
@@ -346,7 +346,7 @@
 					{{-- Tombol Submit Pembuat Aksi --}}
 					<div class="flex justify-end border-t border-slate-100 pt-4">
 						<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
-							class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+							class="inline-flex items-center gap-2 rounded bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
 							<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
 								<i class="fa-solid fa-paper-plane text-xs"></i>
 								<span>Buat & Ajukan SPPD</span>
@@ -364,7 +364,7 @@
 
 	{{-- MODAL KONFIRMASI --}}
 	@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
-	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-cyan-600 text-base" maxWidth="max-w-3xl" :closeable="false">
+	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-primary-600 text-base" maxWidth="max-w-3xl" :closeable="false">
 		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
 
 			{{-- Kolom Kiri: Anggaran Tersedia --}}
@@ -391,7 +391,7 @@
 								<span>Rp {{ number_format($selectedBudget->realization, 0, ',', '.') }}</span>
 							</div>
 							<div class="h-1.5 sm:h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-cyan-500' }}"
+								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
 									style="width: {{ min($selectedBudget->realization_percentage, 100) }}%"></div>
 							</div>
 						</div>
@@ -406,7 +406,7 @@
 						<div class="hidden sm:block space-y-2 border-t border-slate-200/70 pt-2.5 leading-tight">
 							<div>
 								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Program</span>
-								<p class="text-xs font-semibold text-cyan-700">{{ $selectedBudget->program ?? '-' }}</p>
+								<p class="text-xs font-semibold text-primary-700">{{ $selectedBudget->program ?? '-' }}</p>
 							</div>
 							<div>
 								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kegiatan</span>
@@ -433,7 +433,7 @@
 				<div>
 					<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Pegawai Pelaksana:</span>
 					<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
-						<i class="fa-solid fa-user text-cyan-600 mr-1.5"></i> {{ $pelaksana->name }}
+						<i class="fa-solid fa-user text-primary-600 mr-1.5"></i> {{ $pelaksana->name }}
 					</p>
 				</div>
 				<div>
@@ -445,10 +445,10 @@
 								@if ($folUser)
 									<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
 										<span class="text-xs font-semibold text-slate-700 truncate">
-											<i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i>{{ $folUser->name }}
+											<i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i>{{ $folUser->name }}
 										</span>
 										<select wire:model="follower_positions.{{ $fId }}"
-											class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-cyan-500 focus:outline-none shrink-0"
+											class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none shrink-0"
 											required>
 											<option value="">— Pilih Jabatan —</option>
 											<option value="Penanggung Jawab">Penanggung Jawab</option>
@@ -470,7 +470,7 @@
 							@forelse ($followers as $fId)
 								@php $folUser = $users->firstWhere('id', $fId); @endphp
 								@if ($folUser)
-									<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-cyan-600 mr-1.5"></i> {{ $folUser->name }}</div>
+									<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i> {{ $folUser->name }}</div>
 								@endif
 							@empty
 								<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
@@ -496,7 +496,7 @@
 				Periksa Kembali
 			</button>
 			<button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
-				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+				class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2 text-xs font-bold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
 				<span wire:loading.remove wire:target="submit">
 					{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
 				</span>

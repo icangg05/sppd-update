@@ -25,7 +25,7 @@ $id = $id ?? $key;
             value="{{ $value }}"
             @if ($checked) checked @endif
             @if ($required) required @endif
-            {{ $attributes->merge(['class' => trim('mt-0.5 h-4 w-4 border-slate-300 text-sky-600 focus:ring-sky-500 ' . $class)]) }}
+            {{ $attributes->merge(['class' => trim('mt-0.5 h-4 w-4 border-slate-300 text-primary-600 focus:ring-primary-500 ' . $class)]) }}
         >
         <span class="font-medium">{{ $label }}</span>
     </label>
@@ -36,7 +36,7 @@ $id = $id ?? $key;
 
     @if ($key)
         @error($key)
-            <p class="form-error">{{ $message }}</p>
+            <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
         @enderror
     @endif
 </div>

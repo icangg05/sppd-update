@@ -4,13 +4,13 @@
 	{{-- Header --}}
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 		<div>
-			<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-cyan-500 inline-block pb-1">
-				<i class="fa-solid fa-users-gear mr-2 text-cyan-600"></i>Data Pegawai
+			<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
+				<i class="fa-solid fa-users-gear mr-2 text-primary-600"></i>Data Pegawai
 			</h1>
 			<p class="mt-1 text-xs text-slate-500 font-medium">Kelola data pegawai dan hak akses pengguna sistem</p>
 		</div>
 		<a wire:navigate href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
-			class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+			class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 			<i class="fa-solid fa-plus"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
 		</a>
 	</div>
@@ -25,10 +25,10 @@
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
-					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
 					placeholder="{{ $this->searchPlaceholder() }}">
 				<div wire:loading wire:target="search"
-					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
 					<i class="fa-solid fa-spinner fa-spin text-xs"></i>
 				</div>
 			</div>
@@ -89,10 +89,10 @@
 		@if ($activePosition || $activeRank || $activeRole)
 			<div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
 				@if ($activePosition)
-					<span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-50 px-3 py-1 font-semibold text-cyan-700 ring-1 ring-cyan-600/20">
+					<span class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 font-semibold text-primary-700 ring-1 ring-primary-600/20">
 						<i class="fa-solid fa-id-badge text-[10px]"></i>
 						Jabatan: {{ $activePosition->name }}
-						<button type="button" wire:click="$set('position_id', '')" class="ml-1 text-cyan-500 hover:text-cyan-800" title="Hapus filter">
+						<button type="button" wire:click="$set('position_id', '')" class="ml-1 text-primary-500 hover:text-primary-800" title="Hapus filter">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					</span>
@@ -163,10 +163,10 @@
 										@if ($depth > 0)
 											<i class="fa-solid fa-sitemap text-[9px] text-slate-400"></i>
 										@else
-											<i class="fa-solid fa-building-columns text-[9px] text-cyan-500"></i>
+											<i class="fa-solid fa-building-columns text-[9px] text-primary-500"></i>
 										@endif
 										<span
-											class="text-[10px] font-bold uppercase tracking-widest {{ $depth === 0 ? 'text-cyan-700' : ($depth === 1 ? 'text-slate-600' : 'text-slate-400') }}">
+											class="text-[10px] font-bold uppercase tracking-widest {{ $depth === 0 ? 'text-primary-700' : ($depth === 1 ? 'text-slate-600' : 'text-slate-400') }}">
 											{{ $user->department?->name ?? '-' }}
 										</span>
 									</div>
@@ -247,7 +247,7 @@
 
 									{{-- View --}}
 									<a wire:navigate href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
+										class="rounded p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
 										title="Detail Pegawai">
 										<i class="fa-solid fa-eye"></i>
 									</a>

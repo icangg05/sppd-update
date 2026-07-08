@@ -24,7 +24,7 @@
 
 	{{-- Modal Detail Alur Pejabat --}}
 	<x-ui.modal show="$wire.showWorkflowModal" :closeable="true" title="Detail Alur Pejabat Penandatangan"
-		icon="fa-solid fa-route text-cyan-600">
+		icon="fa-solid fa-route text-primary-600">
 		@if (!empty($simulatedSteps))
 			<div class="space-y-4">
 				<p class="text-xs text-slate-500">Berikut adalah daftar alur persetujuan pejabat struktural untuk perjalanan dinas
@@ -128,7 +128,7 @@
 				<h1 class="text-lg font-bold text-slate-800 flex flex-wrap items-center gap-2">
 					<span>Daftar SPPD</span>
 					<span class="text-slate-300 font-normal">|</span>
-					<span class="text-cyan-600 underline">{{ $activeFilterLabel }}</span>
+					<span class="text-primary-600 underline">{{ $activeFilterLabel }}</span>
 				</h1>
 				<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
 			@endif
@@ -145,13 +145,13 @@
 					{{-- Tab jabatan dinamis sesuai jenis OPD user --}}
 					<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
 						<button wire:click="filterByJabatan('')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 							Semua Jabatan
 						</button>
 
 						@foreach ($jabatanTabs as $tab)
 							<button wire:click="filterByJabatan('{{ $tab }}')"
-								class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === $tab ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+								class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === $tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 								{{ $jabatanLabels[$tab] ?? $tab }}
 							</button>
 						@endforeach
@@ -160,7 +160,7 @@
 
 				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
-						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 justify-center">
+						class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 justify-center">
 						<x-slot name="icon">
 							<i class="fa-solid fa-plus text-xs"></i>
 						</x-slot>
@@ -172,7 +172,7 @@
 	</div>
 
 	{{-- Bar Filter --}}
-	<div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+	<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<div class="flex-1">
 				<x-form.input
@@ -282,7 +282,7 @@
 							</p>
 
 							@if (!auth()->user()->hasRole('super_admin'))
-								<p class="text-[11px] text-cyan-600 mt-0.5 font-medium">
+								<p class="text-[11px] text-primary-600 mt-0.5 font-medium">
 									{{ $sppd->user->department?->name ?? '-' }}
 								</p>
 							@else
@@ -393,7 +393,7 @@
 								@if (in_array($sppd->status->value, ['approved', 'completed']))
 									<a
 										href="{{ route('sppd.next', $sppd) }}" wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded bg-cyan-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-cyan-700 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
 										<span>Selanjutnya</span>
 										<i class="fa-solid fa-arrow-right text-[10px]"></i>
 									</a>

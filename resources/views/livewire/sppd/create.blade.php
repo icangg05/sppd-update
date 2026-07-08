@@ -19,11 +19,11 @@
 			{{-- Sub Header Card --}}
 			<div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/75 px-5 py-3.5">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-2">
-					<i class="fa-solid fa-paste text-cyan-600"></i>
+					<i class="fa-solid fa-paste text-primary-600"></i>
 					Tahap 1: Pelaksana & Estimasi Alur
 				</h3>
 				<span
-					class="flex size-6 items-center justify-center rounded-full bg-cyan-600 text-xs font-bold text-white shadow-2xs">1</span>
+					class="flex size-6 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white shadow-2xs">1</span>
 			</div>
 
 			{{-- Input Grid Pemilihan Pelaksana & Domain --}}
@@ -96,7 +96,7 @@
 						@resize.window="if (open) position()"
 						class="relative">
 						<button type="button" x-ref="trigger" @click="toggle()"
-							class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
+							class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
 							<span class="truncate text-left {{ $selectedUserLabel ? 'text-slate-800' : 'text-slate-400' }}">
 								{{ $selectedUserLabel ?? '— Pilih Pegawai yang Berangkat —' }}
 							</span>
@@ -123,7 +123,7 @@
 										@keydown.enter.prevent="pick()"
 										@keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
 										placeholder="Cari nama / NIP pegawai..."
-										class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+										class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
 								</div>
 							</div>
 							<ul x-ref="list" class="max-h-56 overflow-auto py-1">
@@ -133,8 +133,8 @@
 											@click="open = false" @mouseenter="highlighted = {{ $loop->index }}"
 											class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
 											:class="highlighted === {{ $loop->index }}
-												? 'bg-cyan-100 text-cyan-800'
-												: ({{ $user_id == $u->id ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+												? 'bg-primary-100 text-primary-800'
+												: ({{ $user_id == $u->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
 											{{ trim(($u->nip ? $u->nip . ' - ' : '') . $u->name) }}
 										</button>
 									</li>
@@ -212,7 +212,7 @@
 						@empty
 							@if ($errorMessage === '')
 								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-400 italic">
-									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-cyan-600"></i>Memvalidasi alur instansi...
+									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
 								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-400 italic">
@@ -246,7 +246,7 @@
 					{{-- Tombol Lanjutkan --}}
 					<div class="mt-6 pt-4 border-t border-slate-200 flex justify-center">
 						<button type="submit" @disabled(!$isComplete)
-							class="inline-flex items-center gap-2 rounded bg-cyan-600 px-12 py-2.5 text-sm font-semibold text-white shadow-md transition duration-200 hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
+							class="inline-flex items-center gap-2 rounded bg-primary-600 px-12 py-2.5 text-sm font-semibold text-white shadow-md transition duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
 							<span>Lanjut Isi Detail SPPD</span>
 							<i class="fa-solid fa-arrow-right text-xs"></i>
 						</button>

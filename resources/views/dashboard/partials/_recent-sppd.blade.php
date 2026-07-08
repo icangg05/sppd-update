@@ -1,5 +1,5 @@
 {{-- Daftar SPPD terbaru. Param: $items (Collection<SppdRequest>), opsional $title --}}
-<div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+<div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
   <div class="flex items-center justify-between border-b border-slate-100 p-4">
     <div class="flex items-center gap-2.5">
       <div class="flex size-7 items-center justify-center rounded bg-blue-50 text-blue-500">
@@ -11,7 +11,7 @@
       </div>
     </div>
     <a wire:navigate href="{{ route('sppd.index') }}"
-      class="text-xs font-medium text-cyan-600 transition hover:text-cyan-800 hover:underline">
+      class="text-xs font-medium text-primary-600 transition hover:text-primary-800 hover:underline">
       Lihat Semua <i class="fa-solid fa-arrow-right ml-1"></i>
     </a>
   </div>

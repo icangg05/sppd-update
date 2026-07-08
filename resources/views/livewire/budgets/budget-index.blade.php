@@ -3,11 +3,11 @@
 	{{-- Header Halaman --}}
 	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 		<div class="flex items-center gap-3">
-			<div class="p-2 bg-cyan-100 rounded">
-				<i class="fa-solid fa-file-invoice-dollar text-cyan-600 text-lg"></i>
+			<div class="p-2 bg-primary-100 rounded">
+				<i class="fa-solid fa-file-invoice-dollar text-primary-600 text-lg"></i>
 			</div>
 			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-cyan-500 inline-block pb-1">
+				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
 					Daftar Anggaran (DPA)
 				</h1>
 				<p class="mt-1 text-xs text-slate-500 font-medium">
@@ -18,7 +18,7 @@
 
 		@can('budget.create')
 			<x-ui.button href="{{ route('master.budgets.create') }}"
-				class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+				class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 				<x-slot name="icon">
 					<i class="fa-solid fa-plus"></i>
 				</x-slot>
@@ -37,10 +37,10 @@
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
-					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
 					placeholder="Cari program, kegiatan, kode rekening, atau uraian...">
 				<div wire:loading wire:target="search"
-					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
 					<i class="fa-solid fa-spinner fa-spin text-xs"></i>
 				</div>
 			</div>
@@ -136,7 +136,7 @@
 							</td>
 
 							<td class="py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
-								<div class="text-xs font-bold text-cyan-700 leading-tight mb-1">{{ $budget->program }}</div>
+								<div class="text-xs font-bold text-primary-700 leading-tight mb-1">{{ $budget->program }}</div>
 								<div class="text-[11px] text-slate-500 leading-relaxed">{{ $budget->activity }}</div>
 							</td>
 
@@ -173,7 +173,7 @@
 								<div class="flex items-center justify-center gap-1">
 									{{-- Detail --}}
 									<a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"
-										class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
+										class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
 										title="Detail Anggaran">
 										<i class="fa-solid fa-eye text-xs"></i>
 									</a>
@@ -181,7 +181,7 @@
 									{{-- Edit --}}
 									@can('budget.edit')
 										<a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
-											class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
 											title="Edit Anggaran">
 											<i class="fa-solid fa-pen-to-square text-xs"></i>
 										</a>
@@ -190,7 +190,7 @@
 									{{-- Hapus --}}
 									@can('budget.delete')
 										<button type="button" wire:click="confirmDelete({{ $budget->id }})"
-											class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
 											title="Hapus Anggaran">
 											<i class="fa-solid fa-trash-can text-xs"></i>
 										</button>

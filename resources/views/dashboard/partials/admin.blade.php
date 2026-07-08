@@ -11,8 +11,8 @@
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 shadow-md">
-      <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
+    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex size-10 items-center justify-center rounded-lg {{ $kpi['tone'] }}">
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
       <div>
@@ -25,7 +25,7 @@
 
 {{-- Charts: Trend + Distribusi Status --}}
 <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md lg:col-span-2">
+  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <div>
         <h3 class="text-sm font-bold text-slate-800">Tren Pengajuan SPPD</h3>
@@ -39,7 +39,7 @@
     <div class="relative h-60 w-full p-4"><canvas id="trendChart"></canvas></div>
   </div>
 
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="text-sm font-bold text-slate-800">Distribusi Status</h3>
       <p class="mt-0.5 text-xs text-slate-500">Sebaran status SPPD (lingkup Anda)</p>
@@ -64,7 +64,7 @@
 {{-- Pemakaian anggaran per OPD (super_admin) + SPPD terbaru --}}
 <div class="grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
   @if ($topByUsage->count() > 1)
-    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+    <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
         <h3 class="text-sm font-bold text-slate-800">Pemakaian Anggaran per OPD</h3>
         <p class="mt-0.5 text-xs text-slate-500">6 OPD dengan persentase realisasi tertinggi</p>
@@ -91,7 +91,7 @@
 
 {{-- Antrean persetujuan (bila admin juga approver) --}}
 @if ($pendingApprovals->isNotEmpty())
-  <div class="rounded border border-slate-200 bg-white shadow-md">
+  <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="text-sm font-bold text-slate-800">Menunggu Persetujuan Anda</h3>
     </div>

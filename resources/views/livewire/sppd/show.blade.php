@@ -37,7 +37,7 @@
 			{{-- Tombol Portal Selanjutnya --}}
 			@if (in_array($sppd->status->value, ['approved', 'completed']))
 				<a href="{{ route('sppd.next', $sppd) }}" wire:navigate
-					class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-cyan-700">
+					class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700">
 					<span>Selanjutnya</span>
 					<i class="fa-solid fa-arrow-right text-[10px]"></i>
 				</a>
@@ -46,14 +46,14 @@
 			{{-- Dokumen SPT / SPPD --}}
 			<button type="button" @click="showDocModal = true"
 				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
-				<i class="fa-solid fa-file-pdf text-cyan-600 text-[13px]"></i>
+				<i class="fa-solid fa-file-pdf text-primary-600 text-[13px]"></i>
 				Lihat Dokumen
 			</button>
 
 			{{-- Link Publik (read-only, tanpa alur persetujuan & status TTE) --}}
 			<a href="{{ $sppd->publicUrl() }}" target="_blank" rel="noopener"
 				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
-				<i class="fa-solid fa-share-nodes text-cyan-600 text-[13px]"></i>
+				<i class="fa-solid fa-share-nodes text-primary-600 text-[13px]"></i>
 				Link Publik
 			</a>
 
@@ -83,13 +83,13 @@
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<i class="fa-solid fa-address-card text-cyan-600"></i> Informasi Perjalanan
+						<i class="fa-solid fa-address-card text-primary-600"></i> Informasi Perjalanan
 					</h3>
 				</div>
 				<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Pelaksana</p>
-						<a href="{{ route('master.users.show', $sppd->user) }}" class="text-sm font-bold text-cyan-600 hover:text-cyan-700 hover:underline inline-flex items-center gap-1">
+						<a href="{{ route('master.users.show', $sppd->user) }}" class="text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline inline-flex items-center gap-1">
 							<span>{{ $sppd->user->name }}</span>
 							<i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
 						</a>
@@ -106,7 +106,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">Domain Wilayah</p>
 						<p class="text-sm font-semibold text-slate-800">
-							<span class="bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded border border-cyan-100 text-xs uppercase">{{ $sppd->domain->label() }}</span>
+							<span class="bg-primary-50 text-primary-700 px-2 py-0.5 rounded border border-primary-100 text-xs uppercase">{{ $sppd->domain->label() }}</span>
 						</p>
 					</div>
 					<div>
@@ -172,7 +172,7 @@
 								<div class="min-w-0 flex-1">
 									<p class="text-xs text-slate-500 font-medium">Lampiran Dokumen</p>
 									<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
-										class="text-sm font-bold text-cyan-600 hover:text-cyan-700 hover:underline truncate block">
+										class="text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline truncate block">
 										{{ basename($sppd->attachment) }}
 									</a>
 								</div>
@@ -191,7 +191,7 @@
 				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-money-check-dollar text-cyan-600"></i> Pembebanan Anggaran
+							<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Pembebanan Anggaran
 						</h3>
 					</div>
 					<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
@@ -225,13 +225,13 @@
 				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-map-location-dot text-cyan-600"></i> Lokasi Tujuan
+							<i class="fa-solid fa-map-location-dot text-primary-600"></i> Lokasi Tujuan
 						</h3>
 					</div>
 					<div class="p-5 space-y-3">
 						@foreach ($sppd->destinations as $dest)
 							<div class="flex items-start gap-3 rounded border border-slate-200 bg-slate-50 p-3 shadow-2xs">
-								<div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+								<div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
 									<i class="fa-solid fa-location-dot text-sm"></i>
 								</div>
 								<div class="min-w-0 leading-tight">
@@ -252,18 +252,18 @@
 				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-users text-cyan-600"></i> Daftar Pengikut
+							<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut
 						</h3>
 					</div>
 					<div class="p-5 flex flex-wrap gap-2.5">
 						@foreach ($sppd->followers as $f)
-							<a href="{{ route('master.users.show', $f->user) }}" class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 shadow-2xs hover:border-cyan-300 hover:bg-cyan-50/10 transition group">
+							<a href="{{ route('master.users.show', $f->user) }}" class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2 py-1.5 shadow-2xs hover:border-primary-300 hover:bg-primary-50/10 transition group">
 								<span
-									class="flex size-6 shrink-0 items-center justify-center rounded bg-cyan-600 text-[10px] font-bold text-white shadow-2xs group-hover:bg-cyan-700 transition">
+									class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-600 text-[10px] font-bold text-white shadow-2xs group-hover:bg-primary-700 transition">
 									{{ strtoupper(substr($f->user->name, 0, 1)) }}
 								</span>
 								<div class="leading-tight pr-1">
-									<span class="block text-sm font-semibold text-slate-700 group-hover:text-cyan-600 transition">{{ $f->user->name }}</span>
+									<span class="block text-sm font-semibold text-slate-700 group-hover:text-primary-600 transition">{{ $f->user->name }}</span>
 									@if ($f->travel_position)
 										<span class="block text-[10px] font-bold uppercase tracking-wide text-indigo-600 mt-0.5">
 											<i class="fa-solid fa-id-badge mr-0.5"></i>{{ $f->travel_position }}
@@ -286,7 +286,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<i class="fa-solid fa-list-check text-cyan-600"></i> Alur Persetujuan
+						<i class="fa-solid fa-list-check text-primary-600"></i> Alur Persetujuan
 					</h3>
 				</div>
 				<div class="p-5">
@@ -535,7 +535,7 @@
 				<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex items-center justify-between">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-file-shield text-cyan-600"></i> Status TTE Dokumen
+							<i class="fa-solid fa-file-shield text-primary-600"></i> Status TTE Dokumen
 						</h3>
 					</div>
 					<div class="p-4 divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
@@ -579,7 +579,7 @@
 		$sptIsApproved = $sptSig && $sptSig->status->value === 'signed' && $sptSig->signed_file_path;
 	@endphp
 	<x-ui.modal show="showDocModal" title="Dokumen SPPD" description="Pilih dokumen yang ingin dibuka"
-		icon="fa-solid fa-folder-open text-cyan-600" :closeable="false">
+		icon="fa-solid fa-folder-open text-primary-600" :closeable="false">
 		<div class="space-y-2">
 			@if ($sptIsApproved)
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"
@@ -590,7 +590,7 @@
 				</a>
 			@else
 				<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
-					class="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100">
+					class="flex items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100">
 					<i class="fa-solid fa-file-pdf"></i><span>SPT</span>
 				</a>
 			@endif

@@ -11,7 +11,7 @@
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 shadow-md">
+    <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-md">
       <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
@@ -28,10 +28,10 @@
   @include('dashboard.partials._recent-sppd', ['items' => $mySppd, 'title' => 'SPPD Saya'])
 
   {{-- Laporan perjalanan yang perlu dilengkapi --}}
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-clipboard-list text-cyan-500"></i> Laporan Perlu Dilengkapi
+        <i class="fa-solid fa-clipboard-list text-primary-500"></i> Laporan Perlu Dilengkapi
       </h3>
       <p class="mt-0.5 text-xs text-slate-500">SPPD selesai yang laporannya belum dibuat</p>
     </div>
@@ -43,7 +43,7 @@
             <p class="line-clamp-1 font-medium text-slate-700">{{ $item->purpose }}</p>
             <p class="text-xs text-slate-400">{{ $item->destinations->first()?->regency?->name ?? '-' }}</p>
           </div>
-          <span class="shrink-0 rounded bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-700">Buat Laporan</span>
+          <span class="shrink-0 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">Buat Laporan</span>
         </a>
       @empty
         <div class="flex flex-col items-center justify-center p-8 text-slate-400">

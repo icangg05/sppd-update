@@ -1,16 +1,16 @@
-<header class="sticky top-0 z-30 w-full border-b border-cyan-600/50 bg-cyan-700 text-white shadow-sm">
+<header class="sticky top-0 z-30 w-full border-b border-primary-600/50 bg-primary-700 text-white shadow-sm">
 	<div class="flex h-13 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
 		<div class="flex items-center gap-4">
 			<button onclick="toggleSidebar()"
-				class="inline-flex size-9 items-center justify-center rounded-lg bg-cyan-600/50 text-white transition-all hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-white/50 lg:hidden"
+				class="inline-flex size-9 items-center justify-center rounded-lg bg-primary-600/50 text-white transition-all hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-white/50 lg:hidden"
 				aria-label="Buka menu navigasi" title="Buka menu navigasi">
 				<i class="fa-solid fa-bars-staggered"></i>
 			</button>
 
 			<div class="hidden flex-col sm:flex">
 				<h1 class="text-sm font-bold tracking-wide sm:text-base">@yield('page-title', 'Dashboard')</h1>
-				<p class="text-xs font-medium text-cyan-200">Sistem Perjalanan Dinas</p>
+				<p class="text-xs font-medium text-primary-200">Sistem Perjalanan Dinas</p>
 			</div>
 
 			@if (auth()->user()?->hasRole('super_admin'))
@@ -26,22 +26,22 @@
 			{{-- Notifikasi: log pembaruan sistem (changelog) --}}
 			<x-notifications />
 
-			<div class="hidden h-6 w-px bg-cyan-500/50 sm:block"></div>
+			<div class="hidden h-6 w-px bg-primary-500/50 sm:block"></div>
 
 			<div class="relative">
 				<button id="toggle-profile"
-					class="flex items-center gap-3 rounded-lg p-1 transition-all hover:bg-cyan-600/30 focus:outline-none">
+					class="flex items-center gap-3 rounded-lg p-1 transition-all hover:bg-primary-600/30 focus:outline-none">
 					<div class="hidden text-right sm:block">
 						<p class="text-sm font-semibold leading-tight text-white">{{ auth()->user()->name ?? 'Administrator' }}</p>
-						<p class="text-xs font-medium text-cyan-200">{{ auth()->user()->department?->name ?? 'Sistem SPPD' }}</p>
+						<p class="text-xs font-medium text-primary-200">{{ auth()->user()->department?->name ?? 'Sistem SPPD' }}</p>
 					</div>
-					<div class="relative size-9 overflow-hidden rounded-full border-2 border-cyan-200/50 shadow-sm">
+					<div class="relative size-9 overflow-hidden rounded-full border-2 border-primary-200/50 shadow-sm">
 						<img
 							src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=0D8ABC&color=fff"
 							alt="Profil" class="h-full w-full object-cover">
 					</div>
 					<i id="profile-icon"
-						class="fa-solid fa-chevron-down text-xs text-cyan-200 transition-transform duration-200"></i>
+						class="fa-solid fa-chevron-down text-xs text-primary-200 transition-transform duration-200"></i>
 				</button>
 
 				<div id="dropdown-menu"
@@ -60,7 +60,7 @@
 						<a href="{{ route('profile') }}" wire:navigate
 							class="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
 							<i
-								class="fa-regular fa-user mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-cyan-600"></i>
+								class="fa-regular fa-user mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-primary-600"></i>
 							Profil Saya
 						</a>
 					</div>

@@ -11,7 +11,7 @@
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 shadow-md">
+    <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-md">
       <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
@@ -25,13 +25,13 @@
 
 <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
   {{-- Antrean Persetujuan (utama) --}}
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
       </h3>
       <a wire:navigate href="{{ route('sppd.index', ['filter' => 'approval']) }}"
-        class="text-xs font-medium text-cyan-600 hover:underline">Buka Semua</a>
+        class="text-xs font-medium text-primary-600 hover:underline">Buka Semua</a>
     </div>
     <div class="flex max-h-96 flex-col divide-y divide-slate-100 overflow-y-auto">
       @forelse ($pendingApprovals as $appr)
@@ -59,7 +59,7 @@
   <div class="flex flex-col gap-5">
     {{-- Antrean Tanda Tangan (jika bisa sign) --}}
     @if ($pendingSignatures->isNotEmpty())
-      <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+      <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
         <div class="border-b border-slate-100 p-4">
           <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
             <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
@@ -80,7 +80,7 @@
     @endif
 
     {{-- Keputusan terakhir --}}
-    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-md">
+    <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
       <div class="border-b border-slate-100 p-4">
         <h3 class="text-sm font-bold text-slate-800">Keputusan Terakhir Anda</h3>
       </div>

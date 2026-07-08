@@ -3,7 +3,7 @@
   {{-- Header Halaman Compact --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid fa-sitemap text-base"></i>
       </div>
       <div>
@@ -17,7 +17,7 @@
     </div>
 
     <x-ui.button href="{{ route('master.departments.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Struktur' }}
     </x-ui.button>
@@ -33,10 +33,10 @@
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
           placeholder="Cari nama unit kerja atau kode urusan...">
         <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
           <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
         </div>
       </div>
@@ -95,7 +95,7 @@
               $isOwnDept = !$isSuperAdmin && $dept->id == auth()->user()->department_id;
             @endphp
             <tr wire:key="dept-{{ $dept->id }}"
-              class="transition-colors {{ $isOwnDept ? 'bg-cyan-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
+              class="transition-colors {{ $isOwnDept ? 'bg-primary-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
               <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
                 {{ $departments->firstItem() + $i }}
               </td>
@@ -109,7 +109,7 @@
                     @endfor
                     <i class="fa-solid fa-angles-right text-[10px] text-slate-300 mr-2"></i>
                   @endif
-                  <span class="{{ $isOwnDept ? 'text-cyan-700 font-bold' : 'text-slate-900' }}">
+                  <span class="{{ $isOwnDept ? 'text-primary-700 font-bold' : 'text-slate-900' }}">
                     {{ $dept->name }}
                   </span>
                   @unless($dept->has_kop)
@@ -155,14 +155,14 @@
                 <div class="flex items-center justify-center gap-1">
                   {{-- Tombol Detail --}}
                   <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors"
+                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                     title="Detail">
                     <i class="fa-solid fa-eye text-[10px]"></i>
                   </a>
 
                   {{-- Tombol Edit --}}
                   <a wire:navigate href="{{ route('master.departments.edit', $dept->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
@@ -170,7 +170,7 @@
                   {{-- Tombol Hapus kondisional --}}
                   @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
                     <button type="button" wire:click="confirmDelete({{ $dept->id }})"
-                      class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>

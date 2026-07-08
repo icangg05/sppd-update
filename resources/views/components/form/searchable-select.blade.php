@@ -138,7 +138,7 @@
 
         <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
             @class([
-                'flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500',
+                'flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',
                 'cursor-not-allowed bg-slate-50' => $disabled,
                 $class,
             ])>
@@ -168,7 +168,7 @@
                             @keydown.enter.prevent="pick()"
                             @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
                             placeholder="{{ $searchPlaceholder }}"
-                            class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+                            class="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30">
                     </div>
                 </div>
                 <ul x-ref="list" class="max-h-56 overflow-auto py-1">
@@ -176,8 +176,8 @@
                         <li @click="choose(opt.value)" @mouseenter="highlighted = index" :data-index="index"
                             class="cursor-pointer px-3 py-2 text-sm transition-colors"
                             :class="index === highlighted
-                                ? 'bg-cyan-100 text-cyan-800'
-                                : (String(opt.value) === String(value ?? '') ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+                                ? 'bg-primary-100 text-primary-800'
+                                : (String(opt.value) === String(value ?? '') ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
                             <span x-text="opt.label"></span>
                         </li>
                     </template>

@@ -16,7 +16,7 @@
 	$key = $name ?? $wireModel;
 	$id = $id ?? $key;
 	$resolvedClass = trim(
-	    'w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 ' .
+	    'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ' .
 	        $class,
 	);
 @endphp
