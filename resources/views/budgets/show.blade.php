@@ -4,17 +4,17 @@
 @section('page-title', 'Detail Data Anggaran')
 
 @section('content')
-<div class="p-1 space-y-6">
+<div class="mx-auto max-w-6xl space-y-6 p-1">
 
   {{-- Header Halaman --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div class="flex items-center gap-3">
-      <div class="flex size-10 items-center justify-center rounded bg-primary-50 text-primary-600">
-        <i class="fa-solid fa-circle-info text-lg"></i>
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
       </div>
       <div>
-        <h1 class="text-lg font-bold text-slate-800">Informasi DPA</h1>
-        <p class="mt-0.5 text-xs text-slate-500">Rincian lengkap berkas dokumen pelaksanaan anggaran</p>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Informasi DPA</h1>
+        <p class="mt-0.5 text-sm text-slate-500">Rincian lengkap dokumen pelaksanaan anggaran.</p>
       </div>
     </div>
 
@@ -36,11 +36,15 @@
 
     {{-- Kolom Kiri: Tabel Informasi Detail --}}
     <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50/50">
-          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-file-invoice text-primary-500"></i>Detail Atribut Utama DPA
-          </h3>
+      <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
+          <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+            <i class="fa-solid fa-file-invoice"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Detail Atribut DPA</h3>
+            <p class="text-xs text-slate-500">Klasifikasi program, kegiatan, dan kode anggaran.</p>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -94,17 +98,21 @@
 
     {{-- Kolom Kanan: Ringkasan & Progress Penyerapan Finansial --}}
     <div class="space-y-6">
-      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-200 bg-slate-50/50">
-          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-primary-500"></i>Ringkasan Keuangan
-          </h3>
+      <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
+          <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Ringkasan Keuangan</h3>
+            <p class="text-xs text-slate-500">Pagu, realisasi, dan penyerapan.</p>
+          </div>
         </div>
 
         <div class="p-6 space-y-4">
           <div>
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Pagu Anggaran</p>
-            <p class="text-xl font-black text-slate-900 font-mono">Rp {{ number_format($budget->total_amount, 0, ',', '.') }}</p>
+            <p class="text-xl font-bold text-slate-900 font-mono">Rp {{ number_format($budget->total_amount, 0, ',', '.') }}</p>
           </div>
 
           <div class="pt-4 border-t border-slate-100">

@@ -1,25 +1,26 @@
-<div class="p-1 space-y-4" x-data="{ detailOpen: false, detailId: '', detailEvent: '', detailBadgeClass: '', detailHasOld: true, detailRows: [] }">
+<div class="p-1 space-y-6" x-data="{ detailOpen: false, detailId: '', detailEvent: '', detailBadgeClass: '', detailHasOld: true, detailRows: [] }">
 
   @php $isTte = $this->isTte(); @endphp
 
   {{-- Header --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 {{ $isTte ? 'bg-emerald-100 text-emerald-600' : 'bg-primary-100 text-primary-600' }} rounded">
-        <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-base"></i>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded ring-1 {{ $isTte ? 'bg-emerald-50 text-emerald-600 ring-emerald-100' : 'bg-primary-50 text-primary-600 ring-primary-100' }}">
+        <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-lg"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">{{ $isTte ? 'Logs TTE' : 'Logs Aktivitas' }}</h1>
-        <p class="text-[11px] text-slate-500 font-medium">
-          {{ $isTte ? 'Riwayat penandatanganan elektronik dokumen' : 'Riwayat aktivitas pengguna & perubahan data dalam sistem' }}
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{{ $isTte ? 'Logs TTE' : 'Logs Aktivitas' }}</h1>
+        <p class="mt-0.5 text-sm text-slate-500">
+          {{ $isTte ? 'Riwayat penandatanganan elektronik dokumen.' : 'Riwayat aktivitas pengguna & perubahan data dalam sistem.' }}
         </p>
       </div>
     </div>
 
     @if ($this->isSuperAdmin())
       <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
-        class="px-3 py-1.5 text-xs font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
-        <i class="fa-solid fa-trash-can text-[10px]"></i> Bersihkan Log
+        class="shrink-0 font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
+        <x-slot name="icon"><i class="fa-solid fa-trash-can text-xs"></i></x-slot>
+        Bersihkan Log
       </x-ui.button>
     @endif
   </div>
@@ -32,7 +33,7 @@
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
           placeholder="Cari deskripsi, objek, atau nama pengguna...">
         <div wire:loading wire:target="search"
           class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
@@ -248,7 +249,7 @@
                     @if ($changedCount > 0)
                       <button type="button"
                         @click="detailRows = @js($detailRows); detailHasOld = @js($detailHasOld); detailId = @js('#' . $activity->id); detailEvent = @js(strtoupper($displayEvent ?? 'LOG')); detailBadgeClass = @js($eventBadgeClass); detailOpen = true"
-                        class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-700 transition hover:bg-primary-100">
+                        class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-700 transition hover:bg-primary-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
                         <i class="fa-solid fa-table-list text-[10px]"></i> Detail perubahan
                         <span class="rounded bg-primary-200/60 px-1 text-[10px]">{{ $changedCount }}</span>
                       </button>
@@ -256,7 +257,7 @@
 
                     @if ($signedUrl)
                       <a href="{{ $signedUrl }}" target="_blank" rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100"
+                        class="inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                         title="Buka dokumen yang ditandatangani di tab baru">
                         <i class="fa-solid fa-file-signature text-[10px]"></i> Lihat dokumen
                         <i class="fa-solid fa-up-right-from-square text-[8px]"></i>
@@ -284,7 +285,7 @@
                 <td class="py-2.5 px-4 text-center">
                   @if ($activity->subject && $activity->subject_type === \App\Models\SppdRequest::class)
                     <a href="{{ route('sppd.show', $activity->subject_id) }}" target="_blank" rel="noopener noreferrer"
-                      class="inline-flex items-center justify-center rounded border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-700 transition hover:bg-emerald-100"
+                      class="inline-flex items-center justify-center rounded border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-700 transition hover:bg-emerald-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                       title="Buka detail SPPD di tab baru">
                       <i class="fa-solid fa-up-right-from-square text-[11px]"></i>
                     </a>
@@ -296,10 +297,28 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isTte ? 7 : 6 }}" class="py-10 text-center text-slate-500">
-                <div class="flex flex-col items-center justify-center gap-1.5">
-                  <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-2xl opacity-40"></i>
-                  <p class="font-medium">{{ $isTte ? 'Belum ada riwayat penandatanganan elektronik' : 'Belum ada aktivitas yang tercatat' }}</p>
+              <td colspan="{{ $isTte ? 7 : 6 }}" class="px-4 py-16">
+                <div class="mx-auto flex max-w-sm flex-col items-center text-center">
+                  <div class="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+                    <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-xl"></i>
+                  </div>
+
+                  @if ($canReset)
+                    <p class="mt-4 text-sm font-semibold text-slate-700">Tidak ada log yang cocok</p>
+                    <p class="mt-1 text-xs text-slate-500">Coba ubah kata kunci pencarian atau hapus filter event yang aktif.</p>
+                    <x-ui.button wire:click="resetFilters" type="button" variant="secondary" size="sm" class="mt-4">
+                      <i class="fa-solid fa-rotate-right text-xs"></i> Reset filter
+                    </x-ui.button>
+                  @else
+                    <p class="mt-4 text-sm font-semibold text-slate-700">
+                      {{ $isTte ? 'Belum ada riwayat penandatanganan' : 'Belum ada aktivitas tercatat' }}
+                    </p>
+                    <p class="mt-1 text-xs text-slate-500">
+                      {{ $isTte
+                        ? 'Catatan tanda tangan elektronik akan muncul di sini setelah dokumen ditandatangani.'
+                        : 'Aktivitas pengguna dan perubahan data akan tercatat otomatis di sini.' }}
+                    </p>
+                  @endif
                 </div>
               </td>
             </tr>

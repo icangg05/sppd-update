@@ -10,5 +10,10 @@ pada halaman list telaah status ;perjalanan selesai dan masukan; dan 'belum real
 cloudflared tunnel --url http://localhost:8004
 ===================================================
 
-command redesign pakai skills:
+# command redesign 1 pakai skills:
+
 /brandkit /high-end-visual-design /design-taste-frontend /redesign-existing-projects /impeccable /use-components redesign halaman sppd next
+
+# command redesign 2 pakai skills:
+
+/redesign-existing-projects /brandkit /design-taste-frontend /high-end-visual-design /industrial-brutalist-ui /use-components /imagegen-frontend-web /impeccable redesign halaman sppd next

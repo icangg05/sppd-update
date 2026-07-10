@@ -2,20 +2,26 @@
 	@php $isDprd = $this->isDprd(); @endphp
 
 	{{-- Header --}}
-	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-		<div>
-			<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
-				<i class="fa-solid fa-users-gear mr-2 text-primary-600"></i>Data Pegawai
-			</h1>
-			<p class="mt-1 text-xs text-slate-500 font-medium">Kelola data pegawai dan hak akses pengguna sistem</p>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex items-center gap-3">
+			<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+				<i class="fa-solid fa-users-gear text-lg"></i>
+			</div>
+			<div>
+				<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+					{{ $isDprd ? 'Data Anggota DPRD' : 'Data Pegawai' }}
+				</h1>
+				<p class="mt-0.5 text-sm text-slate-500">Kelola data pegawai dan hak akses pengguna sistem.</p>
+			</div>
 		</div>
-		<a wire:navigate href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
-			class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-			<i class="fa-solid fa-plus"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
-		</a>
+		<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}" variant="primary"
+			class="shrink-0 font-bold">
+			<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
+		</x-ui.button>
 	</div>
 
 	{{-- Filters --}}
+	{{-- TANPA .dash-enter: animasi (fill: both) menjebak dropdown fixed searchable-select. --}}
 	<div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col sm:flex-row gap-3">
 
@@ -25,7 +31,7 @@
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
-					class="block w-full rounded border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
+					class="block w-full rounded border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
 					placeholder="{{ $this->searchPlaceholder() }}">
 				<div wire:loading wire:target="search"
 					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
@@ -120,7 +126,7 @@
 	</div>
 
 	{{-- Table --}}
-	<div class="rounded border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
+	<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
 		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-clip">
 			<table class="w-full text-left table-fixed">
@@ -152,6 +158,11 @@
 							$depth = $deptDepthMap[$deptId] ?? 0;
 							$indent = $depth * 16;
 							$colCount = auth()->user()->hasRole('super_admin') ? 8 : 7;
+
+							// Monogram inisial (1–2 huruf) dari nama — hindari request avatar eksternal per baris.
+							$nameParts = preg_split('/\s+/', trim($user->name ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+							$initials = strtoupper(mb_substr($nameParts[0] ?? '?', 0, 1)
+								. (count($nameParts) > 1 ? mb_substr(end($nameParts), 0, 1) : ''));
 						@endphp
 
 						{{-- Department group header row when department changes --}}
@@ -179,10 +190,15 @@
 
 							{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
 							<td class="py-2.5 px-4">
-								<div style="padding-left: {{ $indent + 12 }}px">
-									<p class="text-sm font-semibold text-slate-900 leading-snug wrap-break-word">{{ $user->name }}</p>
-									<div class="flex flex-wrap items-center gap-x-2 text-[12px] text-slate-500">
-										<span class="break-all"><i class="fa-solid fa-at text-[10px] mr-0.5"></i>{{ $user->username ?? '-' }}</span>
+								<div class="flex items-center gap-3" style="padding-left: {{ $indent }}px">
+									<span
+										class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-700 ring-1 ring-primary-100"
+										aria-hidden="true">{{ $initials }}</span>
+									<div class="min-w-0">
+										<p class="text-sm font-semibold leading-snug text-slate-900 wrap-break-word">{{ $user->name }}</p>
+										<div class="flex flex-wrap items-center gap-x-2 text-[12px] text-slate-500">
+											<span class="break-all"><i class="fa-solid fa-at text-[10px] mr-0.5"></i>{{ $user->username ?? '-' }}</span>
+										</div>
 									</div>
 								</div>
 							</td>
@@ -241,20 +257,20 @@
 									{{-- Toggle Status --}}
 									<button type="button" wire:click="toggleActive({{ $user->id }})"
 										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
-										class="rounded p-1.5 text-xs font-medium transition-colors {{ $user->is_active ? 'text-slate-500 hover:bg-slate-100 hover:text-rose-600' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600' }}">
+										class="rounded p-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 {{ $user->is_active ? 'text-slate-500 hover:bg-slate-100 hover:text-rose-600' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600' }}">
 										<i class="fa-solid fa-power-off"></i>
 									</button>
 
 									{{-- View --}}
 									<a wire:navigate href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
 										title="Detail Pegawai">
 										<i class="fa-solid fa-eye"></i>
 									</a>
 
 									{{-- Edit --}}
 									<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
 										title="Edit Data">
 										<i class="fa-solid fa-pen-to-square"></i>
 									</a>
@@ -262,7 +278,7 @@
 									{{-- Delete --}}
 									<button type="button" wire:click="deleteUser({{ $user->id }})"
 										wire:confirm="Yakin ingin menghapus pegawai ini secara permanen?"
-										class="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
 										title="Hapus Data">
 										<i class="fa-solid fa-trash-can"></i>
 									</button>
@@ -271,10 +287,30 @@
 						</tr>
 					@empty
 						<tr>
-							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '8' : '7' }}" class="py-12 text-center">
-								<div class="flex flex-col items-center justify-center text-slate-500">
-									<i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
-									<p class="text-sm font-medium">Belum ada data pegawai yang ditemukan</p>
+							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '8' : '7' }}" class="px-4 py-16">
+								<div class="mx-auto flex max-w-sm flex-col items-center text-center">
+									<div class="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+										<i class="fa-solid fa-folder-open text-xl"></i>
+									</div>
+
+									@if ($hasActiveFilters)
+										<p class="mt-4 text-sm font-semibold text-slate-700">Tidak ada pegawai yang cocok</p>
+										<p class="mt-1 text-xs text-slate-500">Coba ubah kata kunci pencarian atau hapus sebagian filter yang aktif.</p>
+										<x-ui.button wire:click="resetFilters" type="button" variant="secondary" size="sm" class="mt-4">
+											<i class="fa-solid fa-rotate-right text-xs"></i> Reset filter
+										</x-ui.button>
+									@else
+										<p class="mt-4 text-sm font-semibold text-slate-700">
+											Belum ada data {{ $isDprd ? 'anggota DPRD' : 'pegawai' }}
+										</p>
+										<p class="mt-1 text-xs text-slate-500">
+											Mulai dengan menambahkan {{ $isDprd ? 'anggota DPRD' : 'pegawai' }} pertama ke sistem.
+										</p>
+										<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
+											variant="primary" size="sm" class="mt-4">
+											<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
+										</x-ui.button>
+									@endif
 								</div>
 							</td>
 						</tr>

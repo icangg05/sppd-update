@@ -1,4 +1,4 @@
-<div class="p-1 space-y-4"
+<div class="p-1 space-y-6"
   x-data
   x-init="if (window.location.hash === '#ajukan-jabatan') {
     $wire.openCreateModal();
@@ -7,33 +7,34 @@
   }">
 
   {{-- Header Halaman --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-        <i class="fa-solid fa-id-badge text-base"></i>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid fa-id-badge text-lg"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Pengajuan Jabatan</h1>
-        <p class="text-[11px] text-slate-500 font-medium">
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Pengajuan Jabatan</h1>
+        <p class="mt-0.5 text-sm text-slate-500">
           {{ $isSuperAdmin
-            ? 'Verifikasi usulan jabatan baru dari Admin OPD dan pastikan tidak duplikat'
-            : 'Ajukan jabatan baru jika belum tersedia, lalu menunggu verifikasi Super Admin' }}
+            ? 'Verifikasi usulan jabatan baru dari Admin OPD dan pastikan tidak duplikat.'
+            : 'Ajukan jabatan baru jika belum tersedia, lalu menunggu verifikasi Super Admin.' }}
         </p>
       </div>
     </div>
 
-    <x-ui.button type="button" wire:click="openCreateModal"
-      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-      <i class="fa-solid fa-plus text-[10px]"></i>
+    <x-ui.button type="button" wire:click="openCreateModal" variant="primary" class="shrink-0 font-bold">
+      <i class="fa-solid fa-plus text-xs"></i>
       Ajukan Jabatan
     </x-ui.button>
   </div>
 
   {{-- Keterangan: pengajuan menunggu persetujuan administrator sistem (Admin OPD) --}}
   @unless($isSuperAdmin)
-    <div class="flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-800">
-      <i class="fa-solid fa-circle-info mt-0.5 text-sm text-amber-500"></i>
-      <p class="text-[11px] leading-relaxed">
+    <div class="flex items-start gap-3 rounded border border-amber-200 bg-amber-50/70 px-4 py-3 text-amber-900">
+      <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 ring-1 ring-amber-200">
+        <i class="fa-solid fa-circle-info text-xs"></i>
+      </div>
+      <p class="text-xs leading-relaxed">
         Setiap jabatan yang Anda ajukan berstatus
         <span class="font-semibold">menunggu persetujuan administrator sistem</span>
         sebelum dapat digunakan. Pantau perkembangannya melalui kolom <span class="font-semibold">Status</span> di bawah.
@@ -49,7 +50,7 @@
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
           placeholder="Cari nama jabatan...">
         <div wire:loading wire:target="search"
           class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
@@ -131,7 +132,7 @@
                 <div class="flex items-center justify-center gap-1.5">
                   @if($isSuperAdmin && $isPending)
                     <button type="button" wire:click="openVerifyModal({{ $req->id }})"
-                      class="inline-flex items-center gap-1 rounded border border-primary-200 bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100"
+                      class="inline-flex items-center gap-1 rounded border border-primary-200 bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                       title="Verifikasi">
                       <i class="fa-solid fa-gavel text-[10px]"></i> Verifikasi
                     </button>
@@ -139,7 +140,7 @@
 
                   @if($canEdit)
                     <button type="button" wire:click="openEditModal({{ $req->id }})"
-                      class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
+                      class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
                       title="Edit">
                       <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                     </button>
@@ -147,7 +148,7 @@
 
                   @if($canDelete)
                     <button type="button" wire:click="confirmDelete({{ $req->id }})"
-                      class="inline-flex items-center justify-center rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                      class="inline-flex items-center justify-center rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>
@@ -161,10 +162,31 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isSuperAdmin ? '7' : '5' }}" class="py-10 text-center text-slate-500">
-                <div class="flex flex-col items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-id-badge text-2xl opacity-40"></i>
-                  <p class="font-medium">Belum ada pengajuan jabatan</p>
+              <td colspan="{{ $isSuperAdmin ? '7' : '5' }}" class="px-4 py-16">
+                <div class="mx-auto flex max-w-sm flex-col items-center text-center">
+                  <div class="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+                    <i class="fa-solid fa-id-badge text-xl"></i>
+                  </div>
+
+                  @if($canReset)
+                    <p class="mt-4 text-sm font-semibold text-slate-700">Tidak ada pengajuan yang cocok</p>
+                    <p class="mt-1 text-xs text-slate-500">Coba ubah kata kunci atau hapus filter status yang aktif.</p>
+                    <x-ui.button wire:click="resetFilters" type="button" variant="secondary" size="sm" class="mt-4">
+                      <i class="fa-solid fa-rotate-right text-xs"></i> Reset filter
+                    </x-ui.button>
+                  @else
+                    <p class="mt-4 text-sm font-semibold text-slate-700">Belum ada pengajuan jabatan</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                      {{ $isSuperAdmin
+                        ? 'Usulan jabatan dari Admin OPD akan muncul di sini untuk diverifikasi.'
+                        : 'Ajukan jabatan baru bila jabatan yang Anda butuhkan belum tersedia.' }}
+                    </p>
+                    @unless($isSuperAdmin)
+                      <x-ui.button type="button" wire:click="openCreateModal" variant="primary" size="sm" class="mt-4">
+                        <i class="fa-solid fa-plus text-xs"></i> Ajukan Jabatan
+                      </x-ui.button>
+                    @endunless
+                  @endif
                 </div>
               </td>
             </tr>

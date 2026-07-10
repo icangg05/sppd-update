@@ -20,14 +20,11 @@ class PptkSelector extends Component
 
   public SppdRequest $sppd;
   public ?int $pptk_id = null;
-  public ?string $selectedLabel = null;
-  public string $search = '';
 
   public function mount(SppdRequest $sppd): void
   {
     $this->sppd = $sppd;
     $this->pptk_id = $sppd->pptk_id;
-    $this->selectedLabel = $sppd->pptk?->name;
   }
 
   /** Hanya admin OPD & super admin yang boleh mengubah PPTK. */
@@ -59,19 +56,6 @@ class PptkSelector extends Component
       ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']));
   }
 
-  public function selectPptk(int $id): void
-  {
-    // Resolusi label di server agar aman (validasi lingkup) & bebas masalah quoting.
-    $user = $this->candidateQuery()->find($id, ['id', 'name', 'nip']);
-
-    if (! $user) {
-      return;
-    }
-
-    $this->pptk_id = $user->id;
-    $this->selectedLabel = $user->name . ($user->nip ? ' (' . $user->nip . ')' : '');
-  }
-
   public function updatePptk(): void
   {
     abort_unless($this->canManage(), 403, 'Aksi ini tidak diizinkan.');
@@ -89,26 +73,31 @@ class PptkSelector extends Component
 
     $this->sppd->update(['pptk_id' => $this->pptk_id]);
     $this->sppd->refresh()->load('pptk');
-    $this->selectedLabel = $this->sppd->pptk?->name;
+
+    // Beri tahu halaman induk agar tombol cetak per pegawai langsung aktif
+    // tanpa reload (dari kondisi PPTK kosong → terisi).
+    $this->dispatch('pptk-saved', hasPptk: true);
 
     $this->toastSuccess('PPTK berhasil diperbarui.');
   }
 
   public function render()
   {
-    $candidates = collect();
+    // Opsi diserahkan ke komponen searchable-select (filter di sisi klien).
+    // Lingkup kandidat tetap dibatasi OPD induk pelaksana & difilter di server.
+    $options = [];
 
     if ($this->canManage()) {
-      $candidates = $this->candidateQuery()
-        ->when(trim($this->search) !== '', function ($q) {
-          $term = trim($this->search);
-          $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('nip', 'like', "%{$term}%"));
-        })
+      $options = $this->candidateQuery()
         ->orderBy('name')
-        ->limit(25)
-        ->get(['id', 'name', 'nip']);
+        ->get(['id', 'name', 'nip'])
+        ->map(fn ($u) => [
+          'value' => (string) $u->id,
+          'label' => $u->name . ($u->nip ? ' — NIP. ' . $u->nip : ''),
+        ])
+        ->all();
     }
 
-    return view('livewire.sppd.pptk-selector', compact('candidates'));
+    return view('livewire.sppd.pptk-selector', compact('options'));
   }
 }

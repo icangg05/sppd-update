@@ -28,7 +28,7 @@
 	<form wire:submit.prevent="openConfirmModal" enctype="multipart/form-data" id="form-sppd-store">
 		{{-- Ringkasan Informasi Pelaksana & Alur --}}
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-			<div class="rounded border border-primary-200 bg-primary-50/50 p-4 shadow-sm leading-tight flex flex-col justify-between">
+			<div class="rounded border border-slate-200 bg-white p-4 shadow-sm leading-tight flex flex-col justify-between">
 				<div>
 					<h4 class="text-xs font-bold uppercase tracking-wider text-primary-700 flex items-center gap-1.5 mb-2">
 						<i class="fa-solid fa-user-tie"></i> Pelaksana

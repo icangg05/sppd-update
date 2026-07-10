@@ -3,21 +3,25 @@
 @section('page-title', 'Detail Pegawai')
 
 @section('content')
-	<div class="p-1 space-y-6">
+	<div class="mx-auto max-w-6xl space-y-6 p-1">
 
 		{{-- Header Halaman --}}
-		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
-					<i class="fa-solid fa-user-check mr-2 text-primary-600"></i>Profil Pegawai
-				</h1>
-				<p class="mt-1 text-xs text-slate-500 font-medium">Detail informasi lengkap pegawai dan hak akses pengguna sistem</p>
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex items-center gap-3">
+				<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+					<i class="fa-solid fa-user-check text-lg"></i>
+				</div>
+				<div>
+					<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Detail Pegawai</h1>
+					<p class="mt-0.5 text-sm text-slate-500">Informasi lengkap pegawai dan hak akses pengguna sistem.</p>
+				</div>
 			</div>
 			<div class="flex flex-wrap items-center gap-2">
-				<a wire:navigate href="{{ route('master.users.index', array_filter(['type' => request('type')])) }}"
-					class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-					<i class="fa-solid fa-arrow-left"></i> Kembali
-				</a>
+				<x-ui.button href="{{ route('master.users.index', array_filter(['type' => request('type')])) }}"
+					variant="secondary" class="shrink-0">
+					<x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+					Kembali
+				</x-ui.button>
 
 				{{-- Impersonasi: hanya super_admin, dan tidak untuk dirinya sendiri. --}}
 				@if (auth()->user()->hasRole('super_admin') && $user->id !== auth()->id())
@@ -32,21 +36,20 @@
 							],
 						);
 					@endphp
-					<div x-data="{ copied: false }" class="inline-flex items-center gap-2">
-						<button type="button"
-							@click="navigator.clipboard.writeText(@js($impersonateUrl)); copied = true; setTimeout(() => copied = false, 2000)"
-							title="Salin tautan, lalu buka di jendela incognito untuk masuk sebagai {{ $user->name }} tanpa mengganggu sesi Anda."
-							class="inline-flex items-center gap-2 rounded bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-lg">
-							<i class="fa-solid" :class="copied ? 'fa-check' : 'fa-user-secret'"></i>
-							<span x-text="copied ? 'Tautan login tersalin' : 'Salin tautan login sebagai pengguna'"></span>
-						</button>
-					</div>
+					<button type="button" x-data="{ copied: false }"
+						@click="navigator.clipboard.writeText(@js($impersonateUrl)); copied = true; setTimeout(() => copied = false, 2000)"
+						title="Salin tautan, lalu buka di jendela incognito untuk masuk sebagai {{ $user->name }} tanpa mengganggu sesi Anda."
+						class="inline-flex shrink-0 items-center gap-2 rounded bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition hover:bg-indigo-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-1">
+						<i class="fa-solid" :class="copied ? 'fa-check' : 'fa-user-secret'"></i>
+						<span x-text="copied ? 'Tautan login tersalin' : 'Salin tautan login sebagai pengguna'"></span>
+					</button>
 				@endif
 
-				<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"
-					class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-					<i class="fa-solid fa-pen-to-square"></i> Edit Data
-				</a>
+				<x-ui.button href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"
+					variant="primary" class="shrink-0">
+					<x-slot name="icon"><i class="fa-solid fa-pen-to-square text-xs"></i></x-slot>
+					Edit Data
+				</x-ui.button>
 			</div>
 		</div>
 
@@ -54,56 +57,71 @@
 
 			{{-- Kolom Kiri: Ringkasan Profil --}}
 			<div class="md:col-span-1 space-y-6">
-				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center text-center">
+				@php
+					$nameParts = preg_split('/\s+/', trim($user->name ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+					$initials = strtoupper(mb_substr($nameParts[0] ?? '?', 0, 1)
+						. (count($nameParts) > 1 ? mb_substr(end($nameParts), 0, 1) : ''));
+				@endphp
+				<div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 
-					{{-- Avatar Ring --}}
-					<div
-						class="w-24 h-24 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-black text-3xl mb-4 ring-4 ring-primary-50 shadow-inner">
-						{{ strtoupper(substr($user->name, 0, 1)) }}
+					{{-- Pita gradien institusional --}}
+					<div class="relative h-10 bg-linear-to-br from-primary-800 via-primary-700 to-primary-600">
+						<div class="absolute inset-0 opacity-20"
+							style="background-image: radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0); background-size: 18px 18px;">
+						</div>
 					</div>
 
-					<h3 class="text-base font-bold text-slate-900 mb-0.5 px-2">{{ $user->name }}</h3>
-					<p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-						{{ $user->roles->first()?->label ?? 'Pegawai' }}</p>
+					<div class="mt-4 flex flex-col items-center px-6 pb-6 text-center">
+						{{-- Avatar monogram --}}
+						<div
+							class="flex size-24 items-center justify-center rounded-full border-4 border-white bg-primary-100 text-3xl font-bold text-primary-700 shadow-md ring-1 ring-slate-900/5">
+							{{ $initials }}
+						</div>
 
-					<div class="w-full pt-4 border-t border-slate-100 flex flex-col gap-3">
-
-						{{-- Alert NIK --}}
-						@if (!$user->nik)
-							<div class="flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50/70 p-3 text-left">
-								<i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
-								<p class="text-[11px] font-medium leading-relaxed text-amber-800">
-									<strong>NIK belum terisi.</strong> Lengkapi NIK di menu Edit Profil Pegawai sebelum melakukan TTE.
-								</p>
-							</div>
-						@endif
-
-						{{-- Status Badge --}}
-						<div class="flex justify-center">
+						<h3 class="mt-3 px-2 text-lg font-bold tracking-tight text-slate-900 text-balance">{{ $user->name }}</h3>
+						<div class="mt-2 flex flex-wrap items-center justify-center gap-2">
+							<x-ui.badge color="blue">
+								<i class="fa-solid fa-shield-halved mr-1.5 text-[10px]"></i>
+								{{ $user->roles->first()?->label ?? 'Pegawai' }}
+							</x-ui.badge>
 							@if ($user->is_active)
 								<span
-									class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-									<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Aktif
+									class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 bg-emerald-50">
+									<span class="size-1.5 rounded-full bg-emerald-500"></span> Aktif
 								</span>
 							@else
 								<span
-									class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-rose-700 ring-1 ring-inset ring-rose-600/10">
-									<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Nonaktif
+									class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20 bg-rose-50">
+									<span class="size-1.5 rounded-full bg-rose-500"></span> Nonaktif
 								</span>
 							@endif
 						</div>
 
+						{{-- Alert NIK --}}
+						@if (!$user->nik)
+							<div class="mt-4 flex w-full items-start gap-2.5 rounded border border-amber-200 bg-amber-50/70 p-3 text-left">
+								<i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-sm text-amber-600"></i>
+								<p class="text-[11px] font-medium leading-relaxed text-amber-800">
+									<strong>NIK belum terisi.</strong> Lengkapi NIK di menu Edit Data pegawai sebelum melakukan TTE.
+								</p>
+							</div>
+						@endif
 					</div>
 				</div>
 			</div>
 
 			{{-- Kolom Kanan: Detail Informasi --}}
 			<div class="md:col-span-2">
-				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm">
-					<h3
-						class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-5 pb-2 border-b border-slate-100 flex items-center gap-2">
-						<i class="fa-solid fa-id-card-clip text-primary-500 text-base"></i>Informasi Detail Pegawai
-					</h3>
+				<div class="dash-enter rounded border border-slate-200 bg-white p-6 shadow-sm">
+					<div class="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+						<div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+							<i class="fa-regular fa-id-card"></i>
+						</div>
+						<div>
+							<h3 class="text-sm font-bold text-slate-800">Informasi Detail</h3>
+							<p class="text-xs text-slate-500">Identitas, kontak, dan penempatan pegawai.</p>
+						</div>
+					</div>
 
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
 
@@ -147,7 +165,7 @@
 						<div class="space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Kepegawaian</label>
 							<p class="text-sm font-semibold text-slate-800"><i
-									class="fa-solid fa-user-tier mr-1.5 text-slate-500"></i>{{ $user->employee_type->label() }}</p>
+									class="fa-solid fa-user-tag mr-1.5 text-slate-500"></i>{{ $user->employee_type->label() }}</p>
 						</div>
 
 						<div class="space-y-1">
@@ -180,11 +198,17 @@
 				</div>
 
 				{{-- Card: Riwayat Perjalanan Dinas --}}
-				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm mt-6">
-					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-2 border-b border-slate-100">
-						<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-							<i class="fa-solid fa-route text-primary-500 text-base"></i>Riwayat Perjalanan Dinas
-						</h3>
+				<div class="dash-enter rounded border border-slate-200 bg-white p-6 shadow-sm mt-6">
+					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
+						<div class="flex items-center gap-3">
+							<div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+								<i class="fa-solid fa-route"></i>
+							</div>
+							<div>
+								<h3 class="text-sm font-bold text-slate-800">Riwayat Perjalanan Dinas</h3>
+								<p class="text-xs text-slate-500">Sebagai pelaksana utama maupun pengikut.</p>
+							</div>
+						</div>
 
 						{{-- Search Trip Form --}}
 						<form method="GET" action="{{ url()->current() }}" class="flex items-center gap-2 w-full sm:w-72">
@@ -202,10 +226,10 @@
 									<i class="fa-solid fa-magnifying-glass text-xs"></i>
 								</span>
 								<input type="text" name="search_trip" value="{{ request('search_trip') }}"
-									class="w-full rounded border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden"
+									class="w-full rounded border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"
 									placeholder="Cari maksud, nomor, atau tujuan...">
 							</div>
-							<button type="submit" class="inline-flex items-center rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
+							<button type="submit" class="inline-flex items-center rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-slate-900 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40">
 								Cari
 							</button>
 							@if(request('search_trip'))
@@ -234,7 +258,7 @@
 						{{-- Tab: Pelaksana --}}
 						<div x-show="activeTab === 'pelaksana'" class="space-y-3">
 							@forelse ($tripsAsPelaksana as $trip)
-								<div class="p-4 bg-slate-50 border border-slate-200 rounded leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div class="group flex flex-col justify-between gap-4 rounded border border-slate-200 bg-slate-50 p-4 leading-relaxed transition-colors hover:border-primary-200 hover:bg-white sm:flex-row sm:items-center">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
@@ -244,23 +268,28 @@
 										</div>
 										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
 										<p class="text-xs text-slate-500 flex items-center gap-1">
-											<i class="fa-solid fa-location-dot text-slate-500"></i>
+											<i class="fa-solid fa-location-dot text-slate-400"></i>
 											@foreach ($trip->destinations as $dest)
 												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
 											@endforeach
 										</p>
 										<p class="text-xs text-slate-500">
-											<i class="fa-regular fa-calendar mr-1"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
+											<i class="fa-regular fa-calendar mr-1 text-slate-400"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
 										</p>
 									</div>
 									<div class="shrink-0">
-										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
-											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
+											Detail <i class="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-0.5"></i>
 										</a>
 									</div>
 								</div>
 							@empty
-								<p class="text-sm text-slate-500 italic text-center py-6">Belum ada riwayat perjalanan sebagai pelaksana utama.</p>
+								<div class="flex flex-col items-center gap-2 py-10 text-center">
+									<div class="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+										<i class="fa-solid fa-route"></i>
+									</div>
+									<p class="text-sm font-medium text-slate-500">Belum ada perjalanan sebagai pelaksana utama.</p>
+								</div>
 							@endforelse
 
 							@if ($tripsAsPelaksana->hasPages())
@@ -273,7 +302,7 @@
 						{{-- Tab: Pengikut --}}
 						<div x-show="activeTab === 'pengikut'" class="space-y-3" style="display: none;">
 							@forelse ($tripsAsFollower as $trip)
-								<div class="p-4 bg-slate-50 border border-slate-200 rounded leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div class="group flex flex-col justify-between gap-4 rounded border border-slate-200 bg-slate-50 p-4 leading-relaxed transition-colors hover:border-primary-200 hover:bg-white sm:flex-row sm:items-center">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
@@ -286,23 +315,28 @@
 										</div>
 										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
 										<p class="text-xs text-slate-500 flex items-center gap-1">
-											<i class="fa-solid fa-location-dot text-slate-500"></i>
+											<i class="fa-solid fa-location-dot text-slate-400"></i>
 											@foreach ($trip->destinations as $dest)
 												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
 											@endforeach
 										</p>
 										<p class="text-xs text-slate-500">
-											<i class="fa-regular fa-calendar mr-1"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
+											<i class="fa-regular fa-calendar mr-1 text-slate-400"></i>{{ $trip->start_date->translatedFormat('d M Y') }} s/d {{ $trip->end_date->translatedFormat('d M Y') }} ({{ $trip->duration_days }} hari)
 										</p>
 									</div>
 									<div class="shrink-0">
-										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
-											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-primary-50 hover:text-primary-700 hover:border-primary-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
+											Detail <i class="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-0.5"></i>
 										</a>
 									</div>
 								</div>
 							@empty
-								<p class="text-sm text-slate-500 italic text-center py-6">Belum ada riwayat perjalanan sebagai pengikut.</p>
+								<div class="flex flex-col items-center gap-2 py-10 text-center">
+									<div class="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+										<i class="fa-solid fa-user-group"></i>
+									</div>
+									<p class="text-sm font-medium text-slate-500">Belum ada perjalanan sebagai pengikut.</p>
+								</div>
 							@endforelse
 
 							@if ($tripsAsFollower->hasPages())

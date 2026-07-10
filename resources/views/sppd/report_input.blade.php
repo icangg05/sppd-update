@@ -5,16 +5,20 @@
   <div class="p-1 space-y-6">
 
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-emerald-500 inline-block pb-1">
-          <i class="fa-solid fa-pen-to-square mr-2 text-emerald-600"></i>Laporan Perjalanan Dinas
-        </h1>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+          <i class="fa-solid fa-pen-to-square text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Laporan Perjalanan Dinas</h1>
+          <p class="mt-0.5 text-sm text-slate-500">Unggah dokumen laporan dan foto dokumentasi hasil perjalanan.</p>
+        </div>
       </div>
-      <a wire:navigate href="{{ route('sppd.next', $sppd) }}"
-        class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-        <i class="fa-solid fa-arrow-left"></i> Kembali
-      </a>
+      <x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary" class="shrink-0">
+        <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+        Kembali
+      </x-ui.button>
     </div>
 
     {{-- Alert / Info Box --}}

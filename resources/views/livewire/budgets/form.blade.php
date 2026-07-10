@@ -1,30 +1,41 @@
-<div class="p-1 space-y-4">
+<div class="mx-auto max-w-4xl space-y-6 p-1">
 
   {{-- Header Halaman --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="flex size-9 items-center justify-center rounded bg-primary-50 text-primary-600">
-        <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} text-base"></i>
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} text-lg"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800">
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           {{ $isEdit ? 'Edit Data DPA' : 'Input Data DPA' }}
         </h1>
-        <p class="text-[11px] text-slate-500 font-medium">Isi formulir anggaran secara ringkas di bawah ini</p>
+        <p class="mt-0.5 text-sm text-slate-500">Lengkapi rincian dokumen pelaksanaan anggaran di bawah ini.</p>
       </div>
     </div>
 
-    <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary"
-      class="gap-1.5 px-3 py-1.5 text-xs font-bold">
-      <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
+    <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary" class="shrink-0">
+      <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+      Kembali
     </x-ui.button>
   </div>
 
-  {{-- Form Container --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-    <form wire:submit="save" class="p-4 space-y-4">
+  {{-- Form --}}
+  <form wire:submit="save" class="space-y-6">
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+    {{-- ── Kelompok 1: Sumber & Klasifikasi ── --}}
+    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+      <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
+        <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">Sumber & Klasifikasi</h3>
+          <p class="text-xs text-slate-500">Instansi, periode, dan kode anggaran.</p>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-3">
 
         {{-- SKPD / Unit Kerja --}}
         @if ($isSuperAdmin)
@@ -41,8 +52,8 @@
         @else
           <div class="md:col-span-2">
             <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">SKPD / Unit Kerja Terikat</label>
-            <div class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded flex items-center gap-2 text-xs font-bold text-slate-700 h-[38px]">
-              <i class="fa-solid fa-building text-slate-500 text-[11px]"></i>
+            <div class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+              <i class="fa-solid fa-building text-xs text-slate-500"></i>
               {{ collect($departments)->firstWhere('id', (int) $department_id)?->name ?? auth()->user()->department?->name ?? '—' }}
             </div>
           </div>
@@ -55,10 +66,11 @@
             :options="collect($years)->map(fn ($y) => ['value' => (string) $y, 'label' => (string) $y])->all()" />
         </div>
 
-        {{-- Kode Rekening --}}
+        {{-- Mata Anggaran --}}
         <div>
-          <x-form.input wire:model="account_code" type="text" label="Kode Rekening"
-            placeholder="Contoh: 5.1.02.04..." class="font-mono text-xs py-1.5" required />
+          <x-form.searchable-select wire:model="source" name="source" label="Mata Anggaran" required
+            placeholder="-- Pilih Sumber --" searchPlaceholder="Cari sumber..."
+            :options="['APBD', 'APBD-P', 'APBN']" />
         </div>
 
         {{-- Jenis Anggaran --}}
@@ -73,57 +85,71 @@
             ]" />
         </div>
 
-        {{-- Mata Anggaran --}}
+        {{-- Kode Rekening --}}
         <div>
-          <x-form.searchable-select wire:model="source" name="source" label="Mata Anggaran" required
-            placeholder="-- Pilih Sumber --" searchPlaceholder="Cari sumber..."
-            :options="['APBD', 'APBD-P', 'APBN']" />
+          <x-form.input wire:model="account_code" type="text" label="Kode Rekening"
+            placeholder="Contoh: 5.1.02.04..." class="font-mono" required />
         </div>
+      </div>
+    </section>
+
+    {{-- ── Kelompok 2: Rincian & Pagu ── --}}
+    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+      <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
+        <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">Rincian & Pagu</h3>
+          <p class="text-xs text-slate-500">Program, kegiatan, dan nilai pagu.</p>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-3">
 
         {{-- Nama Program --}}
         <div class="md:col-span-3">
           <x-form.input wire:model="program" type="text" label="Nama Program Utama"
-            placeholder="Masukkan nama program..." class="text-xs py-1.5" required />
+            placeholder="Masukkan nama program..." required />
         </div>
 
         {{-- Nama Kegiatan --}}
         <div class="md:col-span-3">
           <x-form.input wire:model="activity" type="text" label="Nama Kegiatan / Sub Kegiatan"
-            placeholder="Masukkan nama kegiatan..." class="text-xs py-1.5" required />
-        </div>
-
-        {{-- Pagu Total --}}
-        <div>
-          <x-form.input wire:model="total_amount" type="number" label="Pagu Total (Rp)"
-            placeholder="0" class="font-mono font-bold text-xs py-1.5 text-slate-800" required />
+            placeholder="Masukkan nama kegiatan..." required />
         </div>
 
         {{-- Uraian --}}
         <div class="md:col-span-2">
           <x-form.input wire:model="description" type="text" label="Uraian Singkat Penjelasan"
-            placeholder="Deskripsi pelengkap anggaran..." class="text-xs py-1.5" required />
+            placeholder="Deskripsi pelengkap anggaran..." required />
         </div>
 
+        {{-- Pagu Total --}}
+        <div>
+          <x-form.input wire:model="total_amount" type="number" label="Pagu Total (Rp)"
+            placeholder="0" class="font-mono font-bold text-slate-800" required
+            hint="Angka saja, tanpa titik atau koma." />
+        </div>
       </div>
+    </section>
 
-      {{-- Footer Actions --}}
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-        <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary"
-          class="gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600">
-          <i class="fa-solid fa-xmark text-[10px]"></i> Batal
-        </x-ui.button>
+    {{-- Footer Actions --}}
+    <div class="sticky bottom-4 z-10 flex items-center justify-end gap-3 rounded border border-slate-200 bg-white/85 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
+      <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary">
+        <x-slot name="icon"><i class="fa-solid fa-xmark text-xs"></i></x-slot>
+        Batal
+      </x-ui.button>
 
-        <x-ui.button type="submit" variant="success" wire:target="save" wire:loading.attr="disabled"
-          class="gap-1.5 px-4 py-1.5 text-xs font-bold">
-          <span wire:loading.remove wire:target="save">
-            <i class="fa-solid fa-floppy-disk text-[11px]"></i> {{ $isEdit ? 'Perbarui Data DPA' : 'Simpan Data DPA' }}
-          </span>
-          <span wire:loading wire:target="save">
-            <i class="fa-solid fa-spinner fa-spin text-[11px]"></i> Menyimpan...
-          </span>
-        </x-ui.button>
-      </div>
+      <x-ui.button type="submit" variant="primary" wire:target="save" wire:loading.attr="disabled">
+        <span wire:loading.remove wire:target="save">
+          <i class="fa-solid fa-floppy-disk text-xs"></i> {{ $isEdit ? 'Perbarui Data DPA' : 'Simpan Data DPA' }}
+        </span>
+        <span wire:loading wire:target="save">
+          <i class="fa-solid fa-spinner fa-spin text-xs"></i> Menyimpan...
+        </span>
+      </x-ui.button>
+    </div>
 
-    </form>
-  </div>
+  </form>
 </div>

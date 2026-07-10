@@ -44,7 +44,7 @@ class SppdCalendar extends Component
                 // FullCalendar 'end' is exclusive, so we add 1 day
                 'end' => $sppd->end_date->addDay()->format('Y-m-d'),
                 'url' => route('sppd.show', $sppd),
-                'color' => $sppd->status === SppdStatus::COMPLETED ? '#10b981' : '#0ea5e9', // emerald-500 vs sky-500
+                'color' => $sppd->status === SppdStatus::COMPLETED ? '#10b981' : '#1e80c6', // emerald-500 vs primary-600 (biru logo)
             ];
         });
 

@@ -1,13 +1,13 @@
-<div class="p-1 space-y-4">
+<div class="mx-auto max-w-5xl space-y-6 p-1">
 
   {{-- Header --}}
-  <div class="flex items-center gap-2.5 border-b border-slate-200 pb-3">
-    <div class="rounded bg-emerald-100 p-1.5 text-emerald-600">
-      <i class="fa-solid fa-file-shield text-base"></i>
+  <div class="flex items-center gap-3">
+    <div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+      <i class="fa-solid fa-file-shield text-lg"></i>
     </div>
     <div>
-      <h1 class="text-base font-bold uppercase tracking-wide text-slate-800">Cek Dokumen TTE</h1>
-      <p class="text-[11px] font-medium text-slate-500">Verifikasi keaslian dokumen ber-tanda tangan elektronik ke BSrE</p>
+      <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Cek Dokumen TTE</h1>
+      <p class="mt-0.5 text-sm text-slate-500">Verifikasi keaslian dokumen ber-tanda tangan elektronik ke BSrE.</p>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
 
         @if ($checked)
           <button type="button" wire:click="resetUpload"
-            class="rounded border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+            class="rounded border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40">
             Cek dokumen lain
           </button>
         @endif

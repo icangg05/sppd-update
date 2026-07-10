@@ -32,7 +32,7 @@
 		<div class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Menu Utama</div>
 
 		<a href="{{ route('dashboard') }}" wire:navigate.hover
-			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('dashboard') ? 'bg-primary-700 text-white' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-100' }}">
+			class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('dashboard') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 			<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-house fa-fw"></i></span>
 			<span>Beranda</span>
 		</a>

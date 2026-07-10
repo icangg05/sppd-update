@@ -24,7 +24,7 @@
 	@livewireStyles
 </head>
 
-<body class="h-full text-slate-900 antialiased bg-slate-100">
+<body class="text-slate-900 antialiased bg-blue-50">
 
 	{{-- Sidebar Component --}}
 	@include('components.sidebar')
@@ -57,13 +57,16 @@
 				class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-slate-500 sm:flex-row">
 				<div class="flex items-center gap-2">
 					<img src="{{ asset('img/logo-sppd.png') }}" alt="Logo SPPD Kota Kendari" class="size-4 opacity-80">
-					<span>&copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} &mdash; Sistem Perjalanan Dinas Elektronik</span>
+          <div>
+            <span>&copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} &mdash; Sistem Perjalanan Dinas Elektronik.</span>
+            <span class="inline sm:hidden">v{{ config('app.sppd_version') }}</span>
+          </div>
 				</div>
 				<div class="flex items-center gap-2.5">
 					<span class="hidden text-slate-400 sm:inline">Diskominfo Kota Kendari</span>
 					<span class="hidden text-slate-300 sm:inline">&bull;</span>
 					<span
-						class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-500">v{{ config('app.sppd_version') }}</span>
+						class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-500">v{{ config('app.sppd_version') }}</span>
 				</div>
 			</div>
 		</footer>

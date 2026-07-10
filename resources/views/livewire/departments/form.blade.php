@@ -1,67 +1,73 @@
-<div class="p-1 space-y-4">
+<div class="mx-auto max-w-4xl space-y-6 p-1">
 
   @php
     $backUrl = route('master.departments.index');
   @endphp
 
-  {{-- Header Halaman Compact --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-        <i class="fa-solid {{ $isEdit ? 'fa-building-gear' : 'fa-folder-plus' }} text-base"></i>
+  {{-- Header Halaman --}}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid {{ $isEdit ? 'fa-building-user' : 'fa-folder-plus' }} text-lg"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           {{ $isEdit ? 'Edit Profil Instansi' : 'Tambah Instansi' }}
         </h1>
-        <p class="text-[11px] text-slate-500 font-medium">
+        <p class="mt-0.5 text-sm text-slate-500">
           {{ $isEdit
-            ? 'Perbarui atribut informasi profil instansi atau sub-unit kerja terkait'
-            : 'Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung' }}
+            ? 'Perbarui informasi profil instansi atau sub-unit kerja terkait.'
+            : 'Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung.' }}
         </p>
       </div>
     </div>
 
-    <x-ui.button href="{{ $backUrl }}" variant="secondary"
-      class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-      <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
+    <x-ui.button href="{{ $backUrl }}" variant="secondary" class="shrink-0">
+      <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+      Kembali
     </x-ui.button>
   </div>
 
-  {{-- Form Container Compact --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-    <div class="p-3 border-b border-slate-200 bg-slate-50/50">
-      <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-        <i class="fa-solid fa-file-signature text-primary-500"></i>Formulir Registrasi Unit Kerja
-      </h3>
+  {{-- Panduan Menyusun Struktur --}}
+  <div class="flex items-start gap-3 rounded border border-primary-200 bg-primary-100/50 p-4 text-xs leading-relaxed text-slate-600">
+    <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 ring-1 ring-primary-200">
+      <i class="fa-solid fa-sitemap text-xs"></i>
     </div>
-
-    {{-- Panduan Menyusun Struktur --}}
-    <div class="px-4 pt-3">
-      <div class="rounded border border-primary-200 bg-primary-50/60 p-3 text-[11px] leading-relaxed text-slate-600">
-        <p class="font-bold text-primary-700 mb-1"><i class="fa-solid fa-sitemap mr-1"></i>Panduan Menyusun Struktur</p>
-        <ul class="list-disc pl-4 space-y-0.5">
-          <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
-          <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
-          <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
-          <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
-          @if ($parentLocked)
-            <li class="text-amber-600">Instansi induk & tipe hanya dapat diubah oleh Super Admin.</li>
-          @endif
-        </ul>
-      </div>
+    <div>
+      <p class="mb-1 font-bold text-primary-700">Panduan menyusun struktur</p>
+      <ul class="list-disc space-y-0.5 pl-4">
+        <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
+        <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
+        <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
+        <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
+        @if ($parentLocked)
+          <li class="text-amber-600">Instansi induk & tipe hanya dapat diubah oleh Super Admin.</li>
+        @endif
+      </ul>
     </div>
+  </div>
 
-    <form wire:submit="save" class="p-4 space-y-4">
+  <form wire:submit="save" class="space-y-6">
+
+    {{-- ── Kelompok 1: Identitas & Struktur ── --}}
+    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+      <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
+        <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+          <i class="fa-solid fa-sitemap"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">Identitas & Struktur</h3>
+          <p class="text-xs text-slate-500">Nama unit, posisi dalam hierarki, dan penanggung jawab.</p>
+        </div>
+      </header>
 
       {{-- Grid Utama Form --}}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Input Nama Unit Kerja --}}
         <div class="space-y-0.5">
           <x-form.input wire:model="name" name="name" label="Nama Unit Kerja / Struktur"
-            placeholder="Misal: Bidang Tata Usaha" required :disabled="$parentLocked"
-            class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
+            placeholder="Misal: Bidang Tata Usaha" required :disabled="$parentLocked" />
           @if ($parentLocked)
             <p class="text-[10px] text-slate-500 font-medium mt-0.5">
               <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Nama instansi Anda hanya dapat diubah oleh Super Admin.
@@ -101,8 +107,7 @@
         @if ($isRoot)
           <div class="space-y-0.5">
             <x-form.input wire:model="code" name="code" label="Kode Unit Kerja"
-              placeholder="Misal: 15.42.5"
-              class="font-mono text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
+              placeholder="Misal: 15.42.5" class="font-mono" />
           </div>
 
           <div class="space-y-0.5">
@@ -283,13 +288,22 @@
           @enderror
         </div>
 
-        {{-- Penandatangan "Setuju Bayar" dokumen cetak — hanya saat edit.
-             Dipakai pada kuitansi, pengeluaran riil, & rincian biaya perjalanan dinas. --}}
-        @if ($isEdit)
-          <div class="md:col-span-2 rounded border border-slate-200 bg-slate-50/60 p-3 space-y-2">
-            <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
-              <i class="fa-solid fa-signature text-primary-500 mr-1"></i>Penandatangan "Setuju Bayar" (Dokumen Cetak)
-            </p>
+      </div>{{-- /grid Identitas & Struktur --}}
+    </section>
+
+    {{-- ── Kelompok 2: Penandatangan "Setuju Bayar" (dokumen cetak) — hanya saat edit ── --}}
+    @if ($isEdit)
+      <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+        <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
+          <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+            <i class="fa-solid fa-signature"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Penandatangan "Setuju Bayar"</h3>
+            <p class="text-xs text-slate-500">Dipakai pada kuitansi, pengeluaran riil, dan rincian biaya perjalanan dinas.</p>
+          </div>
+        </header>
+        <div class="space-y-3 p-5 sm:p-6">
             <p class="text-[11px] leading-relaxed text-slate-500">
               Nama dan label di bawah dipakai pada kolom tanda tangan Setuju Bayar di
               <strong>kuitansi, pengeluaran riil, dan rincian biaya perjalanan dinas</strong>.
@@ -441,21 +455,33 @@
               <div class="space-y-0.5">
                 <x-form.input wire:model="setuju_bayar_label" name="setuju_bayar_label"
                   label="Label Jabatan Penandatangan" maxlength="150"
-                  placeholder="Bawaan: Pengguna Anggaran"
-                  class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
+                  placeholder="Bawaan: Pengguna Anggaran" />
                 <p class="text-[10px] text-slate-500 font-medium mt-0.5">
                   <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Misal: Kuasa Pengguna Anggaran. Kosongkan untuk memakai label bawaan dokumen.
                 </p>
               </div>
-            </div>
-          </div>
-        @endif
+            </div>{{-- /grid setuju bayar --}}
+        </div>{{-- /body setuju bayar --}}
+      </section>
+    @endif
+
+    {{-- ── Kelompok 3: Kop Surat ── --}}
+    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+      <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
+        <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+          <i class="fa-regular fa-image"></i>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">Kop Surat</h3>
+          <p class="text-xs text-slate-500">Dipakai pada dokumen cetak. Sub-unit dapat mewarisi kop dari induk.</p>
+        </div>
+      </header>
+      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Unggah Kop Surat Utama — tersedia untuk semua unit. Sub-unit yang
              dikosongkan akan otomatis mewarisi kop instansi induknya. --}}
         <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
           <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
-            class="text-xs focus:border-primary-500 focus:ring-primary-500"
             hint="{{ $isRoot
               ? 'Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD.'
               : 'Rekomendasi rasio cetak 1000x200 pixel. Kosongkan untuk mengikuti kop instansi induk.' }}" />
@@ -490,7 +516,6 @@
         @if ($type === 'dprd')
           <div class="md:col-span-1 space-y-1.5">
             <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
-              class="text-xs focus:border-primary-500 focus:ring-primary-500"
               hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
             <div wire:loading wire:target="letterhead_second" class="text-[10px] text-primary-600">
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
@@ -510,23 +535,22 @@
             @endif
           </div>
         @endif
-      </div>
+      </div>{{-- /grid Kop Surat --}}
+    </section>
 
-      {{-- Form Actions Footer Compact --}}
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-        <x-ui.button href="{{ $backUrl }}" variant="secondary" class="gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600">
-          Batal
-        </x-ui.button>
+    {{-- Form Actions --}}
+    <div class="sticky bottom-4 z-10 flex items-center justify-end gap-3 rounded border border-slate-200 bg-white/85 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
+      <x-ui.button href="{{ $backUrl }}" variant="secondary">
+        <x-slot name="icon"><i class="fa-solid fa-xmark text-xs"></i></x-slot>
+        Batal
+      </x-ui.button>
 
-        <x-ui.button type="submit" class="gap-1.5 px-4 py-1.5 text-xs font-bold shadow-sm shadow-primary-200 hover:shadow-lg"
-          wire:loading.attr="disabled" wire:target="save">
-          <i class="fa-solid fa-floppy-disk text-[11px]"></i>
-          <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}</span>
-          <span wire:loading wire:target="save">Menyimpan...</span>
-        </x-ui.button>
-      </div>
-    </form>
-  </div>
+      <x-ui.button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
+        <span wire:loading.remove wire:target="save"><i class="fa-solid fa-floppy-disk text-xs"></i> {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}</span>
+        <span wire:loading wire:target="save"><i class="fa-solid fa-spinner fa-spin text-xs"></i> Menyimpan...</span>
+      </x-ui.button>
+    </div>
+  </form>
 
   {{-- Modal Konfirmasi Hapus Kop Surat — hanya bisa ditutup lewat tombol (tidak closeable) --}}
   <x-ui.modal show="$wire.showDeleteKopModal" title="Konfirmasi Hapus Kop Surat"

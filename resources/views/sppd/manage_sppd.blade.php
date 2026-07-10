@@ -2,19 +2,23 @@
 @section('title', 'Kelola SPPD')
 
 @section('content')
-	<div class="p-1 space-y-6">
+	<div class="mx-auto max-w-4xl space-y-6 p-1">
 
 		{{-- Header --}}
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-emerald-500 inline-block pb-1">
-					<i class="fa-solid fa-file-contract mr-2 text-emerald-600"></i>Kelola SPPD
-				</h1>
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex items-center gap-3">
+				<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+					<i class="fa-solid fa-file-contract text-lg"></i>
+				</div>
+				<div>
+					<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Kelola SPPD</h1>
+					<p class="mt-0.5 text-sm text-slate-500">Cetak dokumen per personel dan pantau status tanda tangan elektronik SPPD.</p>
+				</div>
 			</div>
-			<a wire:navigate href="{{ route('sppd.next', $sppd) }}"
-				class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-				<i class="fa-solid fa-arrow-left"></i> Kembali
-			</a>
+			<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary" class="shrink-0">
+				<x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+				Kembali
+			</x-ui.button>
 		</div>
 
 		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -31,7 +35,7 @@
 
 					<div class="relative mb-3">
 						<input type="text" id="personel-search-input" placeholder="Cari nama pegawai..."
-							class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500" />
+							class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
 						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-[10px]"></i>
 					</div>
 
@@ -63,7 +67,7 @@
 										</td>
 										<td class="py-2 px-3 text-center">
 											<a href="{{ route('sppd.stream.sppd', $sppd) }}" target="_blank"
-												class="inline-flex items-center gap-1 rounded bg-primary-600 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-primary-700 shadow-xs">
+												class="inline-flex items-center gap-1 rounded bg-primary-600 px-2 py-1 text-[9px] font-bold text-white shadow-xs transition hover:bg-primary-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50">
 												<i class="fa-solid fa-print"></i> CETAK
 											</a>
 										</td>
@@ -87,7 +91,7 @@
 												<a
 													href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($f->user_id)]) }}"
 													target="_blank"
-													class="inline-flex items-center gap-1 rounded bg-slate-600 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-slate-700 shadow-xs">
+													class="inline-flex items-center gap-1 rounded bg-slate-600 px-2 py-1 text-[9px] font-bold text-white shadow-xs transition hover:bg-slate-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50">
 													<i class="fa-solid fa-print"></i> CETAK
 												</a>
 											</td>

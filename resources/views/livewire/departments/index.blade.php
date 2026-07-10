@@ -1,24 +1,23 @@
-<div class="p-1 space-y-4" x-data>
+<div class="p-1 space-y-6" x-data>
 
-  {{-- Header Halaman Compact --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-        <i class="fa-solid fa-sitemap text-base"></i>
+  {{-- Header Halaman --}}
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid fa-sitemap text-lg"></i>
       </div>
       <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           {{ $isSuperAdmin ? 'Data Instansi' : 'Manajemen Unit Kerja' }}
         </h1>
-        <p class="text-[11px] text-slate-500 font-medium">
-          {{ $isSuperAdmin ? 'Kelola OPD, kecamatan, kelurahan, dan unit kerja induk' : 'Kelola struktur Bidang & Seksi di lingkup ' . auth()->user()->department?->name }}
+        <p class="mt-0.5 text-sm text-slate-500">
+          {{ $isSuperAdmin ? 'Kelola OPD, kecamatan, kelurahan, dan unit kerja induk.' : 'Kelola struktur Bidang & Seksi di lingkup ' . auth()->user()->department?->name . '.' }}
         </p>
       </div>
     </div>
 
-    <x-ui.button href="{{ route('master.departments.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-      <i class="fa-solid fa-plus text-[10px]"></i>
+    <x-ui.button href="{{ route('master.departments.create') }}" variant="primary" class="shrink-0 font-bold">
+      <x-slot name="icon"><i class="fa-solid fa-plus text-xs"></i></x-slot>
       {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Struktur' }}
     </x-ui.button>
   </div>
@@ -33,7 +32,7 @@
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
           placeholder="Cari nama unit kerja atau kode urusan...">
         <div wire:loading wire:target="search"
           class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
@@ -155,14 +154,14 @@
                 <div class="flex items-center justify-center gap-1">
                   {{-- Tombol Detail --}}
                   <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 transition-colors hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                     title="Detail">
                     <i class="fa-solid fa-eye text-[10px]"></i>
                   </a>
 
                   {{-- Tombol Edit --}}
                   <a wire:navigate href="{{ route('master.departments.edit', $dept->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
@@ -170,7 +169,7 @@
                   {{-- Tombol Hapus kondisional --}}
                   @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
                     <button type="button" wire:click="confirmDelete({{ $dept->id }})"
-                      class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>
@@ -180,10 +179,27 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isSuperAdmin ? '9' : '5' }}" class="py-10 text-center text-slate-500">
-                <div class="flex flex-col items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-folder-tree text-2xl opacity-40"></i>
-                  <p class="font-medium">Belum ada data unit kerja yang ditemukan</p>
+              <td colspan="{{ $isSuperAdmin ? '9' : '5' }}" class="px-4 py-16">
+                <div class="mx-auto flex max-w-sm flex-col items-center text-center">
+                  <div class="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+                    <i class="fa-solid fa-folder-tree text-xl"></i>
+                  </div>
+
+                  @if($search !== '' || $type !== '')
+                    <p class="mt-4 text-sm font-semibold text-slate-700">Tidak ada unit kerja yang cocok</p>
+                    <p class="mt-1 text-xs text-slate-500">Coba ubah kata kunci atau hapus filter tipe yang aktif.</p>
+                    <x-ui.button wire:click="resetFilters" type="button" variant="secondary" size="sm" class="mt-4">
+                      <i class="fa-solid fa-rotate-right text-xs"></i> Reset filter
+                    </x-ui.button>
+                  @else
+                    <p class="mt-4 text-sm font-semibold text-slate-700">Belum ada data unit kerja</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                      Tambahkan {{ $isSuperAdmin ? 'instansi/OPD' : 'struktur bidang atau seksi' }} untuk mulai menyusun struktur.
+                    </p>
+                    <x-ui.button href="{{ route('master.departments.create') }}" variant="primary" size="sm" class="mt-4">
+                      <i class="fa-solid fa-plus text-xs"></i> {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Struktur' }}
+                    </x-ui.button>
+                  @endif
                 </div>
               </td>
             </tr>

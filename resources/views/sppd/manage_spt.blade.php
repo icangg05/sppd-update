@@ -2,19 +2,23 @@
 @section('title', 'Kelola SPT')
 
 @section('content')
-	<div class="p-1 space-y-6">
+	<div class="mx-auto max-w-4xl space-y-6 p-1">
 
 		{{-- Header --}}
-		<div class="flex items-center justify-between">
-			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-emerald-500 inline-block pb-1">
-					<i class="fa-solid fa-file-signature mr-2 text-emerald-600"></i>Kelola SPT
-				</h1>
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex items-center gap-3">
+				<div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+					<i class="fa-solid fa-file-signature text-lg"></i>
+				</div>
+				<div>
+					<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Kelola SPT</h1>
+					<p class="mt-0.5 text-sm text-slate-500">Cetak dokumen dan pantau status tanda tangan elektronik SPT.</p>
+				</div>
 			</div>
-			<a wire:navigate href="{{ route('sppd.next', $sppd) }}"
-				class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-				<i class="fa-solid fa-arrow-left"></i> Kembali
-			</a>
+			<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary" class="shrink-0">
+				<x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+				Kembali
+			</x-ui.button>
 		</div>
 
 		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -33,8 +37,8 @@
 							        : route('sppd.stream.spt', $sppd);
 						@endphp
 						<a href="{{ $sptUrl }}" target="_blank"
-							class="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700">
-							<i class="fa-solid fa-print"></i> CETAK DOKUMEN SPT
+							class="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-emerald-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-1">
+							<i class="fa-solid fa-print"></i> Cetak dokumen SPT
 						</a>
 						<p class="mt-2 text-[11px] text-slate-500 font-medium leading-relaxed">
 							<i class="fa-solid fa-circle-info mr-1"></i>

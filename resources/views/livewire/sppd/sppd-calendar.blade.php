@@ -1,278 +1,304 @@
 <div>
-    <!-- Header Page -->
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Kalender Perjalanan Dinas</h1>
-            <p class="text-sm text-slate-500 font-medium mt-1">Jadwal monitoring perjalanan dinas pegawai yang telah disetujui secara resmi.</p>
-        </div>
+  {{-- ── Header halaman ── --}}
+  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-regular fa-calendar-days text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Kalender Perjalanan Dinas</h1>
+        <p class="mt-0.5 text-sm text-slate-500">Jadwal monitoring perjalanan dinas pegawai yang telah disetujui resmi.</p>
+      </div>
     </div>
 
-    <!-- Quick Stats Bar -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
-        <!-- Stat Card 1 -->
-        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
-            <div class="flex h-12 w-12 items-center justify-center rounded bg-sky-50 text-sky-600">
-                <i class="fa-solid fa-calendar-days text-xl"></i>
-            </div>
-            <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total SPPD Bulan Ini</p>
-                <p class="text-2xl font-black text-slate-900 mt-1">{{ $totalTravelsThisMonth }}</p>
-            </div>
-        </div>
+    {{-- Penanda tanggal hari ini --}}
+    <div class="inline-flex items-center gap-2 self-start rounded border border-slate-200 bg-white px-3 py-2 shadow-2xs sm:self-auto">
+      <i class="fa-regular fa-clock text-primary-500"></i>
+      <span class="text-sm font-semibold text-slate-700">{{ now()->locale('id')->translatedFormat('l, d F Y') }}</span>
+    </div>
+  </div>
 
-        <!-- Stat Card 2 -->
-        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
-            <div class="flex h-12 w-12 items-center justify-center rounded bg-emerald-50 text-emerald-600">
-                <i class="fa-solid fa-plane-departure text-xl"></i>
-            </div>
-            <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Sedang Berlangsung Hari Ini</p>
-                <p class="text-2xl font-black text-slate-900 mt-1">{{ $activeTravelsCount }}</p>
-            </div>
-        </div>
-
-        <!-- Stat Card 3 (Legend & Info) -->
-        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200 md:col-span-2 lg:col-span-1">
-            <div class="flex h-12 w-12 items-center justify-center rounded bg-slate-50 text-slate-600">
-                <i class="fa-solid fa-info text-xl"></i>
-            </div>
-            <div class="flex-1">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Status Warna Agenda</p>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                        <span class="inline-block h-3 w-3 rounded-full bg-sky-500"></span>
-                        Disetujui
-                    </div>
-                    <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                        <span class="inline-block h-3 w-3 rounded-full bg-emerald-500"></span>
-                        Selesai
-                    </div>
-                </div>
-            </div>
-        </div>
+  {{-- ── Ringkasan cepat ── --}}
+  <div class="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+    {{-- Total bulan ini --}}
+    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+        <i class="fa-solid fa-calendar-days text-lg"></i>
+      </div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total SPPD Bulan Ini</p>
+        <p class="mt-1 text-2xl font-bold tracking-tight text-slate-900 tabular-nums">{{ $totalTravelsThisMonth }}</p>
+      </div>
     </div>
 
-    <!-- Main Grid Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        <!-- Left: Calendar Area -->
-        <div class="lg:col-span-8 rounded border border-slate-200 bg-white p-6 shadow-sm">
-            <div id="calendar" wire:ignore class="min-h-[600px] text-slate-800"></div>
-        </div>
-
-        <!-- Right: Sidebar Info & Upcoming -->
-        <div class="lg:col-span-4 flex flex-col gap-6">
-            
-            <!-- Upcoming Travels Card -->
-            <div class="rounded border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-extrabold text-slate-900 flex items-center gap-2">
-                        <i class="fa-solid fa-compass text-sky-500"></i>
-                        Perjalanan Mendatang
-                    </h3>
-                    <span class="rounded bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-600">Next 5</span>
-                </div>
-
-                <div class="flow-root">
-                    <ul role="list" class="-my-5 divide-y divide-slate-100">
-                        @forelse($upcomingSppds as $sppd)
-                            <li class="py-4">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 text-center bg-slate-50 border border-slate-200 rounded p-2 min-w-[3.5rem] shadow-sm">
-                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                                            {{ $sppd->start_date->format('M') }}
-                                        </p>
-                                        <p class="text-lg font-black text-slate-800 leading-none mt-0.5">
-                                            {{ $sppd->start_date->format('d') }}
-                                        </p>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <a href="{{ route('sppd.show', $sppd) }}" wire:navigate class="block text-sm font-bold text-slate-900 hover:text-sky-600 transition truncate">
-                                            {{ $sppd->user?->name }}
-                                        </a>
-                                        <p class="text-xs text-slate-500 truncate mt-0.5">
-                                            {{ $sppd->purpose }}
-                                        </p>
-                                        
-                                        <!-- Destination and duration info -->
-                                        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 font-semibold">
-                                            <span class="inline-flex items-center gap-1">
-                                                <i class="fa-solid fa-location-dot"></i>
-                                                {{ $sppd->destinations->first()?->regency?->name ?? 'Tujuan' }}
-                                            </span>
-                                            <span class="text-slate-300">•</span>
-                                            <span>{{ $sppd->duration_days }} hari</span>
-                                            <span class="text-slate-300">•</span>
-                                            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] uppercase font-bold {{ $sppd->status === \App\Enums\SppdStatus::COMPLETED ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-sky-50 text-sky-600 border border-sky-100' }}">
-                                                {{ $sppd->status->label() }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="py-8 text-center">
-                                <div class="text-slate-300 mb-2">
-                                    <i class="fa-solid fa-route text-3xl"></i>
-                                </div>
-                                <p class="text-sm font-semibold text-slate-500">Tidak ada agenda perjalanan dinas mendatang.</p>
-                            </li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Calendar Quick Info -->
-            <div class="rounded border border-slate-200 bg-slate-50 p-5">
-                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3">Panduan Interaksi</h4>
-                <ul class="text-xs text-slate-600 space-y-2.5 font-medium">
-                    <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-circle-check text-sky-500 mt-0.5 shrink-0"></i>
-                        <span>Klik pada judul agenda di kalender untuk langsung masuk ke halaman detail SPPD.</span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-circle-check text-sky-500 mt-0.5 shrink-0"></i>
-                        <span>Gunakan tombol navigasi di kiri atas kalender untuk berpindah bulan atau melihat hari ini.</span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <i class="fa-solid fa-circle-check text-sky-500 mt-0.5 shrink-0"></i>
-                        <span>Gunakan tab di kanan atas untuk mengganti tampilan: Bulanan, Mingguan, atau Harian.</span>
-                    </li>
-                </ul>
-            </div>
-
-        </div>
-
+    {{-- Sedang berlangsung --}}
+    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+        <i class="fa-solid fa-plane-departure text-lg"></i>
+      </div>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Sedang Berlangsung Hari Ini</p>
+        <p class="mt-1 text-2xl font-bold tracking-tight text-slate-900 tabular-nums">{{ $activeTravelsCount }}</p>
+      </div>
     </div>
 
-    <!-- FullCalendar Styles custom overrides -->
-    <style>
-        .fc {
-            --fc-border-color: #f1f5f9 !important;
-            --fc-button-text-color: #334155 !important;
-            --fc-button-bg-color: #ffffff !important;
-            --fc-button-border-color: #cbd5e1 !important;
-            --fc-button-hover-bg-color: #f8fafc !important;
-            --fc-button-hover-border-color: #94a3b8 !important;
-            --fc-button-active-bg-color: #f1f5f9 !important;
-            --fc-button-active-border-color: #64748b !important;
-            --fc-today-bg-color: rgba(14, 165, 233, 0.04) !important;
-            font-family: inherit !important;
-        }
+    {{-- Legenda warna --}}
+    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 lg:col-span-1">
+      <div class="flex size-12 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-500 ring-1 ring-slate-200">
+        <i class="fa-solid fa-palette text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Status Warna Agenda</p>
+        <div class="mt-2 flex items-center gap-4">
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+            <span class="inline-block size-2.5 rounded-full bg-primary-500 ring-2 ring-primary-100"></span>
+            Disetujui
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+            <span class="inline-block size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-100"></span>
+            Selesai
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        .fc .fc-toolbar-title {
-            font-size: 1.125rem !important;
-            font-weight: 800 !important;
-            color: #0f172a !important;
-        }
+  {{-- ── Grid utama ── --}}
+  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
 
-        .fc .fc-button {
-            padding: 0.4rem 0.75rem !important;
-            font-size: 0.8125rem !important;
-            font-weight: 700 !important;
-            border-radius: 0.375rem !important;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-            text-transform: capitalize !important;
-        }
+    {{-- Kiri: area kalender --}}
+    <div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-8">
+      <div id="calendar" wire:ignore class="min-h-150 text-slate-800"></div>
+    </div>
 
-        .fc .fc-button-group > .fc-button {
-            border-radius: 0.375rem !important;
-            margin-left: 2px !important;
-            margin-right: 2px !important;
-        }
+    {{-- Kanan: info & agenda mendatang --}}
+    <div class="flex flex-col gap-6 lg:col-span-4">
 
-        .fc .fc-col-header-cell {
-            padding: 8px 0 !important;
-            background-color: #f8fafc !important;
-        }
+      {{-- Perjalanan mendatang --}}
+      <div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <h3 class="flex items-center gap-2 text-sm font-bold text-slate-900">
+            <i class="fa-solid fa-compass text-primary-500"></i>
+            Perjalanan Mendatang
+          </h3>
+          <span class="rounded bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-600 ring-1 ring-inset ring-primary-100">5 Terdekat</span>
+        </div>
 
-        .fc .fc-col-header-cell-cushion {
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
-            color: #64748b !important;
-            text-decoration: none !important;
-        }
+        <ul role="list" class="divide-y divide-slate-100">
+          @forelse($upcomingSppds as $sppd)
+            <li>
+              <a href="{{ route('sppd.show', $sppd) }}" wire:navigate
+                class="group flex items-start gap-3 px-5 py-4 transition-colors hover:bg-slate-50/70">
+                <div class="min-w-13 shrink-0 rounded border border-slate-200 bg-slate-50 p-2 text-center shadow-2xs transition-colors group-hover:border-primary-200 group-hover:bg-primary-50">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-primary-600">
+                    {{ $sppd->start_date->locale('id')->translatedFormat('M') }}
+                  </p>
+                  <p class="mt-0.5 text-lg font-bold leading-none text-slate-800 tabular-nums group-hover:text-primary-700">
+                    {{ $sppd->start_date->format('d') }}
+                  </p>
+                </div>
 
-        .fc .fc-daygrid-day-number {
-            font-size: 0.8125rem !important;
-            font-weight: 700 !important;
-            color: #475569 !important;
-            text-decoration: none !important;
-            padding: 6px 8px !important;
-        }
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-primary-600">
+                    {{ $sppd->user?->name }}
+                  </p>
+                  <p class="mt-0.5 truncate text-xs text-slate-500">
+                    {{ $sppd->purpose }}
+                  </p>
 
-        .fc .fc-event {
-            border: none !important;
-            padding: 3px 6px !important;
-            border-radius: 4px !important;
-            font-size: 0.75rem !important;
-            font-weight: 700 !important;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-            transition: all 0.15s ease-in-out !important;
-        }
+                  <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-slate-500">
+                    <span class="inline-flex items-center gap-1">
+                      <i class="fa-solid fa-location-dot text-slate-400"></i>
+                      {{ $sppd->destinations->first()?->regency?->name ?? 'Tujuan' }}
+                    </span>
+                    <span class="text-slate-300">•</span>
+                    <span>{{ $sppd->duration_days }} hari</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ring-1 ring-inset {{ $sppd->status === \App\Enums\SppdStatus::COMPLETED ? 'bg-emerald-50 text-emerald-600 ring-emerald-100' : 'bg-primary-50 text-primary-600 ring-primary-100' }}">
+                      {{ $sppd->status->label() }}
+                    </span>
+                  </div>
+                </div>
 
-        .fc .fc-event:hover {
-            transform: translateY(-1px) !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-            filter: brightness(0.95) !important;
-        }
-        
-        .fc .fc-daygrid-day.fc-day-today {
-            background-color: var(--fc-today-bg-color) !important;
-        }
+                <i class="fa-solid fa-chevron-right mt-1 text-xs text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-primary-500"></i>
+              </a>
+            </li>
+          @empty
+            <li class="px-5 py-10 text-center">
+              <div class="mb-2 text-slate-300">
+                <i class="fa-solid fa-route text-3xl"></i>
+              </div>
+              <p class="text-sm font-semibold text-slate-500">Tidak ada agenda perjalanan dinas mendatang.</p>
+            </li>
+          @endforelse
+        </ul>
+      </div>
 
-        .fc .fc-daygrid-event-harness {
-            margin-top: 2px !important;
-            margin-bottom: 2px !important;
-        }
-        
-        .fc-theme-standard td, .fc-theme-standard th {
-            border: 1px solid #e2e8f0 !important;
-        }
-    </style>
+      {{-- Panduan interaksi --}}
+      <div class="rounded border border-slate-200 bg-slate-50 p-5">
+        <h4 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Panduan Interaksi</h4>
+        <ul class="space-y-2.5 text-xs font-medium text-slate-600">
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-circle-check mt-0.5 shrink-0 text-primary-500"></i>
+            <span>Klik pada judul agenda di kalender untuk langsung masuk ke halaman detail SPPD.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-circle-check mt-0.5 shrink-0 text-primary-500"></i>
+            <span>Gunakan tombol navigasi di kiri atas kalender untuk berpindah bulan atau melihat hari ini.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-circle-check mt-0.5 shrink-0 text-primary-500"></i>
+            <span>Gunakan tab di kanan atas untuk mengganti tampilan: Bulanan, Mingguan, atau Harian.</span>
+          </li>
+        </ul>
+      </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-    <script>
-        (function() {
-            function initCalendar() {
-                var calendarEl = document.getElementById('calendar');
-                if (!calendarEl) return;
+    </div>
+  </div>
 
-                // If already initialized, avoid re-initializing
-                if (calendarEl.innerHTML !== '') return;
+  {{-- Override tampilan FullCalendar agar selaras dengan identitas biru SPPD --}}
+  <style>
+    .fc {
+      --fc-border-color: #f1f5f9 !important;
+      --fc-button-text-color: #334155 !important;
+      --fc-button-bg-color: #ffffff !important;
+      --fc-button-border-color: #cbd5e1 !important;
+      --fc-button-hover-bg-color: #f8fafc !important;
+      --fc-button-hover-border-color: #94a3b8 !important;
+      --fc-button-active-bg-color: #eff6fc !important;
+      --fc-button-active-border-color: #1e80c6 !important;
+      --fc-today-bg-color: rgba(30, 128, 198, 0.05) !important;
+      font-family: inherit !important;
+    }
 
-                var calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    locale: 'id',
-                    themeSystem: 'standard',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                    },
-                    events: @json($events),
-                    eventClick: function(info) {
-                        if (info.event.url) {
-                            info.jsEvent.preventDefault();
-                            Livewire.navigate(info.event.url);
-                        }
-                    }
-                });
-                calendar.render();
+    .fc .fc-toolbar-title {
+      font-size: 1.125rem !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+    }
+
+    .fc .fc-button {
+      padding: 0.4rem 0.75rem !important;
+      font-size: 0.8125rem !important;
+      font-weight: 600 !important;
+      border-radius: 0.25rem !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      text-transform: capitalize !important;
+    }
+
+    .fc .fc-button:focus {
+      box-shadow: 0 0 0 2px rgba(30, 128, 198, 0.25) !important;
+    }
+
+    .fc .fc-button-active {
+      color: #1e80c6 !important;
+    }
+
+    .fc .fc-button-group > .fc-button {
+      border-radius: 0.25rem !important;
+      margin-left: 2px !important;
+      margin-right: 2px !important;
+    }
+
+    .fc .fc-col-header-cell {
+      padding: 8px 0 !important;
+      background-color: #f8fafc !important;
+    }
+
+    .fc .fc-col-header-cell-cushion {
+      font-size: 0.75rem !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.05em !important;
+      color: #64748b !important;
+      text-decoration: none !important;
+    }
+
+    .fc .fc-daygrid-day-number {
+      font-size: 0.8125rem !important;
+      font-weight: 600 !important;
+      color: #475569 !important;
+      text-decoration: none !important;
+      padding: 6px 8px !important;
+    }
+
+    .fc .fc-day-today .fc-daygrid-day-number {
+      color: #1e80c6 !important;
+      font-weight: 800 !important;
+    }
+
+    .fc .fc-event {
+      border: none !important;
+      padding: 3px 6px !important;
+      border-radius: 4px !important;
+      font-size: 0.75rem !important;
+      font-weight: 600 !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      transition: all 0.15s ease-in-out !important;
+      cursor: pointer !important;
+    }
+
+    .fc .fc-event:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+      filter: brightness(0.95) !important;
+    }
+
+    .fc .fc-daygrid-day.fc-day-today {
+      background-color: var(--fc-today-bg-color) !important;
+    }
+
+    .fc .fc-daygrid-event-harness {
+      margin-top: 2px !important;
+      margin-bottom: 2px !important;
+    }
+
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+      border: 1px solid #e2e8f0 !important;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script>
+    (function() {
+      function initCalendar() {
+        var calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
+
+        // If already initialized, avoid re-initializing
+        if (calendarEl.innerHTML !== '') return;
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          locale: 'id',
+          themeSystem: 'standard',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          events: @json($events),
+          eventClick: function(info) {
+            if (info.event.url) {
+              info.jsEvent.preventDefault();
+              Livewire.navigate(info.event.url);
             }
+          }
+        });
+        calendar.render();
+      }
 
-            if (typeof FullCalendar !== 'undefined') {
-                initCalendar();
-            } else {
-                var checkInterval = setInterval(function() {
-                    if (typeof FullCalendar !== 'undefined') {
-                        clearInterval(checkInterval);
-                        initCalendar();
-                    }
-                }, 50);
-            }
-        })();
-    </script>
+      if (typeof FullCalendar !== 'undefined') {
+        initCalendar();
+      } else {
+        var checkInterval = setInterval(function() {
+          if (typeof FullCalendar !== 'undefined') {
+            clearInterval(checkInterval);
+            initCalendar();
+          }
+        }, 50);
+      }
+    })();
+  </script>
 </div>

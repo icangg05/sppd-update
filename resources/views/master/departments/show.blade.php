@@ -3,43 +3,46 @@
 @section('page-title', 'Detail Profil OPD')
 
 @section('content')
-  <div class="p-1 space-y-4">
+  <div class="mx-auto max-w-6xl space-y-6 p-1">
 
-    {{-- Header Halaman Compact --}}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-      <div class="flex items-center gap-2.5">
-        <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-          <i class="fa-solid fa-folder-open text-base"></i>
+    {{-- Header Halaman --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+          <i class="fa-solid fa-folder-open text-lg"></i>
         </div>
         <div>
-          <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Profil OPD</h1>
-          <p class="text-[11px] text-slate-500 font-medium">Informasi menyeluruh rincian atribut data instansi atau unit
-            kerja terkait</p>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Profil OPD</h1>
+          <p class="mt-0.5 text-sm text-slate-500">Rincian atribut data instansi atau unit kerja terkait.</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 self-end sm:self-auto">
-        <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary"
-          class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-          <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary" class="shrink-0">
+          <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+          Kembali
         </x-ui.button>
-        <a wire:navigate href="{{ route('master.departments.edit', $department->id) }}"
-          class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-          <i class="fa-solid fa-pen-to-square text-[11px]"></i> Edit Profil
-        </a>
+        <x-ui.button href="{{ route('master.departments.edit', $department->id) }}" variant="primary" class="shrink-0">
+          <x-slot name="icon"><i class="fa-solid fa-pen-to-square text-xs"></i></x-slot>
+          Edit Profil
+        </x-ui.button>
       </div>
     </div>
 
     {{-- Dashboard Detail Grid Layout --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
       {{-- Sektor Utama: Lembar Informasi Instansi (Mengambil 2 Kolom) --}}
-      <div class="md:col-span-2 space-y-4">
-        <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-3 border-b border-slate-200 bg-slate-50/50">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-circle-info text-primary-500"></i>Informasi Pokok Struktur
-            </h3>
+      <div class="md:col-span-2 space-y-6">
+        <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+          <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">Informasi Pokok Struktur</h3>
+              <p class="text-xs text-slate-500">Identitas, hierarki, dan kop surat resmi.</p>
+            </div>
           </div>
 
           <div class="p-4 space-y-3 text-xs">
@@ -170,21 +173,22 @@
       </div>
 
       {{-- Sektor Samping: Penanggung Jawab & Statistik (1 Kolom) --}}
-      <div class="space-y-4">
+      <div class="space-y-6">
 
         {{-- Card Profil Pimpinan --}}
-        <div class="bg-white rounded border border-slate-200 border-t-2 border-t-primary-500 shadow-sm overflow-hidden">
-          <div class="p-3 border-b border-slate-200 bg-slate-50/50">
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-user-tie text-primary-500"></i>Pimpinan Unit Kerja
-            </h3>
+        <div class="dash-enter bg-white rounded border border-slate-200 border-t-2 border-t-primary-500 shadow-sm overflow-hidden">
+          <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <h3 class="text-sm font-bold text-slate-800">Pimpinan Unit Kerja</h3>
           </div>
 
           <div class="p-4 text-xs">
             @if ($department->head)
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 bg-primary-100 text-primary-700 rounded border border-primary-200 flex items-center justify-center font-black text-sm shrink-0 shadow-inner">
+                  class="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary-200 bg-primary-100 text-sm font-bold text-primary-700 shadow-inner">
                   {{ strtoupper(substr($department->head->name, 0, 1)) }}
                 </div>
                 <div class="space-y-0.5 min-w-0">
@@ -217,9 +221,12 @@
 
         {{-- Card Statistik Internal Pegawai --}}
         @if (!$department->parent_id)
-          <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-3 border-b border-slate-200 bg-slate-50/50">
-              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Statistik Aparatur</h3>
+          <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
+              <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <h3 class="text-sm font-bold text-slate-800">Statistik Aparatur</h3>
             </div>
             <div class="p-3">
               <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded">

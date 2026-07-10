@@ -45,7 +45,7 @@
 				</button>
 
 				<div id="dropdown-menu"
-					class="absolute right-0 mt-3 hidden w-56 origin-top-right rounded border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200">
+					class="absolute right-0 mt-3 w-56 origin-top-right rounded border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200 ease-out motion-reduce:transition-none invisible pointer-events-none -translate-y-2 scale-95 opacity-0">
 
 					{{-- Mobile User Info --}}
 					<div class="block px-4 py-3 sm:hidden bg-slate-50/50 mb-1.5 border-b border-slate-100">
@@ -87,18 +87,36 @@
 
 <script>
 	$(document).ready(function() {
+		// Kelas keadaan-tertutup: dropdown menyusut & memudar ke sudut kanan-atas
+		// (origin-top-right). Transisi 200ms menganimasikan muncul ⇄ menghilang.
+		const closedClasses = 'invisible pointer-events-none -translate-y-2 scale-95 opacity-0';
+		const $menu = $('#dropdown-menu');
+		const $icon = $('#profile-icon');
+
+		function isOpen() {
+			return !$menu.hasClass('opacity-0');
+		}
+
+		function setOpen(open) {
+			$menu.toggleClass(closedClasses, !open);
+			$icon.toggleClass('rotate-180', open);
+		}
+
 		$('#toggle-profile').on('click', function(e) {
 			e.stopPropagation();
-			$('#dropdown-menu').fadeToggle(150);
-			$('#profile-icon').toggleClass('rotate-180');
+			setOpen(!isOpen());
 		});
 
 		$(document).on('click', function(e) {
-			if (!$(e.target).closest('#toggle-profile, #dropdown-menu').length) {
-				if ($('#dropdown-menu').is(':visible')) {
-					$('#dropdown-menu').fadeOut(150);
-					$('#profile-icon').removeClass('rotate-180');
-				}
+			if (isOpen() && !$(e.target).closest('#toggle-profile, #dropdown-menu').length) {
+				setOpen(false);
+			}
+		});
+
+		// Tutup saat menekan Escape agar konsisten dengan pola menu lain.
+		$(document).on('keydown', function(e) {
+			if (e.key === 'Escape' && isOpen()) {
+				setOpen(false);
 			}
 		});
 	});
