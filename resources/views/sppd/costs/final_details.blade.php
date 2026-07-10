@@ -78,7 +78,7 @@
 
         {{-- Alert Info --}}
         @if (!$sppd->pptk_id || !$bendahara)
-            <div class="flex items-start gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <div class="flex items-start gap-4 rounded border border-amber-200 bg-amber-50 p-4 shadow-sm">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
                     <i class="fa-solid fa-triangle-exclamation text-lg"></i>
                 </div>
@@ -100,7 +100,7 @@
 
         {{-- Toolbar: Tanggal Cetak & Input Massal --}}
         <div
-            class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded border border-slate-200 shadow-sm">
             {{-- Kiri: Info jumlah + Pilih Tanggal Cetak --}}
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
@@ -130,7 +130,7 @@
         </div>
 
         {{-- Table Section --}}
-        <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr
@@ -286,9 +286,9 @@
         </div>
         <div class="mt-4 flex justify-end gap-3 border-t border-slate-100 pt-3">
           <button type="button" @click="showAddModal = false"
-            class="rounded-lg px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
+            class="rounded px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
           <button type="submit"
-            class="rounded-lg bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer">Simpan
+            class="rounded bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer">Simpan
             Biaya</button>
         </div>
       </form>
@@ -323,9 +323,9 @@
         </div>
         <div class="mt-4 flex justify-end gap-3 border-t border-slate-100 pt-3">
             <button type="button" @click="showEditModal = false"
-                class="rounded-lg px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
+                class="rounded px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
             <button type="submit"
-                class="rounded-lg bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-700 shadow-sm transition cursor-pointer">Update
+                class="rounded bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-700 shadow-sm transition cursor-pointer">Update
                 Perubahan</button>
         </div>
         </form>
@@ -389,7 +389,7 @@
                             </button>
                         </div>
                         <div
-                            class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+                            class="max-h-48 overflow-y-auto border border-slate-200 rounded p-3 space-y-2 bg-slate-50/50">
                             <template x-for="user in allUsers" :key="user.id">
                                 <label
                                     class="flex items-center gap-2 cursor-pointer py-1 px-1.5 rounded hover:bg-slate-100 transition text-xs">

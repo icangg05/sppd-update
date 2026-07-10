@@ -138,7 +138,7 @@
 
         <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
             @class([
-                'flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',
+                'flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',
                 'cursor-not-allowed bg-slate-50' => $disabled,
                 $class,
             ])>
@@ -157,7 +157,7 @@
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95"
                 :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
-                class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
+                class="overflow-hidden rounded border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
                 <div class="border-b border-slate-100 p-2">
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
@@ -168,7 +168,7 @@
                             @keydown.enter.prevent="pick()"
                             @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
                             placeholder="{{ $searchPlaceholder }}"
-                            class="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30">
+                            class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30">
                     </div>
                 </div>
                 <ul x-ref="list" class="max-h-56 overflow-auto py-1">

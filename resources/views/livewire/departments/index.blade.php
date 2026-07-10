@@ -155,14 +155,14 @@
                 <div class="flex items-center justify-center gap-1">
                   {{-- Tombol Detail --}}
                   <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"
-                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                     title="Detail">
                     <i class="fa-solid fa-eye text-[10px]"></i>
                   </a>
 
                   {{-- Tombol Edit --}}
                   <a wire:navigate href="{{ route('master.departments.edit', $dept->id) }}"
-                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
@@ -170,7 +170,7 @@
                   {{-- Tombol Hapus kondisional --}}
                   @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
                     <button type="button" wire:click="confirmDelete({{ $dept->id }})"
-                      class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>

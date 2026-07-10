@@ -216,31 +216,42 @@ class SppdCreateDetails extends Component
       return;
     }
 
-    $this->validate([
-      'budget_id' => 'required|exists:budgets,id',
-      'category_id' => 'required|exists:sppd_categories,id',
-      'purpose' => 'required|string|max:1000',
-      'problem' => 'nullable|string',
-      'facts' => 'nullable|string',
-      'analysis' => 'nullable|string',
-      'start_date' => 'required|date',
-      'end_date' => 'required|date|after_or_equal:start_date',
-      'transport_type' => 'nullable|string|max:255',
-      'transport_name' => 'nullable|string|max:255',
-      'departure_place' => 'nullable|string|max:255',
-      'urgency' => 'nullable|string|max:255',
-      'spt_date' => 'nullable|date',
-      'sppd_date' => 'nullable|date',
-      'document_number' => 'nullable|string|max:255',
-      'attachment' => 'nullable|file|max:2048', // 2MB
-      'destinations' => 'required|array|min:1',
-      'destinations.*.province_id' => 'required_if:domain,lddp,ldlp',
-      'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp',
-      'destinations.*.address' => 'required_if:domain,lddp,ldlp|string|max:500',
-      'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
-      'followers' => 'nullable|array',
-      'followers.*' => 'exists:users,id',
-    ]);
+    try {
+      $this->validate([
+        'budget_id' => 'required|exists:budgets,id',
+        'category_id' => 'required|exists:sppd_categories,id',
+        'purpose' => 'required|string|max:1000',
+        'problem' => 'nullable|string',
+        'facts' => 'nullable|string',
+        'analysis' => 'nullable|string',
+        'start_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
+        'transport_type' => 'nullable|string|max:255',
+        'transport_name' => 'nullable|string|max:255',
+        'departure_place' => 'nullable|string|max:255',
+        'urgency' => 'nullable|string|max:255',
+        'spt_date' => 'nullable|date',
+        'sppd_date' => 'nullable|date',
+        'document_number' => 'nullable|string|max:255',
+        'attachment' => 'nullable|file|max:2048', // 2MB
+        'destinations' => 'required|array|min:1',
+        'destinations.*.province_id' => 'required_if:domain,lddp,ldlp',
+        'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp',
+        'destinations.*.address' => 'required_if:domain,lddp,ldlp|string|max:500',
+        'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
+        'followers' => 'nullable|array',
+        'followers.*' => 'exists:users,id',
+      ]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+      // Toast ringkas selain error inline, lalu lempar ulang agar modal tetap
+      // tertahan dan pesan @error tetap tampil di masing-masing field.
+      $count = $e->validator->errors()->count();
+      $this->toastError(
+        "Ada {$count} isian yang belum lengkap atau tidak valid. Silakan periksa kembali formulir.",
+        'Gagal Mengajukan',
+      );
+      throw $e;
+    }
 
     $this->showConfirmModal = true;
   }
@@ -268,6 +279,7 @@ class SppdCreateDetails extends Component
       foreach ($this->followers as $fId) {
         if (empty($this->follower_positions[$fId])) {
           $this->addError('follower_positions.' . $fId, 'Jabatan pengikut harus diisi.');
+          $this->toastError('Jabatan setiap pengikut wajib diisi sebelum mengajukan.', 'Data Belum Lengkap');
           $this->showConfirmModal = false;
           return;
         }

@@ -6,7 +6,7 @@
     subtitle="Pagu, realisasi, dan sisa anggaran tahun anggaran berjalan" />
 
   {{-- Per program / kegiatan --}}
-  <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="rounded border border-slate-200 bg-white shadow-sm">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
         <i class="fa-solid fa-list-ul text-primary-500"></i> Rincian per Program / Kegiatan
@@ -48,7 +48,7 @@
             </div>
             <button type="button" wire:click="openDetail({{ $item['id'] }})" wire:loading.attr="disabled"
               wire:target="openDetail({{ $item['id'] }})"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-primary-50 hover:text-primary-700 disabled:opacity-50">
+              class="inline-flex shrink-0 items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-primary-50 hover:text-primary-700 disabled:opacity-50">
               <i class="fa-solid fa-magnifying-glass-chart text-[11px]"></i>
               <span wire:loading.remove wire:target="openDetail({{ $item['id'] }})">Detail</span>
               <span wire:loading wire:target="openDetail({{ $item['id'] }})">Memuat…</span>
@@ -67,7 +67,7 @@
     @if (count($items) && auth()->user()->hasAnyRole(['super_admin', 'admin_opd']))
       <div class="border-t border-slate-100 p-3">
         <a href="{{ route('master.budgets.index') }}" wire:navigate
-          class="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-50">
+          class="flex items-center justify-center gap-2 rounded px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-50">
           <span>Lihat lainnya</span>
           <i class="fa-solid fa-arrow-right text-[11px]"></i>
         </a>
@@ -82,15 +82,15 @@
     @if ($detail)
       {{-- Ringkasan item --}}
       <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div class="rounded-lg border border-slate-100 bg-slate-50 p-2.5">
+        <div class="rounded border border-slate-100 bg-slate-50 p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Pagu</p>
           <p class="mt-0.5 font-mono text-sm font-bold text-slate-800">Rp {{ number_format($detail['pagu'], 0, ',', '.') }}</p>
         </div>
-        <div class="rounded-lg border border-primary-100 bg-primary-50/60 p-2.5">
+        <div class="rounded border border-primary-100 bg-primary-50/60 p-2.5">
           <p class="text-[10px] font-semibold uppercase tracking-wide text-primary-700">Realisasi</p>
           <p class="mt-0.5 font-mono text-sm font-bold text-primary-700">Rp {{ number_format($detail['realisasi'], 0, ',', '.') }}</p>
         </div>
-        <div class="rounded-lg border p-2.5 {{ $detail['sisa'] < 0 ? 'border-rose-100 bg-rose-50' : 'border-emerald-100 bg-emerald-50/60' }}">
+        <div class="rounded border p-2.5 {{ $detail['sisa'] < 0 ? 'border-rose-100 bg-rose-50' : 'border-emerald-100 bg-emerald-50/60' }}">
           <p class="text-[10px] font-semibold uppercase tracking-wide {{ $detail['sisa'] < 0 ? 'text-rose-700' : 'text-emerald-700' }}">Sisa</p>
           <p class="mt-0.5 font-mono text-sm font-bold {{ $detail['sisa'] < 0 ? 'text-rose-700' : 'text-emerald-700' }}">Rp {{ number_format($detail['sisa'], 0, ',', '.') }}</p>
         </div>

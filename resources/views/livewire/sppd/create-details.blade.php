@@ -1,18 +1,26 @@
 <div class="flex flex-col gap-4 p-1" x-data="{ showConfirm: @entangle('showConfirmModal') }">
 
 	{{-- Header Halaman --}}
-	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-		<div class="leading-tight">
-			<h1 class="text-lg font-bold text-slate-800">Detail Perjalanan Dinas</h1>
-			<p class="text-xs text-slate-500 mt-0.5">Tahap 2: Isi Detail & Lengkapi Data Pengajuan</p>
+	<div
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		{{-- Watermark institusional (tipis, hanya karakter). --}}
+		<i class="fa-solid fa-file-pen pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+			aria-hidden="true"></i>
+
+		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+			<div class="min-w-0 leading-tight">
+				<span
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<i class="fa-solid fa-list-ol text-[9px]"></i> Langkah 2 dari 2
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
+				<p class="mt-1 text-xs text-slate-500">Isi detail & lengkapi data pengajuan.</p>
+			</div>
+			<x-ui.button href="{{ route('sppd.create') }}" wire:navigate variant="secondary">
+				<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+				Kembali ke Tahap 1
+			</x-ui.button>
 		</div>
-		<x-ui.button href="{{ route('sppd.create') }}" wire:navigate variant="secondary"
-			class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-			<x-slot name="icon">
-				<i class="fa-solid fa-arrow-left text-xs text-slate-500"></i>
-			</x-slot>
-			Kembali ke Tahap 1
-		</x-ui.button>
 	</div>
 
 
@@ -33,7 +41,7 @@
 						<i class="fa-solid fa-earth-asia"></i> Domain Perjalanan
 					</h4>
 					<span
-						class="inline-block mt-1.5 rounded-sm bg-white border border-primary-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-800">
+						class="inline-block mt-1.5 rounded bg-white border border-primary-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-800">
 						{{ str_replace('_', ' ', $domain) }}
 					</span>
 				</div>
@@ -65,7 +73,7 @@
 		<div class="mt-4 rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-					<i class="fa-solid fa-file-pen text-primary-600"></i> Data Perihal & Justifikasi Perjalanan
+					<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-file-pen text-[11px]"></i></span> Data Perihal & Justifikasi Perjalanan
 				</h3>
 			</div>
 			<div class="p-5">
@@ -82,7 +90,7 @@
 		<div class="mt-4 rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-					<i class="fa-solid fa-route text-primary-600"></i> Detail Logistik & Tanggal Perjalanan
+					<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-route text-[11px]"></i></span> Detail Logistik & Tanggal Perjalanan
 				</h3>
 			</div>
 			<div class="p-5 space-y-5">
@@ -108,7 +116,7 @@
 					@if ($domain === 'dalam_daerah')
 						<div id="dalam-daerah-fields" class="flex flex-col gap-2">
 							<div
-								class="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 w-fit">
+								class="inline-flex items-center gap-1.5 rounded bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 w-fit">
 								<i class="fa-solid fa-location-dot text-slate-500"></i>
 								Lokasi Basis: <span class="font-bold text-slate-700">Kota Kendari, Sulawesi Tenggara</span>
 							</div>
@@ -181,7 +189,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Anggaran & Dokumen Pendukung
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-money-check-dollar text-[11px]"></i></span> Anggaran & Dokumen Pendukung
 					</h3>
 				</div>
 				<div class="p-5 space-y-4">
@@ -210,7 +218,7 @@
 					</div>
 					<div>
 						<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Undangan / Dokumen Pendukung</label>
-						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
 						<p class="text-[10px] text-slate-500 mt-1">Format berkas: PDF, DOCX, JPG, PNG (Maks. 2MB)</p>
 						@error('attachment') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 					</div>
@@ -221,7 +229,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
 				<div class="border-b border-slate-100 bg-emerald-50/60 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-emerald-700 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-wallet text-emerald-600"></i> Informasi Anggaran Tersedia
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600"><i class="fa-solid fa-wallet text-[11px]"></i></span> Informasi Anggaran Tersedia
 					</h3>
 				</div>
 				@if ($selectedBudget)
@@ -285,7 +293,7 @@
 				<div
 					class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut (Opsional)
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-users text-[11px]"></i></span> Daftar Pengikut (Opsional)
 					</h3>
 					{{-- Input Live Search Pengikut --}}
 					<div class="relative w-full sm:w-48">
@@ -331,7 +339,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<i class="fa-solid fa-calendar-check text-primary-600"></i> Penomoran & Penanggalan Dokumen Resmi
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-calendar-check text-[11px]"></i></span> Penomoran & Penanggalan Dokumen Resmi
 					</h3>
 				</div>
 				<div class="p-5 space-y-4">
@@ -345,17 +353,10 @@
 
 					{{-- Tombol Submit Pembuat Aksi --}}
 					<div class="flex justify-end border-t border-slate-100 pt-4">
-						<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
-							class="inline-flex items-center gap-2 rounded bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
-							<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
-								<i class="fa-solid fa-paper-plane text-xs"></i>
-								<span>Buat & Ajukan SPPD</span>
-							</span>
-							<span wire:loading wire:target="openConfirmModal" class="inline-flex items-center gap-2">
-								<i class="fa-solid fa-spinner fa-spin text-xs"></i>
-								<span>Memproses...</span>
-							</span>
-						</button>
+						<x-ui.button variant="primary" type="submit" wire:target="openConfirmModal" class="px-6">
+							<x-slot name="icon"><i class="fa-solid fa-paper-plane text-xs"></i></x-slot>
+							Buat & Ajukan SPPD
+						</x-ui.button>
 					</div>
 				</div>
 			</div>
@@ -491,19 +492,10 @@
 		</div>
 
 		<div class="flex justify-end gap-2 border-t border-slate-100 pt-3 mt-2">
-			<button type="button" wire:click="closeConfirmModal"
-				class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-				Periksa Kembali
-			</button>
-			<button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
-				class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2 text-xs font-bold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
-				<span wire:loading.remove wire:target="submit">
-					{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
-				</span>
-				<span wire:loading wire:target="submit" class="inline-flex items-center gap-2">
-					<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...
-				</span>
-			</button>
+			<x-ui.button variant="secondary" size="sm" wire:click="closeConfirmModal">Periksa Kembali</x-ui.button>
+			<x-ui.button variant="primary" size="sm" wire:click="submit" wire:target="submit">
+				{{ $sppd_id ? 'Ya, Kirim Perbaikan' : 'Ya, Ajukan Sekarang' }}
+			</x-ui.button>
 		</div>
 	</x-ui.modal>
 

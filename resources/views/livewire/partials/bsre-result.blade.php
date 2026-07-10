@@ -1,6 +1,6 @@
 {{-- Hasil verifikasi BSrE. Menerima: $result (array dari BsreVerificationService::verify) --}}
 @if (! ($result['ok'] ?? false))
-  <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+  <div class="rounded border border-rose-200 bg-rose-50 p-4">
     <p class="flex items-center gap-1.5 text-sm font-medium text-rose-700">
       <i class="fa-solid fa-circle-exclamation"></i>
       {{ $result['error'] ?? 'Verifikasi gagal.' }}
@@ -11,7 +11,7 @@
   </div>
 @else
   @php $bsreValid = $result['valid'] ?? null; @endphp
-  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
     {{-- Banner ringkasan --}}
     <div class="flex flex-col items-center gap-3 px-6 py-8 text-center
       {{ $bsreValid === true ? 'bg-emerald-50' : ($bsreValid === false ? 'bg-rose-50' : 'bg-slate-50') }}">
@@ -69,7 +69,7 @@
               $usingTsa = data_get($detail, 'signature_document.signed_using_tsa');
               $tsaName = data_get($detail, 'info_tsa.name');
             @endphp
-            <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-[12px]">
+            <div class="rounded border border-slate-200 bg-slate-50 p-3 text-[12px]">
               <p class="mb-1.5 font-semibold text-slate-700">
                 Tanda tangan #{{ $i + 1 }}
                 @if ($signerName) — {{ $signerName }} @endif

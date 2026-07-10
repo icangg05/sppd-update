@@ -2,7 +2,7 @@
 
 	@if ($errorMessage)
 		<div
-			class="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800 shadow-sm transition-all duration-300">
+			class="flex items-center justify-between gap-3 rounded border border-red-200 bg-red-50 p-4 text-xs text-red-800 shadow-sm transition-all duration-300">
 			<div class="flex items-start gap-2 flex-1">
 				<i class="fa-solid fa-triangle-exclamation text-red-600 text-sm shrink-0 mt-0.5"></i>
 				<span class="font-medium leading-relaxed">
@@ -62,12 +62,12 @@
 											<div class="whitespace-nowrap text-right text-[10px]">
 												@if ($step['status'] === 'found')
 													<span
-														class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+														class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
 														Aktif
 													</span>
 												@else
 													<span
-														class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+														class="inline-flex items-center rounded bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
 														Belum Diatur
 													</span>
 												@endif
@@ -84,7 +84,7 @@
 
 		<x-slot name="footer">
 			<button type="button" wire:click="$set('showWorkflowModal', false)"
-				class="w-full rounded-lg border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 cursor-pointer">
+				class="w-full rounded border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 cursor-pointer">
 				Tutup
 			</button>
 		</x-slot>
@@ -103,11 +103,11 @@
 
 		<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
 			<button type="button" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
-				class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
+				class="flex-1 rounded border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
 				Batal
 			</button>
 			<button type="button" wire:click="deleteSppd" wire:loading.attr="disabled" wire:target="deleteSppd"
-				class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-rose-700 disabled:opacity-50">
+				class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-rose-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-rose-700 disabled:opacity-50">
 				<span wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
 					<i class="fa-solid fa-trash"></i> Ya, Hapus
 				</span>
@@ -119,21 +119,31 @@
 	</x-ui.modal>
 
 	{{-- Header Halaman --}}
-	<div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-		<div class="leading-tight">
-			@if ($isApprovalMode)
-				<h1 class="text-lg font-bold text-slate-800">Persetujuan</h1>
-				<p class="text-xs text-slate-500 mt-0.5">Daftar SPPD yang menunggu persetujuan Anda</p>
-			@else
-				<h1 class="text-lg font-bold text-slate-800 flex flex-wrap items-center gap-2">
-					<span>Daftar SPPD</span>
-					<span class="text-slate-300 font-normal">|</span>
-					<span class="text-primary-600 underline">{{ $activeFilterLabel }}</span>
-				</h1>
-				<p class="text-xs text-slate-500 mt-0.5">Kelola semua pengajuan perjalanan dinas secara real-time</p>
-			@endif
-		</div>
-		@if (!$isApprovalMode)
+	<div
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		{{-- Watermark institusional (tipis, hanya karakter). --}}
+		<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+			aria-hidden="true"></i>
+
+		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+			<div class="min-w-0 leading-tight">
+				@if ($isApprovalMode)
+					<span
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-700 ring-1 ring-inset ring-amber-600/15">
+						<i class="fa-solid fa-clipboard-check text-[9px]"></i> Menunggu Tindakan
+					</span>
+					<h1 class="text-xl font-bold tracking-tight text-slate-800">Persetujuan</h1>
+					<p class="mt-1 text-xs text-slate-500">Daftar SPPD yang menunggu persetujuan Anda</p>
+				@else
+					<span
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						<i class="fa-solid fa-filter text-[9px]"></i> {{ $activeFilterLabel }}
+					</span>
+					<h1 class="text-xl font-bold tracking-tight text-slate-800">Daftar SPPD</h1>
+					<p class="mt-1 text-xs text-slate-500">Kelola semua pengajuan perjalanan dinas secara real-time</p>
+				@endif
+			</div>
+			@if (!$isApprovalMode)
 			<div class="flex flex-col gap-2 md:flex-row md:items-center">
 				@if ($isSuperAdmin)
 					{{-- Super admin: semua jabatan via select-search --}}
@@ -143,15 +153,15 @@
 					</div>
 				@else
 					{{-- Tab jabatan dinamis sesuai jenis OPD user --}}
-					<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+					<div class="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded border border-slate-200">
 						<button wire:click="filterByJabatan('')"
-							class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+							class="px-3 py-1.5 text-xs font-semibold rounded transition-all duration-200 {{ $jabatan === '' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 							Semua Jabatan
 						</button>
 
 						@foreach ($jabatanTabs as $tab)
 							<button wire:click="filterByJabatan('{{ $tab }}')"
-								class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 {{ $jabatan === $tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
+								class="px-3 py-1.5 text-xs font-semibold rounded transition-all duration-200 {{ $jabatan === $tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50' }}">
 								{{ $jabatanLabels[$tab] ?? $tab }}
 							</button>
 						@endforeach
@@ -170,8 +180,10 @@
 		@endif
 	</div>
 
+	</div>
+
 	{{-- Bar Filter --}}
-	<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+	<div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<div class="flex-1">
 				<x-form.input
@@ -197,13 +209,13 @@
 						? $search !== ''
 						: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '')
 					<button type="button" wire:click="resetFilters"
-						class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+						class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 						<i class="fa-solid fa-rotate-left text-xs text-slate-500"></i>
 						Reset
 					</button>
 				@else
 					<button type="button" disabled
-						class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
+						class="inline-flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
 						<i class="fa-solid fa-rotate-left text-xs text-slate-300"></i>
 						Reset
 					</button>
@@ -215,7 +227,7 @@
 
 
 	{{-- Tabel Data --}}
-	<div class="table-wrapper">
+	<div class="dash-enter table-wrapper">
 		<table class="table">
 			<thead>
 				<tr>
@@ -374,7 +386,7 @@
 								<a
 									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}"
 									wire:navigate
-									class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
+									class="inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
 									<i class="fa-solid fa-eye text-[10px] text-slate-500"></i>
 									<span>Lihat</span>
 								</a>
@@ -383,7 +395,7 @@
 									<a
 										href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}"
 										wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
 										<i class="fa-solid fa-pen-to-square text-[10px] text-amber-600"></i>
 										<span>Edit Perbaikan</span>
 									</a>
@@ -392,7 +404,7 @@
 								@if (in_array($sppd->status->value, ['approved', 'completed']))
 									<a
 										href="{{ route('sppd.next', $sppd) }}" wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
 										<span>Selanjutnya</span>
 										<i class="fa-solid fa-arrow-right text-[10px]"></i>
 									</a>
@@ -403,7 +415,7 @@
 												type="button"
 												wire:click="startSppdLanjutan({{ $sppd->id }})"
 												wire:loading.attr="disabled"
-												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+												class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
 												<i class="fa-solid fa-plus text-[10px]" wire:loading.remove
 													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
 												<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading
@@ -420,7 +432,7 @@
 										type="button"
 										wire:click="confirmDelete({{ $sppd->id }})"
 										title="Hapus SPPD"
-										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
 										<i class="fa-solid fa-trash text-[10px]"></i>
 										<span>Hapus</span>
 									</button>
@@ -429,7 +441,7 @@
 										type="button"
 										wire:click="confirmDelete({{ $sppd->id }})"
 										title="Batalkan Pengajuan"
-										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
 										<i class="fa-solid fa-trash text-[10px]"></i>
 										<span>Batalkan</span>
 									</button>

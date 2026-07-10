@@ -319,12 +319,12 @@
   <x-ui.modal show="detailOpen" title="Detail Perubahan" icon="fa-solid fa-table-list text-primary-600"
     maxWidth="max-w-3xl" :closeable="true">
     <div class="mb-3 flex items-center gap-2">
-      <span class="inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium uppercase tracking-wide ring-1 ring-inset"
+      <span class="inline-flex items-center rounded px-2 py-1 text-[11px] font-medium uppercase tracking-wide ring-1 ring-inset"
         :class="detailBadgeClass" x-text="detailEvent"></span>
       <span class="text-[11px] font-semibold text-slate-500" x-text="detailId"></span>
     </div>
 
-    <div class="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">
+    <div class="max-h-[60vh] overflow-auto rounded border border-slate-200">
       <table class="w-full border-collapse text-left text-xs">
         <thead class="sticky top-0 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
           <tr>

@@ -51,8 +51,8 @@
         @endforeach
       </div>
       <div class="mt-3 flex items-center justify-center gap-4 text-[11px] text-slate-500">
-        <span class="flex items-center gap-1"><span class="inline-block size-2.5 rounded-sm bg-blue-400"></span> Masuk</span>
-        <span class="flex items-center gap-1"><span class="inline-block size-2.5 rounded-sm bg-emerald-400"></span> Selesai</span>
+        <span class="flex items-center gap-1"><span class="inline-block size-2.5 rounded bg-blue-400"></span> Masuk</span>
+        <span class="flex items-center gap-1"><span class="inline-block size-2.5 rounded bg-emerald-400"></span> Selesai</span>
       </div>
     </div>
 

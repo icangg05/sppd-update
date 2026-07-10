@@ -35,7 +35,7 @@
 						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-[10px]"></i>
 					</div>
 
-					<div class="relative overflow-hidden border border-slate-200 rounded-lg bg-white shadow-xs">
+					<div class="relative overflow-hidden border border-slate-200 rounded bg-white shadow-xs">
 						<div class="overflow-y-auto scrollbar-thin max-h-[420px]" id="personel-list-container">
 							<table class="w-full text-left border-collapse">
 								<thead>
@@ -109,7 +109,7 @@
 
 					@php $sppdSignature = $sppd->signatureFor('sppd'); @endphp
 
-					<div class="rounded-lg border border-slate-200 bg-slate-50 p-4"
+					<div class="rounded border border-slate-200 bg-slate-50 p-4"
 						@if ($sppdSignature) data-tte-signature-id="{{ $sppdSignature->id }}" @endif>
 						<div class="flex justify-between items-start">
 							<div>

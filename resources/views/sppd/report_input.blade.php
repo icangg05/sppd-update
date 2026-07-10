@@ -18,7 +18,7 @@
     </div>
 
     {{-- Alert / Info Box --}}
-    <div class="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
       <div class="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center gap-3">
         <div class="flex size-8 items-center justify-center rounded bg-emerald-100 text-emerald-600">
           <i class="fa-solid fa-user-tie text-sm"></i>
@@ -40,7 +40,7 @@
     <form action="{{ route('sppd.report.store', $sppd) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
       @csrf
       
-      <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div class="rounded border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 bg-slate-50 px-5 py-3">
           <h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
             <i class="fa-solid fa-file-pen text-emerald-600"></i> Detail Laporan
@@ -109,7 +109,7 @@
         </div>
         
         @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-3 rounded-b-lg">
+            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-3 rounded-b">
                 <x-ui.button type="submit" variant="success" class="px-6 py-2.5 font-bold shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
                     <i class="fa-solid fa-save"></i>
                     {{ $sppd->report ? 'Perbarui Laporan' : 'Simpan Laporan' }}

@@ -36,10 +36,10 @@
 }
 
 @theme {
-  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  /* Serif institusional untuk masthead/judul; mono untuk angka (rupiah). */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  /* Serif institusional untuk masthead/judul; Geist Mono untuk angka (rupiah). */
   --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 
   /* ─── Warna primary = BIRU LOGO SPPD (satu sumber kebenaran) ───
      Diturunkan dari warna logo: inti #1A76BA (cerulean) & highlight #3E9AD9
@@ -53,7 +53,7 @@
   --color-primary-400: #4aa6e1;
   --color-primary-500: #3a9ddf;
   --color-primary-600: #1e80c6;
-  --color-primary-700: #1a6ba6;
+  --color-primary-700: #337AB7;
   --color-primary-800: #175987;
   --color-primary-900: #143f5c;
   --color-accent-400: #4aa6e1;
@@ -69,16 +69,59 @@
 
 /* ─────────────────────────────────────────────────────────────────
    SKALA DESAIN (disepakati — terapkan konsisten via util Tailwind):
-   • Radius  : kontrol (button/input/select/textarea/checkbox) = rounded-lg
-               kartu/panel/modal/dropdown                       = rounded-xl
-               pill status & avatar                             = rounded-full
+   • Radius  : semua elemen (kontrol, kartu, panel, modal, dropdown) = rounded
+               pill status & avatar                                  = rounded-full
    • Shadow  : kartu = `border border-slate-200` + `shadow-sm`
    • Warna   : elemen interaktif selalu pakai `primary-*` (bukan `cyan-*`)
    ───────────────────────────────────────────────────────────────── */
 
 /* ───── Base ───── */
-html {
-  scroll-behavior: smooth;
+/* Smooth-scroll HANYA untuk interaksi pengguna (klik anchor), bukan saat
+   browser memulihkan posisi scroll ketika reload. `scroll-behavior: smooth`
+   di root membuat restorasi itu dianimasikan — halaman "meluncur turun
+   sedikit-sedikit" tiap reload (dan bisa akumulatif). Scoping ke
+   `html:focus-within` membiarkan restorasi awal berjalan instan. */
+@media (prefers-reduced-motion: no-preference) {
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Entrance halus untuk blok dashboard. Bertahap via nth-of-type, dan
+   dinonaktifkan penuh untuk pengguna yang minta kurangi-gerak.
+   PENTING: opacity saja, TANPA `transform`. `transform` pada elemen ini
+   akan membuatnya jadi containing-block bagi `position: fixed` di dalamnya
+   (mis. dropdown searchable-select) sehingga panel dropdown meleset —
+   apalagi saat Livewire re-render memicu ulang animasi. */
+@keyframes dashUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dash-enter {
+  animation: dashUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dash-enter:nth-of-type(2) {
+  animation-delay: 0.06s;
+}
+
+.dash-enter:nth-of-type(3) {
+  animation-delay: 0.12s;
+}
+
+.dash-enter:nth-of-type(4) {
+  animation-delay: 0.18s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-enter {
+    animation: none;
+  }
 }
 
 /* Angka (di app ini selalu font-mono: rupiah, kode rekening, persentase)
@@ -251,7 +294,7 @@ html {
 /* ───── Table (varian .data-table — dipakai 4 view) ───── */
 .table-container {
   background: var(--color-surface-card);
-  border-radius: 0.75rem;
+  border-radius: 0.25rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -294,7 +337,7 @@ html {
 /* ───── Table (.table — @layer components, dipakai 16 view) ───── */
 @layer components {
   .table-wrapper {
-    @apply overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply overflow-x-auto rounded border border-slate-200 bg-white shadow-sm;
   }
 
   .table {

@@ -10,7 +10,5 @@ pada halaman list telaah status ;perjalanan selesai dan masukan; dan 'belum real
 cloudflared tunnel --url http://localhost:8004
 ===================================================
 
-icang01 => nonaktif
-
-- ada masalah diserver production tidak ada notifikasi berhasil atau gagal verifikasi hp. tetapi status dimodal berjalan lancar
-- halaman create/edit pakai livewire agar mudah pengelolaan responsive. saat verifikasi berhasil otomatis form telepon disabled. dan muncul tombol ganti nomor
+command redesign pakai skills:
+/brandkit /high-end-visual-design /design-taste-frontend /redesign-existing-projects /impeccable /use-components redesign halaman sppd next

@@ -79,7 +79,7 @@
 
 		{{-- Alert Info --}}
 		<div
-			class="flex items-start gap-3 rounded-lg border border-primary-200 bg-primary-50 p-4 text-[11px] text-primary-800 shadow-xs">
+			class="flex items-start gap-3 rounded border border-primary-200 bg-primary-50 p-4 text-[11px] text-primary-800 shadow-xs">
 			<i class="fa-solid fa-circle-info mt-0.5 text-primary-600"></i>
 			<p>Pengaturan <strong>PPTK</strong> wajib dipilih sebelum Anda dapat mencetak dokumen Laporan Pengeluaran Rill.
 			</p>
@@ -87,7 +87,7 @@
 
 		{{-- Toolbar: Tanggal Cetak & Input Massal --}}
 		<div
-			class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+			class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded border border-slate-200 shadow-sm">
 			{{-- Kiri: Info jumlah + Pilih Tanggal Cetak --}}
 			<div class="flex flex-col sm:flex-row sm:items-center gap-4">
 				<div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
@@ -117,7 +117,7 @@
 		</div>
 
 		{{-- Table Section --}}
-		<div class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+		<div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
 			<table class="w-full text-left border-collapse text-xs">
 				<thead>
 					<tr class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -227,7 +227,7 @@
 		{{-- Modal Tambah --}}
 		<x-ui.modal show="showAddModal" title="Tambah Pengeluaran Riil" icon="fa-solid fa-plus text-emerald-600">
 			<div>
-				<p class="mb-4 text-xs font-semibold text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+				<p class="mb-4 text-xs font-semibold text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-100">
 					Pegawai: <span class="font-bold text-slate-800 uppercase" x-text="addUserName"></span>
 				</p>
 
@@ -319,7 +319,7 @@
 														<span x-text="selectedUserIds.length === allUsers.length ? 'Batal Pilih Semua' : 'Pilih Semua'"></span>
 													</button>
 												</div>
-												<div class="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+												<div class="max-h-48 overflow-y-auto border border-slate-200 rounded p-3 space-y-2 bg-slate-50/50">
 													<template x-for="user in allUsers" :key="user.id">
 														<label
 															class="flex items-center gap-2 cursor-pointer py-1 px-1.5 rounded hover:bg-slate-100 transition text-xs">

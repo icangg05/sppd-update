@@ -30,7 +30,7 @@
 		</div>
 
 		{{-- Judul & Status --}}
-		<div class="mb-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+		<div class="mb-6 flex flex-col gap-3 rounded border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
 			<div class="leading-tight">
 				<h1 class="text-lg font-bold text-slate-800">Detail Surat Perjalanan Dinas</h1>
 				<p class="mt-1 font-mono text-sm text-slate-500">
@@ -38,7 +38,7 @@
 					{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
 				</p>
 			</div>
-			<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+			<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
 				{{ $sppd->status->label() }}
 			</x-ui.badge>
 		</div>
@@ -46,7 +46,7 @@
 		<div class="space-y-6">
 
 			{{-- Informasi Perjalanan --}}
-			<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+			<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
 						<i class="fa-solid fa-address-card text-primary-600"></i> Informasi Perjalanan
@@ -75,7 +75,7 @@
 					<div>
 						<p class="mb-0.5 text-xs font-bold uppercase tracking-wider text-slate-500">Sifat Surat Dokumen</p>
 						<p class="text-sm font-semibold text-slate-800">
-							<span class="inline-block rounded-sm border px-2 py-0.5 text-xs font-bold uppercase tracking-wide
+							<span class="inline-block rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide
 								@if (strtolower($sppd->urgency) === 'segera') border-rose-100 bg-rose-50 text-rose-700
 								@else border-slate-200 bg-slate-50 text-slate-700 @endif">
 								{{ $sppd->urgency ?? 'Biasa' }}
@@ -128,7 +128,7 @@
 
 			{{-- Pembebanan Anggaran --}}
 			@if ($sppd->budget)
-				<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
 							<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Pembebanan Anggaran
@@ -153,7 +153,7 @@
 
 			{{-- Lokasi Tujuan --}}
 			@if ($sppd->destinations->count())
-				<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
 							<i class="fa-solid fa-map-location-dot text-primary-600"></i> Lokasi Tujuan
@@ -180,7 +180,7 @@
 
 			{{-- Daftar Pengikut --}}
 			@if ($sppd->followers->count())
-				<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
 							<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut

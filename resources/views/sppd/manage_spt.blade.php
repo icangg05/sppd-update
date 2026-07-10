@@ -53,7 +53,7 @@
 					@php $sptSignature = $sppd->signatureFor('spt'); @endphp
 
 					{{-- Status TTE --}}
-					<div class="rounded-lg border border-slate-200 bg-slate-50 p-4"
+					<div class="rounded border border-slate-200 bg-slate-50 p-4"
 						@if ($sptSignature) data-tte-signature-id="{{ $sptSignature->id }}" @endif>
 						<div class="flex justify-between items-start">
 							<div>

@@ -1,4 +1,4 @@
-<div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+<div class="rounded border border-slate-200 bg-white p-5 shadow-sm">
 	<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 		<div>
 			<p class="text-[10px] font-bold uppercase text-slate-500">Pejabat Pelaksana Teknis Kegiatan (PPTK)</p>
@@ -26,7 +26,7 @@
 					</button>
 
 					<div x-show="open" x-cloak x-transition.origin.top
-						class="absolute right-0 z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg md:w-72">
+						class="absolute right-0 z-20 mt-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg md:w-72">
 						<div class="border-b border-slate-100 p-2">
 							<div class="relative">
 								<i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-500"></i>

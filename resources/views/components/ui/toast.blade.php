@@ -30,7 +30,7 @@
 			:style="toast.dragging
 				? `transform: translateY(${toast.dragY}px); opacity: ${Math.max(0, 1 + toast.dragY / 80)}`
 				: (toast.springing ? 'transform: translateY(0); opacity: 1; transition: transform 0.2s ease, opacity 0.2s ease' : '')"
-			class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded-lg sm:rounded-xl border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5"
+			class="toast-card relative overflow-hidden pointer-events-auto w-full flex items-center gap-2.5 sm:gap-3 rounded sm:rounded border border-slate-200/80 bg-white px-3 py-2 sm:px-3.5 sm:py-3 shadow-lg shadow-slate-900/5 ring-1 ring-black/5"
 			style="touch-action: pan-x;">
 
 			<!-- Icon (lingkaran berisi) -->

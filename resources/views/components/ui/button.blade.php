@@ -9,7 +9,7 @@
 
 @php
 $variantClasses = [
-    'primary' => 'bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500',
+    'primary' => 'bg-primary-700 text-white hover:bg-primary-700 focus-visible:ring-primary-500',
     'secondary' => 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400',
     'success' => 'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500',
     'warning' => 'bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-400',
@@ -32,7 +32,7 @@ $sizeClass = $sizeClasses[$size] ?? $sizeClasses['md'];
 $wireTarget = $attributes->whereStartsWith('wire:target')->first();
 
 $resolvedClass = trim(
-    'group relative inline-flex items-center justify-center gap-2 rounded-lg font-medium shadow-2xs transition-colors '
+    'group relative inline-flex items-center justify-center gap-2 rounded font-medium shadow-2xs transition-colors '
     . 'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 '
     . 'disabled:cursor-not-allowed disabled:opacity-60 '
     . $sizeClass . ' ' . $variantClass . ' ' . $class

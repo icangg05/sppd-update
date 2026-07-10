@@ -16,7 +16,7 @@
 	</div>
 
 	{{-- Filters --}}
-	<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+	<div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col sm:flex-row gap-3">
 
 			{{-- Search Input with Icon --}}
@@ -25,7 +25,7 @@
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
-					class="block w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
+					class="block w-full rounded border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
 					placeholder="{{ $this->searchPlaceholder() }}">
 				<div wire:loading wire:target="search"
 					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
@@ -78,7 +78,7 @@
 			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== '' || $position_id !== '' || $rank_id !== '' || $role !== ''; @endphp
 			<div class="flex items-center gap-2">
 				<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
-					class="rounded-lg px-4 py-2 font-semibold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+					class="rounded px-4 py-2 font-semibold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
 					:disabled="!$hasActiveFilters">
 					<i class="fa-solid fa-rotate-right"></i> Reset
 				</x-ui.button>
@@ -120,7 +120,7 @@
 	</div>
 
 	{{-- Table --}}
-	<div class="rounded-xl border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
+	<div class="rounded border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
 		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-clip">
 			<table class="w-full text-left table-fixed">

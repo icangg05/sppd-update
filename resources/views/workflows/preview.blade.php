@@ -9,7 +9,7 @@
 			<p class="page-subtitle">Informasi tahapan persetujuan SPPD yang berlaku saat ini</p>
 		</div>
 		@if ($user->department)
-			<div class="px-4 py-2 bg-slate-100 rounded-lg border border-slate-200">
+			<div class="px-4 py-2 bg-slate-100 rounded border border-slate-200">
 				<span class="text-[10px] font-bold text-slate-500 block uppercase">Konteks Instansi Anda:</span>
 				<span class="text-sm font-bold text-slate-700">{{ $user->department->name }}</span>
 			</div>
@@ -102,7 +102,7 @@
 		</table>
 	</div>
 
-	<div class="mt-8 rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-sm">
+	<div class="mt-8 rounded border border-blue-100 bg-blue-50 p-6 shadow-sm">
 		<h3 class="text-lg font-bold text-blue-900 mb-2 flex items-center">
 			<svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

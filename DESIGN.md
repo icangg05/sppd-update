@@ -3,7 +3,7 @@ name: SPPD Kota Kendari
 description: Sistem digital pengelolaan Surat Perintah Perjalanan Dinas Pemerintah Kota Kendari — tepercaya, jernih, rapi.
 colors:
   primary: "#1e80c6"
-  primary-hover: "#1a6ba6"
+  primary-hover: "#337AB7"
   primary-strong: "#175987"
   accent: "#3a9ddf"
   accent-bright: "#4aa6e1"
@@ -122,7 +122,7 @@ Palet netral-dingin (slate) sebagai kerangka, dengan satu keluarga biru logo seb
 
 ### Primary
 - **Biru Aksi** (`#1e80c6`, primary-600): Warna aksi dan otoritas. Dipakai untuk tombol utama, latar item nav aktif, dan penanda status aktif. Inilah "di sinilah kamu bertindak".
-- **Biru Tekan** (`#1a6ba6`, primary-700): Keadaan hover tombol utama — satu langkah lebih dalam, memberi umpan balik taktil tanpa berubah warna.
+- **Biru Tekan** (`#337AB7`, primary-700): Keadaan hover tombol utama — satu langkah lebih dalam, memberi umpan balik taktil tanpa berubah warna.
 - **Biru Jangkar** (`#175987`, primary-800): Latar item navigasi yang sedang aktif di sidebar gelap; cukup pekat untuk menonjol di atas slate-900.
 - **Azure Kilau** (`#3a9ddf`, primary-500): Aksen sekunder untuk ikon aktif & sorotan kecil.
 - **Kabut Biru** (`#edf6fc`, primary-50): Latar tint sangat lembut untuk badge "sedang diproses" dan sorotan area terpilih.
@@ -181,7 +181,7 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 ### Buttons
 - **Shape:** Sudut lembut (`rounded-lg`, 0.5rem) di semua ukuran; bayangan mikro (`shadow-2xs`) sebagai pijakan halus.
 - **Primary:** Latar Biru Aksi (`#1e80c6`), teks putih, padding `0.5rem 1rem` (ukuran md). Untuk aksi utama tunggal per konteks.
-- **Hover / Focus:** Hover menggelapkan ke Biru Tekan (`#1a6ba6`) via `transition-colors`; fokus keyboard memunculkan cincin `ring-2 ring-primary-500` dengan offset. Saat aksi Livewire berjalan, spinner otomatis muncul dan tombol dinonaktifkan.
+- **Hover / Focus:** Hover menggelapkan ke Biru Tekan (`#337AB7`) via `transition-colors`; fokus keyboard memunculkan cincin `ring-2 ring-primary-500` dengan offset. Saat aksi Livewire berjalan, spinner otomatis muncul dan tombol dinonaktifkan.
 - **Secondary:** Batas slate + latar putih + teks Tinta Kedua; untuk aksi sekunder.
 - **Danger / Success / Warning:** Memakai warna semantik solid + putih; disimpan untuk aksi yang benar-benar destruktif/afirmatif.
 - **Ghost:** Tanpa latar, teks Redup → menggelap saat hover; untuk aksi tersier & ikon.

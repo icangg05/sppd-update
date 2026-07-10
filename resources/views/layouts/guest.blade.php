@@ -9,13 +9,15 @@
 	<title>{{ config('app.name') }}</title>
 	<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">
+	<link rel="preconnect" href="https://fonts.bunny.net">
+	<link href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|geist-mono:400,500,600" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 	@livewireStyles
 </head>
 
-<body class="font-sans text-slate-900" style="font-family: 'Poppins', sans-serif;">
+<body class="font-sans text-slate-900" style="font-family: 'Geist', sans-serif;">
 
 	{{-- Notifikasi Toast global (mis. setelah logout) --}}
 	<x-ui.toast />
@@ -37,7 +39,7 @@
 
 		<!-- Card login -->
 		<div
-			class="max-w-6xl grid w-full overflow-hidden rounded-[30px] border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
+			class="max-w-6xl grid w-full overflow-hidden rounded border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
 			<div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9">
 				<div
 					class="inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
@@ -46,16 +48,16 @@
 				</div>
 
 				<div
-					class="animate-[fadeUp_0.9s_ease] overflow-hidden rounded-3xl border border-sky-100/25 bg-sky-100/10 p-2 shadow-[0_18px_40px_rgba(14,165,233,0.16)]">
+					class="animate-[fadeUp_0.9s_ease] overflow-hidden rounded border border-sky-100/25 bg-sky-100/10 p-2 shadow-[0_18px_40px_rgba(14,165,233,0.16)]">
 					<img src="{{ asset('img/walikota-dan-wakil.webp') }}" alt="Foto Kepala Daerah dan Wakil"
-						class="h-full w-[70%] mx-auto rounded-2xl object-cover opacity-95">
+						class="h-full w-[70%] mx-auto rounded object-cover opacity-95">
 				</div>
 
 				<div class="flex flex-row items-center gap-3 px-1">
 					<img src="{{ asset('img/logo-kendari.png') }}" alt="Logo Pemkot Kendari"
-						class="h-20 rounded-2xl border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14">
+						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14">
 					<img src="{{ asset('img/logo-bsre.png') }}" alt="Logo BSrE"
-						class="h-20 rounded-2xl border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
+						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
 				</div>
 
 				<div class="space-y-1 px-1">
@@ -83,7 +85,7 @@
 				</div>
 
 				<div
-					class="mt-6 rounded-3xl border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
+					class="mt-6 rounded border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
 					{{ $slot }}
 				</div>
 

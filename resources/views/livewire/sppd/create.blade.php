@@ -1,15 +1,26 @@
 <div class="flex flex-col gap-4 p-1">
 
 	{{-- Header Halaman --}}
-	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-		<div class="leading-tight">
-			<h1 class="text-lg font-bold text-slate-800">Buat SPPD Baru</h1>
-			<p class="text-xs text-slate-500 mt-0.5">Tahap 1: Pilih Pelaksana & Validasi Alur Pengajuan</p>
+	<div
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		{{-- Watermark institusional (tipis, hanya karakter). --}}
+		<i class="fa-solid fa-file-pen pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+			aria-hidden="true"></i>
+
+		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+			<div class="min-w-0 leading-tight">
+				<span
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<i class="fa-solid fa-list-ol text-[9px]"></i> Langkah 1 dari 2
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-slate-800">Buat SPPD Baru</h1>
+				<p class="mt-1 text-xs text-slate-500">Pilih pelaksana & validasi alur pengajuan.</p>
+			</div>
+			<x-ui.button variant="secondary" href="{{ route('sppd.index') }}">
+				<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+				Kembali
+			</x-ui.button>
 		</div>
-		<a href="{{ route('sppd.index') }}" wire:navigate
-			class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-			<i class="fa-solid fa-arrow-left"></i> Kembali
-		</a>
 	</div>
 
 	{{-- Formulir Utama Tahap 1 --}}
@@ -19,7 +30,7 @@
 			{{-- Sub Header Card --}}
 			<div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/75 px-5 py-3.5">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-2">
-					<i class="fa-solid fa-paste text-primary-600"></i>
+					<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-paste text-[11px]"></i></span>
 					Tahap 1: Pelaksana & Estimasi Alur
 				</h3>
 				<span
@@ -112,7 +123,7 @@
 							x-transition:leave-start="opacity-100 scale-100"
 							x-transition:leave-end="opacity-0 scale-95"
 							:style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
-							class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
+							class="overflow-hidden rounded border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
 							<div class="border-b border-slate-100 p-2">
 								<div class="relative">
 									<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
@@ -170,15 +181,15 @@
 						</h4>
 						<div>
 							@if ($isComplete)
-								<span class="inline-flex items-center gap-1 rounded-sm bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-emerald-700">
+								<span class="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-emerald-700">
 									<i class="fa-solid fa-circle-check text-xs"></i> Lengkap
 								</span>
 							@elseif ($errorMessage !== '')
-								<span class="inline-block rounded-sm bg-red-50 border border-red-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-red-700">
+								<span class="inline-block rounded bg-red-50 border border-red-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-red-700">
 									Tidak Lengkap
 								</span>
 							@else
-								<span class="inline-block rounded-sm bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-slate-700 animate-pulse">
+								<span class="inline-block rounded bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-bold tracking-wide uppercase text-slate-700 animate-pulse">
 									Memeriksa...
 								</span>
 							@endif
@@ -245,11 +256,10 @@
 
 					{{-- Tombol Lanjutkan --}}
 					<div class="mt-6 pt-4 border-t border-slate-200 flex justify-center">
-						<button type="submit" @disabled(!$isComplete)
-							class="inline-flex items-center gap-2 rounded bg-primary-600 px-12 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none">
-							<span>Lanjut Isi Detail SPPD</span>
-							<i class="fa-solid fa-arrow-right text-xs"></i>
-						</button>
+						<x-ui.button variant="primary" type="submit" :disabled="!$isComplete" class="px-8">
+							Lanjut Isi Detail SPPD
+							<i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+						</x-ui.button>
 					</div>
 				</div>
 			@endif

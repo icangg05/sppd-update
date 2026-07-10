@@ -49,10 +49,10 @@
     x-transition:leave-end="opacity-0 translate-y-2 sm:-translate-y-2 sm:scale-95"
     class="fixed inset-0 z-50 flex flex-col bg-white text-slate-800
            sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-3 sm:h-auto sm:max-h-[85vh] sm:w-96
-           sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10 sm:ring-1 sm:ring-black/5">
+           sm:rounded sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10 sm:ring-1 sm:ring-black/5">
 
     {{-- Header panel --}}
-    <div class="flex items-center justify-between gap-3 bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3.5 text-white sm:rounded-t-2xl">
+    <div class="flex items-center justify-between gap-3 bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3.5 text-white sm:rounded-t">
       <div class="leading-tight">
         <p class="flex items-center gap-2 text-sm font-bold">
           <i class="fa-solid fa-bullhorn text-primary-100"></i> Pembaruan Sistem
@@ -82,7 +82,7 @@
           <div class="relative bg-gradient-to-br from-emerald-50 to-white px-4 py-4 ring-1 ring-inset ring-emerald-100">
             <span class="absolute left-0 top-0 h-full w-1 bg-emerald-500"></span>
             <div class="flex gap-3">
-              <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-lg text-white shadow-sm shadow-emerald-500/30">
+              <div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-500 text-lg text-white shadow-sm shadow-emerald-500/30">
                 <i class="{{ $item['icon'] ?? 'fa-brands fa-whatsapp' }}"></i>
               </div>
               <div class="min-w-0 flex-1">
@@ -98,7 +98,7 @@
 
                 @if (!empty($item['guide']))
                   <a href="{{ route($item['guide']) }}" wire:navigate @click="open = false"
-                    class="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                    class="mt-2.5 inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
                     <i class="fa-solid fa-book-open text-[11px]"></i> Buka Panduan WhatsApp
                   </a>
                 @endif
@@ -112,7 +112,7 @@
         @else
           {{-- Item biasa --}}
           <div class="flex gap-3 px-4 py-3 transition-colors hover:bg-slate-50">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-xl {{ $chip }}">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded {{ $chip }}">
               <i class="{{ $item['icon'] ?? 'fa-solid fa-star' }} text-sm"></i>
             </div>
             <div class="min-w-0 flex-1">
@@ -133,7 +133,7 @@
     </div>
 
     {{-- Footer --}}
-    <div class="border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center sm:rounded-b-2xl">
+    <div class="border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center sm:rounded-b">
       <span class="text-[11px] text-slate-500">Sistem Perjalanan Dinas — Kota Kendari</span>
     </div>
   </div>

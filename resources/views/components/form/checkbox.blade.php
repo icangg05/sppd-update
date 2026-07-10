@@ -20,7 +20,7 @@ $id = $id ?? ($name && str_contains($name, '[')
 @endphp
 
 <div class="{{ $wrapperClass }}">
-    <label for="{{ $id }}" class="inline-flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
+    <label for="{{ $id }}" class="inline-flex items-start gap-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
         <input
             type="checkbox"
             @if ($name) name="{{ $name }}" @endif

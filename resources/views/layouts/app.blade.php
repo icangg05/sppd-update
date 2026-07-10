@@ -13,7 +13,7 @@
 	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">
 
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|geist-mono:400,500,600" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -24,7 +24,7 @@
 	@livewireStyles
 </head>
 
-<body class="h-full text-slate-900 antialiased bg-slate-50">
+<body class="h-full text-slate-900 antialiased bg-slate-100">
 
 	{{-- Sidebar Component --}}
 	@include('components.sidebar')
@@ -51,11 +51,21 @@
 			@yield('content')
 		</main>
 
-		{{-- Footer dengan Font Sedang & Blur Tipis --}}
-		<footer
-			class="border-t border-slate-200 bg-white/80 px-6 py-4 text-center text-xs font-normal text-slate-500 backdrop-blur-sm">
-			&copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} — Sistem Perjalanan Dinas
-			v{{ config('app.sppd_version') }}
+		{{-- Footer institusional: atribusi di kiri, versi di kanan --}}
+		<footer class="border-t border-slate-200 bg-white/80 backdrop-blur-sm">
+			<div
+				class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-slate-500 sm:flex-row">
+				<div class="flex items-center gap-2">
+					<img src="{{ asset('img/logo-sppd.png') }}" alt="Logo SPPD Kota Kendari" class="size-4 opacity-80">
+					<span>&copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} &mdash; Sistem Perjalanan Dinas Elektronik</span>
+				</div>
+				<div class="flex items-center gap-2.5">
+					<span class="hidden text-slate-400 sm:inline">Diskominfo Kota Kendari</span>
+					<span class="hidden text-slate-300 sm:inline">&bull;</span>
+					<span
+						class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-500">v{{ config('app.sppd_version') }}</span>
+				</div>
+			</div>
 		</footer>
 	</div>
 

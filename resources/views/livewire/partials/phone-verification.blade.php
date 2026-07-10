@@ -18,12 +18,12 @@
 		{{-- Template pesan --}}
 		<div>
 			<p class="text-xs font-semibold text-slate-600 mb-1.5">Pesan Verifikasi:</p>
-			<div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">{{ $verificationTemplate }}</div>
+			<div class="rounded border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-mono">{{ $verificationTemplate }}</div>
 		</div>
 
 		{{-- Status Polling: 3 states --}}
 		<div
-			class="rounded-lg p-3 text-center text-xs font-medium border
+			class="rounded p-3 text-center text-xs font-medium border
 			{{ $isVerified ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : '' }}
 			{{ $isFailed ? 'bg-red-50 text-red-800 border-red-200' : '' }}
 			{{ !$isVerified && !$isFailed && !$isTimedOut ? 'bg-amber-50 text-amber-800 border-amber-200' : '' }}
@@ -71,14 +71,14 @@
 
 	<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
 		<button type="button" wire:click="closeVerifyModal"
-			class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+			class="flex-1 rounded border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
 			Tutup
 		</button>
 
 		{{-- Kirim via WhatsApp (pending) --}}
 		@if (!$isVerified && !$isFailed && !$isTimedOut)
 			<a href="{{ $deeplinkUrl }}" target="_blank" rel="noopener"
-				class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-green-700 whitespace-nowrap">
+				class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-green-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-green-700 whitespace-nowrap">
 				<i class="fa-brands fa-whatsapp shrink-0"></i>
 				<span>Kirim via WhatsApp</span>
 			</a>
@@ -87,7 +87,7 @@
 		{{-- Terverifikasi --}}
 		@if ($isVerified)
 			<button type="button" disabled
-				class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-xs font-bold text-white shadow cursor-not-allowed whitespace-nowrap">
+				class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-emerald-600 py-2.5 text-xs font-bold text-white shadow cursor-not-allowed whitespace-nowrap">
 				<i class="fa-solid fa-circle-check text-sm shrink-0"></i>
 				<span>Terverifikasi</span>
 			</button>
@@ -96,7 +96,7 @@
 		{{-- Coba Lagi (failed / timed out) --}}
 		@if ($isFailed || $isTimedOut)
 			<button type="button" wire:click="retryVerification"
-				class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600 whitespace-nowrap">
+				class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600 whitespace-nowrap">
 				<i class="fa-solid fa-rotate-right text-sm shrink-0"></i>
 				<span>Coba Lagi</span>
 			</button>
@@ -113,11 +113,11 @@
 
 	<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
 		<button type="button" wire:click="closeTestConfirm" wire:loading.attr="disabled" wire:target="sendTestMessage"
-			class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
+			class="flex-1 rounded border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
 			Batal
 		</button>
 		<button type="button" wire:click="sendTestMessage" wire:loading.attr="disabled" wire:target="sendTestMessage"
-			class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-primary-700 disabled:opacity-50">
+			class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-primary-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-primary-700 disabled:opacity-50">
 			<span wire:loading.remove wire:target="sendTestMessage" class="inline-flex items-center gap-2">
 				<i class="fa-solid fa-paper-plane"></i> Ya, Kirim
 			</span>
@@ -142,11 +142,11 @@
 
 	<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
 		<button type="button" @click="showResetModal = false"
-			class="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+			class="flex-1 rounded border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
 			Batal
 		</button>
 		<button type="button" wire:click="resetPhoneVerification" @click="showResetModal = false"
-			class="flex-1 rounded-lg bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600">
+			class="flex-1 rounded bg-amber-500 py-2.5 text-xs font-bold text-white shadow transition hover:bg-amber-600">
 			Ya, Ganti Nomor
 		</button>
 	</x-slot>

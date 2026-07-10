@@ -13,7 +13,7 @@
 
   @if ($mode === 'upload')
     {{-- ══ Mode unggah: kirim PDF ke BSrE ══ --}}
-    <form wire:submit="verifyUpload" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <form wire:submit="verifyUpload" class="rounded border border-slate-200 bg-white p-4 shadow-sm">
       <label for="verify-file" class="mb-1.5 block text-sm font-semibold text-slate-700">
         Unggah dokumen PDF ber-TTE
       </label>
@@ -56,7 +56,7 @@
         {{-- Pratinjau dokumen — langsung tampil saat berkas dipilih.
              Disembunyikan di mobile (iframe PDF kurang berguna di layar kecil),
              tampil mulai breakpoint lg sesuai grid 2 kolom. --}}
-        <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
+        <div class="hidden overflow-hidden rounded border border-slate-200 bg-white shadow-sm lg:block">
           <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-600">
             <i class="fa-regular fa-file-pdf text-rose-500"></i> Pratinjau Dokumen
           </div>
@@ -68,7 +68,7 @@
           @if ($checked && $bsreResult)
             @include('livewire.partials.bsre-result', ['result' => $bsreResult])
           @else
-            <div class="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+            <div class="flex h-full flex-col items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
               <i class="fa-solid fa-shield-halved mb-3 text-3xl text-slate-300"></i>
               <p class="text-sm font-medium text-slate-500">Berkas siap diverifikasi</p>
               <p class="mt-1 text-xs text-slate-500">Klik <span class="font-semibold">Verifikasi ke BSrE</span> untuk melihat hasil pemeriksaan keasliannya.</p>
@@ -81,7 +81,7 @@
   @else
     {{-- ══ Mode target QR: cek catatan internal ══ --}}
     @if (! $valid)
-      <div class="overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-sm">
+      <div class="overflow-hidden rounded border border-rose-200 bg-white shadow-sm">
         <div class="flex flex-col items-center gap-3 bg-rose-50 px-6 py-8 text-center">
           <div class="flex size-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
             <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -93,7 +93,7 @@
         </div>
       </div>
     @else
-      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
         {{-- Header status keabsahan --}}
         <div class="flex flex-col items-center gap-3 px-6 py-8 text-center {{ $this->isSigned ? 'bg-emerald-50' : 'bg-amber-50' }}">
           <div class="flex size-14 items-center justify-center rounded-full {{ $this->isSigned ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600' }}">
@@ -154,7 +154,7 @@
 
         {{-- Blok tanda tangan elektronik --}}
         @if ($this->isSigned && $signature)
-          <div class="mx-6 mb-6 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+          <div class="mx-6 mb-6 rounded border border-emerald-100 bg-emerald-50/60 p-4">
             <p class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-600">
               <i class="fa-solid fa-pen-nib"></i> Tanda Tangan Elektronik
             </p>
@@ -178,7 +178,7 @@
             </dl>
           </div>
         @else
-          <div class="mx-6 mb-6 rounded-xl border border-amber-100 bg-amber-50/60 p-4 text-sm text-amber-700">
+          <div class="mx-6 mb-6 rounded border border-amber-100 bg-amber-50/60 p-4 text-sm text-amber-700">
             <i class="fa-solid fa-circle-info mr-1"></i>
             Status tanda tangan saat ini:
             <span class="font-semibold">{{ $signature?->status?->label() ?? 'Belum diproses' }}</span>.
@@ -187,7 +187,7 @@
 
         {{-- Verifikasi kriptografis langsung ke BSrE atas berkas tersimpan --}}
         @if ($this->canVerifyBsre)
-          <div class="mx-6 mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="mx-6 mb-6 rounded border border-slate-200 bg-slate-50 p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-600">

@@ -1,45 +1,37 @@
 {{-- Dashboard: Admin / Operasional (super_admin, admin_opd) --}}
 
 {{-- KPI Cards --}}
-<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+<div class="dash-enter grid grid-cols-2 gap-4 lg:grid-cols-4">
   @php
     $kpis = [
-      ['label' => 'Total SPPD', 'value' => $stats['total'], 'icon' => 'fa-file-lines', 'tone' => 'bg-blue-50 text-blue-600'],
-      ['label' => 'Dalam Proses', 'value' => $stats['in_progress'], 'icon' => 'fa-hourglass-half', 'tone' => 'bg-amber-50 text-amber-600'],
-      ['label' => 'Selesai', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'bg-emerald-50 text-emerald-600'],
-      ['label' => 'Ditolak', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'bg-rose-50 text-rose-600'],
+      ['label' => 'Total SPPD', 'value' => $stats['total'], 'icon' => 'fa-file-lines', 'tone' => 'blue'],
+      ['label' => 'Dalam Proses', 'value' => $stats['in_progress'], 'icon' => 'fa-hourglass-half', 'tone' => 'amber'],
+      ['label' => 'Selesai', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'emerald'],
+      ['label' => 'Ditolak', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'rose'],
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div class="flex size-10 items-center justify-center rounded-lg {{ $kpi['tone'] }}">
-        <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
-      </div>
-      <div>
-        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ $kpi['label'] }}</p>
-        <p class="text-4xl font-bold leading-none tracking-tight tabular-nums text-slate-800">{{ $kpi['value'] }}</p>
-      </div>
-    </div>
+    <x-dashboard.stat-card :label="$kpi['label']" :value="$kpi['value']" :icon="$kpi['icon']" :tone="$kpi['tone']" />
   @endforeach
 </div>
 
 {{-- Charts: Trend + Distribusi Status --}}
 <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <div>
         <h3 class="text-sm font-bold text-slate-800">Tren Pengajuan SPPD</h3>
         <p class="mt-0.5 text-xs text-slate-500">Masuk vs selesai 12 bulan terakhir</p>
       </div>
       <div class="flex gap-4 text-xs font-medium text-slate-600">
-        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded-sm bg-blue-500"></span> Masuk</div>
-        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded-sm bg-emerald-500"></span> Selesai</div>
+        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-blue-500"></span> Masuk</div>
+        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-emerald-500"></span> Selesai</div>
       </div>
     </div>
     <div class="relative h-60 w-full p-4"><canvas id="trendChart"></canvas></div>
   </div>
 
-  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="text-sm font-bold text-slate-800">Distribusi Status</h3>
       <p class="mt-0.5 text-xs text-slate-500">Sebaran status SPPD (lingkup Anda)</p>
@@ -50,7 +42,7 @@
         @if ($item['count'] > 0)
           <div class="flex items-center justify-between text-xs">
             <div class="flex items-center gap-2.5">
-              <span class="size-3 rounded-sm" style="background: {{ $item['color'] }};"></span>
+              <span class="size-3 rounded" style="background: {{ $item['color'] }};"></span>
               <span class="text-slate-600">{{ $item['label'] }}</span>
             </div>
             <span class="font-bold text-slate-800">{{ $item['count'] }}</span>
@@ -64,7 +56,7 @@
 {{-- Pemakaian anggaran per OPD (super_admin) + SPPD terbaru --}}
 <div class="grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
   @if ($topByUsage->count() > 1)
-    <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
         <h3 class="text-sm font-bold text-slate-800">Pemakaian Anggaran per OPD</h3>
         <p class="mt-0.5 text-xs text-slate-500">6 OPD dengan persentase realisasi tertinggi</p>
@@ -91,7 +83,7 @@
 
 {{-- Antrean persetujuan (bila admin juga approver) --}}
 @if ($pendingApprovals->isNotEmpty())
-  <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+  <div class="rounded border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
@@ -115,7 +107,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       Chart.defaults.font.size = 12;
-      Chart.defaults.font.family = "'Poppins', ui-sans-serif, system-ui, sans-serif";
+      Chart.defaults.font.family = "'Geist', ui-sans-serif, system-ui, sans-serif";
       Chart.defaults.color = '#64748b';
 
       // Hormati preferensi kurangi-gerak: matikan animasi chart.

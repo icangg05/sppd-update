@@ -64,21 +64,21 @@
   {{-- Info database --}}
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
     <div class="table-container flex items-center gap-3 p-4">
-      <div class="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600"><i class="fa-solid fa-database"></i></div>
+      <div class="flex size-10 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-database"></i></div>
       <div class="min-w-0">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Database</p>
         <p class="truncate text-sm font-bold text-slate-800" title="{{ $database }}">{{ $database }}</p>
       </div>
     </div>
     <div class="table-container flex items-center gap-3 p-4">
-      <div class="flex size-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><i class="fa-solid fa-table-list"></i></div>
+      <div class="flex size-10 items-center justify-center rounded bg-violet-50 text-violet-600"><i class="fa-solid fa-table-list"></i></div>
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Jumlah Tabel</p>
         <p class="text-sm font-bold text-slate-800">{{ $tableCount }} tabel</p>
       </div>
     </div>
     <div class="table-container flex items-center gap-3 p-4">
-      <div class="flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><i class="fa-solid fa-weight-hanging"></i></div>
+      <div class="flex size-10 items-center justify-center rounded bg-amber-50 text-amber-600"><i class="fa-solid fa-weight-hanging"></i></div>
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ukuran Data</p>
         <p class="text-sm font-bold text-slate-800">{{ $sizeMb }} MB</p>
@@ -87,7 +87,7 @@
   </div>
 
   {{-- Catatan --}}
-  <div class="flex items-start gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+  <div class="flex items-start gap-3 rounded border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
     <i class="fa-solid fa-robot mt-0.5 shrink-0"></i>
     @php
       $backupDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -103,7 +103,7 @@
   </div>
 
   {{-- Catatan restore --}}
-  <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+  <div class="flex items-start gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
     <i class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
     <p>
       File berformat <strong>.sql.gz</strong> (SQL terkompresi). Simpan di tempat aman.
@@ -170,7 +170,7 @@
     <div class="space-y-3 text-sm text-slate-600">
       <p>Anda akan membuat backup database <strong>minggu ini</strong>. Jika backup minggu ini sudah ada,
         file tersebut akan <strong>ditimpa</strong>.</p>
-      <div class="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+      <div class="flex items-start gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
         <i class="fa-regular fa-clock mt-0.5"></i>
         <span>Demi keamanan, tombol konfirmasi aktif setelah <strong>10 detik</strong>.</span>
       </div>
@@ -178,7 +178,7 @@
 
     <x-slot name="footer" class="flex items-center justify-end gap-3 bg-slate-50">
       <button type="button" x-on:click="closeConfirm()"
-        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+        class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
         Batal
       </button>
 
@@ -187,7 +187,7 @@
         wire:click="createBackup"
         x-on:click="closeConfirm()"
         x-bind:disabled="countdown > 0"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
+        class="inline-flex items-center justify-center gap-2 rounded bg-primary-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
         <template x-if="countdown > 0">
           <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="countdown"></span>s</span>
         </template>
@@ -216,8 +216,8 @@
     description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-red-600" maxWidth="max-w-md">
     <div class="space-y-3 text-sm text-slate-600">
       <p>File backup berikut akan <strong>dihapus permanen</strong>:</p>
-      <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 break-all" x-text="deleteTarget"></div>
-      <div class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+      <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 break-all" x-text="deleteTarget"></div>
+      <div class="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
         <i class="fa-regular fa-clock mt-0.5"></i>
         <span>Demi keamanan, tombol hapus aktif setelah <strong>10 detik</strong>.</span>
       </div>
@@ -225,7 +225,7 @@
 
     <x-slot name="footer" class="flex items-center justify-end gap-3 bg-slate-50">
       <button type="button" x-on:click="closeDelete()"
-        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+        class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
         Batal
       </button>
 
@@ -233,7 +233,7 @@
       <button type="button"
         x-on:click="$wire.deleteBackup(deleteTarget); closeDelete()"
         x-bind:disabled="deleteCountdown > 0"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+        class="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
         <template x-if="deleteCountdown > 0">
           <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="deleteCountdown"></span>s</span>
         </template>

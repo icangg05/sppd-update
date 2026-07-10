@@ -10,8 +10,8 @@
     <!-- Quick Stats Bar -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         <!-- Stat Card 1 -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
+            <div class="flex h-12 w-12 items-center justify-center rounded bg-sky-50 text-sky-600">
                 <i class="fa-solid fa-calendar-days text-xl"></i>
             </div>
             <div>
@@ -21,8 +21,8 @@
         </div>
 
         <!-- Stat Card 2 -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
+            <div class="flex h-12 w-12 items-center justify-center rounded bg-emerald-50 text-emerald-600">
                 <i class="fa-solid fa-plane-departure text-xl"></i>
             </div>
             <div>
@@ -32,8 +32,8 @@
         </div>
 
         <!-- Stat Card 3 (Legend & Info) -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200 md:col-span-2 lg:col-span-1">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
+        <div class="flex items-center gap-4 p-5 rounded border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200 md:col-span-2 lg:col-span-1">
+            <div class="flex h-12 w-12 items-center justify-center rounded bg-slate-50 text-slate-600">
                 <i class="fa-solid fa-info text-xl"></i>
             </div>
             <div class="flex-1">
@@ -56,7 +56,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         <!-- Left: Calendar Area -->
-        <div class="lg:col-span-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="lg:col-span-8 rounded border border-slate-200 bg-white p-6 shadow-sm">
             <div id="calendar" wire:ignore class="min-h-[600px] text-slate-800"></div>
         </div>
 
@@ -64,7 +64,7 @@
         <div class="lg:col-span-4 flex flex-col gap-6">
             
             <!-- Upcoming Travels Card -->
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="rounded border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="font-extrabold text-slate-900 flex items-center gap-2">
                         <i class="fa-solid fa-compass text-sky-500"></i>
@@ -78,7 +78,7 @@
                         @forelse($upcomingSppds as $sppd)
                             <li class="py-4">
                                 <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0 text-center bg-slate-50 border border-slate-200 rounded-lg p-2 min-w-[3.5rem] shadow-sm">
+                                    <div class="flex-shrink-0 text-center bg-slate-50 border border-slate-200 rounded p-2 min-w-[3.5rem] shadow-sm">
                                         <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
                                             {{ $sppd->start_date->format('M') }}
                                         </p>
@@ -123,7 +123,7 @@
             </div>
 
             <!-- Calendar Quick Info -->
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <div class="rounded border border-slate-200 bg-slate-50 p-5">
                 <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3">Panduan Interaksi</h4>
                 <ul class="text-xs text-slate-600 space-y-2.5 font-medium">
                     <li class="flex items-start gap-2">

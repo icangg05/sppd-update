@@ -1,31 +1,23 @@
 {{-- Dashboard: Pimpinan / Approver --}}
 
 {{-- KPI ringkas --}}
-<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+<div class="dash-enter grid grid-cols-2 gap-4 lg:grid-cols-4">
   @php
     $kpis = [
-      ['label' => 'Menunggu Persetujuan', 'value' => $pendingApprovals->count(), 'icon' => 'fa-clipboard-check', 'tone' => 'bg-amber-50 text-amber-600'],
-      ['label' => 'Menunggu TTE', 'value' => $pendingSignatures->count(), 'icon' => 'fa-signature', 'tone' => 'bg-violet-50 text-violet-600'],
-      ['label' => 'Selesai (lingkup)', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'bg-emerald-50 text-emerald-600'],
-      ['label' => 'Ditolak (lingkup)', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'bg-rose-50 text-rose-600'],
+      ['label' => 'Menunggu Persetujuan', 'value' => $pendingApprovals->count(), 'icon' => 'fa-clipboard-check', 'tone' => 'amber'],
+      ['label' => 'Menunggu TTE', 'value' => $pendingSignatures->count(), 'icon' => 'fa-signature', 'tone' => 'violet'],
+      ['label' => 'Selesai (lingkup)', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'emerald'],
+      ['label' => 'Ditolak (lingkup)', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'rose'],
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div class="flex size-10 items-center justify-center rounded-lg {{ $kpi['tone'] }}">
-        <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
-      </div>
-      <div>
-        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ $kpi['label'] }}</p>
-        <p class="text-4xl font-bold leading-none tracking-tight tabular-nums text-slate-800">{{ $kpi['value'] }}</p>
-      </div>
-    </div>
+    <x-dashboard.stat-card :label="$kpi['label']" :value="$kpi['value']" :icon="$kpi['icon']" :tone="$kpi['tone']" />
   @endforeach
 </div>
 
 <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
   {{-- Antrean Persetujuan (tugas utama approver — diberi bobot 2/3 lebar) --}}
-  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
@@ -39,7 +31,7 @@
     <div class="flex max-h-112 flex-col divide-y divide-slate-100 overflow-y-auto">
       @forelse ($pendingApprovals as $appr)
         @php $sppd = $appr->sppdRequest; @endphp
-        <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-slate-50">
+        <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-slate-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
           <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ $sppd->purpose }}</p>
           <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $sppd->user->name ?? '-' }}</span>
@@ -62,7 +54,7 @@
   <div class="flex flex-col gap-5">
     {{-- Antrean Tanda Tangan (jika bisa sign) --}}
     @if ($pendingSignatures->isNotEmpty())
-      <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 p-4">
           <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
             <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
@@ -84,7 +76,7 @@
     @endif
 
     {{-- Keputusan terakhir --}}
-    <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
         <h3 class="text-sm font-bold text-slate-800">Keputusan Terakhir Anda</h3>
       </div>

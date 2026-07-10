@@ -15,7 +15,7 @@
 
 	{{-- Peringatan kesalahan --}}
 	@if ($errors->any())
-		<div class="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm shadow-sm" role="alert">
+		<div class="flex gap-3 rounded border border-red-200 bg-red-50 p-3.5 text-sm shadow-sm" role="alert">
 			<svg class="mt-0.5 h-5 w-5 shrink-0 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
 				stroke-width="2" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round"
@@ -37,7 +37,7 @@
 
 	{{-- Banner penguncian dengan hitung mundur yang terlihat --}}
 	<div x-show="remaining > 0" x-cloak
-		class="mt-3 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="status">
+		class="mt-3 flex items-center gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="status">
 		<svg class="h-5 w-5 shrink-0 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
 			stroke-width="2" stroke="currentColor">
 			<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -58,7 +58,7 @@
 				required
 				autofocus
 				autocomplete="username"
-				class="mt-2 w-full rounded-2xl border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
+				class="mt-2 w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
 				placeholder="Masukkan username">
 		</div>
 
@@ -70,7 +70,7 @@
 				id="password"
 				required
 				autocomplete="current-password"
-				class="mt-2 w-full rounded-2xl border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
+				class="mt-2 w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
 				placeholder="Masukkan password">
 		</div>
 
@@ -85,7 +85,7 @@
 			:disabled="remaining > 0"
 			wire:loading.attr="disabled"
 			wire:target="login"
-			class="w-full rounded-2xl bg-sky-300 px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
+			class="w-full rounded bg-sky-300 px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
 			<span wire:loading.remove wire:target="login">Login</span>
 			<span wire:loading wire:target="login" x-cloak>Memproses…</span>
 		</button>

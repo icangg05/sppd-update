@@ -3,13 +3,13 @@
 
 		<div class="flex items-center gap-4">
 			<button onclick="toggleSidebar()"
-				class="inline-flex size-9 items-center justify-center rounded-lg bg-primary-600/50 text-white transition-all hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-white/50 lg:hidden"
+				class="inline-flex size-9 items-center justify-center rounded bg-primary-600/50 text-white transition-all hover:bg-primary-600 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50 lg:hidden"
 				aria-label="Buka menu navigasi" title="Buka menu navigasi">
 				<i class="fa-solid fa-bars-staggered"></i>
 			</button>
 
 			<div class="hidden flex-col sm:flex">
-				<h1 class="font-serif text-base font-bold tracking-tight sm:text-lg">@yield('page-title', 'Dashboard')</h1>
+				<h1 class="font-sans text-base font-bold tracking-tight sm:text-lg">@yield('page-title', 'Dashboard')</h1>
 				<p class="text-xs font-medium text-primary-200">Sistem Perjalanan Dinas</p>
 			</div>
 
@@ -30,7 +30,7 @@
 
 			<div class="relative">
 				<button id="toggle-profile"
-					class="flex items-center gap-3 rounded-lg p-1 transition-all hover:bg-primary-600/30 focus:outline-none">
+					class="flex items-center gap-3 rounded p-1 transition-all hover:bg-primary-600/30 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
 					<div class="hidden text-right sm:block">
 						<p class="text-sm font-semibold leading-tight text-white">{{ auth()->user()->name ?? 'Administrator' }}</p>
 						<p class="text-xs font-medium text-primary-200">{{ auth()->user()->department?->name ?? 'Sistem SPPD' }}</p>
@@ -45,7 +45,7 @@
 				</button>
 
 				<div id="dropdown-menu"
-					class="absolute right-0 mt-3 hidden w-56 origin-top-right rounded-xl border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200">
+					class="absolute right-0 mt-3 hidden w-56 origin-top-right rounded border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200">
 
 					{{-- Mobile User Info --}}
 					<div class="block px-4 py-3 sm:hidden bg-slate-50/50 mb-1.5 border-b border-slate-100">
@@ -58,7 +58,7 @@
 					{{-- Menu Links --}}
 					<div class="px-1.5 space-y-0.5">
 						<a href="{{ route('profile') }}" wire:navigate
-							class="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+							class="group flex items-center rounded px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
 							<i
 								class="fa-regular fa-user mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-primary-600"></i>
 							Profil Saya
@@ -72,7 +72,7 @@
 						<form action="{{ route('logout') }}" method="POST" class="block">
 							@csrf
 							<button type="submit"
-								class="group flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-700">
+								class="group flex w-full items-center rounded px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-700">
 								<i
 									class="fa-solid fa-arrow-right-from-bracket mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-rose-600"></i>
 								Keluar

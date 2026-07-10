@@ -35,7 +35,7 @@
 
 		{{-- Main Form --}}
 		<form wire:submit.prevent="save" class="space-y-6">
-			<div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				{{-- Sub-header Card --}}
 				<div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
 					<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
@@ -317,7 +317,7 @@
 										x-transition:leave-start="opacity-100 scale-100"
 										x-transition:leave-end="opacity-0 scale-95"
 										:style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
-										class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
+										class="overflow-hidden rounded border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
 										<div class="border-b border-slate-100 p-2">
 											<div class="relative">
 												<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>

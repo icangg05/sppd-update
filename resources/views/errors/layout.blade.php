@@ -17,7 +17,7 @@
     <div class="absolute top-1/2 left-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300/30 mix-blend-multiply blur-[80px] animate-pulse" style="animation-delay: 4s;"></div>
 
     {{-- Panel Utama (Glass Panel) --}}
-    <div class="relative z-10 w-full max-w-md mx-4 rounded-[2rem] border border-white/60 bg-white/60 p-10 text-center shadow-2xl backdrop-blur-xl">
+    <div class="relative z-10 w-full max-w-md mx-4 rounded border border-white/60 bg-white/60 p-10 text-center shadow-2xl backdrop-blur-xl">
         @yield('content')
     </div>
 

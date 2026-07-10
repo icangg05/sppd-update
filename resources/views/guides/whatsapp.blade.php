@@ -11,7 +11,7 @@
   <div class="mx-auto max-w-3xl space-y-6">
 
     {{-- Hero --}}
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-green-700 p-6 text-white shadow-lg sm:p-8">
+    <div class="relative overflow-hidden rounded bg-gradient-to-br from-emerald-600 to-green-700 p-6 text-white shadow-lg sm:p-8">
       <i class="fa-brands fa-whatsapp pointer-events-none absolute -right-4 -top-4 text-[8rem] text-white/10"></i>
       <div class="relative">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide">
@@ -51,7 +51,7 @@
         @endforeach
       </ol>
 
-      <div class="mt-5 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
+      <div class="mt-5 flex items-start gap-2 rounded border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
         <i class="fa-solid fa-circle-info mt-0.5"></i>
         <p>Nomor operator verifikasi: <strong class="font-mono">{{ $waNumber }}</strong>.
           Sistem mencocokkan nomor pengirim secara otomatis, jadi pastikan mengirim dari nomor yang didaftarkan.</p>

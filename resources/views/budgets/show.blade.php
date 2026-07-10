@@ -9,7 +9,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <div class="flex size-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+      <div class="flex size-10 items-center justify-center rounded bg-primary-50 text-primary-600">
         <i class="fa-solid fa-circle-info text-lg"></i>
       </div>
       <div>
@@ -36,7 +36,7 @@
 
     {{-- Kolom Kiri: Tabel Informasi Detail --}}
     <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50/50">
           <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-file-invoice text-primary-500"></i>Detail Atribut Utama DPA
@@ -94,7 +94,7 @@
 
     {{-- Kolom Kanan: Ringkasan & Progress Penyerapan Finansial --}}
     <div class="space-y-6">
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50/50">
           <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-chart-pie text-primary-500"></i>Ringkasan Keuangan

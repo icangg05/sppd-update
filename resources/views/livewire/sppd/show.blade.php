@@ -3,16 +3,26 @@
 	@if ($isProcessing) wire:poll.5s @endif>
 
 	{{-- Header Halaman & Aksi --}}
-	<div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-		<div class="leading-tight">
-			<h1 class="text-lg font-bold text-slate-800">Detail Surat Perjalanan Dinas</h1>
-			<p class="text-sm font-mono text-slate-500 mt-1">
-				<i class="fa-solid fa-hashtag text-xs text-slate-500 mr-1"></i>
-				{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
-			</p>
-		</div>
+	<div
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		{{-- Watermark institusional (tipis, hanya karakter). --}}
+		<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+			aria-hidden="true"></i>
 
-		<div class="flex flex-wrap items-center gap-2.5">
+		<div class="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
+			<div class="min-w-0 leading-tight">
+				<span
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<i class="fa-solid fa-file-lines text-[9px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-balance text-slate-800">Detail Surat Perjalanan Dinas</h1>
+				<p class="mt-1 font-mono text-sm text-slate-500">
+					<i class="fa-solid fa-hashtag text-xs text-slate-500 mr-1"></i>
+					{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
+				</p>
+			</div>
+
+			<div class="flex flex-wrap items-center gap-2.5">
 			{{-- Tombol Edit Perbaikan --}}
 			@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 				<a href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}" wire:navigate
@@ -37,9 +47,12 @@
 			{{-- Tombol Portal Selanjutnya --}}
 			@if (in_array($sppd->status->value, ['approved', 'completed']))
 				<a href="{{ route('sppd.next', $sppd) }}" wire:navigate
-					class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700">
+					class="group inline-flex items-center gap-2 rounded bg-primary-600 py-1.5 pl-3.5 pr-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
 					<span>Selanjutnya</span>
-					<i class="fa-solid fa-arrow-right text-[10px]"></i>
+					<span
+						class="flex size-6 items-center justify-center rounded-full bg-white/20 transition group-hover:translate-x-0.5">
+						<i class="fa-solid fa-arrow-right text-[10px]"></i>
+					</span>
 				</a>
 			@endif
 
@@ -61,7 +74,7 @@
 			<div class="hidden sm:block border-l border-slate-300 h-5 self-center mx-0.5"></div>
 
 			{{-- Badge Status --}}
-			<x-ui.badge :status="$sppd->status->value" class="inline-block rounded-sm px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+			<x-ui.badge :status="$sppd->status->value" class="inline-block rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
 				{{ $sppd->status->label() }}
 			</x-ui.badge>
 
@@ -70,6 +83,7 @@
 				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
 				<i class="fa-solid fa-arrow-left text-slate-500"></i> Kembali
 			</a>
+			</div>
 		</div>
 	</div>
 
@@ -80,10 +94,10 @@
 		<div class="space-y-6 xl:col-span-2">
 
 			{{-- 1. Info Perjalanan --}}
-			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+			<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<i class="fa-solid fa-address-card text-primary-600"></i> Informasi Perjalanan
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-address-card text-[11px]"></i></span> Informasi Perjalanan
 					</h3>
 				</div>
 				<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
@@ -112,7 +126,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5">Sifat Surat Dokumen</p>
 						<p class="text-sm font-semibold text-slate-800">
-							<span class="inline-block rounded-sm px-2 py-0.5 text-xs font-bold uppercase tracking-wide border
+							<span class="inline-block rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wide border
 								@if (strtolower($sppd->urgency) === 'segera')
 									bg-rose-50 text-rose-700 border-rose-100
 								@else
@@ -136,24 +150,27 @@
 					</div>
 					<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 						<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Maksud Perjalanan</p>
-						<p class="text-sm font-medium text-slate-800 leading-relaxed">{{ $sppd->purpose }}</p>
+						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->purpose }}</p>
 					</div>
 					@if ($sppd->problem)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Persoalan</p>
-							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->problem }}</p>
+						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->problem }}</p>
+
 						</div>
 					@endif
 					@if ($sppd->facts)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Fakta-Fakta Yang Mempengaruhi</p>
-							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->facts }}</p>
+						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->facts }}</p>
+
 						</div>
 					@endif
 					@if ($sppd->analysis)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Analisis</p>
-							<p class="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->analysis }}</p>
+						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->analysis }}</p>
+
 						</div>
 					@endif
 					@if ($sppd->notes)
@@ -188,10 +205,10 @@
 
 			{{-- Pembebanan Anggaran --}}
 			@if ($sppd->budget)
-				<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Pembebanan Anggaran
+							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-money-check-dollar text-[11px]"></i></span> Pembebanan Anggaran
 						</h3>
 					</div>
 					<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
@@ -209,10 +226,10 @@
 						</div>
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
 							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5">Anggaran Tersedia (Sisa Anggaran)</p>
-							<p class="text-lg font-extrabold text-emerald-600">
+							<p class="font-mono text-lg font-extrabold tracking-tight text-emerald-600">
 								Rp {{ number_format($sppd->budget->balance, 0, ',', '.') }}
 							</p>
-							<p class="text-xs text-slate-500 mt-1">
+							<p class="mt-1 font-mono text-xs text-slate-500">
 								Pagu: Rp {{ number_format($sppd->budget->total_amount, 0, ',', '.') }} | Realisasi: Rp {{ number_format($sppd->budget->realization, 0, ',', '.') }}
 							</p>
 						</div>
@@ -222,10 +239,10 @@
 
 			{{-- 2. Tujuan --}}
 			@if ($sppd->destinations->count())
-				<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-map-location-dot text-primary-600"></i> Lokasi Tujuan
+							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-map-location-dot text-[11px]"></i></span> Lokasi Tujuan
 						</h3>
 					</div>
 					<div class="p-5 space-y-3">
@@ -249,10 +266,10 @@
 
 			{{-- 3. Pengikut --}}
 			@if ($sppd->followers->count())
-				<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut
+							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-users text-[11px]"></i></span> Daftar Pengikut
 						</h3>
 					</div>
 					<div class="p-5 flex flex-wrap gap-2.5">
@@ -283,10 +300,10 @@
 		<div class="space-y-6">
 
 			{{-- Timeline Persetujuan --}}
-			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+			<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<i class="fa-solid fa-list-check text-primary-600"></i> Alur Persetujuan
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-list-check text-[11px]"></i></span> Alur Persetujuan
 					</h3>
 				</div>
 				<div class="p-5">
@@ -325,10 +342,10 @@
 										<div class="mt-1.5">
 											@if ($displayStatus === 'skipped')
 												<span
-													class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">Tidak
+													class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider inline-block">Tidak
 													Dilanjutkan</span>
 											@else
-												<x-ui.badge :status="$displayStatus" class="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider inline-block">
+												<x-ui.badge :status="$displayStatus" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider inline-block">
 													@if ($displayStatus === 'rejected')
 														Ditolak
 													@elseif ($displayStatus === 'revision')
@@ -499,7 +516,7 @@
 									</button>
 								@else
 									<button type="button" wire:click="openApproveModal" wire:loading.attr="disabled"
-										class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700">
+										class="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1">
 										<i class="fa-solid fa-check-double"></i> Setujui Dokumen
 									</button>
 								@endif
@@ -507,11 +524,11 @@
 
 							<div class="flex flex-col gap-2">
 								<button type="button" wire:click="openRejectModal" wire:loading.attr="disabled"
-									class="flex w-full items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 cursor-pointer">
+									class="flex w-full cursor-pointer items-center justify-center gap-2 rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1">
 									<i class="fa-solid fa-ban"></i> Tolak Dokumen
 								</button>
 								<button type="button" wire:click="openRevisionModal" wire:loading.attr="disabled"
-									class="flex w-full items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 cursor-pointer">
+									class="flex w-full cursor-pointer items-center justify-center gap-2 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 transition hover:bg-amber-100 hover:text-amber-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
 									<i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi
 								</button>
 							</div>
@@ -532,10 +549,10 @@
 			@endphp
 
 			@if ($showSppdStatus || $showSptStatus)
-				<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex items-center justify-between">
 						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<i class="fa-solid fa-file-shield text-primary-600"></i> Status TTE Dokumen
+							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-file-shield text-[11px]"></i></span> Status TTE Dokumen
 						</h3>
 					</div>
 					<div class="p-4 divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
@@ -583,14 +600,14 @@
 		<div class="space-y-2">
 			@if ($sptIsApproved)
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"
-					class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+					class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
 					<i class="fa-solid fa-file-pdf"></i>
 					<span>SPT <span
 							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
 				</a>
 			@else
 				<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
-					class="flex items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100">
+					class="flex items-center gap-2 rounded border border-primary-200 bg-primary-50 px-3 py-2 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100">
 					<i class="fa-solid fa-file-pdf"></i><span>SPT</span>
 				</a>
 			@endif
@@ -603,7 +620,7 @@
 			@endphp
 			@if ($sppdPelaksanaSig && $sppdPelaksanaSig->signed_file_path)
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdPelaksanaSig->signed_file_path) }}" target="_blank"
-					class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+					class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
 					<i class="fa-solid fa-file-lines"></i>
 					<span>SPPD Pelaksana <span
 							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
@@ -612,7 +629,7 @@
 				<a
 					href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($sppd->user_id)]) }}"
 					target="_blank"
-					class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+					class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
 					<i class="fa-solid fa-file-lines"></i><span>SPPD Pelaksana</span>
 				</a>
 			@endif
@@ -632,7 +649,7 @@
 							@endphp
 							@if ($sppdFollowerSig && $sppdFollowerSig->signed_file_path)
 								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
-									class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
+									class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100">
 									<i class="fa-solid fa-user-group"></i>
 									<span>SPPD {{ $follower->user->name }} <span
 											class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800">TTE</span></span>
@@ -641,7 +658,7 @@
 								<a
 									href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
 									target="_blank"
-									class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
+									class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">
 									<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
 								</a>
 							@endif
@@ -654,7 +671,7 @@
 				<div class="border-t border-slate-200 my-2 pt-2">
 					<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Lampiran Lainnya</p>
 					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
-						class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
+						class="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
 						<i class="fa-solid fa-paperclip"></i>
 						<span>Dokumen Pendukung (Lampiran)</span>
 					</a>
@@ -663,7 +680,7 @@
 		</div>
 		<x-slot:footer>
 			<button type="button" @click="showDocModal = false"
-				class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
 				Tutup
 			</button>
 		</x-slot:footer>
@@ -675,7 +692,7 @@
 		<p class="text-sm text-slate-600 leading-relaxed">
 			Apakah Anda yakin ingin menyetujui dokumen SPPD ini?
 			@if ($needsTte && auth()->user()->nik)
-				<span class="block mt-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+				<span class="block mt-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded px-3 py-2">
 					<i class="fa-solid fa-file-signature mr-1"></i>
 					Proses tanda tangan elektronik (TTE) akan dijalankan setelah konfirmasi.
 				</span>
@@ -684,11 +701,11 @@
 
 		<x-slot:footer class="flex gap-2">
 			<button type="button" @click="showApproveModal = false"
-				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				class="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
 				Batal
 			</button>
 			<button type="button" wire:click="approve" wire:loading.attr="disabled"
-				class="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-emerald-700 shadow-sm">
+				class="flex-1 rounded bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-emerald-700 shadow-sm">
 				Ya, Setujui
 			</button>
 		</x-slot:footer>
@@ -700,7 +717,7 @@
 		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Alasan Penolakan <span
 				class="text-rose-500">*</span></label>
 		<textarea wire:model="rejectNotes" required
-		 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 min-h-[100px]"
+		 class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-rose-500 focus:outline-hidden focus:ring-1 focus:ring-rose-500 min-h-[100px]"
 		 placeholder="Masukkan alasan penolakan secara jelas..."></textarea>
 		@error('rejectNotes')
 			<span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span>
@@ -708,11 +725,11 @@
 
 		<x-slot:footer class="flex gap-2">
 			<button type="button" @click="showRejectModal = false"
-				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				class="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
 				Batal
 			</button>
 			<button type="button" wire:click="reject"
-				class="flex-1 rounded-xl bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-700 shadow-sm">
+				class="flex-1 rounded bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-700 shadow-sm">
 				Tolak Dokumen
 			</button>
 		</x-slot:footer>
@@ -724,7 +741,7 @@
 		<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Keterangan / Catatan Revisi
 			<span class="text-rose-500">*</span></label>
 		<textarea wire:model="revisionNotes" required
-		 class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500 min-h-[100px]"
+		 class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500 min-h-[100px]"
 		 placeholder="Jelaskan bagian mana saja yang perlu diperbaiki..."></textarea>
 		@error('revisionNotes')
 			<span class="text-xs text-amber-600 mt-1 block">{{ $message }}</span>
@@ -732,11 +749,11 @@
 
 		<x-slot:footer class="flex gap-2">
 			<button type="button" @click="showRevisionModal = false"
-				class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
+				class="flex-1 rounded border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50">
 				Batal
 			</button>
 			<button type="button" wire:click="revision"
-				class="flex-1 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700 shadow-sm">
+				class="flex-1 rounded bg-amber-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-amber-700 shadow-sm">
 				Kembalikan
 			</button>
 		</x-slot:footer>

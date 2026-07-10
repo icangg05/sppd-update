@@ -51,7 +51,7 @@
 
 		{{-- Alert Bendahara --}}
 		@if (!$hasBendahara)
-			<div class="rounded-lg border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-800 text-xs font-medium">
+			<div class="rounded border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-800 text-xs font-medium">
 				<p class="font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Bendahara Belum Ditetapkan</p>
 				<p class="mt-1">Instansi <strong>{{ $sppd->user->department->name ?? '-' }}</strong> memerlukan pegawai dengan
 					jabatan "Bendahara Pengeluaran" untuk mencetak kuitansi.</p>
@@ -59,7 +59,7 @@
 		@endif
 
 		{{-- Pengaturan Tanggal Cetak & Panjar Massal --}}
-		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded border border-slate-200 shadow-sm">
 			<div class="flex flex-col sm:flex-row sm:items-center gap-4">
 				<div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
 					<i class="fa-solid fa-calendar-day text-emerald-600 text-sm"></i>
@@ -84,7 +84,7 @@
 		{{-- Daftar Personel (Bulk Form) --}}
 		<form method="POST" action="{{ route('sppd.advance-receipts.store', $sppd) }}">
 			@csrf
-			<div class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+			<div class="overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
 				<table class="w-full text-left border-collapse">
 					<thead>
 						<tr class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -164,7 +164,7 @@
 			</div>
 
 			@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-			<div class="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
+			<div class="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-3 rounded border border-slate-200">
 				<span class="text-[11px] text-slate-500 font-medium">
 					<i class="fa-solid fa-circle-info text-slate-500 mr-1"></i>
 					Kosongkan nominal panjar untuk menghapus data kuitansi panjar pegawai tersebut.
@@ -177,7 +177,7 @@
 			@endif
 		</form>
 
-		<div class="flex items-start gap-4 rounded-lg border border-primary-200 bg-primary-50 p-4 shadow-sm">
+		<div class="flex items-start gap-4 rounded border border-primary-200 bg-primary-50 p-4 shadow-sm">
 			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
 				<i class="fa-solid fa-circle-info text-lg"></i>
 			</div>

@@ -54,7 +54,7 @@
 
 			{{-- Kolom Kiri: Ringkasan Profil --}}
 			<div class="md:col-span-1 space-y-6">
-				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center text-center">
+				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center text-center">
 
 					{{-- Avatar Ring --}}
 					<div
@@ -70,7 +70,7 @@
 
 						{{-- Alert NIK --}}
 						@if (!$user->nik)
-							<div class="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-left">
+							<div class="flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50/70 p-3 text-left">
 								<i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
 								<p class="text-[11px] font-medium leading-relaxed text-amber-800">
 									<strong>NIK belum terisi.</strong> Lengkapi NIK di menu Edit Profil Pegawai sebelum melakukan TTE.
@@ -99,7 +99,7 @@
 
 			{{-- Kolom Kanan: Detail Informasi --}}
 			<div class="md:col-span-2">
-				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm">
 					<h3
 						class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-5 pb-2 border-b border-slate-100 flex items-center gap-2">
 						<i class="fa-solid fa-id-card-clip text-primary-500 text-base"></i>Informasi Detail Pegawai
@@ -110,7 +110,7 @@
 						<div class="space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">NIP / ID Sistem</label>
 							<p
-								class="text-sm font-mono font-semibold text-slate-800 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 inline-block">
+								class="text-sm font-mono font-semibold text-slate-800 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 inline-block">
 								{{ $user->nip ?? '-' }}</p>
 						</div>
 
@@ -118,7 +118,7 @@
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nomor Induk Kependudukan
 								(NIK)</label>
 							<p
-								class="text-sm font-mono font-semibold text-slate-800 {{ $user->nik ? 'bg-slate-50 border-slate-100' : 'bg-amber-50/50 border-amber-100 text-amber-700' }} px-2.5 py-1.5 rounded-lg border inline-block">
+								class="text-sm font-mono font-semibold text-slate-800 {{ $user->nik ? 'bg-slate-50 border-slate-100' : 'bg-amber-50/50 border-amber-100 text-amber-700' }} px-2.5 py-1.5 rounded border inline-block">
 								{{ $user->nik ?? 'Belum Diatur' }}</p>
 						</div>
 
@@ -168,8 +168,8 @@
 						<div class="sm:col-span-2 space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Instansi / Unit Kerja
 								(OPD)</label>
-							<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3">
-								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+							<div class="p-3 bg-slate-50 border border-slate-100 rounded flex items-center gap-3">
+								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600">
 									<i class="fa-solid fa-building text-sm"></i>
 								</div>
 								<p class="text-sm font-bold text-slate-800">{{ $user->department?->name ?? 'Belum ada instansi' }}</p>
@@ -180,7 +180,7 @@
 				</div>
 
 				{{-- Card: Riwayat Perjalanan Dinas --}}
-				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mt-6">
+				<div class="rounded border border-slate-200 bg-white p-6 shadow-sm mt-6">
 					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-2 border-b border-slate-100">
 						<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
 							<i class="fa-solid fa-route text-primary-500 text-base"></i>Riwayat Perjalanan Dinas
@@ -202,10 +202,10 @@
 									<i class="fa-solid fa-magnifying-glass text-xs"></i>
 								</span>
 								<input type="text" name="search_trip" value="{{ request('search_trip') }}"
-									class="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden"
+									class="w-full rounded border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden"
 									placeholder="Cari maksud, nomor, atau tujuan...">
 							</div>
-							<button type="submit" class="inline-flex items-center rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
+							<button type="submit" class="inline-flex items-center rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
 								Cari
 							</button>
 							@if(request('search_trip'))
@@ -234,11 +234,11 @@
 						{{-- Tab: Pelaksana --}}
 						<div x-show="activeTab === 'pelaksana'" class="space-y-3">
 							@forelse ($tripsAsPelaksana as $trip)
-								<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div class="p-4 bg-slate-50 border border-slate-200 rounded leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
-											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
 											</x-ui.badge>
 										</div>
@@ -254,7 +254,7 @@
 										</p>
 									</div>
 									<div class="shrink-0">
-										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
 											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
 										</a>
 									</div>
@@ -273,14 +273,14 @@
 						{{-- Tab: Pengikut --}}
 						<div x-show="activeTab === 'pengikut'" class="space-y-3" style="display: none;">
 							@forelse ($tripsAsFollower as $trip)
-								<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+								<div class="p-4 bg-slate-50 border border-slate-200 rounded leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
 											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
-											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
 											</x-ui.badge>
-											<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider">
+											<span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												Pelaksana: {{ $trip->user->name }}
 											</span>
 										</div>
@@ -296,7 +296,7 @@
 										</p>
 									</div>
 									<div class="shrink-0">
-										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+										<a wire:navigate href="{{ route('sppd.show', $trip) }}" class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
 											Detail <i class="fa-solid fa-arrow-right text-[10px]"></i>
 										</a>
 									</div>

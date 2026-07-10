@@ -2,10 +2,13 @@
 	class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-800 bg-slate-900 text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full">
 	<!-- Bagian Atas: Logo Aplikasi -->
 	<div class="flex h-16 items-center gap-3 border-b border-slate-800 px-4">
-		<img src="{{ asset('img/logo-sppd.png') }}" alt="logo" class="size-8">
+		<span
+			class="flex size-9 shrink-0 items-center justify-center rounded bg-slate-800/60 ring-1 ring-inset ring-slate-700/60">
+			<img src="{{ asset('img/logo-sppd.png') }}" alt="Logo SPPD Kota Kendari" class="size-7">
+		</span>
 		<div class="leading-tight">
 			<p class="text-sm font-bold tracking-wide text-white">SPPD PEMERINTAH</p>
-			<p class="text-xs text-slate-500">Kota Kendari</p>
+			<p class="text-[11px] font-semibold uppercase tracking-wider text-primary-400">Kota Kendari</p>
 		</div>
 	</div>
 
@@ -48,7 +51,7 @@
 
 			<div id="sppd-menu" x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.*') && !request()->routeIs('sppd.calendar') && request('filter') !== 'approval' && request('from') !== 'approval' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.*') && !request()->routeIs('sppd.calendar') && request('filter') !== 'approval' && request('from') !== 'approval' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-list fa-fw"></i></span>
 					<span>Daftar SPPD</span>
 				</a>
@@ -56,7 +59,7 @@
 				{{-- Super admin tidak ikut alur persetujuan, sembunyikan menunya. --}}
 				@if (auth()->user()->can('sppd.approve') && ! auth()->user()->hasRole('super_admin'))
 					<a href="{{ route('sppd.index', ['filter' => 'approval']) }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' || request('from') === 'approval' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request('filter') === 'approval' || request('from') === 'approval' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-check-double fa-fw"></i></span>
 						<span class="flex-1">Menunggu Persetujuan</span>
 						<livewire:pending-approval-badge />
@@ -64,7 +67,7 @@
 				@endif
 
 				<a href="{{ route('sppd.calendar') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.calendar') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('sppd.calendar') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-calendar-days fa-fw"></i></span>
 					<span>Kalender</span>
 				</a>
@@ -116,7 +119,7 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('master.users.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-users fa-fw"></i></span>
 					<span>Pegawai</span>
 				</a>
@@ -125,14 +128,14 @@
 						auth()->user()->department?->type?->value === 'dprd' ||
 						auth()->user()->department?->parent?->type?->value === 'dprd')
 					<a wire:navigate.hover href="{{ route('master.users.index', ['type' => 'dprd']) }}"
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-user-tie fa-fw"></i></span>
 						<span>Anggota DPRD</span>
 					</a>
 				@endif
 
 				<a href="{{ route('master.position-requests.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-user-plus fa-fw"></i></span>
 					<span class="flex-1">Pengajuan Jabatan</span>
 					<livewire:pending-position-request-badge />
@@ -140,13 +143,13 @@
 
 				@if (auth()->user()->hasRole('super_admin'))
 					<a href="{{ route('master.positions.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.positions.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.positions.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-id-badge fa-fw"></i></span>
 						<span>Data Jabatan</span>
 					</a>
 
 					<a href="{{ route('master.ranks.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.ranks.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.ranks.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-ranking-star fa-fw"></i></span>
 						<span>Data Pangkat</span>
 					</a>
@@ -171,26 +174,26 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('master.budgets.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-coins fa-fw"></i></span>
 					<span>DPA</span>
 				</a>
 
 				<a href="{{ route('master.departments.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-building fa-fw"></i></span>
 					<span>Unit Kerja</span>
 				</a>
 
 				@if (auth()->user()->hasRole('super_admin'))
 					<a href="{{ route('master.provinces.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.provinces.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.provinces.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-map fa-fw"></i></span>
 						<span>Data Provinsi</span>
 					</a>
 
 					<a href="{{ route('master.regencies.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.regencies.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.regencies.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-city fa-fw"></i></span>
 						<span>Data Kabupaten/Kota</span>
 					</a>
@@ -215,7 +218,7 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('master.users.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-users fa-fw"></i></span>
 					<span>Pegawai</span>
 				</a>
@@ -223,27 +226,27 @@
 				@if (auth()->user()->department?->type?->value === 'dprd' ||
 						auth()->user()->department?->parent?->type?->value === 'dprd')
 					<a wire:navigate.hover href="{{ route('master.users.index', ['type' => 'dprd']) }}"
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-user-tie fa-fw"></i></span>
 						<span>Anggota DPRD</span>
 					</a>
 				@endif
 
 				<a href="{{ route('master.position-requests.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-user-plus fa-fw"></i></span>
 					<span class="flex-1">Pengajuan Jabatan</span>
 					<livewire:pending-position-request-badge />
 				</a>
 
 				<a href="{{ route('master.budgets.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.budgets.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-coins fa-fw"></i></span>
 					<span>DPA</span>
 				</a>
 
 				<a href="{{ route('master.departments.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-building fa-fw"></i></span>
 					<span>Unit Kerja</span>
 				</a>
@@ -269,19 +272,19 @@
 
 				<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 					<a href="{{ route('master.workflows.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.workflows.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-diagram-project fa-fw"></i></span>
 						<span>Workflow</span>
 					</a>
 
 					<a href="{{ route('master.roles.index') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.roles.*') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.roles.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-shield-halved fa-fw"></i></span>
 						<span>Role & Permission</span>
 					</a>
 
 					<a href="{{ route('master.database.backup') }}" wire:navigate.hover
-						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.database.backup') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.database.backup') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-database fa-fw"></i></span>
 						<span>Backup Database</span>
 					</a>
@@ -307,20 +310,20 @@
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				{{-- Cek keaslian & status TTE dokumen (target QR code) --}}
 				<a href="{{ route('verify.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('verify.index', 'verify.document') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('verify.index', 'verify.document') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-file-shield fa-fw"></i></span>
 					<span>Cek Dokumen TTE</span>
 				</a>
 
 				{{-- Logs: super_admin (semua data) & admin_opd (data unit kerjanya) --}}
 				<a href="{{ route('master.logs.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.logs.index') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.logs.index') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-clock-rotate-left fa-fw"></i></span>
 					<span>Logs Aktivitas</span>
 				</a>
 
 				<a href="{{ route('master.logs.tte') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.logs.tte') ? 'text-primary-400 bg-slate-800/40' : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/20' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.logs.tte') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-pen-nib fa-fw"></i></span>
 					<span>Logs TTE</span>
 				</a>

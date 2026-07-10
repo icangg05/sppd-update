@@ -3,7 +3,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="flex size-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+      <div class="flex size-9 items-center justify-center rounded bg-primary-50 text-primary-600">
         <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} text-base"></i>
       </div>
       <div>
@@ -21,7 +21,7 @@
   </div>
 
   {{-- Form Container --}}
-  <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
     <form wire:submit="save" class="p-4 space-y-4">
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
@@ -41,7 +41,7 @@
         @else
           <div class="md:col-span-2">
             <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">SKPD / Unit Kerja Terikat</label>
-            <div class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2 text-xs font-bold text-slate-700 h-[38px]">
+            <div class="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded flex items-center gap-2 text-xs font-bold text-slate-700 h-[38px]">
               <i class="fa-solid fa-building text-slate-500 text-[11px]"></i>
               {{ collect($departments)->firstWhere('id', (int) $department_id)?->name ?? auth()->user()->department?->name ?? '—' }}
             </div>

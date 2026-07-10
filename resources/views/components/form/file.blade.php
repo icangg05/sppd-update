@@ -15,7 +15,7 @@
 $wireModel = $attributes->whereStartsWith('wire:model')->first();
 $key = $name ?? $wireModel;
 $id = $id ?? $key;
-$resolvedClass = trim('w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-primary-50 file:px-3 file:py-1 file:text-xs file:font-bold file:uppercase file:tracking-wide file:text-primary-700 file:transition file:hover:bg-primary-100 ' . $class);
+$resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 file:mr-3 file:rounded file:border-0 file:bg-primary-50 file:px-3 file:py-1 file:text-xs file:font-bold file:uppercase file:tracking-wide file:text-primary-700 file:transition file:hover:bg-primary-100 ' . $class);
 @endphp
 
 <div class="{{ $wrapperClass }}">

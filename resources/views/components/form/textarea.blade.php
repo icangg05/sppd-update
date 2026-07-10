@@ -19,7 +19,7 @@ $key = $name ?? $wireModel;
 $id = $id ?? $key;
 $resolvedValue = $wireModel ? null : ($value ?? old($name));
 // min-h disesuaikan agar proporsional dan tidak terlalu memaksa jika rows yang dikirim kecil
-$resolvedClass = trim('w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 min-h-[80px] ' . $class);
+$resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 min-h-[80px] ' . $class);
 @endphp
 
 <div class="{{ $wrapperClass }}">

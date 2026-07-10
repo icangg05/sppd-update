@@ -33,7 +33,7 @@
 
     if ($color) {
         $pill = $colorMap[$color] ?? $colorMap['slate'];
-        $base = 'inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ' . $pill;
+        $base = 'inline-flex items-center rounded px-2 py-1 text-[11px] font-medium ring-1 ring-inset ' . $pill;
     } elseif ($status) {
         // Warna mengikuti .badge-{status} di app.css; bentuk/teks lewat class tambahan.
         $base = 'badge-' . $status;
