@@ -1,8 +1,8 @@
 {{-- Daftar SPPD terbaru. Param: $items (Collection<SppdRequest>), opsional $title --}}
-<div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
+<div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
   <div class="flex items-center justify-between border-b border-slate-100 p-4">
     <div class="flex items-center gap-2.5">
-      <div class="flex size-7 items-center justify-center rounded bg-blue-50 text-blue-500">
+      <div class="flex size-7 items-center justify-center rounded-lg bg-primary-50 text-primary-500">
         <i class="fa-solid fa-clock-rotate-left text-xs"></i>
       </div>
       <div>
@@ -34,8 +34,8 @@
         </div>
       </a>
     @empty
-      <div class="flex flex-col items-center justify-center p-8 text-slate-400">
-        <i class="fa-solid fa-file-lines mb-3 text-3xl text-slate-200"></i>
+      <div class="flex flex-col items-center justify-center p-8 text-slate-500">
+        <i class="fa-solid fa-file-lines mb-3 text-3xl text-slate-300"></i>
         <p class="text-sm">Belum ada data SPPD</p>
       </div>
     @endforelse

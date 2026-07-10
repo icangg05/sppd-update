@@ -11,13 +11,13 @@
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-md">
-      <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
+    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex size-10 items-center justify-center rounded-lg {{ $kpi['tone'] }}">
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-        <p class="text-lg font-bold text-slate-800">{{ $kpi['value'] }}</p>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ $kpi['label'] }}</p>
+        <p class="text-4xl font-bold leading-none tracking-tight tabular-nums text-slate-800">{{ $kpi['value'] }}</p>
       </div>
     </div>
   @endforeach
@@ -28,10 +28,13 @@
   @include('dashboard.partials._recent-sppd', ['items' => $mySppd, 'title' => 'SPPD Saya'])
 
   {{-- Laporan perjalanan yang perlu dilengkapi --}}
-  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
+  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-list text-primary-500"></i> Laporan Perlu Dilengkapi
+        @if ($needReport->isNotEmpty())
+          <span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700">{{ $needReport->count() }}</span>
+        @endif
       </h3>
       <p class="mt-0.5 text-xs text-slate-500">SPPD selesai yang laporannya belum dibuat</p>
     </div>
@@ -41,13 +44,13 @@
           class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50">
           <div class="min-w-0">
             <p class="line-clamp-1 font-medium text-slate-700">{{ $item->purpose }}</p>
-            <p class="text-xs text-slate-400">{{ $item->destinations->first()?->regency?->name ?? '-' }}</p>
+            <p class="text-xs text-slate-500">{{ $item->destinations->first()?->regency?->name ?? '-' }}</p>
           </div>
           <span class="shrink-0 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">Buat Laporan</span>
         </a>
       @empty
-        <div class="flex flex-col items-center justify-center p-8 text-slate-400">
-          <i class="fa-solid fa-circle-check mb-3 text-3xl text-slate-200"></i>
+        <div class="flex flex-col items-center justify-center p-8 text-slate-500">
+          <i class="fa-solid fa-circle-check mb-3 text-3xl text-slate-300"></i>
           <p class="text-sm">Semua laporan sudah lengkap</p>
         </div>
       @endforelse

@@ -3,7 +3,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid fa-route text-base"></i>
       </div>
       <div>
@@ -13,7 +13,7 @@
     </div>
 
     <a wire:navigate href="{{ route('master.workflows.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       Tambah Workflow
     </a>
@@ -23,14 +23,14 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-center gap-2">
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
           placeholder="Cari nama workflow...">
         <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
           <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
         </div>
       </div>
@@ -64,7 +64,7 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($workflows as $i => $w)
             <tr wire:key="workflow-{{ $w->id }}" class="hover:bg-slate-50/50 transition-colors">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $workflows->firstItem() + $i }}.
               </td>
 
@@ -75,7 +75,7 @@
               <td class="py-2.5 px-4">
                 <div class="space-y-1 text-[11px]">
                   <span class="block text-slate-700 font-medium">
-                    <i class="fa-solid fa-building text-slate-400 mr-1 text-[10px]"></i>Tipe Instansi:
+                    <i class="fa-solid fa-building text-slate-500 mr-1 text-[10px]"></i>Tipe Instansi:
                     @if (is_array($w->department_type) && count($w->department_type) > 0)
                       <div class="flex flex-wrap gap-1 mt-0.5 ml-4">
                         @foreach ($w->department_type as $dt)
@@ -90,12 +90,12 @@
                     @endif
                   </span>
                   <span class="block text-slate-500">
-                    <i class="fa-solid fa-user-tag text-slate-400 mr-1 text-[10px]"></i>Pemohon:
+                    <i class="fa-solid fa-user-tag text-slate-500 mr-1 text-[10px]"></i>Pemohon:
                     @if (is_array($w->applicant_role) && count($w->applicant_role) > 0)
                       <div class="flex flex-wrap gap-1 mt-0.5 ml-4">
                         @foreach ($w->applicant_role as $role)
                           <span
-                            class="inline-flex items-center rounded bg-cyan-50 px-1 py-0.5 text-[9px] font-bold text-cyan-700 border border-cyan-100/70">
+                            class="inline-flex items-center rounded bg-primary-50 px-1 py-0.5 text-[9px] font-bold text-primary-700 border border-primary-100/70">
                             {{ $roleLabels[$role] ?? $role }}
                           </span>
                         @endforeach
@@ -136,7 +136,7 @@
                     @endphp
                     <div
                       class="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm">
-                      <span class="text-cyan-600 font-black">{{ $idx + 1 }}.</span>
+                      <span class="text-primary-600 font-black">{{ $idx + 1 }}.</span>
                       <span>{{ $roleLabel }}</span>
                       @if ($signsSpt || $signsSppd)
                         <div class="flex items-center gap-0.5 ml-1 select-none">
@@ -177,13 +177,13 @@
               <td class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1">
                   <a wire:navigate href="{{ route('master.workflows.edit', $w->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
 
                   <button type="button" wire:click="confirmDelete({{ $w->id }})"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                     title="Hapus">
                     <i class="fa-solid fa-trash-can text-[10px]"></i>
                   </button>
@@ -192,7 +192,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="py-10 text-center text-slate-400">
+              <td colspan="7" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-diagram-project text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada pengaturan alur urutan workflow yang tersimpan</p>

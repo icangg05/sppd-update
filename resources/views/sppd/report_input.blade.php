@@ -30,7 +30,7 @@
       </div>
       <div class="px-5 py-4">
         <div>
-            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Maksud Perjalanan</p>
+            <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Maksud Perjalanan</p>
             <p class="text-sm font-medium text-slate-700 leading-relaxed">{{ $sppd->purpose }}</p>
         </div>
       </div>
@@ -58,7 +58,7 @@
                     <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">File Laporan (Dokumen) <span class="text-rose-500">*</span></label>
                     @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
                         <input type="file" name="report_file" accept=".pdf,.doc,.docx" {{ !$sppd->report?->report_file ? 'required' : '' }} class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
-                        <p class="text-[10px] text-slate-400 mt-1">Format: PDF, DOC, DOCX (Maks. 20MB). Wajib diisi.</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Format: PDF, DOC, DOCX (Maks. 20MB). Wajib diisi.</p>
                     @endif
                     @if($sppd->report?->report_file)
                         <div class="mt-2 flex items-center gap-2">
@@ -84,7 +84,7 @@
                     <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Foto Dokumentasi <span class="text-rose-500">*</span></label>
                     @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
                         <input type="file" name="documentation_file" accept="image/*" {{ !$sppd->report?->documentation_file ? 'required' : '' }} class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-slate-200 rounded p-1">
-                        <p class="text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Maks. 20MB). Wajib diisi.</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Format: JPG, PNG (Maks. 20MB). Wajib diisi.</p>
                     @endif
                     @if($sppd->report?->documentation_file)
                         <div class="mt-2 flex items-center gap-2">
@@ -110,7 +110,7 @@
         
         @if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
             <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end gap-3 rounded-b-lg">
-                <x-ui.button type="submit" variant="success" class="px-6 py-2.5 font-bold shadow-md cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <x-ui.button type="submit" variant="success" class="px-6 py-2.5 font-bold shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
                     <i class="fa-solid fa-save"></i>
                     {{ $sppd->report ? 'Perbarui Laporan' : 'Simpan Laporan' }}
                 </x-ui.button>

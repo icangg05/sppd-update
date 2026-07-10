@@ -17,13 +17,13 @@
 			</a>
 		</div>
 
-		<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			{{-- Info Card --}}
 			<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
 
 				<div class="space-y-6">
 					<div>
-						<p class="text-[10px] font-bold uppercase text-slate-400">Pelaksana Tugas</p>
+						<p class="text-[10px] font-bold uppercase text-slate-500">Pelaksana Tugas</p>
 						<p class="text-sm font-bold text-slate-800 mt-1 uppercase mb-3">{{ $sppd->user->name }}</p>
 						@php
 							$sptSigTemp = $sppd->signatureFor('spt');
@@ -36,7 +36,7 @@
 							class="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700">
 							<i class="fa-solid fa-print"></i> CETAK DOKUMEN SPT
 						</a>
-						<p class="mt-2 text-[11px] text-slate-400 font-medium leading-relaxed">
+						<p class="mt-2 text-[11px] text-slate-500 font-medium leading-relaxed">
 							<i class="fa-solid fa-circle-info mr-1"></i>
 							Sistem menghasilkan dokumen PDF yang sudah siap cetak atau ditandatangani secara elektronik.
 						</p>
@@ -45,7 +45,7 @@
 
 				<div class="space-y-4">
 					<div class="flex justify-between items-center py-2 border-b border-slate-100">
-						<span class="text-xs font-bold text-slate-400 uppercase">Tanggal Dokumen</span>
+						<span class="text-xs font-bold text-slate-500 uppercase">Tanggal Dokumen</span>
 						<span
 							class="text-sm font-bold text-slate-800">{{ $sppd->spt_date?->translatedFormat('d F Y') ?? $sppd->created_at->translatedFormat('d F Y') }}</span>
 					</div>
@@ -84,7 +84,7 @@
 
 								@if ($sptSignature && $sptSignature->status->value === 'signed' && $sptSignature->signer)
 									<div class="mt-2.5 text-[11px] text-slate-600 font-medium">
-										<i class="fa-solid fa-signature text-slate-400 mr-1"></i>
+										<i class="fa-solid fa-signature text-slate-500 mr-1"></i>
 										Penandatangan: <span class="text-slate-800 font-bold">{{ $sptSignature->signer->name }}</span>
 										@if ($sptSignature->signer->nip)
 											<span class="text-slate-500 font-normal">(NIP. {{ $sptSignature->signer->nip }})</span>

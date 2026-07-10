@@ -17,7 +17,7 @@
     </div>
 
     <x-ui.button href="{{ route('master.departments.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       {{ $isSuperAdmin ? 'Tambah Instansi' : 'Tambah Struktur' }}
     </x-ui.button>
@@ -29,7 +29,7 @@
 
       {{-- Input Pencarian (live) --}}
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
@@ -96,7 +96,7 @@
             @endphp
             <tr wire:key="dept-{{ $dept->id }}"
               class="transition-colors {{ $isOwnDept ? 'bg-primary-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $departments->firstItem() + $i }}
               </td>
 
@@ -155,14 +155,14 @@
                 <div class="flex items-center justify-center gap-1">
                   {{-- Tombol Detail --}}
                   <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"
-                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                     title="Detail">
                     <i class="fa-solid fa-eye text-[10px]"></i>
                   </a>
 
                   {{-- Tombol Edit --}}
                   <a wire:navigate href="{{ route('master.departments.edit', $dept->id) }}"
-                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
@@ -170,7 +170,7 @@
                   {{-- Tombol Hapus kondisional --}}
                   @if($isSuperAdmin || ($dept->parent_id !== null && !$isOwnDept))
                     <button type="button" wire:click="confirmDelete({{ $dept->id }})"
-                      class="rounded-xl border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class="rounded-xl border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>
@@ -180,7 +180,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isSuperAdmin ? '9' : '5' }}" class="py-10 text-center text-slate-400">
+              <td colspan="{{ $isSuperAdmin ? '9' : '5' }}" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-folder-tree text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada data unit kerja yang ditemukan</p>

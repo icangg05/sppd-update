@@ -9,6 +9,9 @@
 
 	<title>@yield('title', 'Dashboard') - {{ config('app.name', 'SPPD') }}</title>
 
+	<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">
+
 	<link rel="preconnect" href="https://fonts.bunny.net">
 	<link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -30,7 +33,7 @@
 	<div id="sidebar-overlay" class="fixed inset-0 z-30 hidden bg-slate-950/40 lg:hidden" onclick="toggleSidebar()"></div>
 
 	{{-- Main Content Wrapper (Geser kanan otomatis saat desktop lewat lg:ml-64) --}}
-	<div class="flex min-h-screen flex-col lg:ml-64">
+	<div class="flex min-h-dvh flex-col lg:ml-64">
 
 		{{-- Header Component --}}
 		@include('components.header')

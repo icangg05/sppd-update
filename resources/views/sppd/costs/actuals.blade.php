@@ -79,8 +79,8 @@
 
 		{{-- Alert Info --}}
 		<div
-			class="flex items-start gap-3 rounded-lg border border-cyan-200 bg-cyan-50 p-4 text-[11px] text-cyan-800 shadow-xs">
-			<i class="fa-solid fa-circle-info mt-0.5 text-cyan-600"></i>
+			class="flex items-start gap-3 rounded-lg border border-primary-200 bg-primary-50 p-4 text-[11px] text-primary-800 shadow-xs">
+			<i class="fa-solid fa-circle-info mt-0.5 text-primary-600"></i>
 			<p>Pengaturan <strong>PPTK</strong> wajib dipilih sebelum Anda dapat mencetak dokumen Laporan Pengeluaran Rill.
 			</p>
 		</div>
@@ -109,7 +109,7 @@
 			<div>
 				<button type="button" @click="showBulkModal = true"
 					class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
-					<i class="fa-solid fa-layer-group text-slate-400"></i>
+					<i class="fa-solid fa-layer-group text-slate-500"></i>
 					Input Sekaligus
 				</button>
 			</div>
@@ -163,7 +163,7 @@
 											class="group flex items-center justify-between bg-slate-50 hover:bg-slate-100 border border-slate-400 rounded px-2.5 py-1.5 transition-all">
 											<div class="flex items-center gap-2">
 												<span class="text-slate-700 font-medium">{{ $expense->description }}</span>
-												<span class="text-[10px] text-slate-400 font-mono">| Rp
+												<span class="text-[10px] text-slate-500 font-mono">| Rp
 													{{ number_format($expense->amount, 0, ',', '.') }}</span>
 											</div>
 											@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
@@ -184,12 +184,12 @@
 											@endif
 										</div>
 									@empty
-										<span class="text-slate-400 italic text-[11px] pl-1">Belum ada data pengeluaran</span>
+										<span class="text-slate-500 italic text-[11px] pl-1">Belum ada data pengeluaran</span>
 									@endforelse
 								</div>
 							</td>
 							<td class="py-3 px-4 text-right">
-								<span class="font-bold {{ $total > 0 ? 'text-emerald-700 font-mono text-xs' : 'text-slate-400' }}">
+								<span class="font-bold {{ $total > 0 ? 'text-emerald-700 font-mono text-xs' : 'text-slate-500' }}">
 									Rp {{ number_format($total, 0, ',', '.') }}
 								</span>
 							</td>
@@ -212,7 +212,7 @@
 										</a>
 @else
 <button type="button" disabled
-											class="inline-flex items-center gap-1 rounded bg-slate-100 border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-400 cursor-not-allowed">
+											class="inline-flex items-center gap-1 rounded bg-slate-100 border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-500 cursor-not-allowed">
 											<i class="fa-solid fa-lock text-[8px]"></i> Cetak
 										</button>
 @endif

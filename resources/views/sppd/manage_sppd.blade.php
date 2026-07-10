@@ -17,13 +17,13 @@
 			</a>
 		</div>
 
-		<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
 
 				{{-- Daftar Personel --}}
 				<div class="space-y-3">
 					<div class="flex items-center justify-between mb-2">
-						<p class="text-[10px] font-bold uppercase text-slate-400">Daftar Pelaksana & Pengikut</p>
+						<p class="text-[10px] font-bold uppercase text-slate-500">Daftar Pelaksana & Pengikut</p>
 						<span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
 							{{ 1 + $sppd->followers->count() }} Orang
 						</span>
@@ -31,8 +31,8 @@
 
 					<div class="relative mb-3">
 						<input type="text" id="personel-search-input" placeholder="Cari nama pegawai..."
-							class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500" />
-						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-[10px]"></i>
+							class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500" />
+						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-[10px]"></i>
 					</div>
 
 					<div class="relative overflow-hidden border border-slate-200 rounded-lg bg-white shadow-xs">
@@ -51,19 +51,19 @@
 									{{-- Main Pelaksana --}}
 									<tr class="hover:bg-slate-50/80 transition-colors"
 										data-search-term="pelaksana {{ strtolower($sppd->user->name) }}">
-										<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">1.</td>
+										<td class="py-2 px-3 text-xs text-slate-500 text-center font-medium">1.</td>
 										<td class="py-2 px-3">
 											<span class="text-xs font-semibold text-slate-800">{{ $sppd->user->name }}</span>
 										</td>
 										<td class="py-2 px-3">
 											<span
-												class="inline-block bg-cyan-50 text-cyan-700 border border-cyan-200/60 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+												class="inline-block bg-primary-50 text-primary-700 border border-primary-200/60 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												Pelaksana
 											</span>
 										</td>
 										<td class="py-2 px-3 text-center">
 											<a href="{{ route('sppd.stream.sppd', $sppd) }}" target="_blank"
-												class="inline-flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-cyan-700 shadow-xs">
+												class="inline-flex items-center gap-1 rounded bg-primary-600 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-primary-700 shadow-xs">
 												<i class="fa-solid fa-print"></i> CETAK
 											</a>
 										</td>
@@ -73,7 +73,7 @@
 									@foreach ($sppd->followers as $index => $f)
 										<tr class="hover:bg-slate-50/80 transition-colors"
 											data-search-term="pengikut {{ strtolower($f->user->name) }}">
-											<td class="py-2 px-3 text-xs text-slate-400 text-center font-medium">{{ $index + 2 }}.</td>
+											<td class="py-2 px-3 text-xs text-slate-500 text-center font-medium">{{ $index + 2 }}.</td>
 											<td class="py-2 px-3">
 												<span class="text-xs font-medium text-slate-700">{{ $f->user->name }}</span>
 											</td>
@@ -102,7 +102,7 @@
 				{{-- Status TTE --}}
 				<div class="space-y-4">
 					<div class="flex justify-between items-center py-2 border-b border-slate-100">
-						<span class="text-xs font-bold text-slate-400 uppercase">Tanggal SPPD</span>
+						<span class="text-xs font-bold text-slate-500 uppercase">Tanggal SPPD</span>
 						<span
 							class="text-sm font-bold text-slate-800">{{ $sppd->sppd_date?->translatedFormat('d F Y') ?? $sppd->created_at->translatedFormat('d F Y') }}</span>
 					</div>
@@ -140,7 +140,7 @@
 
 								@if ($sppdSignature && $sppdSignature->status->value === 'signed' && $sppdSignature->signer)
 									<div class="mt-2.5 text-[11px] text-slate-600 font-medium">
-										<i class="fa-solid fa-signature text-slate-400 mr-1"></i>
+										<i class="fa-solid fa-signature text-slate-500 mr-1"></i>
 										Penandatangan: <span class="text-slate-800 font-bold">{{ $sppdSignature->signer->name }}</span>
 										@if ($sppdSignature->signer->nip)
 											<span class="text-slate-500 font-normal">(NIP. {{ $sppdSignature->signer->nip }})</span>
@@ -162,7 +162,7 @@
 
 			{{-- Footer Note --}}
 			<div class="bg-slate-50 border-t border-slate-100 p-4 flex items-center gap-3 text-[11px] text-slate-500 italic">
-				<i class="fa-solid fa-circle-info text-slate-400"></i>
+				<i class="fa-solid fa-circle-info text-slate-500"></i>
 				Sistem menghasilkan dokumen PDF yang sudah siap cetak atau ditandatangani secara elektronik.
 			</div>
 		</div>

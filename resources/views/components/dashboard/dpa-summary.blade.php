@@ -13,11 +13,11 @@
     $pctLabel = $pagu > 0 ? number_format($pct, 1, ',', '.') : '0';
 @endphp
 
-<div class="rounded border border-slate-200 bg-white p-5 shadow-md">
+<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
   <div class="mb-4 flex items-center justify-between">
     <div>
-      <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-wallet text-cyan-500"></i> {{ $title }}
+      <h3 class="flex items-center gap-2 font-serif text-base font-bold text-slate-800">
+        <i class="fa-solid fa-wallet text-primary-500"></i> {{ $title }}
         @if ($year)
           <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500">{{ $year }}</span>
         @endif
@@ -30,21 +30,21 @@
 
   <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
     {{-- Pagu --}}
-    <div class="rounded border border-slate-100 bg-slate-50 p-3">
-      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Pagu DPA</p>
-      <p class="mt-1 font-mono text-base font-bold text-slate-800">Rp {{ number_format($pagu, 0, ',', '.') }}</p>
+    <div class="rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pagu DPA</p>
+      <p class="mt-1 font-mono text-xl font-bold tracking-tight text-slate-800">Rp {{ number_format($pagu, 0, ',', '.') }}</p>
     </div>
     {{-- Realisasi --}}
-    <div class="rounded border border-cyan-100 bg-cyan-50/60 p-3">
-      <p class="text-[11px] font-semibold uppercase tracking-wide text-cyan-500">Realisasi</p>
-      <p class="mt-1 font-mono text-base font-bold text-cyan-700">Rp {{ number_format($realisasi, 0, ',', '.') }}</p>
+    <div class="rounded-lg border border-primary-100 bg-primary-50/60 p-3">
+      <p class="text-[11px] font-semibold uppercase tracking-wide text-primary-700">Realisasi</p>
+      <p class="mt-1 font-mono text-xl font-bold tracking-tight text-primary-700">Rp {{ number_format($realisasi, 0, ',', '.') }}</p>
     </div>
     {{-- Sisa --}}
-    <div class="rounded border p-3 {{ $sisa < 0 ? 'border-rose-100 bg-rose-50' : 'border-emerald-100 bg-emerald-50/60' }}">
-      <p class="text-[11px] font-semibold uppercase tracking-wide {{ $sisa < 0 ? 'text-rose-500' : 'text-emerald-500' }}">
+    <div class="rounded-lg border p-3 {{ $sisa < 0 ? 'border-rose-100 bg-rose-50' : 'border-emerald-100 bg-emerald-50/60' }}">
+      <p class="text-[11px] font-semibold uppercase tracking-wide {{ $sisa < 0 ? 'text-rose-700' : 'text-emerald-700' }}">
         Sisa Anggaran
       </p>
-      <p class="mt-1 font-mono text-base font-bold {{ $sisa < 0 ? 'text-rose-700' : 'text-emerald-700' }}">
+      <p class="mt-1 font-mono text-xl font-bold tracking-tight {{ $sisa < 0 ? 'text-rose-700' : 'text-emerald-700' }}">
         Rp {{ number_format($sisa, 0, ',', '.') }}
       </p>
     </div>

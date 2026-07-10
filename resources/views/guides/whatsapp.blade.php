@@ -61,7 +61,7 @@
     {{-- Notifikasi persetujuan --}}
     <div class="table-container p-5 sm:p-6">
       <div class="mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-paper-plane text-cyan-600"></i>
+        <i class="fa-solid fa-paper-plane text-primary-600"></i>
         <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Notifikasi Persetujuan SPPD</h2>
       </div>
       <p class="text-sm leading-relaxed text-slate-600">
@@ -101,7 +101,7 @@
           ['Tidak menerima notifikasi persetujuan?', 'Cek apakah nomor Anda sudah terverifikasi di halaman Profil. Notifikasi hanya dikirim ke nomor terverifikasi.'],
         ] as $faq)
           <div>
-            <p class="text-sm font-semibold text-slate-800"><i class="fa-solid fa-angle-right mr-1.5 text-slate-400"></i>{{ $faq[0] }}</p>
+            <p class="text-sm font-semibold text-slate-800"><i class="fa-solid fa-angle-right mr-1.5 text-slate-500"></i>{{ $faq[0] }}</p>
             <p class="mt-1 pl-5 text-xs leading-relaxed text-slate-500">{!! $faq[1] !!}</p>
           </div>
         @endforeach

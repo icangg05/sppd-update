@@ -64,7 +64,7 @@
   {{-- Info database --}}
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
     <div class="table-container flex items-center gap-3 p-4">
-      <div class="flex size-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600"><i class="fa-solid fa-database"></i></div>
+      <div class="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600"><i class="fa-solid fa-database"></i></div>
       <div class="min-w-0">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Database</p>
         <p class="truncate text-sm font-bold text-slate-800" title="{{ $database }}">{{ $database }}</p>
@@ -87,7 +87,7 @@
   </div>
 
   {{-- Catatan --}}
-  <div class="flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
+  <div class="flex items-start gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
     <i class="fa-solid fa-robot mt-0.5 shrink-0"></i>
     @php
       $backupDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -137,7 +137,7 @@
                      wire:target memuat argumen agar hanya tombol baris ini yang terkunci. --}}
                 <button wire:click="download('{{ $backup['name'] }}')"
                   wire:loading.attr="disabled" wire:target="download('{{ $backup['name'] }}')"
-                  class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60">
+                  class="inline-flex items-center gap-1.5 rounded border border-primary-500 bg-primary-50 px-2.5 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60">
                   <span wire:loading.remove wire:target="download('{{ $backup['name'] }}')">
                     <i class="fa-solid fa-download"></i> Unduh
                   </span>
@@ -154,7 +154,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="5" class="py-10 text-center text-sm text-slate-400">
+            <td colspan="5" class="py-10 text-center text-sm text-slate-500">
               <i class="fa-solid fa-box-open mb-2 block text-2xl"></i>
               Belum ada backup. Klik <strong>Buat Backup Sekarang</strong> untuk membuat yang pertama.
             </td>
@@ -166,7 +166,7 @@
 
   {{-- Modal konfirmasi backup dengan jeda 10 detik --}}
   <x-ui.modal show="showConfirm" :closeable="false" title="Konfirmasi Backup Database"
-    description="Proses akan dikirim ke worker" icon="fa-solid fa-database text-cyan-600" maxWidth="max-w-md">
+    description="Proses akan dikirim ke worker" icon="fa-solid fa-database text-primary-600" maxWidth="max-w-md">
     <div class="space-y-3 text-sm text-slate-600">
       <p>Anda akan membuat backup database <strong>minggu ini</strong>. Jika backup minggu ini sudah ada,
         file tersebut akan <strong>ditimpa</strong>.</p>
@@ -187,7 +187,7 @@
         wire:click="createBackup"
         x-on:click="closeConfirm()"
         x-bind:disabled="countdown > 0"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60">
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
         <template x-if="countdown > 0">
           <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="countdown"></span>s</span>
         </template>
@@ -201,9 +201,9 @@
   {{-- Modal proses: tampil selama backup diproses worker; tidak bisa ditutup,
        menutup sendiri saat $processing menjadi false (pollBackup). --}}
   <x-ui.modal show="$wire.processing" :closeable="false" title="Membuat Backup Database"
-    description="Mohon tunggu, jangan tutup halaman ini" icon="fa-solid fa-database text-cyan-600" maxWidth="max-w-sm">
+    description="Mohon tunggu, jangan tutup halaman ini" icon="fa-solid fa-database text-primary-600" maxWidth="max-w-sm">
     <div class="flex flex-col items-center gap-3 py-4 text-center">
-      <div class="flex size-14 items-center justify-center rounded-full bg-cyan-50 text-2xl text-cyan-600">
+      <div class="flex size-14 items-center justify-center rounded-full bg-primary-50 text-2xl text-primary-600">
         <i class="fa-solid fa-spinner fa-spin"></i>
       </div>
       <p class="text-sm font-semibold text-slate-700">Backup sedang diproses di latar belakang…</p>

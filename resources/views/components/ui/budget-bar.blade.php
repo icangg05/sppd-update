@@ -9,13 +9,19 @@
     $pct = (float) $percentage;
     $width = max(0, min(100, $pct));
 
-    // Ambang warna: ≤50 hijau, 51–75 kuning, 76–90 oranye, >90 merah.
+    // Ambang warna + label teks (agar makna tak lewat warna saja — a11y).
     // Kelas ditulis literal agar terpindai Tailwind v4.
-    $bar = $pct > 90
-        ? 'bg-red-500'
-        : ($pct > 75 ? 'bg-orange-500' : ($pct > 50 ? 'bg-yellow-400' : 'bg-green-500'));
+    [$bar, $level] = match (true) {
+        $pct > 90 => ['bg-red-500', 'Kritis'],
+        $pct > 75 => ['bg-orange-500', 'Tinggi'],
+        $pct > 50 => ['bg-yellow-400', 'Waspada'],
+        default   => ['bg-green-500', 'Aman'],
+    };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'w-full overflow-hidden rounded-full bg-slate-100 ' . $height]) }}>
-    <div class="{{ $bar }} {{ $height }} rounded-full transition-all duration-500" style="width: {{ $width }}%"></div>
+<div {{ $attributes->merge(['class' => 'w-full overflow-hidden rounded-full bg-slate-100 ' . $height]) }}
+    role="progressbar" aria-valuenow="{{ round($pct) }}" aria-valuemin="0" aria-valuemax="100"
+    aria-label="Penggunaan anggaran {{ number_format($pct, 1, ',', '.') }}% — {{ $level }}">
+    <div class="{{ $bar }} {{ $height }} rounded-full transition-all duration-500 motion-reduce:transition-none"
+        style="width: {{ $width }}%"></div>
 </div>

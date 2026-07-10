@@ -10,34 +10,34 @@
     <!-- Quick Stats Bar -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
         <!-- Stat Card 1 -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition duration-200">
+        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
                 <i class="fa-solid fa-calendar-days text-xl"></i>
             </div>
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total SPPD Bulan Ini</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total SPPD Bulan Ini</p>
                 <p class="text-2xl font-black text-slate-900 mt-1">{{ $totalTravelsThisMonth }}</p>
             </div>
         </div>
 
         <!-- Stat Card 2 -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition duration-200">
+        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200">
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <i class="fa-solid fa-plane-departure text-xl"></i>
             </div>
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Sedang Berlangsung Hari Ini</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Sedang Berlangsung Hari Ini</p>
                 <p class="text-2xl font-black text-slate-900 mt-1">{{ $activeTravelsCount }}</p>
             </div>
         </div>
 
         <!-- Stat Card 3 (Legend & Info) -->
-        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition duration-200 md:col-span-2 lg:col-span-1">
+        <div class="flex items-center gap-4 p-5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-sm transition duration-200 md:col-span-2 lg:col-span-1">
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
                 <i class="fa-solid fa-info text-xl"></i>
             </div>
             <div class="flex-1">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Status Warna Agenda</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Status Warna Agenda</p>
                 <div class="flex items-center gap-4 mt-2">
                     <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
                         <span class="inline-block h-3 w-3 rounded-full bg-sky-500"></span>
@@ -79,7 +79,7 @@
                             <li class="py-4">
                                 <div class="flex items-start gap-3">
                                     <div class="flex-shrink-0 text-center bg-slate-50 border border-slate-200 rounded-lg p-2 min-w-[3.5rem] shadow-sm">
-                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                                        <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
                                             {{ $sppd->start_date->format('M') }}
                                         </p>
                                         <p class="text-lg font-black text-slate-800 leading-none mt-0.5">
@@ -95,7 +95,7 @@
                                         </p>
                                         
                                         <!-- Destination and duration info -->
-                                        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 font-semibold">
+                                        <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 font-semibold">
                                             <span class="inline-flex items-center gap-1">
                                                 <i class="fa-solid fa-location-dot"></i>
                                                 {{ $sppd->destinations->first()?->regency?->name ?? 'Tujuan' }}

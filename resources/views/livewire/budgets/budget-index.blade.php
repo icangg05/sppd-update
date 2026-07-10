@@ -18,7 +18,7 @@
 
 		@can('budget.create')
 			<x-ui.button href="{{ route('master.budgets.create') }}"
-				class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
+				class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 				<x-slot name="icon">
 					<i class="fa-solid fa-plus"></i>
 				</x-slot>
@@ -33,7 +33,7 @@
 
 			{{-- Search Input --}}
 			<div class="relative flex-1">
-				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
@@ -120,14 +120,14 @@
 				<tbody class="divide-y divide-slate-100 text-slate-700">
 					@forelse($budgets as $budget)
 						<tr class="hover:bg-slate-50/50 transition-colors">
-							<td class="py-3.5 px-4 text-center text-xs font-semibold text-slate-400">
+							<td class="py-3.5 px-4 text-center text-xs font-semibold text-slate-500">
 								{{ $loop->iteration + ($budgets->currentPage() - 1) * $budgets->perPage() }}.
 							</td>
 
 							<td class="py-3.5 px-4 max-w-56 whitespace-normal">
 								<div class="text-sm font-bold text-slate-900 leading-tight">{{ $budget->department?->name ?? '-' }}</div>
 								@if ($budget->department?->parent)
-									<div class="text-[11px] text-slate-400 leading-tight mt-0.5">{{ $budget->department->parent->name }}</div>
+									<div class="text-[11px] text-slate-500 leading-tight mt-0.5">{{ $budget->department->parent->name }}</div>
 								@endif
 							</td>
 
@@ -173,7 +173,7 @@
 								<div class="flex items-center justify-center gap-1">
 									{{-- Detail --}}
 									<a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"
-										class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+										class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
 										title="Detail Anggaran">
 										<i class="fa-solid fa-eye text-xs"></i>
 									</a>
@@ -181,7 +181,7 @@
 									{{-- Edit --}}
 									@can('budget.edit')
 										<a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
-											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
 											title="Edit Anggaran">
 											<i class="fa-solid fa-pen-to-square text-xs"></i>
 										</a>
@@ -190,7 +190,7 @@
 									{{-- Hapus --}}
 									@can('budget.delete')
 										<button type="button" wire:click="confirmDelete({{ $budget->id }})"
-											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+											class="rounded-xl border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
 											title="Hapus Anggaran">
 											<i class="fa-solid fa-trash-can text-xs"></i>
 										</button>
@@ -201,7 +201,7 @@
 					@empty
 						<tr>
 							<td colspan="9" class="py-12 text-center">
-								<div class="flex flex-col items-center justify-center text-slate-400">
+								<div class="flex flex-col items-center justify-center text-slate-500">
 									<i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
 									<p class="text-sm font-medium">Belum ada data anggaran yang ditemukan</p>
 								</div>

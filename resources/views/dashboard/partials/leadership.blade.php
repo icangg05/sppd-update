@@ -11,29 +11,32 @@
     ];
   @endphp
   @foreach ($kpis as $kpi)
-    <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-md">
-      <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
+    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex size-10 items-center justify-center rounded-lg {{ $kpi['tone'] }}">
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-        <p class="text-lg font-bold text-slate-800">{{ $kpi['value'] }}</p>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ $kpi['label'] }}</p>
+        <p class="text-4xl font-bold leading-none tracking-tight tabular-nums text-slate-800">{{ $kpi['value'] }}</p>
       </div>
     </div>
   @endforeach
 </div>
 
-<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
-  {{-- Antrean Persetujuan (utama) --}}
-  <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
+<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+  {{-- Antrean Persetujuan (tugas utama approver — diberi bobot 2/3 lebar) --}}
+  <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+      <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
+        @if ($pendingApprovals->isNotEmpty())
+          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
+        @endif
       </h3>
       <a wire:navigate href="{{ route('sppd.index', ['filter' => 'approval']) }}"
         class="text-xs font-medium text-primary-600 hover:underline">Buka Semua</a>
     </div>
-    <div class="flex max-h-96 flex-col divide-y divide-slate-100 overflow-y-auto">
+    <div class="flex max-h-112 flex-col divide-y divide-slate-100 overflow-y-auto">
       @forelse ($pendingApprovals as $appr)
         @php $sppd = $appr->sppdRequest; @endphp
         <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-slate-50">
@@ -48,8 +51,8 @@
           </div>
         </a>
       @empty
-        <div class="flex flex-col items-center justify-center p-8 text-slate-400">
-          <i class="fa-solid fa-mug-hot mb-3 text-3xl text-slate-200"></i>
+        <div class="flex flex-col items-center justify-center p-8 text-slate-500">
+          <i class="fa-solid fa-mug-hot mb-3 text-3xl text-slate-300"></i>
           <p class="text-sm">Tidak ada pengajuan menunggu persetujuan</p>
         </div>
       @endforelse
@@ -59,10 +62,11 @@
   <div class="flex flex-col gap-5">
     {{-- Antrean Tanda Tangan (jika bisa sign) --}}
     @if ($pendingSignatures->isNotEmpty())
-      <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
+      <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 p-4">
           <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
             <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
+            <span class="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">{{ $pendingSignatures->count() }}</span>
           </h3>
         </div>
         <div class="flex max-h-44 flex-col divide-y divide-slate-100 overflow-y-auto">
@@ -80,7 +84,7 @@
     @endif
 
     {{-- Keputusan terakhir --}}
-    <div class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md">
+    <div class="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
         <h3 class="text-sm font-bold text-slate-800">Keputusan Terakhir Anda</h3>
       </div>
@@ -93,7 +97,7 @@
             </x-ui.badge>
           </div>
         @empty
-          <p class="p-6 text-center text-sm text-slate-400">Belum ada keputusan</p>
+          <p class="p-6 text-center text-sm text-slate-500">Belum ada keputusan</p>
         @endforelse
       </div>
     </div>

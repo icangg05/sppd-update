@@ -3,7 +3,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid fa-route text-base"></i>
       </div>
       <div>
@@ -30,7 +30,7 @@
     <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-3 border-b border-slate-200 bg-slate-50/50">
         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-cyan-500"></i>Konfigurasi Parameter Aturan
+          <i class="fa-solid fa-sliders text-primary-500"></i>Konfigurasi Parameter Aturan
         </h3>
       </div>
 
@@ -41,7 +41,7 @@
           <div class="space-y-0.5">
             <x-form.input name="name" label="Nama Skema Workflow" wire:model="name"
               placeholder="Misal: Alur Staf Reguler Luar Daerah" required
-              class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
+              class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
           </div>
 
           {{-- Filter Tipe Instansi (multi-checkbox) --}}
@@ -53,7 +53,7 @@
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu tipe instansi. Kosongkan jika berlaku untuk semua OPD.</p>
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu tipe instansi. Kosongkan jika berlaku untuk semua OPD.</p>
           </div>
 
           {{-- Filter Peran Pemohon (multi-checkbox dengan label) --}}
@@ -65,7 +65,7 @@
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu peran pemohon. Kosongkan jika berlaku untuk semua tingkat peran.</p>
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu peran pemohon. Kosongkan jika berlaku untuk semua tingkat peran.</p>
           </div>
 
           {{-- Pilihan Ruang Lingkup Wilayah Tujuan --}}
@@ -77,7 +77,7 @@
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-400 font-medium"><i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Dapat memilih lebih dari satu cakupan wilayah. Jika dikosongkan, sistem menganggap sah untuk semua destinasi.</p>
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu cakupan wilayah. Jika dikosongkan, sistem menganggap sah untuk semua destinasi.</p>
           </div>
 
           {{-- Status Keaktifan Aturan --}}
@@ -94,14 +94,14 @@
       <div class="p-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-4">
         <div class="space-y-0.5">
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <i class="fa-solid fa-diagram-next text-cyan-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
+            <i class="fa-solid fa-diagram-next text-primary-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
           </h3>
-          <p class="text-[10px] text-slate-400 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan.</p>
+          <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan.</p>
         </div>
 
         <x-ui.button type="button" wire:click="addStep" variant="secondary"
           class="px-2.5 py-1 text-[11px] font-bold text-slate-700">
-          <i class="fa-solid fa-plus text-cyan-600 text-[10px]"></i> Sisipkan Tahap
+          <i class="fa-solid fa-plus text-primary-600 text-[10px]"></i> Sisipkan Tahap
         </x-ui.button>
       </div>
 
@@ -124,11 +124,11 @@
               <div class="flex items-center gap-2 flex-1 w-full">
                 <div class="flex flex-col gap-0.5 shrink-0">
                   <button type="button" wire:click="moveStep({{ $i }}, -1)" @disabled($loop->first)
-                    class="px-1 text-slate-300 hover:text-cyan-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Naik">
+                    class="px-1 text-slate-300 hover:text-primary-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Naik">
                     <i class="fa-solid fa-chevron-up text-[10px]"></i>
                   </button>
                   <button type="button" wire:click="moveStep({{ $i }}, 1)" @disabled($loop->last)
-                    class="px-1 text-slate-300 hover:text-cyan-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Turun">
+                    class="px-1 text-slate-300 hover:text-primary-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Turun">
                     <i class="fa-solid fa-chevron-down text-[10px]"></i>
                   </button>
                 </div>
@@ -145,21 +145,21 @@
 
               <div class="flex items-center justify-between sm:justify-start gap-4 px-2 sm:px-0 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
                 <div class="flex items-center gap-4">
-                  <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-cyan-600 transition-colors">
+                  <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-primary-600 transition-colors">
                     <input type="checkbox" wire:model.live="steps.{{ $i }}.signs_spt"
-                      class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-4 h-4 transition-colors">
+                      class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
                     <span>TTD SPT</span>
                   </label>
 
-                  <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-cyan-600 transition-colors">
+                  <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none hover:text-primary-600 transition-colors">
                     <input type="checkbox" wire:model.live="steps.{{ $i }}.signs_sppd"
-                      class="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-4 h-4 transition-colors">
+                      class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
                     <span>TTD SPPD</span>
                   </label>
                 </div>
 
                 <button type="button" wire:click="removeStep({{ $i }})"
-                  class="p-1.5 text-slate-400 border border-transparent rounded hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors shrink-0"
+                  class="p-1.5 text-slate-500 border border-transparent rounded hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors shrink-0"
                   title="Hapus Tahap">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
@@ -178,7 +178,7 @@
       </a>
 
       <x-ui.button type="submit"
-        class="px-4 py-1.5 text-xs font-bold shadow-md shadow-cyan-200">
+        class="px-4 py-1.5 text-xs font-bold shadow-sm shadow-primary-200">
         <span wire:loading.remove wire:target="save">
           <i class="fa-solid fa-floppy-disk text-[11px]"></i>
           {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Aturan Workflow' }}

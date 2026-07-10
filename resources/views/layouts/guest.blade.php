@@ -3,10 +3,12 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	<meta content="width=device-width, initial-scale=1" name="viewport">
 	<meta name="google" content="notranslate">
 	<meta name="robots" content="index, follow">
 	<title>{{ config('app.name') }}</title>
+	<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -89,7 +91,7 @@
 					<p>
 						<span class="inline lg:hidden font-bold text-sky-100">SPPD Elektronik</span>
 						<span class="font-bold text-sky-100">V {{ config('app.sppd_version') }}</span> • &copy; <?= date('Y') ?>
-						Pemerintah Kota Kendari
+						Dinas Komunikasi dan Informatika Kota Kendari. All Rights Reserved.
 					</p>
 				</div>
 			</div>

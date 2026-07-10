@@ -9,7 +9,7 @@
 		<x-ui.button href="{{ route('sppd.create') }}" wire:navigate variant="secondary"
 			class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 			<x-slot name="icon">
-				<i class="fa-solid fa-arrow-left text-xs text-slate-400"></i>
+				<i class="fa-solid fa-arrow-left text-xs text-slate-500"></i>
 			</x-slot>
 			Kembali ke Tahap 1
 		</x-ui.button>
@@ -41,7 +41,7 @@
 
 			<div class="lg:col-span-2 rounded border border-slate-200 bg-white p-4 shadow-sm">
 				<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-3">
-					<i class="fa-solid fa-diagram-project text-slate-400"></i> Pratinjau Alur Verifikasi / Persetujuan
+					<i class="fa-solid fa-diagram-project text-slate-500"></i> Pratinjau Alur Verifikasi / Persetujuan
 				</h4>
 				<div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
 					@foreach ($steps as $step)
@@ -62,7 +62,7 @@
 		</div>
 
 		{{-- Data Perihal / Isi Telaah --}}
-		<div class="mt-4 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+		<div class="mt-4 rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
 					<i class="fa-solid fa-file-pen text-primary-600"></i> Data Perihal & Justifikasi Perjalanan
@@ -79,7 +79,7 @@
 		</div>
 
 		{{-- Logistik & Tanggal Perjalanan --}}
-		<div class="mt-4 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+		<div class="mt-4 rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 				<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
 					<i class="fa-solid fa-route text-primary-600"></i> Detail Logistik & Tanggal Perjalanan
@@ -109,7 +109,7 @@
 						<div id="dalam-daerah-fields" class="flex flex-col gap-2">
 							<div
 								class="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 w-fit">
-								<i class="fa-solid fa-location-dot text-slate-400"></i>
+								<i class="fa-solid fa-location-dot text-slate-500"></i>
 								Lokasi Basis: <span class="font-bold text-slate-700">Kota Kendari, Sulawesi Tenggara</span>
 							</div>
 							<input type="text" wire:model="destinations.0.address_only"
@@ -164,7 +164,7 @@
 										<i class="fa-solid fa-circle-plus"></i> Tambah Lokasi Tujuan Lainnya
 									</button>
 								@endif
-								<span class="text-xs text-slate-400">({{ count($destinations) }}/4 lokasi)</span>
+								<span class="text-xs text-slate-500">({{ count($destinations) }}/4 lokasi)</span>
 								@if (count($destinations) >= 4)
 									<span class="text-xs text-amber-600 font-semibold"><i class="fa-solid fa-circle-info"></i> Batas maksimal 4 tujuan</span>
 								@endif
@@ -178,7 +178,7 @@
 		{{-- Pembebanan Anggaran & Informasi Anggaran Tersedia --}}
 		@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
-			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
 						<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Anggaran & Dokumen Pendukung
@@ -197,7 +197,7 @@
 						<x-form.searchable-select wire:model.live="budget_id" name="budget_id"
 							label="Sumber Anggaran / Kegiatan SKPD" required :options="$budgetOptions"
 							placeholder="— Pilih Program / Kegiatan —" searchPlaceholder="Cari program / kegiatan..." />
-						<p class="mt-1 text-[10px] text-slate-400">
+						<p class="mt-1 text-[10px] text-slate-500">
 							<i class="fa-solid fa-circle-info"></i>
 							DPA anggaran yang tersedia merupakan DPA tahun anggaran berjalan ({{ now()->year }}).
 						</p>
@@ -211,14 +211,14 @@
 					<div>
 						<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Undangan / Dokumen Pendukung</label>
 						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
-						<p class="text-[10px] text-slate-400 mt-1">Format berkas: PDF, DOCX, JPG, PNG (Maks. 2MB)</p>
+						<p class="text-[10px] text-slate-500 mt-1">Format berkas: PDF, DOCX, JPG, PNG (Maks. 2MB)</p>
 						@error('attachment') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 					</div>
 				</div>
 			</div>
 
 			{{-- Informasi Anggaran Tersedia (muncul saat program / kegiatan dipilih) --}}
-			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden flex flex-col">
+			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
 				<div class="border-b border-slate-100 bg-emerald-50/60 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-emerald-700 uppercase flex items-center gap-1.5">
 						<i class="fa-solid fa-wallet text-emerald-600"></i> Informasi Anggaran Tersedia
@@ -255,23 +255,23 @@
 						{{-- Detail Program / Kegiatan --}}
 						<div class="space-y-2 border-t border-slate-200/70 pt-2.5 leading-tight">
 							<div>
-								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Program</span>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Program</span>
 								<p class="text-xs font-semibold text-primary-700">{{ $selectedBudget->program ?? '-' }}</p>
 							</div>
 							<div>
-								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kegiatan</span>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Kegiatan</span>
 								<p class="text-xs text-slate-600">{{ $selectedBudget->activity ?? '-' }}</p>
 							</div>
 							@if ($selectedBudget->account_code)
 								<div>
-									<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kode Rekening</span>
+									<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Kode Rekening</span>
 									<span class="inline-block mt-0.5 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-medium text-slate-600 border border-slate-200/60">{{ $selectedBudget->account_code }}</span>
 								</div>
 							@endif
 						</div>
 					</div>
 				@else
-					<div class="flex flex-1 flex-col items-center justify-center p-8 text-center text-xs text-slate-400 italic">
+					<div class="flex flex-1 flex-col items-center justify-center p-8 text-center text-xs text-slate-500 italic">
 						<i class="fa-solid fa-hand-pointer mb-2 block text-xl text-slate-300"></i>
 						Pilih program / kegiatan anggaran untuk menampilkan informasi anggaran tersedia.
 					</div>
@@ -281,7 +281,7 @@
 
 		{{-- Daftar Pengikut & Penomoran Dokumen Resmi --}}
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
-			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden flex flex-col">
+			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
 				<div
 					class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
@@ -289,7 +289,7 @@
 					</h3>
 					{{-- Input Live Search Pengikut --}}
 					<div class="relative w-full sm:w-48">
-						<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+						<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-500">
 							<i class="fa-solid fa-magnifying-glass text-xs"></i>
 						</span>
 						<input type="text" wire:model.live.debounce.300ms="searchFollower"
@@ -310,7 +310,7 @@
 										@disabled($isActive)>
 									<div class="min-w-0 leading-tight">
 										<span class="block text-xs font-semibold text-slate-700 truncate follower-name">{{ $u->name }}</span>
-										<span class="block text-[10px] text-slate-400 font-mono mt-0.5">{{ $u->nip }}</span>
+										<span class="block text-[10px] text-slate-500 font-mono mt-0.5">{{ $u->nip }}</span>
 										@if ($isActive)
 											<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
 													class="fa-solid fa-route"></i> Sedang dalam perjalanan dinas</span>
@@ -319,7 +319,7 @@
 								</label>
 							@endif
 						@empty
-							<div class="col-span-full text-center py-8 text-xs font-medium text-slate-400 italic">
+							<div class="col-span-full text-center py-8 text-xs font-medium text-slate-500 italic">
 								<i class="fa-solid fa-user-slash text-base mb-1 block text-slate-300"></i> Pegawai tidak ditemukan
 							</div>
 						@endforelse
@@ -328,7 +328,7 @@
 			</div>
 
 			{{-- Administrasi Tanggal Pengesahan --}}
-			<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
 						<i class="fa-solid fa-calendar-check text-primary-600"></i> Penomoran & Penanggalan Dokumen Resmi
@@ -346,7 +346,7 @@
 					{{-- Tombol Submit Pembuat Aksi --}}
 					<div class="flex justify-end border-t border-slate-100 pt-4">
 						<button type="submit" wire:loading.attr="disabled" wire:target="openConfirmModal"
-							class="inline-flex items-center gap-2 rounded bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
+							class="inline-flex items-center gap-2 rounded bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
 							<span wire:loading.remove wire:target="openConfirmModal" class="inline-flex items-center gap-2">
 								<i class="fa-solid fa-paper-plane text-xs"></i>
 								<span>Buat & Ajukan SPPD</span>
@@ -405,23 +405,23 @@
 						{{-- Detail Program / Kegiatan (disembunyikan di mobile agar ringkas) --}}
 						<div class="hidden sm:block space-y-2 border-t border-slate-200/70 pt-2.5 leading-tight">
 							<div>
-								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Program</span>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Program</span>
 								<p class="text-xs font-semibold text-primary-700">{{ $selectedBudget->program ?? '-' }}</p>
 							</div>
 							<div>
-								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kegiatan</span>
+								<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Kegiatan</span>
 								<p class="text-xs text-slate-600">{{ $selectedBudget->activity ?? '-' }}</p>
 							</div>
 							@if ($selectedBudget->account_code)
 								<div>
-									<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Kode Rekening</span>
+									<span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Kode Rekening</span>
 									<span class="inline-block mt-0.5 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-medium text-slate-600 border border-slate-200/60">{{ $selectedBudget->account_code }}</span>
 								</div>
 							@endif
 						</div>
 					</div>
 				@else
-					<div class="p-6 text-center text-xs text-slate-400 italic">
+					<div class="p-6 text-center text-xs text-slate-500 italic">
 						<i class="fa-solid fa-circle-exclamation mb-1 block text-base text-slate-300"></i>
 						Sumber anggaran belum dipilih.
 					</div>
@@ -431,13 +431,13 @@
 			{{-- Kolom Kanan: Pelaksana & Pengikut --}}
 			<div class="space-y-3.5 text-sm text-slate-600">
 				<div>
-					<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Pegawai Pelaksana:</span>
+					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pegawai Pelaksana:</span>
 					<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
 						<i class="fa-solid fa-user text-primary-600 mr-1.5"></i> {{ $pelaksana->name }}
 					</p>
 				</div>
 				<div>
-					<span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Pengikut Dinas:</span>
+					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Pengikut Dinas:</span>
 					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 max-h-64 overflow-y-auto">
 						@if ($isInspektorat)
 							@forelse ($followers as $fId)
@@ -464,7 +464,7 @@
 									@enderror
 								@endif
 							@empty
-								<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
+								<div class="px-3 py-2.5 text-xs text-slate-500 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
 							@endforelse
 						@else
 							@forelse ($followers as $fId)
@@ -473,7 +473,7 @@
 									<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i> {{ $folUser->name }}</div>
 								@endif
 							@empty
-								<div class="px-3 py-2.5 text-xs text-slate-400 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
+								<div class="px-3 py-2.5 text-xs text-slate-500 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
 							@endforelse
 						@endif
 					</div>

@@ -3,7 +3,7 @@
   {{-- Header Halaman --}}
   <div class="leading-tight">
     <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-      <i class="fa-solid fa-clipboard-check text-cyan-600"></i> Monitoring Tindak Lanjut SPPD
+      <i class="fa-solid fa-clipboard-check text-primary-600"></i> Monitoring Tindak Lanjut SPPD
     </h1>
     <p class="text-xs text-slate-500 mt-0.5">Kejar kelengkapan administrasi perjalanan dinas di lingkup OPD Anda: pegawai yang sedang dinas, laporan &amp; realisasi biaya yang belum lengkap.</p>
   </div>
@@ -12,8 +12,8 @@
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
     {{-- Sedang dinas hari ini --}}
     <button type="button" wire:click="setTab('ongoing')"
-      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-md transition {{ $tab === 'ongoing' ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-200 hover:border-cyan-300' }}">
-      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-600">
+      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-sm transition {{ $tab === 'ongoing' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-primary-300' }}">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
         <i class="fa-solid fa-person-walking-luggage"></i>
       </span>
       <span class="leading-tight">
@@ -24,7 +24,7 @@
 
     {{-- Belum unggah laporan --}}
     <button type="button" wire:click="setTab('no_report')"
-      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-md transition {{ $tab === 'no_report' ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-200 hover:border-cyan-300' }}">
+      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-sm transition {{ $tab === 'no_report' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-primary-300' }}">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
         <i class="fa-solid fa-file-circle-exclamation"></i>
       </span>
@@ -36,7 +36,7 @@
 
     {{-- Belum input realisasi biaya --}}
     <button type="button" wire:click="setTab('no_expense')"
-      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-md transition {{ $tab === 'no_expense' ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-200 hover:border-cyan-300' }}">
+      class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-sm transition {{ $tab === 'no_expense' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-primary-300' }}">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
         <i class="fa-solid fa-money-check-dollar"></i>
       </span>
@@ -48,7 +48,7 @@
 
     {{-- Menunggu paraf saya (tautan ke mode persetujuan di index) --}}
     <a href="{{ route('sppd.index', ['filter' => 'approval']) }}" wire:navigate
-      class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 text-left shadow-md transition hover:border-emerald-300">
+      class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-emerald-300">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
         <i class="fa-solid fa-signature"></i>
       </span>
@@ -60,7 +60,7 @@
   </div>
 
   {{-- Bar Pencarian --}}
-  <div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+  <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
     <div class="flex flex-col gap-3 sm:flex-row">
       <div class="flex-1">
         <x-form.input name="search" wire:model.live.debounce.300ms="search"
@@ -93,18 +93,18 @@
       <tbody>
         @forelse ($sppds as $i => $sppd)
           <tr wire:key="mon-{{ $sppd->id }}">
-            <td class="text-center text-xs font-semibold text-slate-400">
+            <td class="text-center text-xs font-semibold text-slate-500">
               {{ $sppds->firstItem() + $i }}.
             </td>
 
             <td>
               <p class="font-semibold text-slate-800">{{ $sppd->user->name ?? '-' }}</p>
-              <p class="text-[11px] text-cyan-600 mt-0.5 font-medium">{{ $sppd->user->department?->name ?? '-' }}</p>
+              <p class="text-[11px] text-primary-600 mt-0.5 font-medium">{{ $sppd->user->department?->name ?? '-' }}</p>
             </td>
 
             <td class="max-w-xs">
               <p class="truncate font-medium text-slate-700" title="{{ $sppd->purpose }}">{{ $sppd->purpose }}</p>
-              <p class="mt-0.5 truncate text-xs text-slate-400">
+              <p class="mt-0.5 truncate text-xs text-slate-500">
                 <i class="fa-solid fa-location-dot"></i>
                 {{ $sppd->destinations->first()?->regency?->name ?? '-' }}
               </p>
@@ -112,7 +112,7 @@
 
             <td class="whitespace-nowrap text-xs leading-normal">
               <p class="font-medium text-slate-700">{{ $sppd->start_date->translatedFormat('d M Y') }}</p>
-              <p class="text-slate-400">s/d {{ $sppd->end_date->translatedFormat('d M Y') }}</p>
+              <p class="text-slate-500">s/d {{ $sppd->end_date->translatedFormat('d M Y') }}</p>
             </td>
 
             <td class="whitespace-nowrap">
@@ -141,7 +141,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="6" class="py-12 text-center text-slate-400">
+            <td colspan="6" class="py-12 text-center text-slate-500">
               <div class="flex flex-col items-center justify-center gap-2">
                 <i class="fa-solid fa-clipboard-check text-3xl text-slate-200"></i>
                 <p class="text-sm">

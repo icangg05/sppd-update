@@ -4,9 +4,9 @@
 		{{-- Header Halaman --}}
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-cyan-500 inline-block pb-1">
+				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
 					<i
-						class="fa-solid {{ $isEdit ? 'fa-user-pen' : 'fa-user-plus' }} mr-2 text-cyan-600"></i>{{ $isEdit ? 'Edit' : 'Tambah' }}
+						class="fa-solid {{ $isEdit ? 'fa-user-pen' : 'fa-user-plus' }} mr-2 text-primary-600"></i>{{ $isEdit ? 'Edit' : 'Tambah' }}
 					Pegawai
 				</h1>
 				<p class="mt-1 text-xs text-slate-500 font-medium">
@@ -16,7 +16,7 @@
 			<div class="flex flex-wrap items-center gap-2">
 				@if ($isEdit)
 					<x-ui.button href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $listType])) }}"
-						class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+						class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 						<x-slot name="icon">
 							<i class="fa-solid fa-eye text-xs"></i>
 						</x-slot>
@@ -39,7 +39,7 @@
 				{{-- Sub-header Card --}}
 				<div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
 					<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-						<i class="fa-solid fa-user-gear text-cyan-500"></i>Formulir Data Kepegawaian
+						<i class="fa-solid fa-user-gear text-primary-500"></i>Formulir Data Kepegawaian
 					</h3>
 				</div>
 
@@ -49,7 +49,7 @@
 
 						<div class="space-y-1">
 							<x-form.input wire:model="name" name="name" label="Nama Lengkap" required
-								placeholder="Contoh: Budi Santoso" class="focus:border-cyan-500 focus:ring-cyan-500" />
+								placeholder="Contoh: Budi Santoso" class="focus:border-primary-500 focus:ring-primary-500" />
 						</div>
 
 						<div class="space-y-1">
@@ -60,11 +60,11 @@
 							<div class="flex gap-2">
 								<input wire:model="username" type="text" id="username" name="username" required
 									placeholder="Contoh: budi.santoso"
-									class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 @error('username') border-red-400 @else border-slate-300 @enderror" />
+									class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500 @error('username') border-red-400 @else border-slate-300 @enderror" />
 
 								<button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
 									wire:target="generateUsername" title="Buat username unik otomatis dari Nama Lengkap"
-									class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:opacity-50">
+									class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white disabled:opacity-50">
 									<span wire:loading.remove wire:target="generateUsername">
 										<i class="fa-solid fa-wand-magic-sparkles text-sm"></i> Generate
 									</span>
@@ -81,16 +81,16 @@
 
 						<div class="space-y-1">
 							<x-form.input wire:model="email" type="email" name="email" label="Email Resmi"
-							  placeholder="email@contoh.com" class="focus:border-cyan-500 focus:ring-cyan-500" />
+							  placeholder="email@contoh.com" class="focus:border-primary-500 focus:ring-primary-500" />
 						</div>
 
 						<div class="space-y-1">
 							<x-form.input wire:model="password" type="password" name="password"
 								label="{{ $isEdit ? 'Password Baru' : 'Password' }}"
 								placeholder="{{ $isEdit ? 'Kosongkan jika tidak ingin mengubah password' : 'Minimal 6 karakter (opsional)' }}"
-								class="focus:border-cyan-500 focus:ring-cyan-500" />
+								class="focus:border-primary-500 focus:ring-primary-500" />
 							@unless ($isEdit)
-								<p class="text-xs text-slate-400">
+								<p class="text-xs text-slate-500">
 									<i class="fa-solid fa-circle-info mr-1"></i>
 									Jika dikosongkan, password default
 									<strong class="font-mono text-slate-600">{{ config('users.default_password') }}</strong>
@@ -102,13 +102,13 @@
 						@unless ($this->isDprdContext())
 							<div class="space-y-1">
 								<x-form.input wire:model="nip" name="nip" label="NIP (Nomor Induk Pegawai)"
-									placeholder="18 digit angka" class="font-mono focus:border-cyan-500 focus:ring-cyan-500" />
+									placeholder="18 digit angka" class="font-mono focus:border-primary-500 focus:ring-primary-500" />
 							</div>
 						@endunless
 
 						<div class="space-y-1">
 							<x-form.input wire:model="nik" name="nik" label="NIK (Nomor Induk Kependudukan)"
-								placeholder="16 digit angka" class="font-mono focus:border-cyan-500 focus:ring-cyan-500" />
+								placeholder="16 digit angka" class="font-mono focus:border-primary-500 focus:ring-primary-500" />
 						</div>
 
 						<div class="space-y-1">
@@ -126,7 +126,7 @@
 									inputmode="numeric"
 									pattern="[0-9+]*"
 									@if ($phoneVerified) readonly @endif
-									class="flex-1 block w-full rounded border px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
+									class="flex-1 block w-full rounded border px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:ring-primary-500 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
 
 								@if ($phoneVerified)
 									<button
@@ -139,7 +139,7 @@
 										type="button"
 										wire:click="confirmTestMessage"
 										title="Tes kirim pesan ke nomor pegawai ini"
-										class="inline-flex items-center gap-1.5 rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white whitespace-nowrap">
+										class="inline-flex items-center gap-1.5 rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white whitespace-nowrap">
 										<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
 									</button>
 									<button
@@ -198,7 +198,7 @@
 								:options="$employeeTypeOptions" placeholder="— Pilih Tipe Pegawai —"
 								searchPlaceholder="Cari tipe..." />
 							@if ($this->isDprdContext())
-								<p class="text-xs text-slate-400">Terkunci sebagai Anggota DPRD pada formulir ini.</p>
+								<p class="text-xs text-slate-500">Terkunci sebagai Anggota DPRD pada formulir ini.</p>
 							@endif
 						</div>
 
@@ -217,9 +217,9 @@
 								placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..."
 								hint="Pilih unit kerja tempat pegawai benar-benar ditempatkan. Daftar ditampilkan berjenjang (indentasi) sesuai struktur OPD induk → bidang/seksi; pilih unit yang paling spesifik." />
 							<p class="text-xs text-slate-500 mt-1">
-								<i class="fa-solid fa-circle-plus text-cyan-500 mr-1"></i>Unit kerja belum ada?
+								<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
 								<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
-									class="font-semibold text-cyan-600 underline-offset-2 hover:underline">
+									class="font-semibold text-primary-600 underline-offset-2 hover:underline">
 									Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
 								</a>
 							</p>
@@ -301,11 +301,11 @@
 										$selectedPositionLabel = $selectedPosition?->name;
 									@endphp
 									<button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
-										class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-										<span class="truncate text-left {{ $selectedPositionLabel ? 'text-slate-800' : 'text-slate-400' }}">
+										class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
+										<span class="truncate text-left {{ $selectedPositionLabel ? 'text-slate-800' : 'text-slate-500' }}">
 											{{ $selectedPositionLabel ?? '— Pilih Jabatan —' }}
 										</span>
-										<i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+										<i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
 											:class="open && 'rotate-180'"></i>
 									</button>
 
@@ -320,7 +320,7 @@
 										class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
 										<div class="border-b border-slate-100 p-2">
 											<div class="relative">
-												<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+												<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
 												<input x-ref="searchPosition" type="text" wire:model.live.debounce.300ms="searchPosition"
 													@input="highlighted = 0"
 													@keydown.arrow-down.prevent="move(1)"
@@ -328,7 +328,7 @@
 													@keydown.enter.prevent="pick()"
 													@keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
 													placeholder="Cari jabatan..."
-													class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+													class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
 											</div>
 										</div>
 										<ul x-ref="list" class="max-h-56 overflow-auto py-1">
@@ -337,8 +337,8 @@
 													@click="open = false" @mouseenter="highlighted = 0"
 													class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
 													:class="highlighted === 0
-														? 'bg-cyan-100 text-cyan-800'
-														: ({{ empty($position_id) ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-500 italic hover:bg-cyan-50')">
+														? 'bg-primary-100 text-primary-800'
+														: ({{ empty($position_id) ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-500 italic hover:bg-primary-50')">
 													— Tanpa Jabatan —
 												</button>
 											</li>
@@ -348,17 +348,17 @@
 														@click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
 														class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
 														:class="highlighted === {{ $loop->index + 1 }}
-															? 'bg-cyan-100 text-cyan-800'
-															: ({{ $position_id == $p->id ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+															? 'bg-primary-100 text-primary-800'
+															: ({{ $position_id == $p->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
 														{{ $p->name }}
 													</button>
 												</li>
 											@endforeach
 											@if ($positions->isEmpty() && trim($searchPosition) !== '')
-												<li class="px-3 py-2 text-xs text-slate-400">Jabatan tidak ditemukan.</li>
+												<li class="px-3 py-2 text-xs text-slate-500">Jabatan tidak ditemukan.</li>
 											@endif
 											@if ($positionsHasMore)
-												<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
+												<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
 													Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
 												</li>
 											@endif
@@ -368,11 +368,11 @@
 								@error('position_id')
 									<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
 								@enderror
-								<p class="text-xs text-slate-400">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
+								<p class="text-xs text-slate-500">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
 									dipangku satu pegawai aktif sesuai lingkupnya.</p>
-								<p class="text-xs text-slate-400">Jabatan tidak ada?
+								<p class="text-xs text-slate-500">Jabatan tidak ada?
 									<a href="{{ route('master.position-requests.index') }}#ajukan-jabatan" target="_blank"
-										class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
+										class="font-semibold text-primary-600 hover:text-primary-700 hover:underline">
 										Ajukan jabatan baru <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
 									</a>
 								</p>
@@ -393,7 +393,7 @@
 							@endphp
 							<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
 								required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..." />
-							<p class="text-xs text-slate-400">Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD,
+							<p class="text-xs text-slate-500">Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD,
 								Camat, Lurah, dll.) hanya boleh dipegang satu pegawai aktif sesuai lingkupnya.</p>
 						</div>
 
@@ -404,10 +404,10 @@
 							</div>
 
 							<div class="sm:col-span-2">
-								<h4 class="text-xs font-bold uppercase tracking-wide text-cyan-700 flex items-center gap-2">
-									<i class="fa-solid fa-landmark-dome text-cyan-500"></i>Data Anggota DPRD
+								<h4 class="text-xs font-bold uppercase tracking-wide text-primary-700 flex items-center gap-2">
+									<i class="fa-solid fa-landmark-dome text-primary-500"></i>Data Anggota DPRD
 								</h4>
-								<p class="mt-0.5 text-xs text-slate-400">Informasi ini digunakan pada dokumen SPT/SPPD Anggota DPRD.</p>
+								<p class="mt-0.5 text-xs text-slate-500">Informasi ini digunakan pada dokumen SPT/SPPD Anggota DPRD.</p>
 							</div>
 
 							<div class="space-y-1">
@@ -445,7 +445,7 @@
 				</x-ui.button>
 
 				<x-ui.button type="submit"
-					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+					class="inline-flex items-center gap-2 rounded bg-primary-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 					<x-slot name="icon">
 						<i class="fa-solid fa-floppy-disk text-xs"></i>
 					</x-slot>

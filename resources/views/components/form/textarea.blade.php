@@ -42,7 +42,7 @@ $resolvedClass = trim('w-full rounded-lg border border-slate-300 bg-white px-3 p
     >{{ $resolvedValue }}</textarea>
 
     @if ($hint)
-        <p class="mt-1 text-xs text-slate-400">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
     @if ($key)

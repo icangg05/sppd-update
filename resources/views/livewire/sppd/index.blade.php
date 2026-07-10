@@ -159,8 +159,7 @@
 				@endif
 
 				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-					<x-ui.button href="{{ route('sppd.create') }}" wire:navigate
-						class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700 justify-center">
+					<x-ui.button href="{{ route('sppd.create') }}" variant="primary" class="justify-center">
 						<x-slot name="icon">
 							<i class="fa-solid fa-plus text-xs"></i>
 						</x-slot>
@@ -172,7 +171,7 @@
 	</div>
 
 	{{-- Bar Filter --}}
-	<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+	<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<div class="flex-1">
 				<x-form.input
@@ -198,13 +197,13 @@
 						? $search !== ''
 						: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '')
 					<button type="button" wire:click="resetFilters"
-						class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-						<i class="fa-solid fa-rotate-left text-xs text-slate-400"></i>
+						class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+						<i class="fa-solid fa-rotate-left text-xs text-slate-500"></i>
 						Reset
 					</button>
 				@else
 					<button type="button" disabled
-						class="inline-flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
+						class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
 						<i class="fa-solid fa-rotate-left text-xs text-slate-300"></i>
 						Reset
 					</button>
@@ -272,7 +271,7 @@
 					@endphp
 
 					<tr>
-						<td class="text-center text-xs font-semibold text-slate-400">
+						<td class="text-center text-xs font-semibold text-slate-500">
 							{{ $sppds->firstItem() + $i }}.
 						</td>
 
@@ -286,7 +285,7 @@
 									{{ $sppd->user->department?->name ?? '-' }}
 								</p>
 							@else
-								<p class="mt-0.5 text-xs text-slate-400">
+								<p class="mt-0.5 text-xs text-slate-500">
 									{{ $sppd->budget?->department?->name ?? '-' }}
 								</p>
 							@endif
@@ -297,7 +296,7 @@
 								{{ $sppd->purpose }}
 							</p>
 
-							<p class="mt-0.5 truncate text-xs text-slate-400">
+							<p class="mt-0.5 truncate text-xs text-slate-500">
 								{{ $sppd->category?->name }}
 								·
 								<span class="font-mono text-slate-500">
@@ -311,7 +310,7 @@
 								{{ $sppd->start_date->translatedFormat('d F Y') }}
 							</p>
 
-							<p class="text-slate-400">
+							<p class="text-slate-500">
 								s/d {{ $sppd->end_date->translatedFormat('d F Y') }}
 							</p>
 						</td>
@@ -375,7 +374,7 @@
 								<a
 									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}"
 									wire:navigate
-									class="inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
+									class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
 									<i class="fa-solid fa-eye text-[10px] text-slate-500"></i>
 									<span>Lihat</span>
 								</a>
@@ -384,7 +383,7 @@
 									<a
 										href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}"
 										wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
 										<i class="fa-solid fa-pen-to-square text-[10px] text-amber-600"></i>
 										<span>Edit Perbaikan</span>
 									</a>
@@ -393,7 +392,7 @@
 								@if (in_array($sppd->status->value, ['approved', 'completed']))
 									<a
 										href="{{ route('sppd.next', $sppd) }}" wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
 										<span>Selanjutnya</span>
 										<i class="fa-solid fa-arrow-right text-[10px]"></i>
 									</a>
@@ -404,7 +403,7 @@
 												type="button"
 												wire:click="startSppdLanjutan({{ $sppd->id }})"
 												wire:loading.attr="disabled"
-												class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+												class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
 												<i class="fa-solid fa-plus text-[10px]" wire:loading.remove
 													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
 												<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading
@@ -421,7 +420,7 @@
 										type="button"
 										wire:click="confirmDelete({{ $sppd->id }})"
 										title="Hapus SPPD"
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
 										<i class="fa-solid fa-trash text-[10px]"></i>
 										<span>Hapus</span>
 									</button>
@@ -430,7 +429,7 @@
 										type="button"
 										wire:click="confirmDelete({{ $sppd->id }})"
 										title="Batalkan Pengajuan"
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
+										class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
 										<i class="fa-solid fa-trash text-[10px]"></i>
 										<span>Batalkan</span>
 									</button>
@@ -441,7 +440,7 @@
 
 				@empty
 					<tr>
-						<td colspan="7" class="py-12 text-center text-slate-400">
+						<td colspan="7" class="py-12 text-center text-slate-500">
 							<div class="flex flex-col items-center justify-center gap-2">
 								<i class="fa-solid fa-file-lines text-3xl text-slate-200"></i>
 								<p class="text-sm">

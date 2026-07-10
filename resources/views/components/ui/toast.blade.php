@@ -38,7 +38,7 @@
 				:class="{
 				    'bg-emerald-500': toast.type === 'success',
 				    'bg-rose-500': toast.type === 'error',
-				    'bg-cyan-500': toast.type === 'info',
+				    'bg-primary-500': toast.type === 'info',
 				    'bg-amber-500': toast.type === 'warning'
 				}">
 				<i class="fa-solid text-xs"
@@ -67,7 +67,7 @@
 				:class="{
 				    'bg-emerald-500': toast.type === 'success',
 				    'bg-rose-500': toast.type === 'error',
-				    'bg-cyan-500': toast.type === 'info',
+				    'bg-primary-500': toast.type === 'info',
 				    'bg-amber-500': toast.type === 'warning'
 				}"
 				:style="`animation-duration: ${duration}ms`"></div>

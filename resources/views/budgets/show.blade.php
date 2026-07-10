@@ -9,27 +9,25 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <div class="p-2 bg-cyan-100 rounded">
-        <i class="fa-solid fa-circle-info text-cyan-600 text-lg"></i>
+      <div class="flex size-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+        <i class="fa-solid fa-circle-info text-lg"></i>
       </div>
       <div>
-        <h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-cyan-500 inline-block pb-1">
-          Informasi DPA
-        </h1>
-        <p class="mt-1 text-xs text-slate-500 font-medium">Rincian lengkap berkas dokumen pelaksanaan anggaran</p>
+        <h1 class="text-lg font-bold text-slate-800">Informasi DPA</h1>
+        <p class="mt-0.5 text-xs text-slate-500">Rincian lengkap berkas dokumen pelaksanaan anggaran</p>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <a wire:navigate href="{{ route('master.budgets.index') }}"
-        class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-        <i class="fa-solid fa-arrow-left"></i> Kembali
-      </a>
+      <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary">
+        <x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+        Kembali
+      </x-ui.button>
       @can('budget.edit')
-        <a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
-          class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
-          <i class="fa-solid fa-pen-to-square"></i> Edit Data
-        </a>
+        <x-ui.button href="{{ route('master.budgets.edit', $budget->id) }}" variant="primary">
+          <x-slot name="icon"><i class="fa-solid fa-pen-to-square"></i></x-slot>
+          Edit Data
+        </x-ui.button>
       @endcan
     </div>
   </div>
@@ -38,10 +36,10 @@
 
     {{-- Kolom Kiri: Tabel Informasi Detail --}}
     <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50/50">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <i class="fa-solid fa-file-invoice text-cyan-500"></i>Detail Atribut Utama DPA
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice text-primary-500"></i>Detail Atribut Utama DPA
           </h3>
         </div>
 
@@ -49,27 +47,27 @@
           <table class="w-full text-left text-sm border-collapse">
             <tbody class="divide-y divide-slate-100 text-slate-700">
               <tr>
-                <th class="w-1/3 p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">SKPD / Instansi</th>
+                <th class="w-1/3 p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">SKPD / Instansi</th>
                 <td class="p-4 text-sm font-bold text-slate-900">{{ $budget->department->name }}</td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Tahun Anggaran</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Tahun Anggaran</th>
                 <td class="p-4 font-mono font-semibold text-slate-800">{{ $budget->year }}</td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Jenis Anggaran</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Jenis Anggaran</th>
                 <td class="p-4 font-medium text-slate-800">{{ $budget->type ?? '-' }}</td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Program Utama</th>
-                <td class="p-4 font-semibold text-cyan-800 whitespace-normal leading-normal">{{ $budget->program }}</td>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Program Utama</th>
+                <td class="p-4 font-semibold text-primary-800 whitespace-normal leading-normal">{{ $budget->program }}</td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Sub Kegiatan</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Sub Kegiatan</th>
                 <td class="p-4 text-slate-600 whitespace-normal leading-relaxed">{{ $budget->activity }}</td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Kode Rekening</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Kode Rekening</th>
                 <td class="p-4">
                   <span class="inline-block rounded bg-slate-100 px-2.5 py-1 text-xs font-mono font-medium text-slate-600 border border-slate-200/60">
                     {{ $budget->account_code }}
@@ -77,7 +75,7 @@
                 </td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider">Mata Anggaran / Sumber</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider">Mata Anggaran / Sumber</th>
                 <td class="p-4">
                   <span class="inline-flex items-center rounded bg-emerald-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                     {{ $budget->source }}
@@ -85,7 +83,7 @@
                 </td>
               </tr>
               <tr>
-                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-400 tracking-wider align-top">Uraian Penjelasan</th>
+                <th class="p-4 bg-slate-50/30 text-xs font-bold uppercase text-slate-500 tracking-wider align-top">Uraian Penjelasan</th>
                 <td class="p-4 text-slate-600 whitespace-normal leading-relaxed align-top font-medium">{{ $budget->description }}</td>
               </tr>
             </tbody>
@@ -96,26 +94,26 @@
 
     {{-- Kolom Kanan: Ringkasan & Progress Penyerapan Finansial --}}
     <div class="space-y-6">
-      <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-200 bg-slate-50/50">
-          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-cyan-500"></i>Ringkasan Keuangan
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-primary-500"></i>Ringkasan Keuangan
           </h3>
         </div>
 
         <div class="p-6 space-y-4">
           <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Pagu Anggaran</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Pagu Anggaran</p>
             <p class="text-xl font-black text-slate-900 font-mono">Rp {{ number_format($budget->total_amount, 0, ',', '.') }}</p>
           </div>
 
           <div class="pt-4 border-t border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Realisasi</p>
-            <p class="text-lg font-bold text-cyan-600 font-mono">Rp {{ number_format($budget->realization, 0, ',', '.') }}</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Realisasi</p>
+            <p class="text-lg font-bold text-primary-600 font-mono">Rp {{ number_format($budget->realization, 0, ',', '.') }}</p>
           </div>
 
           <div class="pt-4 border-t border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sisa Anggaran DPA</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sisa Anggaran DPA</p>
             <p class="text-lg font-bold font-mono {{ $budget->balance < 0 ? 'text-rose-600' : 'text-emerald-600' }}">
               Rp {{ number_format($budget->balance, 0, ',', '.') }}
             </p>
@@ -124,7 +122,7 @@
           {{-- Progress Bar Penyerapan --}}
           <div class="pt-4 border-t border-slate-100">
             <div class="flex justify-between items-center text-xs font-bold mb-2">
-              <span class="text-slate-400 uppercase text-[10px] tracking-wider">Persentase Penyerapan</span>
+              <span class="text-slate-500 uppercase text-[10px] tracking-wider">Persentase Penyerapan</span>
               <span class="text-slate-800 font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60">{{ number_format($budget->realization_percentage, 1, ',', '.') }}%</span>
             </div>
             <x-ui.budget-bar :percentage="$budget->realization_percentage" height="h-3" />

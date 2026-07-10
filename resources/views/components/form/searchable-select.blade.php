@@ -142,9 +142,9 @@
                 'cursor-not-allowed bg-slate-50' => $disabled,
                 $class,
             ])>
-            <span class="truncate text-left" :class="selectedLabel ? 'text-slate-800' : 'text-slate-400'"
+            <span class="truncate text-left" :class="selectedLabel ? 'text-slate-800' : 'text-slate-500'"
                 x-text="selectedLabel || @js($placeholder)"></span>
-            <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+            <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                 :class="open && 'rotate-180'"></i>
         </button>
 
@@ -160,7 +160,7 @@
                 class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
                 <div class="border-b border-slate-100 p-2">
                     <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
                         <input x-ref="search" x-model="search" type="text"
                             @input="resetHighlight(); $nextTick(() => position())"
                             @keydown.arrow-down.prevent="move(1)"
@@ -181,7 +181,7 @@
                             <span x-text="opt.label"></span>
                         </li>
                     </template>
-                    <li x-show="filtered.length === 0" class="px-3 py-2 text-xs text-slate-400">
+                    <li x-show="filtered.length === 0" class="px-3 py-2 text-xs text-slate-500">
                         Tidak ada hasil.
                     </li>
                 </ul>
@@ -190,7 +190,7 @@
     </div>
 
     @if ($hint)
-        <p class="mt-1 text-xs text-slate-400">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
     @if ($key)

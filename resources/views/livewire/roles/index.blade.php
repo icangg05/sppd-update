@@ -13,7 +13,7 @@
     </div>
 
     <a wire:navigate href="{{ route('master.roles.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       Tambah Role
     </a>
@@ -23,7 +23,7 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-center gap-2">
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
@@ -63,7 +63,7 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse ($roles as $i => $role)
             <tr wire:key="role-{{ $role->id }}" class="hover:bg-slate-50/50 transition-colors">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">{{ $roles->firstItem() + $i }}.</td>
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">{{ $roles->firstItem() + $i }}.</td>
 
               <td class="py-2.5 px-4">
                 <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-700">{{ $role->name }}</code>
@@ -91,7 +91,7 @@
                     @endif
                   </div>
                 @else
-                  <span class="text-slate-400 italic text-[11px]">Tidak ada permission</span>
+                  <span class="text-slate-500 italic text-[11px]">Tidak ada permission</span>
                 @endif
               </td>
 
@@ -103,21 +103,21 @@
                     <i class="fa-solid fa-users text-[10px]"></i> {{ $role->users_count }}
                   </a>
                 @else
-                  <span class="text-slate-400 font-medium">0</span>
+                  <span class="text-slate-500 font-medium">0</span>
                 @endif
               </td>
 
               <td class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1">
                   <a wire:navigate href="{{ route('master.roles.edit', $role->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                   </a>
 
                   @if ($role->name !== 'super_admin')
                     <button type="button" wire:click="confirmDelete({{ $role->id }})"
-                      class="rounded border border-slate-200 bg-white p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                      class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                       title="Hapus">
                       <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>
@@ -127,7 +127,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="py-10 text-center text-slate-400">
+              <td colspan="6" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-shield-halved text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada role yang tersimpan</p>

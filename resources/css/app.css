@@ -37,25 +37,29 @@
 
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  /* Serif institusional untuk masthead/judul; mono untuk angka (rupiah). */
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
 
-  /* ─── Warna primary = keluarga CYAN (satu sumber kebenaran) ───
-     Cyan adalah warna dominan chrome aplikasi (header, sidebar aktif, tombol,
-     focus input). Semua komponen memakai util `primary-*`, bukan literal `cyan-*`,
-     agar aksen bisa diganti di satu tempat ini saja. Nilai = skala cyan Tailwind. */
-  --color-primary-50: #ecfeff;
-  --color-primary-100: #cffafe;
-  --color-primary-200: #a5f3fc;
-  --color-primary-300: #67e8f9;
-  --color-primary-400: #22d3ee;
-  --color-primary-500: #06b6d4;
-  --color-primary-600: #0891b2;
-  --color-primary-700: #0e7490;
-  --color-primary-800: #155e75;
-  --color-primary-900: #164e63;
-  --color-accent-400: #22d3ee;
-  --color-accent-500: #06b6d4;
-  --color-accent-600: #0891b2;
-  --color-surface: #f8fbff;
+  /* ─── Warna primary = BIRU LOGO SPPD (satu sumber kebenaran) ───
+     Diturunkan dari warna logo: inti #1A76BA (cerulean) & highlight #3E9AD9
+     (azure). Biru dominan chrome aplikasi (header, sidebar aktif, tombol,
+     focus input). Semua komponen memakai util `primary-*`, bukan literal warna,
+     agar identitas bisa diganti di satu tempat ini saja. */
+  --color-primary-50: #edf6fc;
+  --color-primary-100: #d0e9f8;
+  --color-primary-200: #a6d5f1;
+  --color-primary-300: #71bce8;
+  --color-primary-400: #4aa6e1;
+  --color-primary-500: #3a9ddf;
+  --color-primary-600: #1e80c6;
+  --color-primary-700: #1a6ba6;
+  --color-primary-800: #175987;
+  --color-primary-900: #143f5c;
+  --color-accent-400: #4aa6e1;
+  --color-accent-500: #3a9ddf;
+  --color-accent-600: #1e80c6;
+  --color-surface: #f4f9fe;
   --color-surface-card: #ffffff;
 
   /* ─── Skala shadow kartu (gaya flat: border + shadow lembut) ─── */
@@ -75,6 +79,13 @@
 /* ───── Base ───── */
 html {
   scroll-behavior: smooth;
+}
+
+/* Angka (di app ini selalu font-mono: rupiah, kode rekening, persentase)
+   dirender sebagai tabular figures agar digit rata rapi di kolom tabel uang.
+   Satu sumber kebenaran, berlaku app-wide. */
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Modern, sleek custom scrollbar styling globally for browser window */

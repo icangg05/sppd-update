@@ -4,7 +4,7 @@
 		{{-- Header --}}
 		<div class="flex items-center gap-2.5 border-b border-slate-200 pb-3">
 			<a wire:navigate href="{{ route('master.roles.index') }}"
-				class="rounded border border-slate-200 bg-white p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors">
+				class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50 hover:text-slate-600 transition-colors">
 				<i class="fa-solid fa-chevron-left text-[10px]"></i>
 			</a>
 			<div class="p-1.5 bg-violet-100 rounded text-violet-600">
@@ -51,12 +51,12 @@
 									<span class="inline-flex items-center rounded bg-amber-100 px-1 py-0.5 text-[9px] font-black text-amber-700 uppercase">Protected</span>
 								@endif
 							</div>
-							<p class="text-[11px] text-slate-400">Nama role tidak dapat diubah</p>
+							<p class="text-[11px] text-slate-500">Nama role tidak dapat diubah</p>
 						@else
 							<input id="role-name" type="text" wire:model="name"
 								placeholder="contoh: kepala_bagian"
 								class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-300 @error('name') border-rose-400 @enderror">
-							<p class="text-[11px] text-slate-400">Gunakan huruf kecil dan underscore, tanpa spasi</p>
+							<p class="text-[11px] text-slate-500">Gunakan huruf kecil dan underscore, tanpa spasi</p>
 							@error('name')
 								<p class="text-[11px] text-rose-500">{{ $message }}</p>
 							@enderror
@@ -89,7 +89,7 @@
 						'green' => 'bg-green-500',
 						'emerald' => 'bg-emerald-500',
 						'teal' => 'bg-teal-500',
-						'cyan' => 'bg-cyan-500',
+						'cyan' => 'bg-primary-500',
 						'sky' => 'bg-sky-500',
 						'blue' => 'bg-blue-500',
 						'indigo' => 'bg-indigo-500',
@@ -131,7 +131,7 @@
 									class="text-[11px] text-violet-600 hover:underline font-medium">Pilih Semua</button>
 								<span class="text-slate-300">|</span>
 								<button type="button" wire:click="toggleAll(false)"
-									class="text-[11px] text-slate-400 hover:underline font-medium">Hapus Semua</button>
+									class="text-[11px] text-slate-500 hover:underline font-medium">Hapus Semua</button>
 							</div>
 						@endif
 					</div>
@@ -151,7 +151,7 @@
 							@endforeach
 						</div>
 					@else
-						<p class="text-[11px] text-slate-400 italic">
+						<p class="text-[11px] text-slate-500 italic">
 							Belum ada permission yang tersedia dalam sistem.
 						</p>
 					@endif
@@ -164,7 +164,7 @@
 					Batal
 				</a>
 				<button type="submit" wire:loading.attr="disabled"
-					class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-violet-200 transition hover:bg-violet-700 disabled:opacity-60">
+					class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 disabled:opacity-60">
 					<span wire:loading wire:target="save">
 						<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
 					</span>

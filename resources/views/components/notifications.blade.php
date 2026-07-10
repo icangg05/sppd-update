@@ -11,7 +11,7 @@
   // Peta token warna -> kelas chip ikon (ditulis literal agar terpindai Tailwind).
   $chipColors = [
     'emerald' => 'bg-emerald-50 text-emerald-600',
-    'cyan' => 'bg-cyan-50 text-cyan-600',
+    'cyan' => 'bg-primary-50 text-primary-600',
     'indigo' => 'bg-indigo-50 text-indigo-600',
     'amber' => 'bg-amber-50 text-amber-600',
     'sky' => 'bg-sky-50 text-sky-600',
@@ -26,12 +26,12 @@
   x-effect="document.body.classList.toggle('overflow-hidden', open && window.matchMedia('(max-width: 639px)').matches)">
   {{-- Tombol lonceng --}}
   <button type="button" @click="toggle()"
-    class="relative inline-flex size-9 items-center justify-center rounded-full bg-cyan-600/30 text-white transition-all hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-white/40"
+    class="relative inline-flex size-9 items-center justify-center rounded-full bg-primary-600/30 text-white transition-all hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-white/40"
     aria-label="Pembaruan sistem" title="Pembaruan sistem">
     <i class="fa-regular fa-bell"></i>
     {{-- Badge merah per-user: muncul saat ada pembaruan baru utk user ini, hilang setelah dibuka --}}
     <span x-show="unread" x-cloak
-      class="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-cyan-700 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
+      class="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-primary-700 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
       x-text="count"></span>
   </button>
 
@@ -52,12 +52,12 @@
            sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-2xl sm:shadow-slate-900/10 sm:ring-1 sm:ring-black/5">
 
     {{-- Header panel --}}
-    <div class="flex items-center justify-between gap-3 bg-gradient-to-r from-cyan-600 to-cyan-700 px-4 py-3.5 text-white sm:rounded-t-2xl">
+    <div class="flex items-center justify-between gap-3 bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3.5 text-white sm:rounded-t-2xl">
       <div class="leading-tight">
         <p class="flex items-center gap-2 text-sm font-bold">
-          <i class="fa-solid fa-bullhorn text-cyan-100"></i> Pembaruan Sistem
+          <i class="fa-solid fa-bullhorn text-primary-100"></i> Pembaruan Sistem
         </p>
-        <p class="text-[11px] text-cyan-100">{{ $count }} pembaruan terbaru</p>
+        <p class="text-[11px] text-primary-100">{{ $count }} pembaruan terbaru</p>
       </div>
       <div class="flex items-center gap-2">
         <span class="hidden rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide sm:inline">
@@ -125,7 +125,7 @@
           </div>
         @endif
       @empty
-        <div class="px-4 py-10 text-center text-sm text-slate-400">
+        <div class="px-4 py-10 text-center text-sm text-slate-500">
           <i class="fa-regular fa-bell-slash mb-2 block text-2xl"></i>
           Belum ada pembaruan.
         </div>
@@ -134,7 +134,7 @@
 
     {{-- Footer --}}
     <div class="border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center sm:rounded-b-2xl">
-      <span class="text-[11px] text-slate-400">Sistem Perjalanan Dinas — Kota Kendari</span>
+      <span class="text-[11px] text-slate-500">Sistem Perjalanan Dinas — Kota Kendari</span>
     </div>
   </div>
 </div>

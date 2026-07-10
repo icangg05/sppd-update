@@ -14,7 +14,7 @@
 
 	{{-- Formulir Utama Tahap 1 --}}
 	<form wire:submit.prevent="submit" id="form-step-1">
-		<div class="rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 
 			{{-- Sub Header Card --}}
 			<div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/75 px-5 py-3.5">
@@ -97,10 +97,10 @@
 						class="relative">
 						<button type="button" x-ref="trigger" @click="toggle()"
 							class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
-							<span class="truncate text-left {{ $selectedUserLabel ? 'text-slate-800' : 'text-slate-400' }}">
+							<span class="truncate text-left {{ $selectedUserLabel ? 'text-slate-800' : 'text-slate-500' }}">
 								{{ $selectedUserLabel ?? '— Pilih Pegawai yang Berangkat —' }}
 							</span>
-							<i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+							<i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
 								:class="open && 'rotate-180'"></i>
 						</button>
 
@@ -115,7 +115,7 @@
 							class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
 							<div class="border-b border-slate-100 p-2">
 								<div class="relative">
-									<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+									<i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
 									<input x-ref="searchUser" type="text" wire:model.live.debounce.300ms="searchUser"
 										@input="highlighted = 0"
 										@keydown.arrow-down.prevent="move(1)"
@@ -139,12 +139,12 @@
 										</button>
 									</li>
 								@empty
-									<li class="px-3 py-2 text-xs text-slate-400">
+									<li class="px-3 py-2 text-xs text-slate-500">
 										{{ trim($searchUser) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai.' }}
 									</li>
 								@endforelse
 								@if ($usersHasMore)
-									<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
+									<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
 										Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
 									</li>
 								@endif
@@ -165,7 +165,7 @@
 				<div id="workflow-preview" class="border-t border-slate-100 bg-slate-50/50 p-5 animate-fadeIn">
 					<div class="flex items-center justify-between mb-4">
 						<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-							<i class="fa-solid fa-diagram-project text-slate-400"></i>
+							<i class="fa-solid fa-diagram-project text-slate-500"></i>
 							Pratinjau Alur Persetujuan Dokumen
 						</h4>
 						<div>
@@ -211,11 +211,11 @@
 							</div>
 						@empty
 							@if ($errorMessage === '')
-								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-400 italic">
+								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-500 italic">
 									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
-								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-400 italic">
+								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-500 italic">
 									<i class="fa-solid fa-triangle-exclamation mr-2 text-amber-500"></i>Alur persetujuan tidak tersedia.
 								</div>
 							@endif
@@ -246,7 +246,7 @@
 					{{-- Tombol Lanjutkan --}}
 					<div class="mt-6 pt-4 border-t border-slate-200 flex justify-center">
 						<button type="submit" @disabled(!$isComplete)
-							class="inline-flex items-center gap-2 rounded bg-primary-600 px-12 py-2.5 text-sm font-semibold text-white shadow-md transition duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none">
+							class="inline-flex items-center gap-2 rounded bg-primary-600 px-12 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none">
 							<span>Lanjut Isi Detail SPPD</span>
 							<i class="fa-solid fa-arrow-right text-xs"></i>
 						</button>

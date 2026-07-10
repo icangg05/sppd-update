@@ -5,7 +5,7 @@
   {{-- Header --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 {{ $isTte ? 'bg-emerald-100 text-emerald-600' : 'bg-cyan-100 text-cyan-600' }} rounded">
+      <div class="p-1.5 {{ $isTte ? 'bg-emerald-100 text-emerald-600' : 'bg-primary-100 text-primary-600' }} rounded">
         <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-base"></i>
       </div>
       <div>
@@ -28,14 +28,14 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
           placeholder="Cari deskripsi, objek, atau nama pengguna...">
         <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
           <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
         </div>
       </div>
@@ -180,19 +180,19 @@
               }
             @endphp
             <tr wire:key="log-{{ $activity->id }}" class="hover:bg-slate-50/50 transition-colors align-top">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">{{ $activities->firstItem() + $i }}.</td>
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">{{ $activities->firstItem() + $i }}.</td>
 
               <td class="py-2.5 px-4">
                 <div class="font-semibold text-slate-800">{{ $activity->created_at->translatedFormat('d M Y') }}</div>
-                <div class="text-[11px] text-slate-400">{{ $activity->created_at->format('H:i:s') }} &middot; {{ $activity->created_at->diffForHumans() }}</div>
+                <div class="text-[11px] text-slate-500">{{ $activity->created_at->format('H:i:s') }} &middot; {{ $activity->created_at->diffForHumans() }}</div>
               </td>
 
               <td class="py-2.5 px-4">
                 @if ($activity->causer)
                   <div class="font-semibold text-slate-800">{{ $activity->causer->name }}</div>
-                  <div class="text-[11px] text-slate-400">{{ $activity->causer->username ?? '' }}</div>
+                  <div class="text-[11px] text-slate-500">{{ $activity->causer->username ?? '' }}</div>
                 @else
-                  <span class="text-slate-400 italic text-[11px]">Sistem</span>
+                  <span class="text-slate-500 italic text-[11px]">Sistem</span>
                 @endif
               </td>
 
@@ -200,7 +200,7 @@
                 @if ($activity->event)
                   <x-ui.badge :color="$eventColor" class="uppercase tracking-wide">{{ $displayEvent }}</x-ui.badge>
                 @else
-                  <span class="text-slate-400">-</span>
+                  <span class="text-slate-500">-</span>
                 @endif
               </td>
 
@@ -248,9 +248,9 @@
                     @if ($changedCount > 0)
                       <button type="button"
                         @click="detailRows = @js($detailRows); detailHasOld = @js($detailHasOld); detailId = @js('#' . $activity->id); detailEvent = @js(strtoupper($displayEvent ?? 'LOG')); detailBadgeClass = @js($eventBadgeClass); detailOpen = true"
-                        class="inline-flex items-center gap-1.5 rounded bg-cyan-50 px-2 py-0.5 text-[11px] font-bold text-cyan-700 transition hover:bg-cyan-100">
+                        class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2 py-0.5 text-[11px] font-bold text-primary-700 transition hover:bg-primary-100">
                         <i class="fa-solid fa-table-list text-[10px]"></i> Detail perubahan
-                        <span class="rounded bg-cyan-200/60 px-1 text-[10px]">{{ $changedCount }}</span>
+                        <span class="rounded bg-primary-200/60 px-1 text-[10px]">{{ $changedCount }}</span>
                       </button>
                     @endif
 
@@ -270,13 +270,13 @@
                 @if ($subjectName)
                   <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-700">{{ $subjectName }}</code>
                   @if ($activity->subject_id)
-                    <span class="text-[11px] text-slate-400">#{{ $activity->subject_id }}</span>
+                    <span class="text-[11px] text-slate-500">#{{ $activity->subject_id }}</span>
                   @endif
                   @if (! $activity->subject)
                     <span class="ml-1 inline-flex items-center rounded bg-rose-50 px-1 py-0.5 text-[9px] font-bold text-rose-600 uppercase">Dihapus</span>
                   @endif
                 @else
-                  <span class="text-slate-400">-</span>
+                  <span class="text-slate-500">-</span>
                 @endif
               </td>
 
@@ -296,7 +296,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isTte ? 7 : 6 }}" class="py-10 text-center text-slate-400">
+              <td colspan="{{ $isTte ? 7 : 6 }}" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-2xl opacity-40"></i>
                   <p class="font-medium">{{ $isTte ? 'Belum ada riwayat penandatanganan elektronik' : 'Belum ada aktivitas yang tercatat' }}</p>
@@ -316,12 +316,12 @@
   </div>
 
   {{-- Modal Detail Perubahan — tabel sebelum → sesudah --}}
-  <x-ui.modal show="detailOpen" title="Detail Perubahan" icon="fa-solid fa-table-list text-cyan-600"
+  <x-ui.modal show="detailOpen" title="Detail Perubahan" icon="fa-solid fa-table-list text-primary-600"
     maxWidth="max-w-3xl" :closeable="true">
     <div class="mb-3 flex items-center gap-2">
       <span class="inline-flex items-center rounded-md px-2 py-1 text-[11px] font-medium uppercase tracking-wide ring-1 ring-inset"
         :class="detailBadgeClass" x-text="detailEvent"></span>
-      <span class="text-[11px] font-semibold text-slate-400" x-text="detailId"></span>
+      <span class="text-[11px] font-semibold text-slate-500" x-text="detailId"></span>
     </div>
 
     <div class="max-h-[60vh] overflow-auto rounded-lg border border-slate-200">

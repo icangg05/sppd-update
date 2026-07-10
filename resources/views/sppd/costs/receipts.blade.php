@@ -74,7 +74,7 @@
 			<div class="flex items-center gap-2">
 				<button type="button" @click="showBulkModal = true"
 					class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm">
-					<i class="fa-solid fa-layer-group text-slate-400"></i>
+					<i class="fa-solid fa-layer-group text-slate-500"></i>
 					Input Panjar Massal
 				</button>
 			</div>
@@ -121,11 +121,11 @@
 								<td class="py-3 px-4">
 									<div class="flex flex-col gap-1">
 										<input type="number" name="amounts[{{ $person['id'] }}]" x-model="amounts['{{ $person['id'] }}']"
-											{{ !auth()->user()->hasAnyRole(['admin_opd', 'super_admin']) ? 'disabled bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : '' }}
+											{{ !auth()->user()->hasAnyRole(['admin_opd', 'super_admin']) ? 'disabled bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed' : '' }}
 											class="w-full max-w-[180px] rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
 											placeholder="Input Nominal Panjar">
 										@if ($receipt && $receipt->amount > 0)
-											<span class="text-[9px] text-slate-400 font-mono pl-1">
+											<span class="text-[9px] text-slate-500 font-mono pl-1">
 												No: {{ $receipt->receipt_number }}
 											</span>
 										@endif
@@ -146,12 +146,12 @@
 										@if ($canPrint)
 											<a :href="'{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' + '&date=' + printDate"
 												target="_blank"
-												class="text-nowrap inline-flex items-center gap-1 rounded bg-cyan-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-cyan-700 shadow-sm transition">
+												class="text-nowrap inline-flex items-center gap-1 rounded bg-primary-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-primary-700 shadow-sm transition">
 												<i class="fa-solid fa-file-invoice"></i> Cetak Rampung
 											</a>
 										@else
 											<button type="button" disabled
-												class="text-nowrap inline-flex items-center gap-1 rounded bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold text-slate-400 cursor-not-allowed border border-slate-200">
+												class="text-nowrap inline-flex items-center gap-1 rounded bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 cursor-not-allowed border border-slate-200">
 												<i class="fa-solid fa-lock"></i> Cetak Rampung
 											</button>
 										@endif
@@ -166,7 +166,7 @@
 			@if(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 			<div class="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
 				<span class="text-[11px] text-slate-500 font-medium">
-					<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>
+					<i class="fa-solid fa-circle-info text-slate-500 mr-1"></i>
 					Kosongkan nominal panjar untuk menghapus data kuitansi panjar pegawai tersebut.
 				</span>
 				<button type="submit"
@@ -177,13 +177,13 @@
 			@endif
 		</form>
 
-		<div class="flex items-start gap-4 rounded-lg border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
-			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+		<div class="flex items-start gap-4 rounded-lg border border-primary-200 bg-primary-50 p-4 shadow-sm">
+			<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
 				<i class="fa-solid fa-circle-info text-lg"></i>
 			</div>
 			<div>
-				<h4 class="text-xs font-bold uppercase text-cyan-900">Informasi Penting</h4>
-				<p class="mt-1 text-[11px] font-medium text-cyan-800 leading-relaxed">
+				<h4 class="text-xs font-bold uppercase text-primary-900">Informasi Penting</h4>
+				<p class="mt-1 text-[11px] font-medium text-primary-800 leading-relaxed">
 					Untuk dapat mencetak <strong>Kuitansi Rampung</strong>, pastikan seluruh data berikut telah dilengkapi:
 				</p>
 				<ul class="mt-2 flex flex-wrap gap-2 text-[11px]">

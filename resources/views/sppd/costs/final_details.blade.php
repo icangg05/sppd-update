@@ -122,7 +122,7 @@
             <div>
                 <button type="button" @click="showBulkModal = true"
                     class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition shadow-sm cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="fa-solid fa-layer-group text-slate-400"></i>
+                    <i class="fa-solid fa-layer-group text-slate-500"></i>
                     Input Sekaligus
                 </button>
             </div>
@@ -184,7 +184,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-2 mt-1">
                                                     <span
-                                                        class="text-[10px] text-slate-400 font-mono">{{ $cost->quantity }}
+                                                        class="text-[10px] text-slate-500 font-mono">{{ $cost->quantity }}
                                                         Item x Rp {{ number_format($cost->unit_cost, 0, ',', '.') }} =
                                                         <span class="font-bold text-slate-600">Rp
                                                             {{ number_format($cost->total, 0, ',', '.') }}</span></span>
@@ -218,13 +218,13 @@
                                             </div>
                                         </div>
                                     @empty
-                                        <span class="text-slate-400 italic text-[11px] pl-1">Belum ada data biaya</span>
+                                        <span class="text-slate-500 italic text-[11px] pl-1">Belum ada data biaya</span>
                                     @endforelse
                                 </div>
                             </td>
                             <td class="py-3 px-4 text-right">
                                 <span
-                                    class="font-bold {{ $total > 0 ? 'text-emerald-700 font-mono text-xs' : 'text-slate-400' }}">
+                                    class="font-bold {{ $total > 0 ? 'text-emerald-700 font-mono text-xs' : 'text-slate-500' }}">
                                     Rp {{ number_format($total, 0, ',', '.') }}
                                 </span>
                             </td>
@@ -247,7 +247,7 @@
                     </a>
 @else
 <button type="button" disabled
-                      class="inline-flex items-center gap-1 rounded bg-slate-100 border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-400 cursor-not-allowed">
+                      class="inline-flex items-center gap-1 rounded bg-slate-100 border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-500 cursor-not-allowed">
                       <i class="fa-solid fa-lock text-[8px]"></i> Cetak
                     </button>
 @endif
@@ -288,7 +288,7 @@
           <button type="button" @click="showAddModal = false"
             class="rounded-lg px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
           <button type="submit"
-            class="rounded-lg bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-md transition cursor-pointer">Simpan
+            class="rounded-lg bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer">Simpan
             Biaya</button>
         </div>
       </form>
@@ -325,7 +325,7 @@
             <button type="button" @click="showEditModal = false"
                 class="rounded-lg px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Batal</button>
             <button type="submit"
-                class="rounded-lg bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-700 shadow-md transition cursor-pointer">Update
+                class="rounded-lg bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-700 shadow-sm transition cursor-pointer">Update
                 Perubahan</button>
         </div>
         </form>

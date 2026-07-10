@@ -9,7 +9,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid fa-id-badge text-base"></i>
       </div>
       <div>
@@ -23,7 +23,7 @@
     </div>
 
     <x-ui.button type="button" wire:click="openCreateModal"
-      class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       Ajukan Jabatan
     </x-ui.button>
@@ -45,14 +45,14 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-center gap-2">
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
           placeholder="Cari nama jabatan...">
         <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
           <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
         </div>
       </div>
@@ -99,7 +99,7 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($requests as $i => $req)
             <tr wire:key="req-{{ $req->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $requests->firstItem() + $i }}.
               </td>
               <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $req->name }}</td>
@@ -131,7 +131,7 @@
                 <div class="flex items-center justify-center gap-1.5">
                   @if($isSuperAdmin && $isPending)
                     <button type="button" wire:click="openVerifyModal({{ $req->id }})"
-                      class="inline-flex items-center gap-1 rounded border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-100"
+                      class="inline-flex items-center gap-1 rounded border border-primary-200 bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100"
                       title="Verifikasi">
                       <i class="fa-solid fa-gavel text-[10px]"></i> Verifikasi
                     </button>
@@ -161,7 +161,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ $isSuperAdmin ? '7' : '5' }}" class="py-10 text-center text-slate-400">
+              <td colspan="{{ $isSuperAdmin ? '7' : '5' }}" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-id-badge text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada pengajuan jabatan</p>
@@ -183,7 +183,7 @@
   {{-- Modal Ajukan / Edit Jabatan --}}
   <x-ui.modal show="$wire.showCreateModal" :title="$editingId ? 'Edit Pengajuan Jabatan' : 'Ajukan Jabatan Baru'"
     :description="$editingId ? 'Perbarui usulan jabatan yang masih menunggu' : 'Usulkan jabatan yang belum tersedia'"
-    icon="fa-solid fa-id-badge text-cyan-600" :closeable="false">
+    icon="fa-solid fa-id-badge text-primary-600" :closeable="false">
     <form wire:submit="submit" class="space-y-4">
       <x-form.input name="name" label="Nama Jabatan" wire:model="name" required
         placeholder="Contoh: Analis Sumber Daya Manusia Aparatur"
@@ -231,7 +231,7 @@
   {{-- Modal Verifikasi (Super Admin) --}}
   @if($isSuperAdmin)
     <x-ui.modal show="$wire.showVerifyModal" title="Verifikasi Pengajuan Jabatan"
-      description="Tetapkan cakupan keunikan lalu setujui atau tolak" icon="fa-solid fa-gavel text-cyan-600" :closeable="false">
+      description="Tetapkan cakupan keunikan lalu setujui atau tolak" icon="fa-solid fa-gavel text-primary-600" :closeable="false">
       @if($selected)
         <div class="space-y-4">
           <div class="rounded border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">

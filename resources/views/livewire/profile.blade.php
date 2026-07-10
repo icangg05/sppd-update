@@ -14,7 +14,7 @@
 			{{-- Identitas Dasar --}}
 			<div class="table-container p-5 sm:p-6">
 				<div class="mb-4 flex items-center gap-2">
-					<i class="fa-regular fa-user text-cyan-600"></i>
+					<i class="fa-regular fa-user text-primary-600"></i>
 					<h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Identitas</h2>
 				</div>
 
@@ -29,11 +29,11 @@
 						<div class="flex gap-2">
 							<input wire:model="username" type="text" id="username" name="username" required
 								placeholder="Username"
-								class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500 @error('username') border-red-400 @else border-slate-300 @enderror" />
+								class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500 @error('username') border-red-400 @else border-slate-300 @enderror" />
 
 							<button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
 								wire:target="generateUsername" title="Buat username unik otomatis dari Nama Lengkap"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white disabled:opacity-50">
+								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white disabled:opacity-50">
 								<span wire:loading.remove wire:target="generateUsername">
 									<i class="fa-solid fa-wand-magic-sparkles text-sm"></i> Generate
 								</span>
@@ -75,7 +75,7 @@
 							inputmode="numeric"
 							pattern="[0-9+]*"
 							@if ($phoneVerified) readonly @endif
-							class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:ring-cyan-500 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
+							class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:ring-primary-500 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
 
 						@if ($phoneVerified)
 							<button type="button" disabled
@@ -83,7 +83,7 @@
 								<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
 							</button>
 							<button type="button" wire:click="confirmTestMessage" title="Tes kirim pesan ke nomor ini"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-cyan-500 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white">
+								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white">
 								<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
 							</button>
 							<button type="button" @click="showResetModal = true" title="Ganti nomor WhatsApp"
@@ -125,10 +125,10 @@
 			{{-- Ganti Password --}}
 			<div class="table-container p-5 sm:p-6">
 				<div class="mb-4 flex items-center gap-2">
-					<i class="fa-solid fa-lock text-cyan-600"></i>
+					<i class="fa-solid fa-lock text-primary-600"></i>
 					<h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Ganti Password</h2>
 				</div>
-				<p class="mb-4 text-xs text-slate-400">Kosongkan jika tidak ingin mengubah password.</p>
+				<p class="mb-4 text-xs text-slate-500">Kosongkan jika tidak ingin mengubah password.</p>
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<x-form.input wire:model="current_password" type="password" label="Password Saat Ini"
@@ -145,7 +145,7 @@
 					<i class="fa-solid fa-building text-slate-500"></i>
 					<h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Informasi Organisasi</h2>
 				</div>
-				<p class="mb-4 text-xs text-slate-400">Data ini dikelola oleh administrator dan tidak dapat diubah sendiri.</p>
+				<p class="mb-4 text-xs text-slate-500">Data ini dikelola oleh administrator dan tidak dapat diubah sendiri.</p>
 
 				<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>

@@ -20,7 +20,7 @@
         'green' => 'bg-green-50 text-green-700 ring-green-600/20',
         'emerald' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
         'teal' => 'bg-teal-50 text-teal-700 ring-teal-600/20',
-        'cyan' => 'bg-cyan-50 text-cyan-700 ring-cyan-600/20',
+        'cyan' => 'bg-primary-50 text-primary-700 ring-primary-600/20',
         'sky' => 'bg-sky-50 text-sky-700 ring-sky-600/20',
         'blue' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
         'indigo' => 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',

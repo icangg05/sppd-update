@@ -9,7 +9,7 @@
 			</button>
 
 			<div class="hidden flex-col sm:flex">
-				<h1 class="text-sm font-bold tracking-wide sm:text-base">@yield('page-title', 'Dashboard')</h1>
+				<h1 class="font-serif text-base font-bold tracking-tight sm:text-lg">@yield('page-title', 'Dashboard')</h1>
 				<p class="text-xs font-medium text-primary-200">Sistem Perjalanan Dinas</p>
 			</div>
 
@@ -60,7 +60,7 @@
 						<a href="{{ route('profile') }}" wire:navigate
 							class="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
 							<i
-								class="fa-regular fa-user mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-primary-600"></i>
+								class="fa-regular fa-user mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-primary-600"></i>
 							Profil Saya
 						</a>
 					</div>
@@ -74,7 +74,7 @@
 							<button type="submit"
 								class="group flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-700">
 								<i
-									class="fa-solid fa-arrow-right-from-bracket mr-3 w-4 text-center text-slate-400 transition-colors group-hover:text-rose-600"></i>
+									class="fa-solid fa-arrow-right-from-bracket mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-rose-600"></i>
 								Keluar
 							</button>
 						</form>

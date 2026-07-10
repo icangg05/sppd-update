@@ -30,7 +30,7 @@
 			<tbody>
 				@forelse($workflows as $i => $w)
 					<tr>
-						<td class="text-slate-400">{{ $i + 1 }}</td>
+						<td class="text-slate-500">{{ $i + 1 }}</td>
 						<td>
 							<p class="font-medium text-slate-900">{{ $w->name }}</p>
 						</td>
@@ -62,7 +62,7 @@
 								@foreach ($w->steps as $idx => $role)
 									<div class="flex items-center">
 										<div class="flex flex-col items-start">
-											<span class="text-[10px] font-bold text-slate-400 mb-0.5">STEP {{ $idx + 1 }}</span>
+											<span class="text-[10px] font-bold text-slate-500 mb-0.5">STEP {{ $idx + 1 }}</span>
 											<x-ui.badge bg="bg-white" text="text-slate-700" class="uppercase border border-slate-200 shadow-sm">{{ ucwords(str_replace('_', ' ', $role)) }}</x-ui.badge>
 
 											@if (isset($roleMapping[$role]))
@@ -95,7 +95,7 @@
 					</tr>
 				@empty
 					<tr>
-						<td colspan="5" class="text-center py-12 text-slate-400">Belum ada alur pengajuan yang didefinisikan.</td>
+						<td colspan="5" class="text-center py-12 text-slate-500">Belum ada alur pengajuan yang didefinisikan.</td>
 					</tr>
 				@endforelse
 			</tbody>

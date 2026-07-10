@@ -24,7 +24,7 @@
           {{ $result['summary'] ?? 'Hasil Verifikasi BSrE' }}
         </h2>
         <p class="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-500">
-          <i class="fa-solid fa-certificate text-cyan-500"></i> Diverifikasi langsung oleh BSrE
+          <i class="fa-solid fa-certificate text-primary-500"></i> Diverifikasi langsung oleh BSrE
         </p>
       </div>
     </div>
@@ -77,13 +77,13 @@
               <dl class="space-y-1">
                 @if ($issuer)
                   <div class="flex justify-between gap-3">
-                    <dt class="text-slate-400">Penerbit Sertifikat</dt>
+                    <dt class="text-slate-500">Penerbit Sertifikat</dt>
                     <dd class="break-all text-right text-slate-600">{{ $issuer }}</dd>
                   </div>
                 @endif
                 @if (! is_null($integrity))
                   <div class="flex justify-between gap-3">
-                    <dt class="text-slate-400">Integritas Dokumen</dt>
+                    <dt class="text-slate-500">Integritas Dokumen</dt>
                     <dd class="text-right font-semibold {{ $integrity ? 'text-emerald-600' : 'text-rose-600' }}">
                       {{ $integrity ? 'Utuh (tidak diubah)' : 'Berubah' }}
                     </dd>
@@ -91,7 +91,7 @@
                 @endif
                 @if (! is_null($certTrusted))
                   <div class="flex justify-between gap-3">
-                    <dt class="text-slate-400">Sertifikat Tepercaya</dt>
+                    <dt class="text-slate-500">Sertifikat Tepercaya</dt>
                     <dd class="text-right font-semibold {{ $certTrusted ? 'text-emerald-600' : 'text-amber-600' }}">
                       {{ $certTrusted ? 'Ya' : 'Tidak' }}
                     </dd>
@@ -99,13 +99,13 @@
                 @endif
                 @if ($signedIn)
                   <div class="flex justify-between gap-3">
-                    <dt class="text-slate-400">Ditandatangani</dt>
+                    <dt class="text-slate-500">Ditandatangani</dt>
                     <dd class="text-right text-slate-600">{{ $signedIn }}</dd>
                   </div>
                 @endif
                 @if ($usingTsa && $tsaName)
                   <div class="flex justify-between gap-3">
-                    <dt class="text-slate-400">Stempel Waktu (TSA)</dt>
+                    <dt class="text-slate-500">Stempel Waktu (TSA)</dt>
                     <dd class="break-all text-right text-slate-600">{{ $tsaName }}</dd>
                   </div>
                 @endif

@@ -71,7 +71,7 @@
             <div class="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
               <i class="fa-solid fa-shield-halved mb-3 text-3xl text-slate-300"></i>
               <p class="text-sm font-medium text-slate-500">Berkas siap diverifikasi</p>
-              <p class="mt-1 text-xs text-slate-400">Klik <span class="font-semibold">Verifikasi ke BSrE</span> untuk melihat hasil pemeriksaan keasliannya.</p>
+              <p class="mt-1 text-xs text-slate-500">Klik <span class="font-semibold">Verifikasi ke BSrE</span> untuk melihat hasil pemeriksaan keasliannya.</p>
             </div>
           @endif
         </div>
@@ -127,7 +127,7 @@
               <dd class="text-right font-semibold text-slate-800">
                 {{ $traveler->name }}
                 @if ($traveler->nip)
-                  <span class="block font-mono text-[11px] font-normal text-slate-400">NIP {{ $traveler->nip }}</span>
+                  <span class="block font-mono text-[11px] font-normal text-slate-500">NIP {{ $traveler->nip }}</span>
                 @endif
               </dd>
             </div>
@@ -191,7 +191,7 @@
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-600">
-                  <i class="fa-solid fa-certificate text-cyan-500"></i> Verifikasi Resmi BSrE
+                  <i class="fa-solid fa-certificate text-primary-500"></i> Verifikasi Resmi BSrE
                 </p>
                 <p class="mt-0.5 text-[11px] text-slate-500">Pemeriksaan kriptografis keaslian berkas langsung ke server BSrE.</p>
               </div>

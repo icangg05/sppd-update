@@ -3,7 +3,7 @@
   {{-- Header Halaman --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid fa-map text-base"></i>
       </div>
       <div>
@@ -15,7 +15,7 @@
     </div>
 
     <x-ui.button type="button" wire:click="openCreateModal"
-      class="inline-flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
       <i class="fa-solid fa-plus text-[10px]"></i>
       Tambah Provinsi
     </x-ui.button>
@@ -25,14 +25,14 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
     <div class="flex flex-col sm:flex-row items-center gap-2">
       <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
           <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
         </div>
         <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500 outline-none transition"
+          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 outline-none transition"
           placeholder="Cari nama provinsi...">
         <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-500">
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
           <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
         </div>
       </div>
@@ -63,7 +63,7 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($provinces as $i => $province)
             <tr wire:key="province-{{ $province->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-400 font-medium">
+              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $provinces->firstItem() + $i }}.
               </td>
               <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $province->name }}</td>
@@ -85,7 +85,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="py-10 text-center text-slate-400">
+              <td colspan="4" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-map text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada data provinsi</p>
@@ -107,7 +107,7 @@
   {{-- Modal Tambah / Edit Provinsi --}}
   <x-ui.modal show="$wire.showFormModal" :title="$editingId ? 'Edit Provinsi' : 'Tambah Provinsi Baru'"
     :description="$editingId ? 'Perbarui data provinsi' : 'Tambahkan provinsi baru ke master data'"
-    icon="fa-solid fa-map text-cyan-600" :closeable="false">
+    icon="fa-solid fa-map text-primary-600" :closeable="false">
     <form wire:submit="save" class="space-y-4">
       <x-form.input name="name" label="Nama Provinsi" wire:model="name" required
         placeholder="Contoh: Sulawesi Tenggara" />

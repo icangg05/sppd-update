@@ -8,8 +8,8 @@
 		{{-- Header Halaman --}}
 		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 			<div>
-				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-cyan-500 inline-block pb-1">
-					<i class="fa-solid fa-user-check mr-2 text-cyan-600"></i>Profil Pegawai
+				<h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide border-b-2 border-primary-500 inline-block pb-1">
+					<i class="fa-solid fa-user-check mr-2 text-primary-600"></i>Profil Pegawai
 				</h1>
 				<p class="mt-1 text-xs text-slate-500 font-medium">Detail informasi lengkap pegawai dan hak akses pengguna sistem</p>
 			</div>
@@ -36,7 +36,7 @@
 						<button type="button"
 							@click="navigator.clipboard.writeText(@js($impersonateUrl)); copied = true; setTimeout(() => copied = false, 2000)"
 							title="Salin tautan, lalu buka di jendela incognito untuk masuk sebagai {{ $user->name }} tanpa mengganggu sesi Anda."
-							class="inline-flex items-center gap-2 rounded bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-lg">
+							class="inline-flex items-center gap-2 rounded bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-lg">
 							<i class="fa-solid" :class="copied ? 'fa-check' : 'fa-user-secret'"></i>
 							<span x-text="copied ? 'Tautan login tersalin' : 'Salin tautan login sebagai pengguna'"></span>
 						</button>
@@ -44,7 +44,7 @@
 				@endif
 
 				<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"
-					class="inline-flex items-center gap-2 rounded bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-cyan-200 transition hover:bg-cyan-700 hover:shadow-lg">
+					class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 					<i class="fa-solid fa-pen-to-square"></i> Edit Data
 				</a>
 			</div>
@@ -58,7 +58,7 @@
 
 					{{-- Avatar Ring --}}
 					<div
-						class="w-24 h-24 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center font-black text-3xl mb-4 ring-4 ring-cyan-50 shadow-inner">
+						class="w-24 h-24 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-black text-3xl mb-4 ring-4 ring-primary-50 shadow-inner">
 						{{ strtoupper(substr($user->name, 0, 1)) }}
 					</div>
 
@@ -102,20 +102,20 @@
 				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
 					<h3
 						class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-5 pb-2 border-b border-slate-100 flex items-center gap-2">
-						<i class="fa-solid fa-id-card-clip text-cyan-500 text-base"></i>Informasi Detail Pegawai
+						<i class="fa-solid fa-id-card-clip text-primary-500 text-base"></i>Informasi Detail Pegawai
 					</h3>
 
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">NIP / ID Sistem</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">NIP / ID Sistem</label>
 							<p
 								class="text-sm font-mono font-semibold text-slate-800 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 inline-block">
 								{{ $user->nip ?? '-' }}</p>
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nomor Induk Kependudukan
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nomor Induk Kependudukan
 								(NIK)</label>
 							<p
 								class="text-sm font-mono font-semibold text-slate-800 {{ $user->nik ? 'bg-slate-50 border-slate-100' : 'bg-amber-50/50 border-amber-100 text-amber-700' }} px-2.5 py-1.5 rounded-lg border inline-block">
@@ -123,21 +123,21 @@
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Username</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Username</label>
 							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-solid fa-at mr-1.5 text-slate-400"></i>{{ $user->username }}</p>
+									class="fa-solid fa-at mr-1.5 text-slate-500"></i>{{ $user->username }}</p>
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alamat Email</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alamat Email</label>
 							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-regular fa-envelope mr-1.5 text-slate-400"></i>{{ $user->email ?? '-' }}</p>
+									class="fa-regular fa-envelope mr-1.5 text-slate-500"></i>{{ $user->email ?? '-' }}</p>
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. Telepon / WhatsApp</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">No. Telepon / WhatsApp</label>
 							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-solid fa-phone mr-1.5 text-slate-400"></i>{{ $user->phone ?? '-' }}</p>
+									class="fa-solid fa-phone mr-1.5 text-slate-500"></i>{{ $user->phone ?? '-' }}</p>
 						</div>
 
 						<div class="sm:col-span-2 my-2">
@@ -145,31 +145,31 @@
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipe Kepegawaian</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Kepegawaian</label>
 							<p class="text-sm font-semibold text-slate-800"><i
-									class="fa-solid fa-user-tier mr-1.5 text-slate-400"></i>{{ $user->employee_type->label() }}</p>
+									class="fa-solid fa-user-tier mr-1.5 text-slate-500"></i>{{ $user->employee_type->label() }}</p>
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Golongan / Pangkat</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Golongan / Pangkat</label>
 							<p class="text-sm font-semibold text-slate-800">
 								<i
-									class="fa-solid fa-award mr-1.5 text-slate-400"></i>{{ $user->rank ? $user->rank->group . ' — ' . $user->rank->name : '-' }}
+									class="fa-solid fa-award mr-1.5 text-slate-500"></i>{{ $user->rank ? $user->rank->group . ' — ' . $user->rank->name : '-' }}
 							</p>
 						</div>
 
 						<div class="sm:col-span-2 space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jabatan</label>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jabatan</label>
 							<p class="text-sm font-semibold text-slate-800">
-								<i class="fa-solid fa-briefcase mr-1.5 text-slate-400"></i>{{ $user->position?->name ?? '-' }}
+								<i class="fa-solid fa-briefcase mr-1.5 text-slate-500"></i>{{ $user->position?->name ?? '-' }}
 							</p>
 						</div>
 
 						<div class="sm:col-span-2 space-y-1">
-							<label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instansi / Unit Kerja
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Instansi / Unit Kerja
 								(OPD)</label>
 							<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3">
-								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
+								<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
 									<i class="fa-solid fa-building text-sm"></i>
 								</div>
 								<p class="text-sm font-bold text-slate-800">{{ $user->department?->name ?? 'Belum ada instansi' }}</p>
@@ -183,7 +183,7 @@
 				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm mt-6">
 					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-2 border-b border-slate-100">
 						<h3 class="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-							<i class="fa-solid fa-route text-cyan-500 text-base"></i>Riwayat Perjalanan Dinas
+							<i class="fa-solid fa-route text-primary-500 text-base"></i>Riwayat Perjalanan Dinas
 						</h3>
 
 						{{-- Search Trip Form --}}
@@ -198,18 +198,18 @@
 								@endif
 							@endforeach
 							<div class="relative flex-1">
-								<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+								<span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-500">
 									<i class="fa-solid fa-magnifying-glass text-xs"></i>
 								</span>
 								<input type="text" name="search_trip" value="{{ request('search_trip') }}"
-									class="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-cyan-500 focus:outline-hidden"
+									class="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-hidden"
 									placeholder="Cari maksud, nomor, atau tujuan...">
 							</div>
 							<button type="submit" class="inline-flex items-center rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-900">
 								Cari
 							</button>
 							@if(request('search_trip'))
-								<a href="{{ url()->current() }}" class="text-slate-400 hover:text-slate-600">
+								<a href="{{ url()->current() }}" class="text-slate-500 hover:text-slate-600">
 									<i class="fa-solid fa-circle-xmark text-sm"></i>
 								</a>
 							@endif
@@ -220,12 +220,12 @@
 						{{-- Tab Buttons --}}
 						<div class="flex border-b border-slate-200">
 							<button @click="activeTab = 'pelaksana'"
-								:class="activeTab === 'pelaksana' ? 'border-cyan-500 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+								:class="activeTab === 'pelaksana' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
 								class="flex-1 py-2.5 px-4 text-center border-b-2 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
 								Sebagai Pelaksana Utama ({{ $tripsAsPelaksana->total() }})
 							</button>
 							<button @click="activeTab = 'pengikut'"
-								:class="activeTab === 'pengikut' ? 'border-cyan-500 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+								:class="activeTab === 'pengikut' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
 								class="flex-1 py-2.5 px-4 text-center border-b-2 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
 								Sebagai Pengikut ({{ $tripsAsFollower->total() }})
 							</button>
@@ -244,7 +244,7 @@
 										</div>
 										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
 										<p class="text-xs text-slate-500 flex items-center gap-1">
-											<i class="fa-solid fa-location-dot text-slate-400"></i>
+											<i class="fa-solid fa-location-dot text-slate-500"></i>
 											@foreach ($trip->destinations as $dest)
 												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
 											@endforeach
@@ -260,7 +260,7 @@
 									</div>
 								</div>
 							@empty
-								<p class="text-sm text-slate-400 italic text-center py-6">Belum ada riwayat perjalanan sebagai pelaksana utama.</p>
+								<p class="text-sm text-slate-500 italic text-center py-6">Belum ada riwayat perjalanan sebagai pelaksana utama.</p>
 							@endforelse
 
 							@if ($tripsAsPelaksana->hasPages())
@@ -286,7 +286,7 @@
 										</div>
 										<p class="text-sm font-semibold text-slate-800">{{ $trip->purpose }}</p>
 										<p class="text-xs text-slate-500 flex items-center gap-1">
-											<i class="fa-solid fa-location-dot text-slate-400"></i>
+											<i class="fa-solid fa-location-dot text-slate-500"></i>
 											@foreach ($trip->destinations as $dest)
 												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
 											@endforeach
@@ -302,7 +302,7 @@
 									</div>
 								</div>
 							@empty
-								<p class="text-sm text-slate-400 italic text-center py-6">Belum ada riwayat perjalanan sebagai pengikut.</p>
+								<p class="text-sm text-slate-500 italic text-center py-6">Belum ada riwayat perjalanan sebagai pengikut.</p>
 							@endforelse
 
 							@if ($tripsAsFollower->hasPages())

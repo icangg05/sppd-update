@@ -16,8 +16,8 @@
         <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
       </div>
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-        <p class="text-lg font-bold text-slate-800">{{ $kpi['value'] }}</p>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ $kpi['label'] }}</p>
+        <p class="text-4xl font-bold leading-none tracking-tight tabular-nums text-slate-800">{{ $kpi['value'] }}</p>
       </div>
     </div>
   @endforeach
@@ -77,7 +77,7 @@
               <span class="shrink-0 font-mono font-bold text-slate-600">{{ number_format($opd['percentage'], 1, ',', '.') }}%</span>
             </div>
             <x-ui.budget-bar :percentage="$opd['percentage']" height="h-2" />
-            <p class="text-[11px] text-slate-400">
+            <p class="text-[11px] text-slate-500">
               Rp {{ number_format($opd['realisasi'], 0, ',', '.') }} / Rp {{ number_format($opd['pagu'], 0, ',', '.') }}
             </p>
           </div>
@@ -93,7 +93,10 @@
 @if ($pendingApprovals->isNotEmpty())
   <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
-      <h3 class="text-sm font-bold text-slate-800">Menunggu Persetujuan Anda</h3>
+      <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
+        <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
+        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
+      </h3>
     </div>
     <div class="divide-y divide-slate-100">
       @foreach ($pendingApprovals as $appr)
@@ -112,8 +115,13 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       Chart.defaults.font.size = 12;
-      Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+      Chart.defaults.font.family = "'Poppins', ui-sans-serif, system-ui, sans-serif";
       Chart.defaults.color = '#64748b';
+
+      // Hormati preferensi kurangi-gerak: matikan animasi chart.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        Chart.defaults.animation = false;
+      }
 
       const trendCtx = document.getElementById('trendChart');
       if (trendCtx) {

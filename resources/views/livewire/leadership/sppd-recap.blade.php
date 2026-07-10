@@ -3,7 +3,7 @@
   {{-- Header --}}
   <div class="leading-tight">
     <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-      <i class="fa-solid fa-chart-pie text-cyan-600"></i> Rekap &amp; Statistik SPPD
+      <i class="fa-solid fa-chart-pie text-primary-600"></i> Rekap &amp; Statistik SPPD
     </h1>
     <p class="text-xs text-slate-500 mt-0.5">Ringkasan pengajuan perjalanan dinas dalam lingkup kewenangan Anda</p>
   </div>
@@ -20,7 +20,7 @@
       ];
     @endphp
     @foreach ($kpis as $kpi)
-      <div class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 shadow-md">
+      <div class="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 shadow-sm">
         <div class="flex size-10 items-center justify-center rounded {{ $kpi['tone'] }}">
           <i class="fa-solid {{ $kpi['icon'] }} text-lg"></i>
         </div>
@@ -34,9 +34,9 @@
 
   <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
     {{-- Tren 12 bulan --}}
-    <div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+    <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
       <h3 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-chart-column text-cyan-500"></i> Tren Pengajuan 12 Bulan
+        <i class="fa-solid fa-chart-column text-primary-500"></i> Tren Pengajuan 12 Bulan
       </h3>
       @php $maxTrend = max(1, collect($monthlyTrend)->max('masuk')); @endphp
       <div class="flex items-end justify-between gap-1.5" style="height: 160px;">
@@ -46,7 +46,7 @@
               <div class="w-1/2 rounded-t bg-blue-400" style="height: {{ (int) round($m['masuk'] / $maxTrend * 100) }}%;"></div>
               <div class="w-1/2 rounded-t bg-emerald-400" style="height: {{ (int) round($m['selesai'] / $maxTrend * 100) }}%;"></div>
             </div>
-            <span class="text-[9px] font-medium text-slate-400">{{ $m['month'] }}</span>
+            <span class="text-[9px] font-medium text-slate-500">{{ $m['month'] }}</span>
           </div>
         @endforeach
       </div>
@@ -57,9 +57,9 @@
     </div>
 
     {{-- Distribusi status --}}
-    <div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+    <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
       <h3 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-chart-pie text-cyan-500"></i> Distribusi Status
+        <i class="fa-solid fa-chart-pie text-primary-500"></i> Distribusi Status
       </h3>
       <div class="flex flex-col gap-3">
         @php $totalDist = max(1, $stats['total']); @endphp
@@ -68,7 +68,7 @@
             <div class="mb-1 flex items-center justify-between text-xs">
               <span class="font-medium text-slate-600">{{ $d['label'] }}</span>
               <span class="font-semibold text-slate-800">{{ $d['count'] }}
-                <span class="text-slate-400">({{ round($d['count'] / $totalDist * 100) }}%)</span>
+                <span class="text-slate-500">({{ round($d['count'] / $totalDist * 100) }}%)</span>
               </span>
             </div>
             <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -81,9 +81,9 @@
   </div>
 
   {{-- Unit kerja tersibuk --}}
-  <div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+  <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
     <h3 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
-      <i class="fa-solid fa-building text-cyan-500"></i> Unit Kerja Tersibuk
+      <i class="fa-solid fa-building text-primary-500"></i> Unit Kerja Tersibuk
     </h3>
     @php $maxUnit = max(1, (int) ($topUnits->max('jumlah') ?? 1)); @endphp
     <div class="flex flex-col gap-3">
@@ -94,11 +94,11 @@
             <span class="shrink-0 font-semibold text-slate-800">{{ $unit->jumlah }} SPPD</span>
           </div>
           <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div class="h-full rounded-full bg-cyan-500" style="width: {{ round($unit->jumlah / $maxUnit * 100) }}%;"></div>
+            <div class="h-full rounded-full bg-primary-500" style="width: {{ round($unit->jumlah / $maxUnit * 100) }}%;"></div>
           </div>
         </div>
       @empty
-        <p class="py-6 text-center text-sm text-slate-400">Belum ada data SPPD dalam lingkup Anda.</p>
+        <p class="py-6 text-center text-sm text-slate-500">Belum ada data SPPD dalam lingkup Anda.</p>
       @endforelse
     </div>
   </div>

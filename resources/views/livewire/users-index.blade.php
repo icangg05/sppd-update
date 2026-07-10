@@ -10,7 +10,7 @@
 			<p class="mt-1 text-xs text-slate-500 font-medium">Kelola data pegawai dan hak akses pengguna sistem</p>
 		</div>
 		<a wire:navigate href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
-			class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
+			class="inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
 			<i class="fa-solid fa-plus"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
 		</a>
 	</div>
@@ -21,7 +21,7 @@
 
 			{{-- Search Input with Icon --}}
 			<div class="relative flex-1">
-				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
 				</div>
 				<input type="text" wire:model.live.debounce.400ms="search"
@@ -161,12 +161,12 @@
 								<td colspan="{{ $colCount }}" class="py-1.5 px-4">
 									<div class="flex items-center gap-2" style="padding-left: {{ $indent }}px">
 										@if ($depth > 0)
-											<i class="fa-solid fa-sitemap text-[9px] text-slate-400"></i>
+											<i class="fa-solid fa-sitemap text-[9px] text-slate-500"></i>
 										@else
 											<i class="fa-solid fa-building-columns text-[9px] text-primary-500"></i>
 										@endif
 										<span
-											class="text-[10px] font-bold uppercase tracking-widest {{ $depth === 0 ? 'text-primary-700' : ($depth === 1 ? 'text-slate-600' : 'text-slate-400') }}">
+											class="text-[10px] font-bold uppercase tracking-widest {{ $depth === 0 ? 'text-primary-700' : ($depth === 1 ? 'text-slate-600' : 'text-slate-500') }}">
 											{{ $user->department?->name ?? '-' }}
 										</span>
 									</div>
@@ -175,7 +175,7 @@
 						@endif
 
 						<tr class="hover:bg-slate-50/50 transition-colors" wire:key="user-{{ $user->id }}">
-							<td class="py-3 px-4 text-center text-xs text-slate-400">{{ $users->firstItem() + $i }}.</td>
+							<td class="py-3 px-4 text-center text-xs text-slate-500">{{ $users->firstItem() + $i }}.</td>
 
 							{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
 							<td class="py-2.5 px-4">
@@ -209,7 +209,7 @@
 										<p class="text-[13px] text-slate-800">{{ $user->rank->name }}</p>
 										<p class="text-xs text-slate-500">{{ $user->rank->group }}</p>
 									@else
-										<span class="text-sm text-slate-400">-</span>
+										<span class="text-sm text-slate-500">-</span>
 									@endif
 								</td>
 							@endif
@@ -241,20 +241,20 @@
 									{{-- Toggle Status --}}
 									<button type="button" wire:click="toggleActive({{ $user->id }})"
 										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
-										class="rounded p-1.5 text-xs font-medium transition-colors {{ $user->is_active ? 'text-slate-400 hover:bg-slate-100 hover:text-rose-600' : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600' }}">
+										class="rounded p-1.5 text-xs font-medium transition-colors {{ $user->is_active ? 'text-slate-500 hover:bg-slate-100 hover:text-rose-600' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600' }}">
 										<i class="fa-solid fa-power-off"></i>
 									</button>
 
 									{{-- View --}}
 									<a wire:navigate href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-400 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 hover:bg-primary-50 hover:text-primary-600 transition-colors"
 										title="Detail Pegawai">
 										<i class="fa-solid fa-eye"></i>
 									</a>
 
 									{{-- Edit --}}
 									<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
 										title="Edit Data">
 										<i class="fa-solid fa-pen-to-square"></i>
 									</a>
@@ -262,7 +262,7 @@
 									{{-- Delete --}}
 									<button type="button" wire:click="deleteUser({{ $user->id }})"
 										wire:confirm="Yakin ingin menghapus pegawai ini secara permanen?"
-										class="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+										class="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
 										title="Hapus Data">
 										<i class="fa-solid fa-trash-can"></i>
 									</button>
@@ -272,7 +272,7 @@
 					@empty
 						<tr>
 							<td colspan="{{ auth()->user()->hasRole('super_admin') ? '8' : '7' }}" class="py-12 text-center">
-								<div class="flex flex-col items-center justify-center text-slate-400">
+								<div class="flex flex-col items-center justify-center text-slate-500">
 									<i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
 									<p class="text-sm font-medium">Belum ada data pegawai yang ditemukan</p>
 								</div>

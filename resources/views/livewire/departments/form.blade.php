@@ -7,7 +7,7 @@
   {{-- Header Halaman Compact --}}
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
     <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-cyan-100 rounded text-cyan-600">
+      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
         <i class="fa-solid {{ $isEdit ? 'fa-building-gear' : 'fa-folder-plus' }} text-base"></i>
       </div>
       <div>
@@ -32,14 +32,14 @@
   <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
     <div class="p-3 border-b border-slate-200 bg-slate-50/50">
       <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-        <i class="fa-solid fa-file-signature text-cyan-500"></i>Formulir Registrasi Unit Kerja
+        <i class="fa-solid fa-file-signature text-primary-500"></i>Formulir Registrasi Unit Kerja
       </h3>
     </div>
 
     {{-- Panduan Menyusun Struktur --}}
     <div class="px-4 pt-3">
-      <div class="rounded border border-cyan-200 bg-cyan-50/60 p-3 text-[11px] leading-relaxed text-slate-600">
-        <p class="font-bold text-cyan-700 mb-1"><i class="fa-solid fa-sitemap mr-1"></i>Panduan Menyusun Struktur</p>
+      <div class="rounded border border-primary-200 bg-primary-50/60 p-3 text-[11px] leading-relaxed text-slate-600">
+        <p class="font-bold text-primary-700 mb-1"><i class="fa-solid fa-sitemap mr-1"></i>Panduan Menyusun Struktur</p>
         <ul class="list-disc pl-4 space-y-0.5">
           <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
           <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
@@ -61,10 +61,10 @@
         <div class="space-y-0.5">
           <x-form.input wire:model="name" name="name" label="Nama Unit Kerja / Struktur"
             placeholder="Misal: Bidang Tata Usaha" required :disabled="$parentLocked"
-            class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
+            class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
           @if ($parentLocked)
-            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-              <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Nama instansi Anda hanya dapat diubah oleh Super Admin.
+            <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+              <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Nama instansi Anda hanya dapat diubah oleh Super Admin.
             </p>
           @endif
         </div>
@@ -76,8 +76,8 @@
             <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
               {{ $department->parent?->name ?? 'Tidak ada (Top-level)' }}
             </div>
-            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-              <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Hanya dapat diubah oleh Super Admin.
+            <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+              <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Hanya dapat diubah oleh Super Admin.
             </p>
           @else
             @php
@@ -91,8 +91,8 @@
               label="Instansi Induk Pengampu" :options="$parentOptions"
               placeholder="— Pilih Instansi Induk —" searchPlaceholder="Cari instansi induk..."
               :required="! $isSuperAdmin" />
-            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-              <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Kosongkan untuk membuat OPD induk baru; pilih induk untuk membuat sub-unit di bawahnya.
+            <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+              <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Kosongkan untuk membuat OPD induk baru; pilih induk untuk membuat sub-unit di bawahnya.
             </p>
           @endif
         </div>
@@ -102,7 +102,7 @@
           <div class="space-y-0.5">
             <x-form.input wire:model="code" name="code" label="Kode Unit Kerja"
               placeholder="Misal: 15.42.5"
-              class="font-mono text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
+              class="font-mono text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
           </div>
 
           <div class="space-y-0.5">
@@ -119,8 +119,8 @@
               <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
                 {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
               </div>
-              <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-                <i class="fa-solid fa-lock text-slate-400 mr-1"></i>Hanya dapat diubah oleh Super Admin.
+              <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+                <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Hanya dapat diubah oleh Super Admin.
               </p>
             @endif
           </div>
@@ -209,11 +209,11 @@
                 : null;
             @endphp
             <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
-              class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-              <span class="truncate text-left {{ $selectedHeadLabel ? 'text-slate-800' : 'text-slate-400' }}">
+              class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
+              <span class="truncate text-left {{ $selectedHeadLabel ? 'text-slate-800' : 'text-slate-500' }}">
                 {{ $selectedHeadLabel ?? '— Pilih Pimpinan —' }}
               </span>
-              <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+              <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                 :class="open && 'rotate-180'"></i>
             </button>
 
@@ -228,7 +228,7 @@
               class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
               <div class="border-b border-slate-100 p-2">
                 <div class="relative">
-                  <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+                  <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
                   <input x-ref="searchHead" type="text" wire:model.live.debounce.300ms="searchHead"
                     @input="highlighted = 0"
                     @keydown.arrow-down.prevent="move(1)"
@@ -236,7 +236,7 @@
                     @keydown.enter.prevent="pick()"
                     @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
                     placeholder="Cari nama / NIP pegawai..."
-                    class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+                    class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
                 </div>
               </div>
               <ul x-ref="list" class="max-h-56 overflow-auto py-1">
@@ -245,8 +245,8 @@
                     @click="open = false" @mouseenter="highlighted = 0"
                     class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
                     :class="highlighted === 0
-                      ? 'bg-cyan-100 text-cyan-800'
-                      : ({{ empty($head_id) ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-500 italic hover:bg-cyan-50')">
+                      ? 'bg-primary-100 text-primary-800'
+                      : ({{ empty($head_id) ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-500 italic hover:bg-primary-50')">
                     — Tanpa Pimpinan —
                   </button>
                 </li>
@@ -256,27 +256,27 @@
                       @click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
                       class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
                       :class="highlighted === {{ $loop->index + 1 }}
-                        ? 'bg-cyan-100 text-cyan-800'
-                        : ({{ $head_id == $h->id ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+                        ? 'bg-primary-100 text-primary-800'
+                        : ({{ $head_id == $h->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
                       {{ trim(($h->nip ? $h->nip . ' - ' : '') . $h->name) }}
                     </button>
                   </li>
                 @endforeach
                 @if ($heads->isEmpty())
-                  <li class="px-3 py-2 text-xs text-slate-400">
+                  <li class="px-3 py-2 text-xs text-slate-500">
                     {{ trim($searchHead) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai pada instansi induk pengampu.' }}
                   </li>
                 @endif
                 @if ($headsHasMore)
-                  <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
+                  <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
                     Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
                   </li>
                 @endif
               </ul>
             </div>
           </div>
-          <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-            <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Hanya memuat pegawai yang terdaftar di instansi induk pengampu.
+          <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+            <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Hanya memuat pegawai yang terdaftar di instansi induk pengampu.
           </p>
           @error('head_id')
             <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
@@ -288,7 +288,7 @@
         @if ($isEdit)
           <div class="md:col-span-2 rounded border border-slate-200 bg-slate-50/60 p-3 space-y-2">
             <p class="text-xs font-bold text-slate-700 uppercase tracking-wide">
-              <i class="fa-solid fa-signature text-cyan-500 mr-1"></i>Penandatangan "Setuju Bayar" (Dokumen Cetak)
+              <i class="fa-solid fa-signature text-primary-500 mr-1"></i>Penandatangan "Setuju Bayar" (Dokumen Cetak)
             </p>
             <p class="text-[11px] leading-relaxed text-slate-500">
               Nama dan label di bawah dipakai pada kolom tanda tangan Setuju Bayar di
@@ -363,11 +363,11 @@
                       : null;
                   @endphp
                   <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
-                    class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
-                    <span class="truncate text-left {{ $selectedSbLabel ? 'text-slate-800' : 'text-slate-400' }}">
+                    class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
+                    <span class="truncate text-left {{ $selectedSbLabel ? 'text-slate-800' : 'text-slate-500' }}">
                       {{ $selectedSbLabel ?? '— Bawaan: Kepala OPD —' }}
                     </span>
-                    <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                       :class="open && 'rotate-180'"></i>
                   </button>
 
@@ -382,7 +382,7 @@
                     class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
                     <div class="border-b border-slate-100 p-2">
                       <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-400" style="display:flex;"></i>
+                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
                         <input x-ref="searchSb" type="text" wire:model.live.debounce.300ms="searchSetujuBayar"
                           @input="highlighted = 0"
                           @keydown.arrow-down.prevent="move(1)"
@@ -390,7 +390,7 @@
                           @keydown.enter.prevent="pick()"
                           @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
                           placeholder="Cari nama / NIP pegawai..."
-                          class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-cyan-500 focus:bg-white focus:ring-1 focus:ring-cyan-500">
+                          class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
                       </div>
                     </div>
                     <ul x-ref="list" class="max-h-56 overflow-auto py-1">
@@ -399,8 +399,8 @@
                           @click="open = false" @mouseenter="highlighted = 0"
                           class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
                           :class="highlighted === 0
-                            ? 'bg-cyan-100 text-cyan-800'
-                            : ({{ empty($setuju_bayar_user_id) ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-500 italic hover:bg-cyan-50')">
+                            ? 'bg-primary-100 text-primary-800'
+                            : ({{ empty($setuju_bayar_user_id) ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-500 italic hover:bg-primary-50')">
                           — Bawaan: Kepala OPD —
                         </button>
                       </li>
@@ -410,27 +410,27 @@
                             @click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
                             class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
                             :class="highlighted === {{ $loop->index + 1 }}
-                              ? 'bg-cyan-100 text-cyan-800'
-                              : ({{ $setuju_bayar_user_id == $c->id ? 'true' : 'false' }} ? 'bg-cyan-50 font-semibold text-cyan-700' : 'text-slate-700 hover:bg-cyan-50')">
+                              ? 'bg-primary-100 text-primary-800'
+                              : ({{ $setuju_bayar_user_id == $c->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
                             {{ trim(($c->nip ? $c->nip . ' - ' : '') . $c->name) }}
                           </button>
                         </li>
                       @endforeach
                       @if ($sbCandidates->isEmpty())
-                        <li class="px-3 py-2 text-xs text-slate-400">
+                        <li class="px-3 py-2 text-xs text-slate-500">
                           {{ trim($searchSetujuBayar) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai pada lingkup instansi ini.' }}
                         </li>
                       @endif
                       @if ($sbHasMore)
-                        <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-400">
+                        <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
                           Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
                         </li>
                       @endif
                     </ul>
                   </div>
                 </div>
-                <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-                  <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Memuat pegawai aktif di instansi ini beserta unit di bawahnya.
+                <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+                  <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Memuat pegawai aktif di instansi ini beserta unit di bawahnya.
                 </p>
                 @error('setuju_bayar_user_id')
                   <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
@@ -442,9 +442,9 @@
                 <x-form.input wire:model="setuju_bayar_label" name="setuju_bayar_label"
                   label="Label Jabatan Penandatangan" maxlength="150"
                   placeholder="Bawaan: Pengguna Anggaran"
-                  class="text-xs py-1.5 focus:border-cyan-500 focus:ring-cyan-500" />
-                <p class="text-[10px] text-slate-400 font-medium mt-0.5">
-                  <i class="fa-solid fa-circle-info text-cyan-500 mr-1"></i>Misal: Kuasa Pengguna Anggaran. Kosongkan untuk memakai label bawaan dokumen.
+                  class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
+                <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+                  <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Misal: Kuasa Pengguna Anggaran. Kosongkan untuk memakai label bawaan dokumen.
                 </p>
               </div>
             </div>
@@ -455,17 +455,17 @@
              dikosongkan akan otomatis mewarisi kop instansi induknya. --}}
         <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
           <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
-            class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
+            class="text-xs focus:border-primary-500 focus:ring-primary-500"
             hint="{{ $isRoot
               ? 'Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD.'
               : 'Rekomendasi rasio cetak 1000x200 pixel. Kosongkan untuk mengikuti kop instansi induk.' }}" />
-          <div wire:loading wire:target="letterhead" class="text-[10px] text-cyan-600">
+          <div wire:loading wire:target="letterhead" class="text-[10px] text-primary-600">
             <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
           </div>
           @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
             <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
               <div class="flex items-center justify-between gap-2 mb-1.5">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kop Aktif (SPPD):</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kop Aktif (SPPD):</p>
                 <x-ui.button type="button" variant="danger" wire:click="confirmDeleteKop('primary')"
                   class="gap-1 px-2 py-0.5 text-[10px] font-bold">
                   <i class="fa-solid fa-trash-can text-[9px]"></i> Hapus Kop
@@ -490,15 +490,15 @@
         @if ($type === 'dprd')
           <div class="md:col-span-1 space-y-1.5">
             <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
-              class="text-xs focus:border-cyan-500 focus:ring-cyan-500"
+              class="text-xs focus:border-primary-500 focus:ring-primary-500"
               hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
-            <div wire:loading wire:target="letterhead_second" class="text-[10px] text-cyan-600">
+            <div wire:loading wire:target="letterhead_second" class="text-[10px] text-primary-600">
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
             </div>
             @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
               <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
                 <div class="flex items-center justify-between gap-2 mb-1.5">
-                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kop Aktif (SPT):</p>
+                  <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kop Aktif (SPT):</p>
                   <x-ui.button type="button" variant="danger" wire:click="confirmDeleteKop('secondary')"
                     class="gap-1 px-2 py-0.5 text-[10px] font-bold">
                     <i class="fa-solid fa-trash-can text-[9px]"></i> Hapus Kop
@@ -518,7 +518,7 @@
           Batal
         </x-ui.button>
 
-        <x-ui.button type="submit" class="gap-1.5 px-4 py-1.5 text-xs font-bold shadow-md shadow-cyan-200 hover:shadow-lg"
+        <x-ui.button type="submit" class="gap-1.5 px-4 py-1.5 text-xs font-bold shadow-sm shadow-primary-200 hover:shadow-lg"
           wire:loading.attr="disabled" wire:target="save">
           <i class="fa-solid fa-floppy-disk text-[11px]"></i>
           <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}</span>

@@ -6,7 +6,7 @@
     <div class="flex items-center gap-2 shrink-0">
         @if ($sig && $sig->status->value === 'signed')
             <span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">Sudah TTE</span>
-            <span class="text-[9px] font-mono text-slate-400"><i class="fa-regular fa-clock"></i> {{ $sig->signed_at?->translatedFormat('d/m H:i') }}</span>
+            <span class="text-[9px] font-mono text-slate-500"><i class="fa-regular fa-clock"></i> {{ $sig->signed_at?->translatedFormat('d/m H:i') }}</span>
         @elseif ($sig && $sig->status->value === 'processing')
             <span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 animate-pulse">
                 <i class="fa-solid fa-spinner animate-spin text-[9px]"></i> Proses

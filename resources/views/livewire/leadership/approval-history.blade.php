@@ -4,14 +4,14 @@
   <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
     <div class="leading-tight">
       <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-        <i class="fa-solid fa-clock-rotate-left text-cyan-600"></i> Riwayat Persetujuan
+        <i class="fa-solid fa-clock-rotate-left text-primary-600"></i> Riwayat Persetujuan
       </h1>
       <p class="text-xs text-slate-500 mt-0.5">Jejak keputusan &amp; tanda tangan yang telah Anda lakukan</p>
     </div>
   </div>
 
   {{-- Bar Filter --}}
-  <div class="rounded border border-slate-200 bg-white p-4 shadow-md">
+  <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
     <div class="flex flex-col gap-3 sm:flex-row">
       <div class="flex-1">
         <x-form.input name="search" wire:model.live.debounce.300ms="search"
@@ -19,7 +19,7 @@
       </div>
       <div class="w-full sm:w-44">
         <select name="decision" wire:model.live="decision"
-          class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-hidden focus:ring-1 focus:ring-cyan-500">
+          class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
           <option value="">Semua Keputusan</option>
           <option value="approved">Disetujui</option>
           <option value="rejected">Ditolak</option>
@@ -29,7 +29,7 @@
         @if ($search !== '' || $decision !== '')
           <button type="button" wire:click="resetFilters"
             class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-            <i class="fa-solid fa-rotate-left text-xs text-slate-400"></i> Reset
+            <i class="fa-solid fa-rotate-left text-xs text-slate-500"></i> Reset
           </button>
         @else
           <button type="button" disabled
@@ -60,20 +60,20 @@
         @forelse ($approvals as $i => $appr)
           @php $sppd = $appr->sppdRequest; @endphp
           <tr wire:key="appr-{{ $appr->id }}">
-            <td class="text-center text-xs font-semibold text-slate-400">
+            <td class="text-center text-xs font-semibold text-slate-500">
               {{ $approvals->firstItem() + $i }}.
             </td>
 
             <td>
               <p class="font-semibold text-slate-800">{{ $sppd?->user?->name ?? '-' }}</p>
-              <p class="text-[11px] text-cyan-600 mt-0.5 font-medium">{{ $sppd?->user?->department?->name ?? '-' }}</p>
+              <p class="text-[11px] text-primary-600 mt-0.5 font-medium">{{ $sppd?->user?->department?->name ?? '-' }}</p>
             </td>
 
             <td class="max-w-xs">
               <p class="truncate font-medium text-slate-700" title="{{ $sppd?->purpose }}">
                 {{ $sppd?->purpose ?? '-' }}
               </p>
-              <p class="mt-0.5 truncate text-xs text-slate-400">
+              <p class="mt-0.5 truncate text-xs text-slate-500">
                 <i class="fa-solid fa-location-dot"></i>
                 {{ $sppd?->destinations->first()?->regency?->name ?? '-' }}
               </p>
@@ -105,7 +105,7 @@
             <td class="whitespace-nowrap text-xs leading-normal">
               @if ($appr->acted_at)
                 <p class="font-medium text-slate-700">{{ $appr->acted_at->translatedFormat('d F Y') }}</p>
-                <p class="text-slate-400">{{ $appr->acted_at->format('H:i') }}</p>
+                <p class="text-slate-500">{{ $appr->acted_at->format('H:i') }}</p>
               @else
                 <span class="text-slate-300">-</span>
               @endif
@@ -122,7 +122,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="7" class="py-12 text-center text-slate-400">
+            <td colspan="7" class="py-12 text-center text-slate-500">
               <div class="flex flex-col items-center justify-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-3xl text-slate-200"></i>
                 <p class="text-sm">Belum ada riwayat keputusan.</p>
