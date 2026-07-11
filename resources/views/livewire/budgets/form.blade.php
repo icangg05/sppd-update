@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-4xl space-y-6 p-1">
+<div class="mx-auto max-w-4xl space-y-4 p-1">
 
   {{-- Header Halaman (title card) --}}
   <div
@@ -36,7 +36,7 @@
   </div>
 
   {{-- Form --}}
-  <form wire:submit="save" class="space-y-6">
+  <form wire:submit="save" class="space-y-4">
 
     {{-- ── Kelompok 1: Sumber & Klasifikasi ── --}}
     <section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -50,7 +50,7 @@
         </div>
       </header>
 
-      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-3">
+      <div class="grid grid-cols-1 gap-x-4 gap-y-4 p-5 sm:p-6 md:grid-cols-3">
 
         {{-- SKPD / Unit Kerja --}}
         @if ($isSuperAdmin)
@@ -120,22 +120,22 @@
         </div>
       </header>
 
-      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-3">
+      <div class="grid grid-cols-1 gap-x-4 gap-y-4 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Nama Program --}}
-        <div class="md:col-span-3">
+        <div>
           <x-form.input wire:model="program" type="text" label="Nama Program Utama"
             placeholder="Masukkan nama program..." required />
         </div>
 
         {{-- Nama Kegiatan --}}
-        <div class="md:col-span-3">
+        <div>
           <x-form.input wire:model="activity" type="text" label="Nama Kegiatan / Sub Kegiatan"
             placeholder="Masukkan nama kegiatan..." required />
         </div>
 
         {{-- Uraian --}}
-        <div class="md:col-span-2">
+        <div>
           <x-form.input wire:model="description" type="text" label="Uraian Singkat Penjelasan"
             placeholder="Deskripsi pelengkap anggaran..." required />
         </div>

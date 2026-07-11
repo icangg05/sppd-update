@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-4xl space-y-6 p-1">
+<div class="mx-auto max-w-4xl space-y-4 p-1">
 
   @php
     $backUrl = route('master.departments.index');
@@ -62,7 +62,7 @@
     </div>
   </div>
 
-  <form wire:submit="save" class="space-y-6">
+  <form wire:submit="save" class="space-y-4">
 
     {{-- ── Kelompok 1: Identitas & Struktur ── --}}
     <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -77,7 +77,7 @@
       </header>
 
       {{-- Grid Utama Form --}}
-      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-2">
+      <div class="grid grid-cols-1 gap-x-4 gap-y-4 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Input Nama Unit Kerja --}}
         <div class="space-y-0.5">
@@ -491,7 +491,7 @@
           <p class="text-xs text-slate-500">Dipakai pada dokumen cetak. Sub-unit dapat mewarisi kop dari induk.</p>
         </div>
       </header>
-      <div class="grid grid-cols-1 gap-x-4 gap-y-5 p-5 sm:p-6 md:grid-cols-2">
+      <div class="grid grid-cols-1 gap-x-4 gap-y-4 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Unggah Kop Surat Utama — tersedia untuk semua unit. Sub-unit yang
              dikosongkan akan otomatis mewarisi kop instansi induknya. --}}
