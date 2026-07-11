@@ -1,5 +1,5 @@
 <div x-data="{ showResetModal: false }">
-	<div class="mx-auto max-w-4xl space-y-6 p-1">
+	<div class="mx-auto max-w-5xl space-y-6 p-1">
 
 		{{-- Header Halaman (title card) --}}
 		<div
@@ -46,7 +46,10 @@
 		{{-- Main Form --}}
 		<form wire:submit.prevent="save" class="space-y-6">
 
-			{{-- ── Kelompok 1: Identitas Pegawai ── --}}
+			{{-- Hemat scroll: kolom kiri (Identitas Pegawai) berdampingan dengan Akun Sistem + WhatsApp. --}}
+			<div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+
+			{{-- ── Kelompok 1: Identitas Pegawai (kolom kiri) ── --}}
 			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 				<header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
 					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
@@ -58,7 +61,7 @@
 					</div>
 				</header>
 
-				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
+				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-1">
 					<div class="space-y-1">
 						<x-form.input wire:model="name" name="name" label="Nama Lengkap" required
 							placeholder="Contoh: Budi Santoso" />
@@ -96,6 +99,9 @@
 				</div>
 			</section>
 
+			{{-- Kolom kanan: Akun Sistem + Kontak WhatsApp ditumpuk --}}
+			<div class="space-y-6">
+
 			{{-- ── Kelompok 2: Akun Sistem ── --}}
 			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 				<header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
@@ -108,7 +114,7 @@
 					</div>
 				</header>
 
-				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
+				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-1">
 					<div class="space-y-1">
 						{{-- Username dengan tombol generate username unik --}}
 						<label for="username" class="block text-xs font-bold tracking-wide text-slate-600 uppercase">
@@ -174,6 +180,7 @@
 						{{-- Phone Field dengan tombol verifikasi/ganti nomor --}}
 						<label for="phone" class="block text-xs font-bold uppercase tracking-wide text-slate-600">
 							No. Telepon / WhatsApp
+							<span class="ml-1 font-medium normal-case tracking-normal text-slate-400">(opsional)</span>
 						</label>
 						<div class="flex gap-2">
 							<input
@@ -231,10 +238,15 @@
 								<i class="fa-solid fa-circle-check mt-0.5"></i>
 								<span>Nomor telah diverifikasi dan terkunci. Gunakan tombol <strong>Ganti</strong> jika ingin mengubahnya.</span>
 							</p>
-						@else
+						@elseif (filled($phone))
 							<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-amber-600">
 								<i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-								<span>Wajib verifikasi nomor dengan menekan tombol <strong>Verifikasi</strong> sebelum dapat menyimpan perubahan.</span>
+								<span>Nomor ini belum diverifikasi. Tekan <strong>Verifikasi</strong> dulu agar bisa disimpan.</span>
+							</p>
+						@else
+							<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-slate-500">
+								<i class="fa-solid fa-circle-info mt-0.5"></i>
+								<span>Boleh dikosongkan. Isi lalu tekan <strong>Verifikasi</strong> jika ingin menerima notifikasi WhatsApp.</span>
 							</p>
 						@endif
 
@@ -245,7 +257,10 @@
 				</div>
 			</section>
 
-			{{-- ── Kelompok 4: Penempatan & Kewenangan ── --}}
+				</div>
+			</div>
+
+			{{-- ── Kelompok 4: Penempatan & Kewenangan (lebar penuh) ── --}}
 			{{-- Catatan: TANPA .dash-enter. Animasi (animation-fill: both) membuat stacking
 			     context permanen yang menjebak panel Jabatan (position: fixed) sehingga
 			     tertutup action bar sticky meski z-index 9999. Lihat [[blade-livewire-pitfalls]]. --}}

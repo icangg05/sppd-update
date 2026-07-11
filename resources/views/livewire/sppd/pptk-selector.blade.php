@@ -1,4 +1,4 @@
-<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+<div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 	{{-- Aksen kiri: hijau bila PPTK sudah diatur, ambar bila belum. --}}
 	<div class="flex flex-col gap-4 border-l-2 {{ $sppd->pptk_id ? 'border-emerald-500' : 'border-amber-400' }} p-5 md:flex-row md:items-end md:justify-between">
 		<div class="min-w-0">
@@ -31,7 +31,7 @@
 					class="py-1.5" />
 
 				<x-ui.button
-					variant="dark"
+					variant="primary"
 					size="sm"
 					wire:click="updatePptk"
 					wire:target="updatePptk"
@@ -42,10 +42,4 @@
 			</div>
 		@endif
 	</div>
-
-	@error('pptk_id')
-		<p class="border-t border-rose-100 bg-rose-50 px-5 py-2 text-xs font-semibold text-rose-600">
-			<i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}
-		</p>
-	@enderror
 </div>

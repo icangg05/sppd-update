@@ -1,7 +1,7 @@
 <div>
   {{-- ── Header halaman (title card) ── --}}
   <div
-    class="dash-enter relative mb-6 overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    class="dash-enter relative mb-4 overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
     {{-- Watermark institusional (tipis, hanya karakter). --}}
     <i class="fa-regular fa-calendar-days pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
       aria-hidden="true"></i>
@@ -26,9 +26,11 @@
   </div>
 
   {{-- ── Ringkasan cepat ── --}}
-  <div class="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+  <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
     {{-- Total bulan ini --}}
-    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="dash-enter relative flex items-center gap-4 overflow-hidden rounded border border-slate-200 bg-white p-5 shadow-sm">
+      <span class="absolute inset-y-0 left-0 w-1 bg-primary-500/70" aria-hidden="true"></span>
+      <i class="fa-solid fa-calendar-days pointer-events-none absolute -bottom-4 -right-2 text-6xl text-primary-500/10" aria-hidden="true"></i>
       <div class="flex size-12 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
         <i class="fa-solid fa-calendar-days text-lg"></i>
       </div>
@@ -39,7 +41,9 @@
     </div>
 
     {{-- Sedang berlangsung --}}
-    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="dash-enter relative flex items-center gap-4 overflow-hidden rounded border border-slate-200 bg-white p-5 shadow-sm">
+      <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500/70" aria-hidden="true"></span>
+      <i class="fa-solid fa-plane-departure pointer-events-none absolute -bottom-4 -right-2 text-6xl text-emerald-500/10" aria-hidden="true"></i>
       <div class="flex size-12 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
         <i class="fa-solid fa-plane-departure text-lg"></i>
       </div>
@@ -50,7 +54,9 @@
     </div>
 
     {{-- Legenda warna --}}
-    <div class="dash-enter flex items-center gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 lg:col-span-1">
+    <div class="dash-enter relative flex items-center gap-4 overflow-hidden rounded border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 lg:col-span-1">
+      <span class="absolute inset-y-0 left-0 w-1 bg-slate-400/60" aria-hidden="true"></span>
+      <i class="fa-solid fa-palette pointer-events-none absolute -bottom-4 -right-2 text-6xl text-slate-400/10" aria-hidden="true"></i>
       <div class="flex size-12 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-500 ring-1 ring-slate-200">
         <i class="fa-solid fa-palette text-lg"></i>
       </div>
@@ -71,7 +77,7 @@
   </div>
 
   {{-- ── Grid utama ── --}}
-  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+  <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
 
     {{-- Kiri: area kalender --}}
     <div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-8">
@@ -79,7 +85,7 @@
     </div>
 
     {{-- Kanan: info & agenda mendatang --}}
-    <div class="flex flex-col gap-6 lg:col-span-4">
+    <div class="flex flex-col gap-4 lg:col-span-4">
 
       {{-- Perjalanan mendatang --}}
       <div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -142,7 +148,7 @@
       </div>
 
       {{-- Panduan interaksi --}}
-      <div class="rounded border border-slate-200 bg-slate-50 p-5">
+      <div class="dash-enter rounded border border-slate-200 bg-slate-50 p-5">
         <h4 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Panduan Interaksi</h4>
         <ul class="space-y-2.5 text-xs font-medium text-slate-600">
           <li class="flex items-start gap-2">

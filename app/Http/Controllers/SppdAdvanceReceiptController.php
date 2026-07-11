@@ -54,7 +54,17 @@ class SppdAdvanceReceiptController extends Controller
         }
       }
 
-      return back()->with('success', 'Seluruh data kuitansi panjar berhasil disimpan.');
+      $message = 'Seluruh data kuitansi panjar berhasil disimpan.';
+      if ($request->wantsJson()) {
+        // Kirim state kuitansi terbaru agar tombol/nomor bisa muncul tanpa reload.
+        $receipts = $sppd->advanceReceipts()->get()->mapWithKeys(fn ($r) => [
+          $r->user_id => ['number' => $r->receipt_number, 'hasPanjar' => $r->amount > 0],
+        ]);
+
+        return response()->json(['message' => $message, 'receipts' => $receipts]);
+      }
+
+      return back()->with('success', $message);
     }
 
     $validated = $request->validate([

@@ -17,6 +17,8 @@
             'title' => 'group-hover:text-orange-700',
             'arrow' => 'text-orange-500',
             'ring'  => 'focus-visible:ring-orange-400',
+            'edge'  => 'bg-orange-400/70',
+            'mark'  => 'text-orange-500/10',
         ],
         'primary' => [
             'chip'  => 'bg-primary-100 text-primary-600',
@@ -24,13 +26,18 @@
             'title' => 'group-hover:text-primary-700',
             'arrow' => 'text-primary-600',
             'ring'  => 'focus-visible:ring-primary-500',
+            'edge'  => 'bg-primary-500/70',
+            'mark'  => 'text-primary-500/10',
         ],
     ];
     $t = $tones[$tone] ?? $tones['primary'];
 @endphp
 
 <a wire:navigate href="{{ $href }}"
-    class="group relative flex items-start gap-4 rounded border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 {{ $t['hover'] }} hover:-translate-y-1 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset {{ $t['ring'] }}">
+    class="group relative flex items-start gap-4 overflow-hidden rounded border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 {{ $t['hover'] }} hover:-translate-y-1 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset {{ $t['ring'] }}">
+    {{-- Ornamen: garis aksen kiri + watermark ikon dokumen di sudut. --}}
+    <span class="absolute inset-y-0 left-0 w-1 {{ $t['edge'] }}" aria-hidden="true"></span>
+    <i class="fa-solid {{ $icon }} pointer-events-none absolute -bottom-3 -right-2 text-6xl {{ $t['mark'] }} transition-transform duration-300 group-hover:scale-110" aria-hidden="true"></i>
     <div
         class="flex size-12 shrink-0 items-center justify-center rounded {{ $t['chip'] }} transition-transform duration-200 group-hover:scale-105">
         <i class="fa-solid {{ $icon }} text-lg"></i>

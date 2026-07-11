@@ -1,48 +1,50 @@
 <div class="flex flex-col gap-4 p-1">
 
-  {{-- Header Halaman --}}
-  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-    <div class="leading-tight">
-      <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-        <i class="fa-solid fa-clock-rotate-left text-primary-600"></i> Riwayat Persetujuan
-      </h1>
-      <p class="text-xs text-slate-500 mt-0.5">Jejak keputusan &amp; tanda tangan yang telah Anda lakukan</p>
+  {{-- Header (title card) — mengikuti gaya kartu judul halaman index. --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-clock-rotate-left pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-gavel text-[9px]"></i>
+          Jejak Keputusan
+          <span class="ml-1 tabular-nums text-primary-600/70">· {{ $approvals->total() }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Riwayat Persetujuan</h1>
+        <p class="mt-1 text-xs text-slate-500">Jejak keputusan &amp; tanda tangan yang telah Anda lakukan</p>
+      </div>
     </div>
   </div>
 
   {{-- Bar Filter --}}
+  {{-- TANPA .dash-enter: animasi (fill: both) menjebak dropdown fixed searchable-select. --}}
   <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
-    <div class="flex flex-col gap-3 sm:flex-row">
-      <div class="flex-1">
-        <x-form.input name="search" wire:model.live.debounce.300ms="search"
-          placeholder="Cari maksud, nomor surat, atau pelaksana..." wrapperClass="w-full" />
-      </div>
-      <div class="w-full sm:w-44">
-        <select name="decision" wire:model.live="decision"
-          class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
-          <option value="">Semua Keputusan</option>
-          <option value="approved">Disetujui</option>
-          <option value="rejected">Ditolak</option>
-        </select>
-      </div>
-      <div class="flex items-center gap-2 shrink-0">
-        @if ($search !== '' || $decision !== '')
-          <button type="button" wire:click="resetFilters"
-            class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-            <i class="fa-solid fa-rotate-left text-xs text-slate-500"></i> Reset
-          </button>
-        @else
-          <button type="button" disabled
-            class="inline-flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
-            <i class="fa-solid fa-rotate-left text-xs text-slate-300"></i> Reset
-          </button>
-        @endif
-      </div>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <x-form.input name="search" wire:model.live.debounce.300ms="search" icon="fa-solid fa-magnifying-glass"
+        loadingTarget="search" placeholder="Cari maksud, nomor surat, atau pelaksana..." wrapperClass="flex-1" />
+
+      <x-form.searchable-select wire:model.live="decision" wrapperClass="w-full sm:w-48"
+        placeholder="Semua Keputusan" searchPlaceholder="Cari keputusan..." :options="[
+          ['value' => '', 'label' => 'Semua Keputusan'],
+          ['value' => 'approved', 'label' => 'Disetujui'],
+          ['value' => 'rejected', 'label' => 'Ditolak'],
+        ]" />
+
+      <x-ui.button variant="secondary" wire:click="resetFilters"
+        :disabled="$search === '' && $decision === ''" class="w-full shrink-0 sm:w-auto">
+        <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
+        Reset
+      </x-ui.button>
     </div>
   </div>
 
   {{-- Tabel Data --}}
-  <div class="table-wrapper">
+  <div class="dash-enter table-wrapper">
     <table class="table">
       <thead>
         <tr>

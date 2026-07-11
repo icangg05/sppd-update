@@ -1,15 +1,29 @@
 <div class="flex flex-col gap-4 p-1">
 
-  {{-- Header Halaman --}}
-  <div class="leading-tight">
-    <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-      <i class="fa-solid fa-clipboard-check text-primary-600"></i> Monitoring Tindak Lanjut SPPD
-    </h1>
-    <p class="text-xs text-slate-500 mt-0.5">Kejar kelengkapan administrasi perjalanan dinas di lingkup OPD Anda: pegawai yang sedang dinas, laporan &amp; realisasi biaya yang belum lengkap.</p>
+  {{-- Header (title card) — mengikuti gaya kartu judul halaman index. --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-clipboard-check pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-list-check text-[9px]"></i>
+          Tindak Lanjut OPD
+          <span class="ml-1 tabular-nums text-primary-600/70">· {{ $sppds->total() }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Monitoring Tindak Lanjut SPPD</h1>
+        <p class="mt-1 max-w-2xl text-xs text-slate-500">Kejar kelengkapan administrasi perjalanan dinas di lingkup
+          OPD Anda: pegawai yang sedang dinas, laporan &amp; realisasi biaya yang belum lengkap.</p>
+      </div>
+    </div>
   </div>
 
   {{-- Kartu Ringkasan / Tab --}}
-  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="dash-enter grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
     {{-- Sedang dinas hari ini --}}
     <button type="button" wire:click="setTab('ongoing')"
       class="flex items-center gap-3 rounded border bg-white p-4 text-left shadow-sm transition {{ $tab === 'ongoing' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-slate-200 hover:border-primary-300' }}">
@@ -60,24 +74,21 @@
   </div>
 
   {{-- Bar Pencarian --}}
-  <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
-    <div class="flex flex-col gap-3 sm:flex-row">
-      <div class="flex-1">
-        <x-form.input name="search" wire:model.live.debounce.300ms="search"
-          placeholder="Cari pelaksana, maksud, atau nomor surat..." wrapperClass="w-full" />
-      </div>
-      <div class="flex items-center gap-2 shrink-0">
-        @if ($search !== '')
-          <x-ui.button variant="secondary" wire:click="resetFilters">
-            <i class="fa-solid fa-rotate-left text-xs"></i> Reset
-          </x-ui.button>
-        @endif
-      </div>
+  <div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <x-form.input name="search" wire:model.live.debounce.300ms="search" icon="fa-solid fa-magnifying-glass"
+        loadingTarget="search" placeholder="Cari pelaksana, maksud, atau nomor surat..." wrapperClass="flex-1" />
+
+      <x-ui.button variant="secondary" wire:click="resetFilters" :disabled="$search === ''"
+        class="w-full shrink-0 sm:w-auto">
+        <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
+        Reset
+      </x-ui.button>
     </div>
   </div>
 
   {{-- Tabel Data --}}
-  <div class="table-wrapper">
+  <div class="dash-enter table-wrapper">
     <table class="table">
       <thead>
         <tr>

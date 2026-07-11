@@ -2,33 +2,39 @@
 @section('title', 'Kelola SPPD')
 
 @section('content')
-	<div class="mx-auto max-w-4xl space-y-6 p-1">
+	<div class="mx-auto max-w-6xl space-y-6 p-1">
 
-		{{-- Header --}}
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div class="flex items-center gap-3">
-				<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-					<i class="fa-solid fa-file-contract text-lg"></i>
+		{{-- Header (title card) — mengikuti gaya kartu judul halaman index. --}}
+		<div
+			class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+			<i class="fa-solid fa-file-contract pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+				aria-hidden="true"></i>
+
+			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+				<div class="min-w-0 leading-tight">
+					<span
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						<i class="fa-solid fa-print text-[10px]"></i> Cetak &amp; Status TTE
+					</span>
+					<h1 class="text-xl font-bold tracking-tight text-slate-800">Kelola SPPD</h1>
+					<p class="mt-1 text-sm text-slate-500">Cetak dokumen per personel dan pantau status tanda tangan
+						elektronik SPPD.</p>
 				</div>
-				<div>
-					<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Kelola SPPD</h1>
-					<p class="mt-0.5 text-sm text-slate-500">Cetak dokumen per personel dan pantau status tanda tangan elektronik SPPD.</p>
-				</div>
+				<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary" class="shrink-0">
+					<x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+					Kembali
+				</x-ui.button>
 			</div>
-			<x-ui.button href="{{ route('sppd.next', $sppd) }}" variant="secondary" class="shrink-0">
-				<x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
-				Kembali
-			</x-ui.button>
 		</div>
 
-		<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
+		<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 			<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
 
 				{{-- Daftar Personel --}}
 				<div class="space-y-3">
 					<div class="flex items-center justify-between mb-2">
-						<p class="text-[10px] font-bold uppercase text-slate-500">Daftar Pelaksana & Pengikut</p>
-						<span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+						<p class="text-xs font-bold uppercase text-slate-500">Daftar Pelaksana & Pengikut</p>
+						<span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
 							{{ 1 + $sppd->followers->count() }} Orang
 						</span>
 					</div>
@@ -36,7 +42,7 @@
 					<div class="relative mb-3">
 						<input type="text" id="personel-search-input" placeholder="Cari nama pegawai..."
 							class="w-full rounded border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
-						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-[10px]"></i>
+						<i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-xs"></i>
 					</div>
 
 					<div class="relative overflow-hidden border border-slate-200 rounded bg-white shadow-xs">
@@ -44,10 +50,10 @@
 							<table class="w-full text-left border-collapse">
 								<thead>
 									<tr class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No.</th>
-										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap</th>
-										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">Peran</th>
-										<th class="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24 text-center">Aksi
+										<th class="py-2.5 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">No.</th>
+										<th class="py-2.5 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap</th>
+										<th class="py-2.5 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Peran</th>
+										<th class="py-2.5 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24 text-center">Aksi
 										</th>
 									</tr>
 								</thead>
@@ -57,17 +63,17 @@
 										data-search-term="pelaksana {{ strtolower($sppd->user->name) }}">
 										<td class="py-2 px-3 text-xs text-slate-500 text-center font-medium">1.</td>
 										<td class="py-2 px-3">
-											<span class="text-xs font-semibold text-slate-800">{{ $sppd->user->name }}</span>
+											<span class="text-sm font-semibold text-slate-800">{{ $sppd->user->name }}</span>
 										</td>
 										<td class="py-2 px-3">
 											<span
-												class="inline-block bg-primary-50 text-primary-700 border border-primary-200/60 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+												class="inline-block bg-primary-50 text-primary-700 border border-primary-200/60 px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
 												Pelaksana
 											</span>
 										</td>
 										<td class="py-2 px-3 text-center">
 											<a href="{{ route('sppd.stream.sppd', $sppd) }}" target="_blank"
-												class="inline-flex items-center gap-1 rounded bg-primary-600 px-2 py-1 text-[9px] font-bold text-white shadow-xs transition hover:bg-primary-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50">
+												class="inline-flex items-center gap-1 rounded bg-primary-600 px-2 py-1 text-xs font-bold text-white shadow-xs transition hover:bg-primary-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50">
 												<i class="fa-solid fa-print"></i> CETAK
 											</a>
 										</td>
@@ -79,11 +85,11 @@
 											data-search-term="pengikut {{ strtolower($f->user->name) }}">
 											<td class="py-2 px-3 text-xs text-slate-500 text-center font-medium">{{ $index + 2 }}.</td>
 											<td class="py-2 px-3">
-												<span class="text-xs font-medium text-slate-700">{{ $f->user->name }}</span>
+												<span class="text-sm font-medium text-slate-700">{{ $f->user->name }}</span>
 											</td>
 											<td class="py-2 px-3">
 												<span
-													class="inline-block bg-slate-50 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider">
+													class="inline-block bg-slate-50 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider">
 													Pengikut
 												</span>
 											</td>
@@ -91,7 +97,7 @@
 												<a
 													href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($f->user_id)]) }}"
 													target="_blank"
-													class="inline-flex items-center gap-1 rounded bg-slate-600 px-2 py-1 text-[9px] font-bold text-white shadow-xs transition hover:bg-slate-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50">
+													class="inline-flex items-center gap-1 rounded bg-slate-600 px-2 py-1 text-xs font-bold text-white shadow-xs transition hover:bg-slate-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50">
 													<i class="fa-solid fa-print"></i> CETAK
 												</a>
 											</td>
@@ -121,29 +127,29 @@
 								<div class="tte-badge-container mt-1.5">
 									@if ($sppdSignature && $sppdSignature->status->value === 'signed')
 										<span
-											class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+											class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
 											Sudah Ditandatangani
 										</span>
 									@elseif ($sppdSignature && $sppdSignature->status->value === 'processing')
 										<span
-											class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
-											<i class="fa-solid fa-spinner animate-spin text-[10px]"></i> Sedang Diproses
+											class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+											<i class="fa-solid fa-spinner animate-spin text-xs"></i> Sedang Diproses
 										</span>
 									@elseif ($sppdSignature && $sppdSignature->status->value === 'rejected')
 										<span
-											class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+											class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
 											Gagal TTE
 										</span>
 									@else
 										<span
-											class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+											class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
 											Belum Diproses
 										</span>
 									@endif
 								</div>
 
 								@if ($sppdSignature && $sppdSignature->status->value === 'signed' && $sppdSignature->signer)
-									<div class="mt-2.5 text-[11px] text-slate-600 font-medium">
+									<div class="mt-2.5 text-xs text-slate-600 font-medium">
 										<i class="fa-solid fa-signature text-slate-500 mr-1"></i>
 										Penandatangan: <span class="text-slate-800 font-bold">{{ $sppdSignature->signer->name }}</span>
 										@if ($sppdSignature->signer->nip)
@@ -155,7 +161,7 @@
 						</div>
 
 						<div class="tte-error-container mt-2 {{ $sppdSignature && $sppdSignature->error_message ? '' : 'hidden' }}">
-							<p class="text-[10px] text-rose-600 font-medium">
+							<p class="text-xs text-rose-600 font-medium">
 								<i class="fa-solid fa-circle-exclamation mr-1"></i> Error: <span
 									class="error-message-text">{{ $sppdSignature?->error_message }}</span>
 							</p>
@@ -165,7 +171,7 @@
 			</div>
 
 			{{-- Footer Note --}}
-			<div class="bg-slate-50 border-t border-slate-100 p-4 flex items-center gap-3 text-[11px] text-slate-500 italic">
+			<div class="bg-slate-50 border-t border-slate-100 p-4 flex items-center gap-3 text-xs text-slate-500 italic">
 				<i class="fa-solid fa-circle-info text-slate-500"></i>
 				Sistem menghasilkan dokumen PDF yang sudah siap cetak atau ditandatangani secara elektronik.
 			</div>
@@ -194,22 +200,22 @@
 
 										if (sig.status === 'signed') {
 											badgeContainer.innerHTML =
-												`<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Sudah Ditandatangani</span>`;
+												`<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Sudah Ditandatangani</span>`;
 											errorContainer.classList.add('hidden');
 										} else if (sig.status === 'processing') {
 											badgeContainer.innerHTML =
-												`<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse"><i class="fa-solid fa-spinner animate-spin text-[10px]"></i> Sedang Diproses</span>`;
+												`<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse"><i class="fa-solid fa-spinner animate-spin text-xs"></i> Sedang Diproses</span>`;
 											errorContainer.classList.add('hidden');
 										} else if (sig.status === 'rejected') {
 											badgeContainer.innerHTML =
-												`<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Gagal TTE</span>`;
+												`<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Gagal TTE</span>`;
 											if (sig.error_message) {
 												errorMessageText.textContent = sig.error_message;
 												errorContainer.classList.remove('hidden');
 											}
 										} else {
 											badgeContainer.innerHTML =
-												`<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Belum Diproses</span>`;
+												`<span class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Belum Diproses</span>`;
 											errorContainer.classList.add('hidden');
 										}
 									}

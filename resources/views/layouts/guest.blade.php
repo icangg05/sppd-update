@@ -42,7 +42,7 @@
 			class="max-w-6xl grid w-full overflow-hidden rounded border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
 			<div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9">
 				<div
-					class="inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
+					class="dash-enter inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
 					<span class="inline-block h-2 w-2 rounded-full bg-sky-200"></span>
 					E-SPPD Kota Kendari
 				</div>
@@ -53,14 +53,14 @@
 						class="h-full w-[70%] mx-auto rounded object-cover opacity-95">
 				</div>
 
-				<div class="flex flex-row items-center gap-3 px-1">
+				<div class="dash-enter flex flex-row items-center gap-3 px-1">
 					<img src="{{ asset('img/logo-kendari.png') }}" alt="Logo Pemkot Kendari"
 						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14">
 					<img src="{{ asset('img/logo-bsre.png') }}" alt="Logo BSrE"
 						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
 				</div>
 
-				<div class="space-y-1 px-1">
+				<div class="dash-enter space-y-1 px-1">
 					<h1 class="text-[1.4rem] font-black leading-tight text-white sm:text-[1.5rem]">SPPD Elektronik<br>Kota
 						Kendari</h1>
 					<p class="text-sm leading-6 text-sky-50/90">Sistem perjalanan dinas modern untuk OPD.</p>
@@ -69,7 +69,7 @@
 
 			<div
 				class="flex flex-col justify-center border-t border-sky-100/25 bg-sky-100/10 px-5 py-6 text-slate-900 sm:px-7 sm:py-8 lg:border-t-0 lg:border-l lg:px-9">
-				<div class="space-y-3">
+				<div class="dash-enter space-y-3">
 					<div class="relative">
 						<p class="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">Akses resmi</p>
 						<div class="lg:hidden absolute -top-2 right-0 flex flex-row items-center gap-1.5">
@@ -85,11 +85,11 @@
 				</div>
 
 				<div
-					class="mt-6 rounded border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
+					class="dash-enter mt-6 rounded border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
 					{{ $slot }}
 				</div>
 
-				<div class="mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
+				<div class="dash-enter mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
 					<p>
 						<span class="inline lg:hidden font-bold text-sky-100">SPPD Elektronik</span>
 						<span class="font-bold text-sky-100">V {{ config('app.sppd_version') }}</span> • &copy; <?= date('Y') ?>

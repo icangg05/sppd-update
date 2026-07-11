@@ -5,17 +5,39 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Models\SppdActualExpense;
 use App\Models\SppdRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SppdActualExpenseController extends Controller
 {
   use AuthorizesSppdAccess;
 
+  /** Snapshot pengeluaran per user_id untuk render ulang tabel tanpa reload. */
+  private function snapshot(SppdRequest $sppd): array
+  {
+    return $sppd->actualExpenses()->get()
+      ->groupBy('user_id')
+      ->map(fn ($g) => $g->map(fn ($e) => [
+        'id'          => $e->id,
+        'description' => $e->description,
+        'amount'      => (int) $e->amount,
+      ])->values())
+      ->toArray();
+  }
+
+  /** Balasan seragam: JSON (AJAX, tanpa reload) atau redirect (fallback). */
+  private function respond(Request $request, SppdRequest $sppd, string $message)
+  {
+    if ($request->wantsJson()) {
+      return response()->json(['message' => $message, 'expenses' => $this->snapshot($sppd)]);
+    }
+
+    return back()->with('success', $message);
+  }
+
   /**
    * Store a newly created resource in storage.
    */
-  public function store(Request $request, SppdRequest $sppd): RedirectResponse
+  public function store(Request $request, SppdRequest $sppd)
   {
     abort_unless(auth()->user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
     $this->authorizeSppdAccess($sppd);

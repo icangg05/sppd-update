@@ -24,7 +24,9 @@ class PptkSelector extends Component
   public function mount(SppdRequest $sppd): void
   {
     $this->sppd = $sppd;
-    $this->pptk_id = $sppd->pptk_id;
+    // Select sengaja dibiarkan kosong (placeholder) walau PPTK sudah diatur —
+    // nama PPTK aktif ditampilkan terpisah di kartu; field ini untuk mengganti.
+    $this->pptk_id = null;
   }
 
   /** Hanya admin OPD & super admin yang boleh mengubah PPTK. */
@@ -61,18 +63,23 @@ class PptkSelector extends Component
     abort_unless($this->canManage(), 403, 'Aksi ini tidak diizinkan.');
     abort_unless(in_array($this->sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
-    $this->validate([
-      'pptk_id' => [
-        'required',
-        // Pakai query kandidat yang sama agar role admin_opd/super_admin ditolak.
-        fn ($attribute, $value, $fail) => $this->candidateQuery()->whereKey($value)->exists()
-          ? null
-          : $fail('PPTK yang dipilih tidak valid.'),
-      ],
-    ], [], ['pptk_id' => 'PPTK']);
+    // Validasi manual → pesan lewat toast (bukan error inline).
+    if (! $this->pptk_id) {
+      $this->toastError('PPTK wajib dipilih terlebih dahulu.');
+      return;
+    }
+
+    // Pakai query kandidat yang sama agar role admin_opd/super_admin ditolak.
+    if (! $this->candidateQuery()->whereKey($this->pptk_id)->exists()) {
+      $this->toastError('PPTK yang dipilih tidak valid.');
+      return;
+    }
 
     $this->sppd->update(['pptk_id' => $this->pptk_id]);
     $this->sppd->refresh()->load('pptk');
+
+    // Kosongkan kembali select; nama PPTK aktif tampil di kartu.
+    $this->pptk_id = null;
 
     // Beri tahu halaman induk agar tombol cetak per pegawai langsung aktif
     // tanpa reload (dari kondisi PPTK kosong → terisi).

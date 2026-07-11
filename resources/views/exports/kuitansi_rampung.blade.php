@@ -121,7 +121,7 @@
 					<tr>
 						<td style="width: 130px;">KODE REKENING</td>
 						<td class="info-sep">:</td>
-						<td style="width: 105px;">{{ $pdfData['kode_rekening'] }}</td>
+						<td style="width: 120px;">{{ $pdfData['kode_rekening'] }}</td>
 					</tr>
 					<tr>
 						<td style="width: 130px;">BKU NO.</td>

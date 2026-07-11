@@ -92,7 +92,7 @@
 		{{-- Menu sekretariat (daftar role di config/menu_access.php) --}}
 		@if (auth()->user()->hasAnyRole(config('menu_access.secretariat')))
 			<a href="{{ route('secretariat.monitoring') }}" wire:navigate.hover
-				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('secretariat.monitoring') ? 'bg-primary-700 text-white' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-100' }}">
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('secretariat.monitoring') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-clipboard-check fa-fw"></i></span>
 				<span>Monitoring Tindak Lanjut</span>
 			</a>

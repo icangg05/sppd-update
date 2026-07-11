@@ -183,7 +183,7 @@
 	</div>
 
 	{{-- Bar Filter --}}
-	<div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
+	<div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<x-form.input name="search" wire:model.live.debounce.300ms="search"
 				icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1"

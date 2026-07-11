@@ -46,7 +46,7 @@
 
 			{{-- Tombol Portal Selanjutnya --}}
 			@if (in_array($sppd->status->value, ['approved', 'completed']))
-				<a href="{{ route('sppd.next', $sppd) }}" wire:navigate
+				<a href="{{ route('sppd.next', ['sppd' => $sppd, 'from' => 'show']) }}" wire:navigate
 					class="group inline-flex items-center gap-2 rounded bg-primary-600 py-1.5 pl-3.5 pr-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
 					<span>Selanjutnya</span>
 					<span

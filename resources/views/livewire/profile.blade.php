@@ -1,5 +1,5 @@
 <div x-data="{ showResetModal: false }">
-	<div class="mx-auto max-w-3xl space-y-6">
+	<div class="mx-auto max-w-5xl space-y-6">
 
 		{{-- ── Hero identitas ── --}}
 		<div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -117,6 +117,10 @@
 				</div>
 			</div>
 
+			{{-- Hemat scroll: kolom kiri (WhatsApp + Ganti Password) berdampingan dengan Organisasi. --}}
+			<div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+				<div class="space-y-6">
+
 			{{-- ── Kontak / WhatsApp ── --}}
 			<div class="dash-enter rounded border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
 				<div class="mb-5 flex items-center gap-3">
@@ -132,6 +136,7 @@
 				<div class="space-y-1">
 					<label for="phone" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
 						No. Telepon / WhatsApp
+						<span class="ml-1 font-medium normal-case tracking-normal text-slate-400">(opsional)</span>
 					</label>
 					<div class="flex gap-2">
 						<input
@@ -177,10 +182,15 @@
 							<i class="fa-solid fa-circle-check mt-0.5"></i>
 							<span>Nomor telah diverifikasi dan terkunci. Gunakan tombol <strong>Ganti</strong> jika ingin mengubahnya.</span>
 						</p>
-					@else
+					@elseif (filled($phone))
 						<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-amber-600">
 							<i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-							<span>Wajib verifikasi nomor dengan menekan tombol <strong>Verifikasi</strong> sebelum dapat menyimpan.</span>
+							<span>Nomor ini belum diverifikasi. Tekan <strong>Verifikasi</strong> dulu agar bisa disimpan.</span>
+						</p>
+					@else
+						<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-slate-500">
+							<i class="fa-solid fa-circle-info mt-0.5"></i>
+							<span>Boleh dikosongkan. Isi lalu tekan <strong>Verifikasi</strong> jika ingin menerima notifikasi WhatsApp.</span>
 						</p>
 					@endif
 
@@ -211,7 +221,9 @@
 				</div>
 			</div>
 
-			{{-- ── Informasi Organisasi (read-only) ── --}}
+				</div>
+
+			{{-- ── Informasi Organisasi (read-only) — kolom kanan ── --}}
 			<div class="dash-enter rounded border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
 				<div class="mb-5 flex items-center gap-3">
 					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-500 ring-1 ring-slate-200">
@@ -247,6 +259,8 @@
 						</dd>
 					</div>
 				</dl>
+			</div>
+
 			</div>
 
 			{{-- ── Aksi ── --}}

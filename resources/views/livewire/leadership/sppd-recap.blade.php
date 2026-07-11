@@ -1,15 +1,28 @@
 <div class="flex flex-col gap-5 p-1">
 
-  {{-- Header --}}
-  <div class="leading-tight">
-    <h1 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-      <i class="fa-solid fa-chart-pie text-primary-600"></i> Rekap &amp; Statistik SPPD
-    </h1>
-    <p class="text-xs text-slate-500 mt-0.5">Ringkasan pengajuan perjalanan dinas dalam lingkup kewenangan Anda</p>
+  {{-- Header (title card) — mengikuti gaya kartu judul halaman index. --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-chart-pie pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-chart-simple text-[9px]"></i>
+          Statistik Kewenangan
+          <span class="ml-1 tabular-nums text-primary-600/70">· {{ $stats['total'] }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Rekap &amp; Statistik SPPD</h1>
+        <p class="mt-1 text-xs text-slate-500">Ringkasan pengajuan perjalanan dinas dalam lingkup kewenangan Anda</p>
+      </div>
+    </div>
   </div>
 
   {{-- KPI ringkas --}}
-  <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+  <div class="dash-enter grid grid-cols-2 gap-4 lg:grid-cols-5">
     @php
       $kpis = [
         ['label' => 'Total SPPD',    'value' => $stats['total'],       'icon' => 'fa-layer-group',  'tone' => 'bg-slate-100 text-slate-600'],
@@ -32,7 +45,7 @@
     @endforeach
   </div>
 
-  <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+  <div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-2">
     {{-- Tren 12 bulan --}}
     <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
       <h3 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -81,7 +94,7 @@
   </div>
 
   {{-- Unit kerja tersibuk --}}
-  <div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
+  <div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
     <h3 class="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
       <i class="fa-solid fa-building text-primary-500"></i> Unit Kerja Tersibuk
     </h3>

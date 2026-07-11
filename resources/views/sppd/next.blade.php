@@ -2,7 +2,7 @@
 @section('title', 'Selanjutnya - Portal Dokumen')
 
 @section('content')
-<div class="p-1 space-y-10">
+<div class="p-1 space-y-6">
 
   {{-- Header Halaman --}}
   <div
@@ -21,25 +21,26 @@
         <p class="mt-1 text-sm text-slate-500">Kelola dokumen administrasi perjalanan dinas &mdash; sebelum & sesudah
           pelaksanaan.</p>
       </div>
-      <x-ui.button href="{{ route('sppd.index') }}" variant="secondary">
+      @php $backToShow = request('from') === 'show'; @endphp
+      <x-ui.button href="{{ $backToShow ? route('sppd.show', $sppd) : route('sppd.index') }}" variant="secondary">
         <x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
-        Kembali ke Daftar
+        {{ $backToShow ? 'Kembali ke Detail' : 'Kembali ke Daftar' }}
       </x-ui.button>
     </div>
   </div>
 
-  <div class="max-w-6xl space-y-12">
+  <div class="max-w-6xl space-y-8">
 
     {{-- Bagian Dokumen Sebelum --}}
     <section class="dash-enter">
-      <div class="flex items-center gap-4 mb-8">
+      <div class="flex items-center gap-4 mb-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
           <i class="fa-solid fa-file-circle-plus mr-2 text-orange-400"></i> Dokumen Sebelum Perjalanan
         </h3>
         <div class="h-px w-full bg-slate-200"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @php
           $beforeDocs = [
             ['route' => 'sppd.manage-sppd', 'title' => 'Surat Perintah Perjalanan Dinas', 'desc' => 'Kelola & Cetak Dokumen SPPD', 'icon' => 'fa-file-lines'],
@@ -57,14 +58,14 @@
 
     {{-- Bagian Dokumen Sesudah --}}
     <section class="dash-enter">
-      <div class="flex items-center gap-4 mb-8">
+      <div class="flex items-center gap-4 mb-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
           <i class="fa-solid fa-file-circle-check mr-2 text-primary-600"></i> Dokumen Sesudah Perjalanan
         </h3>
         <div class="h-px w-full bg-slate-200"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @php
           $afterDocs = [
             ['route' => 'sppd.actual-expenses', 'title' => 'Laporan Pengeluaran Rill', 'desc' => 'Input Biaya Aktual', 'icon' => 'fa-hand-holding-dollar'],
