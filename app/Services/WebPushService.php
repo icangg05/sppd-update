@@ -131,7 +131,7 @@ class WebPushService
         $cekInfo = "Content-Encoding: aes128gcm\x00";
         $cek = $this->hkdf($salt, $ikm, $cekInfo, 16);
 
-        $ivInfo = "Content-Encoding: auth-iv\x00";
+        $ivInfo = "Content-Encoding: nonce\x00";
         $iv = $this->hkdf($salt, $ikm, $ivInfo, 12);
 
         // Plaintext needs padding delimiter octet (\x02 for the end of the record)
