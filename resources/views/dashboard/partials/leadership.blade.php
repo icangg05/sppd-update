@@ -15,7 +15,7 @@
   @endforeach
 </div>
 
-<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+<div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
   {{-- Antrean Persetujuan (tugas utama approver — diberi bobot 2/3 lebar) --}}
   <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
@@ -39,7 +39,7 @@
             <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i>
               {{ $sppd->destinations->first()?->regency?->name ?? '-' }}</span>
             <span class="text-slate-300">&bull;</span>
-            <span class="font-semibold text-slate-700">Rp {{ number_format($sppd->costDetails->sum('total'), 0, ',', '.') }}</span>
+            <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($sppd->costDetails->sum('total'), 0, ',', '.') }}</span>
           </div>
         </a>
       @empty

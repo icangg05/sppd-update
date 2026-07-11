@@ -1,4 +1,4 @@
-<div class="p-1 space-y-6">
+<div class="p-1 space-y-4">
 	@php $isDprd = $this->isDprd(); @endphp
 
 	{{-- Header (title card) --}}
@@ -34,18 +34,8 @@
 		<div class="flex flex-col sm:flex-row gap-3">
 
 			{{-- Search Input with Icon --}}
-			<div class="relative flex-1">
-				<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-					<i class="fa-solid fa-magnifying-glass text-xs"></i>
-				</div>
-				<input type="text" wire:model.live.debounce.400ms="search"
-					class="block w-full rounded border border-slate-300 bg-slate-50 py-2 pl-9 pr-9 text-sm outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
-					placeholder="{{ $this->searchPlaceholder() }}">
-				<div wire:loading wire:target="search"
-					class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
-					<i class="fa-solid fa-spinner fa-spin text-xs"></i>
-				</div>
-			</div>
+			<x-form.input wire:model.live.debounce.400ms="search" icon="fa-solid fa-magnifying-glass"
+				loadingTarget="search" wrapperClass="flex-1" placeholder="{{ $this->searchPlaceholder() }}" />
 
 			{{-- DPRD: filter Partai/Fraksi menggantikan filter Instansi --}}
 			@if ($isDprd)
@@ -91,10 +81,9 @@
 			{{-- Reset --}}
 			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== '' || $position_id !== '' || $rank_id !== '' || $role !== ''; @endphp
 			<div class="flex items-center gap-2">
-				<x-ui.button wire:click="resetFilters" type="button" variant="secondary"
-					class="rounded px-4 py-2 font-semibold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-					:disabled="!$hasActiveFilters">
-					<i class="fa-solid fa-rotate-right"></i> Reset
+				<x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="!$hasActiveFilters">
+					<x-slot:icon><i class="fa-solid fa-rotate-right text-xs text-slate-500"></i></x-slot:icon>
+					Reset
 				</x-ui.button>
 			</div>
 		</div>

@@ -16,7 +16,7 @@
 </div>
 
 {{-- Charts: Trend + Distribusi Status --}}
-<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+<div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
   <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <div>
@@ -54,7 +54,7 @@
 </div>
 
 {{-- Pemakaian anggaran per OPD (super_admin) + SPPD terbaru --}}
-<div class="grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
+<div class="dash-enter grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
   @if ($topByUsage->count() > 1)
     <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
@@ -69,7 +69,7 @@
               <span class="shrink-0 font-mono font-bold text-slate-600">{{ number_format($opd['percentage'], 1, ',', '.') }}%</span>
             </div>
             <x-ui.budget-bar :percentage="$opd['percentage']" height="h-2" />
-            <p class="text-[11px] text-slate-500">
+            <p class="font-mono text-[11px] text-slate-500">
               Rp {{ number_format($opd['realisasi'], 0, ',', '.') }} / Rp {{ number_format($opd['pagu'], 0, ',', '.') }}
             </p>
           </div>
@@ -83,7 +83,7 @@
 
 {{-- Antrean persetujuan (bila admin juga approver) --}}
 @if ($pendingApprovals->isNotEmpty())
-  <div class="rounded border border-slate-200 bg-white shadow-sm">
+  <div class="dash-enter rounded border border-slate-200 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda

@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4">
+<div class="dash-enter flex flex-col gap-4">
 
   {{-- Ringkasan keseluruhan --}}
   <x-dashboard.dpa-summary :pagu="$summary['pagu']" :realisasi="$summary['realisasi']" :sisa="$summary['sisa']"

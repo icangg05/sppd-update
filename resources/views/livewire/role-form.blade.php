@@ -23,10 +23,10 @@
 					</p>
 				</div>
 
-				<a wire:navigate href="{{ route('master.roles.index') }}"
-					class="inline-flex shrink-0 items-center gap-1.5 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-					<i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
-				</a>
+				<x-ui.button href="{{ route('master.roles.index') }}" variant="secondary" class="shrink-0 font-bold">
+					<x-slot name="icon"><i class="fa-solid fa-arrow-left text-[10px]"></i></x-slot>
+					Kembali
+				</x-ui.button>
 			</div>
 		</div>
 
@@ -146,20 +146,13 @@
 			</div>
 
 			<div class="flex items-center justify-end gap-2">
-				<a wire:navigate href="{{ route('master.roles.index') }}"
-					class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50">
+				<x-ui.button href="{{ route('master.roles.index') }}" variant="secondary" class="font-bold">
 					Batal
-				</a>
-				<button type="submit" wire:loading.attr="disabled"
-					class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 disabled:opacity-60">
-					<span wire:loading wire:target="save">
-						<i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i>
-					</span>
-					<span wire:loading.remove wire:target="save">
-						<i class="fa-solid fa-floppy-disk text-[10px]"></i>
-					</span>
+				</x-ui.button>
+				<x-ui.button type="submit" variant="violet" class="font-bold" wire:target="save">
+					<x-slot name="icon"><i class="fa-solid fa-floppy-disk text-[10px]"></i></x-slot>
 					{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Role' }}
-				</button>
+				</x-ui.button>
 			</div>
 
 		</form>

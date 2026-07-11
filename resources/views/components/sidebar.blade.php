@@ -77,13 +77,13 @@
 		{{-- Menu pejabat kepemimpinan (daftar role di config/menu_access.php) --}}
 		@if (auth()->user()->hasAnyRole(config('menu_access.leadership')))
 			<a href="{{ route('leadership.history') }}" wire:navigate.hover
-				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('leadership.history') ? 'bg-primary-700 text-white' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-100' }}">
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('leadership.history') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-clock-rotate-left fa-fw"></i></span>
 				<span>Riwayat Persetujuan</span>
 			</a>
 
 			<a href="{{ route('leadership.recap') }}" wire:navigate.hover
-				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('leadership.recap') ? 'bg-primary-700 text-white' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-100' }}">
+				class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ request()->routeIs('leadership.recap') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100' }}">
 				<span class="flex w-5 justify-center text-base"><i class="fa-solid fa-chart-pie fa-fw"></i></span>
 				<span>Rekap &amp; Statistik</span>
 			</a>

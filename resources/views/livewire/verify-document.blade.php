@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-5xl space-y-6 p-1">
+<div class="mx-auto max-w-5xl space-y-4 p-1">
 
   {{-- Header (title card — aksen emerald identitas verifikasi/keaslian) --}}
   <div

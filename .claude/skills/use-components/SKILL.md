@@ -25,19 +25,33 @@ pakai komponen di bawah ini supaya gaya konsisten dan styling terpusat di satu t
 
 ### `<x-ui.button>` — `resources/views/components/ui/button.blade.php`
 Tombol / link. Render `<a wire:navigate>` jika ada `href`, selain itu `<button>`.
-- `variant`: `primary` (default), `secondary`, `success`, `warning`, `danger`, `ghost`, `dark`
+- `variant`: `primary` (default), `secondary`, `success`, `warning`, `danger`, `ghost`, `dark`, `violet`
   - `dark` = tombol slate-800 (dipakai untuk tombol Filter/Cari di filter bar).
+  - `secondary` = tombol netral berbingkai (border slate + bg putih) — **ini untuk tombol
+    Reset, Batal, Kembali, dan aksi sekunder lain**. Kalau menemukan `<button>` mentah
+    dengan `border-slate-300 bg-white text-slate-700`, itu = `variant="secondary"`.
 - `type`: default `button` (mis. `submit`, `reset`)
 - `href`: bila diisi → jadi link navigasi
 - slot `icon` opsional untuk ikon di kiri teks
-- `wire:click`, `@click`, `disabled`, dll. diteruskan otomatis lewat atribut.
+- `wire:click`, `@click`, dll. diteruskan otomatis lewat atribut.
+- **State disabled**: jangan bikin dua `<button>` (satu enabled, satu `disabled`) via
+  `@if/@else`. Pakai **satu** komponen dengan `:disabled="<kondisi>"` — komponen sudah
+  punya style `disabled:opacity-60 disabled:cursor-not-allowed`. Gunakan `:disabled`
+  (binding), **bukan** `@disabled(...)`, karena atribut diteruskan lewat `$attributes`.
 
 ```blade
 <x-ui.button variant="success" type="submit">Simpan</x-ui.button>
 <x-ui.button variant="secondary" href="{{ route('sppd.index') }}">Batal</x-ui.button>
 <x-ui.button variant="dark" type="submit">Filter</x-ui.button>
+
+{{-- Tombol Reset dengan ikon + state disabled — SATU komponen, bukan @if/@else --}}
+<x-ui.button variant="secondary" wire:click="resetFilters" :disabled="!$hasActiveFilters">
+  <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
+  Reset
+</x-ui.button>
 ```
-JANGAN: `<button class="bg-cyan-600 text-white ...">`
+JANGAN: `<button class="bg-cyan-600 text-white ...">`, atau dua cabang
+`@if(...)<button>...@else<button disabled>...@endif` untuk satu tombol yang sama.
 
 ### `<x-ui.badge>` — `resources/views/components/ui/badge.blade.php`
 Label status. Dua mode:
@@ -74,7 +88,10 @@ Semua field form **wajib** lewat komponen ini (sudah menangani label, `required`
   mendeteksi `wire:model*`, tidak menimpa `value`, dan memakai nama property untuk
   `id` & `@error`. Contoh: `<x-form.input wire:model="start_date" type="date" label="Tanggal" required />`.
 
-- `<x-form.input>` — props tambahan: `type` (default `text`), `value`, `placeholder`, `labelClass`
+- `<x-form.input>` — props tambahan: `type` (default `text`), `value`, `placeholder`, `labelClass`,
+  `icon` (kelas `fa-*` untuk ikon kiri, mis. search), `loadingTarget` (nama property →
+  spinner `wire:loading` di kanan). Jadi **field search pun wajib komponen ini**:
+  `<x-form.input wire:model.live.debounce.300ms="search" icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1" placeholder="Cari..." />`
 - `<x-form.textarea>` — props tambahan: `rows` (default 3), `value`, `placeholder`
 - `<x-form.select>` — props tambahan: `disabled`; `<option>` lewat slot
 - `<x-form.checkbox>` — props tambahan: `value` (default `1`), `checked`
@@ -111,12 +128,17 @@ Komponen memakai tema **cyan** + bentuk/label standar. Biarkan elemen mentah bil
 - **Tema warna berbeda** yang disengaja — mis. form laporan (emerald), role-form
   (violet), modal approval di `sppd/show` (biru). Memaksa ke komponen mengubah warna.
   (Untuk tombol, tema emerald/danger/dark sudah ada variant-nya; pakai itu.)
-- **Ada adornment di dalam field** — ikon search di kiri input, chevron kustom di
-  select, toggle mata pada passphrase, atau input yang menyatu inline dengan tombol.
+- **Ada adornment di dalam field** — chevron kustom di select, toggle mata pada
+  passphrase, atau input yang menyatu inline dengan tombol.
+  **BUKAN pengecualian lagi:** ikon search di kiri + spinner loading di kanan — `x-form.input`
+  sudah punya prop `icon` & `loadingTarget`, jadi field search **wajib** pakai komponen.
 - **Repeater inline compact tanpa label** — mis. baris tujuan (`destinations.*`),
   kartu checkbox pengikut.
 - **Tombol icon-only di baris tabel** (edit/hapus) dan chrome UI (sidebar, header,
   tab, filter chip) — itu pola tersendiri, bukan tombol berlabel.
+  **BUKAN pengecualian:** tombol **berlabel** di dalam filter bar (mis. Reset, Cari,
+  Filter) — walau letaknya di area filter, itu tombol aksi biasa dan **wajib**
+  `<x-ui.button>`. "Filter chip" = badge kecil yang bisa diklik, bukan tombol berteks.
 
 Setelah migrasi, jalankan `docker exec sppd_update_app php artisan view:cache` lalu
 `view:clear` untuk memastikan semua blade tetap ter-compile.

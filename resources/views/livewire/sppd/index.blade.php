@@ -185,13 +185,9 @@
 	{{-- Bar Filter --}}
 	<div class="rounded border border-slate-200 bg-white p-4 shadow-sm">
 		<div class="flex flex-col gap-3 sm:flex-row">
-			<div class="flex-1">
-				<x-form.input
-					name="search"
-					wire:model.live.debounce.300ms="search"
-					placeholder="Cari pelaksana, maksud, atau nomor surat..."
-					wrapperClass="w-full" />
-			</div>
+			<x-form.input name="search" wire:model.live.debounce.300ms="search"
+				icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1"
+				placeholder="Cari pelaksana, maksud, atau nomor surat..." />
 			@if (!$isApprovalMode)
 				<div class="w-full sm:w-44">
 					<x-form.searchable-select wire:model.live="status" name="status" :options="$statusOptions"
@@ -203,23 +199,16 @@
 				</div>
 			@endif
 
+			@php
+				$hasActiveFilters = $isApprovalMode
+					? $search !== ''
+					: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '';
+			@endphp
 			<div class="flex items-center gap-2 shrink-0">
-				@if (
-					$isApprovalMode
-						? $search !== ''
-						: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '')
-					<button type="button" wire:click="resetFilters"
-						class="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-						<i class="fa-solid fa-rotate-left text-xs text-slate-500"></i>
-						Reset
-					</button>
-				@else
-					<button type="button" disabled
-						class="inline-flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
-						<i class="fa-solid fa-rotate-left text-xs text-slate-300"></i>
-						Reset
-					</button>
-				@endif
+				<x-ui.button type="button" variant="secondary" wire:click="resetFilters" :disabled="!$hasActiveFilters">
+					<x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
+					Reset
+				</x-ui.button>
 			</div>
 		</div>
 	</div>

@@ -16,6 +16,7 @@ $variantClasses = [
     'danger' => 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
     'ghost' => 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 focus-visible:ring-slate-300',
     'dark' => 'bg-slate-800 text-white hover:bg-slate-900 focus-visible:ring-slate-600',
+    'violet' => 'bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-500',
 ];
 
 $sizeClasses = [

@@ -15,7 +15,7 @@
   @endforeach
 </div>
 
-<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+<div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-2">
   {{-- SPPD saya terbaru --}}
   @include('dashboard.partials._recent-sppd', ['items' => $mySppd, 'title' => 'SPPD Saya'])
 

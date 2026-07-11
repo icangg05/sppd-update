@@ -1,4 +1,4 @@
-<div class="p-1 space-y-6" x-data="{ detailOpen: false, detailId: '', detailEvent: '', detailBadgeClass: '', detailHasOld: true, detailRows: [] }">
+<div class="p-1 space-y-4" x-data="{ detailOpen: false, detailId: '', detailEvent: '', detailBadgeClass: '', detailHasOld: true, detailRows: [] }">
 
   @php $isTte = $this->isTte(); @endphp
 
@@ -25,7 +25,7 @@
 
       @if ($this->isSuperAdmin())
         <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
-          class="shrink-0 font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
+          class="shrink-0 font-bold">
           <x-slot name="icon"><i class="fa-solid fa-trash-can text-xs"></i></x-slot>
           Bersihkan Log
         </x-ui.button>
@@ -34,29 +34,20 @@
   </div>
 
   {{-- Filter / Pencarian --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-3">
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-      <div class="relative flex-1 w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-          <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
-        </div>
-        <input type="text" wire:model.live.debounce.400ms="search"
-          class="block w-full rounded border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-xs outline-none transition focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30"
-          placeholder="Cari deskripsi, objek, atau nama pengguna...">
-        <div wire:loading wire:target="search"
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
-          <i class="fa-solid fa-spinner fa-spin text-[11px]"></i>
-        </div>
-      </div>
+  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden p-4">
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <x-form.input wire:model.live.debounce.400ms="search" icon="fa-solid fa-magnifying-glass"
+        loadingTarget="search" wrapperClass="flex-1 w-full"
+        placeholder="Cari deskripsi, objek, atau nama pengguna..." />
 
       <x-form.searchable-select wire:model.live="event" name="event" :options="$eventOptions"
         placeholder="Semua Event" searchPlaceholder="Cari event..." wrapperClass="w-full sm:w-44" />
 
       @php $canReset = $search !== '' || $event !== ''; @endphp
       <div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
-        <x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="! $canReset"
-          class="px-3 py-1.5 text-xs font-medium text-slate-600 {{ $canReset ? '' : 'opacity-50 cursor-not-allowed' }}">
-          <i class="fa-solid fa-rotate-right"></i> Reset
+        <x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="! $canReset">
+          <x-slot:icon><i class="fa-solid fa-rotate-right text-xs text-slate-500"></i></x-slot:icon>
+          Reset
         </x-ui.button>
       </div>
     </div>

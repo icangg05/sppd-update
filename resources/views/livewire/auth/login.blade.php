@@ -62,21 +62,34 @@
 				placeholder="Masukkan username">
 		</div>
 
-		<div>
+		<div x-data="{ show: false }">
 			<label for="password" class="block text-sm font-semibold text-sky-50">Password</label>
-			<input
-				wire:model="password"
-				type="password"
-				id="password"
-				required
-				autocomplete="current-password"
-				class="mt-2 w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
-				placeholder="Masukkan password">
+			<div class="relative mt-2">
+				<input
+					wire:model="password"
+					:type="show ? 'text' : 'password'"
+					id="password"
+					required
+					autocomplete="current-password"
+					class="w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 pr-12 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
+					placeholder="Masukkan password">
+				<button type="button" @click="show = !show" tabindex="-1"
+					:aria-label="show ? 'Sembunyikan password' : 'Tampilkan password'"
+					class="absolute inset-y-0 right-0 flex items-center pr-4 text-sky-100/70 transition hover:text-white focus:outline-none">
+					<i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+				</button>
+			</div>
 		</div>
 
-		<label class="flex items-center gap-2 text-xs font-medium text-sky-50/90 select-none">
-			<input wire:model="remember" type="checkbox"
-				class="size-4 rounded border-sky-100/40 bg-sky-100/15 text-sky-400 focus:ring-sky-300">
+		{{-- Ingat saya: toggle switch bertema kaca (komponen checkbox default bertema terang, tak cocok di sini) --}}
+		<label class="flex w-fit cursor-pointer items-center gap-3 text-xs font-medium text-sky-50/90 select-none">
+			<span class="relative inline-flex shrink-0">
+				<input wire:model="remember" type="checkbox" class="peer sr-only">
+				<span
+					class="h-5 w-9 rounded-full bg-sky-100/20 ring-1 ring-inset ring-sky-100/30 transition-colors peer-checked:bg-sky-300/80 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"></span>
+				<span
+					class="absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
+			</span>
 			Ingat saya
 		</label>
 

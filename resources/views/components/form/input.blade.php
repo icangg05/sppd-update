@@ -7,6 +7,8 @@
     'placeholder' => null,
     'required' => false,
     'hint' => null,
+    'icon' => null,
+    'loadingTarget' => null,
     'class' => '',
     'labelClass' => '',
     'wrapperClass' => '',
@@ -27,7 +29,11 @@ $stateClass = $isDisabled
     ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
     : 'bg-white text-slate-800';
 
-$resolvedClass = trim('w-full rounded border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ' . $stateClass . ' ' . $class);
+// Padding menyesuaikan ada/tidaknya ikon kiri & spinner loading kanan.
+$paddingLeft = $icon ? 'pl-8' : 'pl-3';
+$paddingRight = $loadingTarget ? 'pr-8' : 'pr-3';
+
+$resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingLeft . ' ' . $paddingRight . ' text-sm placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ' . $stateClass . ' ' . $class);
 @endphp
 
 <div class="{{ $wrapperClass }}">
@@ -38,15 +44,30 @@ $resolvedClass = trim('w-full rounded border border-slate-300 px-3 py-2 text-sm 
         </label>
     @endif
 
-    <input
-        type="{{ $type }}"
-        @if ($name) name="{{ $name }}" @endif
-        id="{{ $id }}"
-        @unless ($wireModel) value="{{ $resolvedValue }}" @endunless
-        @if ($placeholder) placeholder="{{ $placeholder }}" @endif
-        @if ($required) required @endif
-        {{ $attributes->merge(['class' => $resolvedClass]) }}
-    >
+    <div class="relative">
+        @if ($icon)
+            <div class="pt-0.5 pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="{{ $icon }} text-xs"></i>
+            </div>
+        @endif
+
+        <input
+            type="{{ $type }}"
+            @if ($name) name="{{ $name }}" @endif
+            id="{{ $id }}"
+            @unless ($wireModel) value="{{ $resolvedValue }}" @endunless
+            @if ($placeholder) placeholder="{{ $placeholder }}" @endif
+            @if ($required) required @endif
+            {{ $attributes->merge(['class' => $resolvedClass]) }}
+        >
+
+        @if ($loadingTarget)
+            <div wire:loading wire:target="{{ $loadingTarget }}"
+                class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-500">
+                <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+            </div>
+        @endif
+    </div>
 
     @if ($hint)
         <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
