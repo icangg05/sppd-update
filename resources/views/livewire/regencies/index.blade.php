@@ -1,24 +1,28 @@
 <div class="p-1 space-y-4">
 
-  {{-- Header Halaman --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-        <i class="fa-solid fa-city text-base"></i>
-      </div>
-      <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Kelola Data Kabupaten/Kota</h1>
-        <p class="text-[11px] text-slate-500 font-medium">
-          Tambah, ubah, dan hapus master data kabupaten/kota per provinsi
-        </p>
-      </div>
-    </div>
+  {{-- Header Halaman (title card) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-city pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
 
-    <x-ui.button type="button" wire:click="openCreateModal"
-      class="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-200 transition hover:bg-primary-700 hover:shadow-lg">
-      <i class="fa-solid fa-plus text-[10px]"></i>
-      Tambah Kabupaten/Kota
-    </x-ui.button>
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-location-dot text-[9px]"></i>
+          Master Wilayah
+          <span class="ml-1 tabular-nums text-primary-600/70">· {{ $regencies->total() }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Kelola Data Kabupaten/Kota</h1>
+        <p class="mt-1 text-xs text-slate-500">Tambah, ubah, dan hapus master data kabupaten/kota per provinsi</p>
+      </div>
+
+      <x-ui.button type="button" wire:click="openCreateModal" variant="primary" class="shrink-0 font-bold">
+        <i class="fa-solid fa-plus text-xs"></i> Tambah Kabupaten/Kota
+      </x-ui.button>
+    </div>
   </div>
 
   {{-- Filter --}}
@@ -59,7 +63,7 @@
   </div>
 
   {{-- Tabel --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
+  <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,provinceFilter">
     <div class="overflow-x-auto">
       <table class="w-full text-left whitespace-nowrap border-collapse">

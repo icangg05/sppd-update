@@ -1,22 +1,30 @@
 <div class="p-1 space-y-4">
 
-  {{-- Header --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-violet-100 rounded text-violet-600">
-        <i class="fa-solid fa-shield-halved text-base"></i>
-      </div>
-      <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">Kelola Role</h1>
-        <p class="text-[11px] text-slate-500 font-medium">Atur hak akses peran pengguna dalam sistem</p>
-      </div>
-    </div>
+  {{-- Header (title card — aksen violet identitas Role) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-violet-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-shield-halved pointer-events-none absolute -right-3 -top-4 text-8xl text-violet-500/6"
+      aria-hidden="true"></i>
 
-    <a wire:navigate href="{{ route('master.roles.create') }}"
-      class="inline-flex items-center gap-1.5 rounded bg-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 hover:shadow-lg">
-      <i class="fa-solid fa-plus text-[10px]"></i>
-      Tambah Role
-    </a>
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-violet-700 ring-1 ring-inset ring-violet-600/15">
+          <i class="fa-solid fa-user-shield text-[9px]"></i>
+          Hak Akses
+          <span class="ml-1 tabular-nums text-violet-600/70">· {{ $roles->total() }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Kelola Role</h1>
+        <p class="mt-1 text-xs text-slate-500">Atur hak akses peran pengguna dalam sistem</p>
+      </div>
+
+      <a wire:navigate href="{{ route('master.roles.create') }}"
+        class="inline-flex shrink-0 items-center gap-1.5 rounded bg-violet-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-700 hover:shadow-lg">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+        Tambah Role
+      </a>
+    </div>
   </div>
 
   {{-- Filter / Pencarian --}}
@@ -46,7 +54,7 @@
   </div>
 
   {{-- Table --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
+  <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search">
     <div class="overflow-x-auto">
       <table class="w-full text-left whitespace-nowrap border-collapse">

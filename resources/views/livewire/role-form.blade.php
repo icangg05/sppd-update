@@ -1,22 +1,32 @@
 <div>
 	<div class="p-1 space-y-4">
 
-		{{-- Header --}}
-		<div class="flex items-center gap-2.5 border-b border-slate-200 pb-3">
-			<a wire:navigate href="{{ route('master.roles.index') }}"
-				class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50 hover:text-slate-600 transition-colors">
-				<i class="fa-solid fa-chevron-left text-[10px]"></i>
-			</a>
-			<div class="p-1.5 bg-violet-100 rounded text-violet-600">
-				<i class="fa-solid fa-shield-halved text-base"></i>
-			</div>
-			<div>
-				<h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
-					{{ $isEdit ? 'Edit Role' : 'Tambah Role' }}
-				</h1>
-				<p class="text-[11px] text-slate-500 font-medium">
-					{{ $isEdit ? 'Ubah label atau hak akses untuk role ini' : 'Buat peran pengguna baru dalam sistem' }}
-				</p>
+		{{-- Header (title card — aksen violet identitas Role) --}}
+		<div
+			class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-violet-50/50 px-5 py-4 shadow-sm">
+			{{-- Watermark institusional (tipis, hanya karakter). --}}
+			<i class="fa-solid fa-shield-halved pointer-events-none absolute -right-3 -top-4 text-8xl text-violet-500/6"
+				aria-hidden="true"></i>
+
+			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+				<div class="min-w-0 leading-tight">
+					<span
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-violet-700 ring-1 ring-inset ring-violet-600/15">
+						<i class="fa-solid fa-user-shield text-[9px]"></i>
+						{{ $isEdit ? 'Perbarui Role' : 'Role Baru' }}
+					</span>
+					<h1 class="text-xl font-bold tracking-tight text-slate-800">
+						{{ $isEdit ? 'Edit Role' : 'Tambah Role' }}
+					</h1>
+					<p class="mt-1 text-xs text-slate-500">
+						{{ $isEdit ? 'Ubah label atau hak akses untuk role ini' : 'Buat peran pengguna baru dalam sistem' }}
+					</p>
+				</div>
+
+				<a wire:navigate href="{{ route('master.roles.index') }}"
+					class="inline-flex shrink-0 items-center gap-1.5 rounded border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+					<i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
+				</a>
 			</div>
 		</div>
 
@@ -31,7 +41,7 @@
 
 		<form wire:submit.prevent="save" class="space-y-4">
 
-			<div class="bg-white rounded border border-slate-200 shadow-sm p-5 space-y-4">
+			<div class="dash-enter bg-white rounded border border-slate-200 shadow-sm p-5 space-y-4">
 				<h2 class="text-xs font-bold uppercase tracking-wide text-slate-500 border-b border-slate-100 pb-2">
 					Informasi Role
 				</h2>
@@ -39,42 +49,26 @@
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
 					{{-- Nama Role --}}
-					<div class="space-y-1">
-						<label for="role-name" class="block text-xs font-semibold text-slate-600">
-							Nama Role @if (!$isEdit)<span class="text-rose-500">*</span>@endif
-						</label>
-
-						@if ($isEdit)
-							<div class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-1.5">
+					@if ($isEdit)
+						<div class="space-y-1">
+							<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Nama Role</label>
+							<div class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2">
 								<code class="text-[11px] font-mono text-slate-600">{{ $name }}</code>
 								@if ($name === 'super_admin')
 									<span class="inline-flex items-center rounded bg-amber-100 px-1 py-0.5 text-[9px] font-black text-amber-700 uppercase">Protected</span>
 								@endif
 							</div>
 							<p class="text-[11px] text-slate-500">Nama role tidak dapat diubah</p>
-						@else
-							<input id="role-name" type="text" wire:model="name"
-								placeholder="contoh: kepala_bagian"
-								class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-300 @error('name') border-rose-400 @enderror">
-							<p class="text-[11px] text-slate-500">Gunakan huruf kecil dan underscore, tanpa spasi</p>
-							@error('name')
-								<p class="text-[11px] text-rose-500">{{ $message }}</p>
-							@enderror
-						@endif
-					</div>
+						</div>
+					@else
+						<x-form.input wire:model="name" name="name" label="Nama Role" required
+							placeholder="contoh: kepala_bagian"
+							hint="Gunakan huruf kecil dan underscore, tanpa spasi" />
+					@endif
 
 					{{-- Label --}}
-					<div class="space-y-1">
-						<label for="role-label" class="block text-xs font-semibold text-slate-600">
-							Label / Nama Tampil <span class="text-rose-500">*</span>
-						</label>
-						<input id="role-label" type="text" wire:model="label"
-							placeholder="contoh: Kepala Bagian"
-							class="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-300 @error('label') border-rose-400 @enderror">
-						@error('label')
-							<p class="text-[11px] text-rose-500">{{ $message }}</p>
-						@enderror
-					</div>
+					<x-form.input wire:model="label" name="label" label="Label / Nama Tampil" required
+						placeholder="contoh: Kepala Bagian" />
 				</div>
 
 				{{-- Warna Badge --}}
@@ -139,15 +133,8 @@
 					@if ($permissions->count() > 0)
 						<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 rounded border border-slate-200 bg-slate-50 p-3">
 							@foreach ($permissions as $perm)
-								<label class="flex items-center gap-2 cursor-pointer group">
-									<input type="checkbox"
-										wire:model="selectedPermissions"
-										value="{{ $perm->name }}"
-										class="rounded border-slate-300 text-violet-600 focus:ring-violet-400">
-									<span class="text-[11px] text-slate-600 group-hover:text-slate-900 transition-colors leading-tight">
-										{{ $perm->name }}
-									</span>
-								</label>
+								<x-form.checkbox wire:model="selectedPermissions" :value="$perm->name" :label="$perm->name"
+									wrapper-class="min-w-0" />
 							@endforeach
 						</div>
 					@else

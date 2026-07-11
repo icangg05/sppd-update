@@ -5,27 +5,34 @@
 @section('content')
   <div class="mx-auto max-w-6xl space-y-6 p-1">
 
-    {{-- Header Halaman --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-          <i class="fa-solid fa-folder-open text-lg"></i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Profil OPD</h1>
-          <p class="mt-0.5 text-sm text-slate-500">Rincian atribut data instansi atau unit kerja terkait.</p>
-        </div>
-      </div>
+    {{-- Header Halaman (title card) --}}
+    <div
+      class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+      {{-- Watermark institusional (tipis, hanya karakter). --}}
+      <i class="fa-solid fa-folder-open pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+        aria-hidden="true"></i>
 
-      <div class="flex items-center gap-2 self-end sm:self-auto">
-        <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary" class="shrink-0">
-          <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
-          Kembali
-        </x-ui.button>
-        <x-ui.button href="{{ route('master.departments.edit', $department->id) }}" variant="primary" class="shrink-0">
-          <x-slot name="icon"><i class="fa-solid fa-pen-to-square text-xs"></i></x-slot>
-          Edit Profil
-        </x-ui.button>
+      <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div class="min-w-0 leading-tight">
+          <span
+            class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+            <i class="fa-solid fa-circle-info text-[9px]"></i>
+            Profil Instansi
+          </span>
+          <h1 class="text-xl font-bold tracking-tight text-slate-800">Profil OPD</h1>
+          <p class="mt-1 text-xs text-slate-500">Rincian atribut data instansi atau unit kerja terkait</p>
+        </div>
+
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <x-ui.button href="{{ route('master.departments.index') }}" variant="secondary" class="shrink-0">
+            <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+            Kembali
+          </x-ui.button>
+          <x-ui.button href="{{ route('master.departments.edit', $department->id) }}" variant="primary" class="shrink-0">
+            <x-slot name="icon"><i class="fa-solid fa-pen-to-square text-xs"></i></x-slot>
+            Edit Profil
+          </x-ui.button>
+        </div>
       </div>
     </div>
 

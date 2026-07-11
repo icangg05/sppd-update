@@ -1,20 +1,27 @@
 <div>
-  {{-- ── Header halaman ── --}}
-  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-3">
-      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-        <i class="fa-regular fa-calendar-days text-lg"></i>
-      </div>
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Kalender Perjalanan Dinas</h1>
-        <p class="mt-0.5 text-sm text-slate-500">Jadwal monitoring perjalanan dinas pegawai yang telah disetujui resmi.</p>
-      </div>
-    </div>
+  {{-- ── Header halaman (title card) ── --}}
+  <div
+    class="dash-enter relative mb-6 overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-regular fa-calendar-days pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
 
-    {{-- Penanda tanggal hari ini --}}
-    <div class="inline-flex items-center gap-2 self-start rounded border border-slate-200 bg-white px-3 py-2 shadow-2xs sm:self-auto">
-      <i class="fa-regular fa-clock text-primary-500"></i>
-      <span class="text-sm font-semibold text-slate-700">{{ now()->locale('id')->translatedFormat('l, d F Y') }}</span>
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-calendar-check text-[9px]"></i> Monitoring Agenda
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Kalender Perjalanan Dinas</h1>
+        <p class="mt-1 text-xs text-slate-500">Jadwal monitoring perjalanan dinas pegawai yang telah disetujui resmi</p>
+      </div>
+
+      {{-- Penanda tanggal hari ini --}}
+      <div
+        class="inline-flex shrink-0 items-center gap-2 self-start rounded border border-slate-200 bg-white px-3 py-2 shadow-2xs sm:self-auto">
+        <i class="fa-regular fa-clock text-primary-500"></i>
+        <span class="text-sm font-semibold text-slate-700">{{ now()->locale('id')->translatedFormat('l, d F Y') }}</span>
+      </div>
     </div>
   </div>
 

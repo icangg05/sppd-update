@@ -42,27 +42,41 @@
     <div wire:poll.2s="pollBackup"></div>
   @endif
 
-  {{-- Header --}}
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Backup Database</h1>
-      <p class="page-subtitle">Buat dan unduh cadangan database sistem.</p>
+  {{-- Header (title card) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-database pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-shield-halved text-[9px]"></i>
+          Cadangan Sistem
+          <span class="ml-1 tabular-nums text-primary-600/70">· {{ count($backups) }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">Backup Database</h1>
+        <p class="mt-1 text-xs text-slate-500">Buat dan unduh cadangan database sistem</p>
+      </div>
+
+      @if ($processing)
+        <x-ui.button type="button" class="shrink-0" disabled>
+          <i class="fa-solid fa-spinner fa-spin text-xs"></i> Memproses di worker...
+        </x-ui.button>
+      @else
+        {{-- Cek worker dulu di server (requestBackup); modal baru dibuka bila worker sehat. --}}
+        <x-ui.button type="button" class="shrink-0" wire:click="requestBackup" wire:loading.attr="disabled" wire:target="requestBackup">
+          <span wire:loading.remove wire:target="requestBackup"><i class="fa-solid fa-database text-xs"></i> Buat Backup Sekarang</span>
+          <span wire:loading wire:target="requestBackup"><i class="fa-solid fa-spinner fa-spin text-xs"></i> Memeriksa worker...</span>
+        </x-ui.button>
+      @endif
     </div>
-    @if ($processing)
-      <x-ui.button type="button" disabled>
-        <i class="fa-solid fa-spinner fa-spin text-xs"></i> Memproses di worker...
-      </x-ui.button>
-    @else
-      {{-- Cek worker dulu di server (requestBackup); modal baru dibuka bila worker sehat. --}}
-      <x-ui.button type="button" wire:click="requestBackup" wire:loading.attr="disabled" wire:target="requestBackup">
-        <span wire:loading.remove wire:target="requestBackup"><i class="fa-solid fa-database text-xs"></i> Buat Backup Sekarang</span>
-        <span wire:loading wire:target="requestBackup"><i class="fa-solid fa-spinner fa-spin text-xs"></i> Memeriksa worker...</span>
-      </x-ui.button>
-    @endif
   </div>
 
   {{-- Info database --}}
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+  <div class="dash-enter grid grid-cols-1 gap-4 sm:grid-cols-3">
     <div class="table-container flex items-center gap-3 p-4">
       <div class="flex size-10 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-database"></i></div>
       <div class="min-w-0">
@@ -87,7 +101,7 @@
   </div>
 
   {{-- Catatan --}}
-  <div class="flex items-start gap-3 rounded border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+  <div class="dash-enter flex items-start gap-3 rounded border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
     <i class="fa-solid fa-robot mt-0.5 shrink-0"></i>
     @php
       $backupDays = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -103,7 +117,7 @@
   </div>
 
   {{-- Catatan restore --}}
-  <div class="flex items-start gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+  <div class="dash-enter flex items-start gap-3 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
     <i class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
     <p>
       File berformat <strong>.sql.gz</strong> (SQL terkompresi). Simpan di tempat aman.
@@ -113,7 +127,7 @@
   </div>
 
   {{-- Daftar backup --}}
-  <div class="table-wrapper">
+  <div class="dash-enter table-wrapper">
     <table class="table">
       <thead>
         <tr>

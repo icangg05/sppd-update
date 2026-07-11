@@ -1,19 +1,26 @@
 <div class="mx-auto max-w-5xl space-y-6 p-1">
 
-  {{-- Header --}}
-  <div class="flex items-center gap-3">
-    <div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
-      <i class="fa-solid fa-file-shield text-lg"></i>
-    </div>
-    <div>
-      <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Cek Dokumen TTE</h1>
-      <p class="mt-0.5 text-sm text-slate-500">Verifikasi keaslian dokumen ber-tanda tangan elektronik ke BSrE.</p>
+  {{-- Header (title card — aksen emerald identitas verifikasi/keaslian) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-emerald-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-file-shield pointer-events-none absolute -right-3 -top-4 text-8xl text-emerald-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative min-w-0 leading-tight">
+      <span
+        class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+        <i class="fa-solid fa-certificate text-[9px]"></i>
+        Keaslian Dokumen
+      </span>
+      <h1 class="text-xl font-bold tracking-tight text-slate-800">Cek Dokumen TTE</h1>
+      <p class="mt-1 text-xs text-slate-500">Verifikasi keaslian dokumen ber-tanda tangan elektronik ke BSrE</p>
     </div>
   </div>
 
   @if ($mode === 'upload')
     {{-- ══ Mode unggah: kirim PDF ke BSrE ══ --}}
-    <form wire:submit="verifyUpload" class="rounded border border-slate-200 bg-white p-4 shadow-sm">
+    <form wire:submit="verifyUpload" class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
       <label for="verify-file" class="mb-1.5 block text-sm font-semibold text-slate-700">
         Unggah dokumen PDF ber-TTE
       </label>
@@ -52,7 +59,7 @@
 
     {{-- 2 kolom: pratinjau dokumen (tampil saat dipilih) | hasil verifikasi (setelah diklik) --}}
     @if ($file)
-      <div class="grid items-start gap-4 lg:grid-cols-2">
+      <div class="dash-enter grid items-start gap-4 lg:grid-cols-2">
         {{-- Pratinjau dokumen — langsung tampil saat berkas dipilih.
              Disembunyikan di mobile (iframe PDF kurang berguna di layar kecil),
              tampil mulai breakpoint lg sesuai grid 2 kolom. --}}
@@ -81,7 +88,7 @@
   @else
     {{-- ══ Mode target QR: cek catatan internal ══ --}}
     @if (! $valid)
-      <div class="overflow-hidden rounded border border-rose-200 bg-white shadow-sm">
+      <div class="dash-enter overflow-hidden rounded border border-rose-200 bg-white shadow-sm">
         <div class="flex flex-col items-center gap-3 bg-rose-50 px-6 py-8 text-center">
           <div class="flex size-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
             <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -93,7 +100,7 @@
         </div>
       </div>
     @else
-      <div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+      <div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
         {{-- Header status keabsahan --}}
         <div class="flex flex-col items-center gap-3 px-6 py-8 text-center {{ $this->isSigned ? 'bg-emerald-50' : 'bg-amber-50' }}">
           <div class="flex size-14 items-center justify-center rounded-full {{ $this->isSigned ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600' }}">

@@ -1,23 +1,31 @@
 <div class="p-1 space-y-6">
 	@php $isDprd = $this->isDprd(); @endphp
 
-	{{-- Header --}}
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex items-center gap-3">
-			<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-				<i class="fa-solid fa-users-gear text-lg"></i>
-			</div>
-			<div>
-				<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+	{{-- Header (title card) --}}
+	<div
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		{{-- Watermark institusional (tipis, hanya karakter). --}}
+		<i class="fa-solid {{ $isDprd ? 'fa-landmark-dome' : 'fa-users-gear' }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+			aria-hidden="true"></i>
+
+		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+			<div class="min-w-0 leading-tight">
+				<span
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<i class="fa-solid fa-user-shield text-[9px]"></i>
+					{{ $isDprd ? 'Keanggotaan DPRD' : 'Manajemen Kepegawaian' }}
+					<span class="ml-1 tabular-nums text-primary-600/70">· {{ $users->total() }}</span>
+				</span>
+				<h1 class="text-xl font-bold tracking-tight text-slate-800">
 					{{ $isDprd ? 'Data Anggota DPRD' : 'Data Pegawai' }}
 				</h1>
-				<p class="mt-0.5 text-sm text-slate-500">Kelola data pegawai dan hak akses pengguna sistem.</p>
+				<p class="mt-1 text-xs text-slate-500">Kelola data pegawai dan hak akses pengguna sistem</p>
 			</div>
+			<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}" variant="primary"
+				class="shrink-0 font-bold">
+				<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
+			</x-ui.button>
 		</div>
-		<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}" variant="primary"
-			class="shrink-0 font-bold">
-			<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
-		</x-ui.button>
 	</div>
 
 	{{-- Filters --}}

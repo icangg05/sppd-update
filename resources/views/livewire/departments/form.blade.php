@@ -4,32 +4,47 @@
     $backUrl = route('master.departments.index');
   @endphp
 
-  {{-- Header Halaman --}}
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-3">
-      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-        <i class="fa-solid {{ $isEdit ? 'fa-building-user' : 'fa-folder-plus' }} text-lg"></i>
-      </div>
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+  {{-- Header Halaman (title card) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid {{ $isEdit ? 'fa-building-user' : 'fa-folder-plus' }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid {{ $isEdit ? 'fa-building-user' : 'fa-folder-plus' }} text-[9px]"></i>
+          {{ $isEdit ? 'Perbarui Instansi' : 'Instansi Baru' }}
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">
           {{ $isEdit ? 'Edit Profil Instansi' : 'Tambah Instansi' }}
         </h1>
-        <p class="mt-0.5 text-sm text-slate-500">
+        <p class="mt-1 text-xs text-slate-500">
           {{ $isEdit
-            ? 'Perbarui informasi profil instansi atau sub-unit kerja terkait.'
-            : 'Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung.' }}
+            ? 'Perbarui informasi profil instansi atau sub-unit kerja terkait'
+            : 'Tambahkan entitas OPD baru atau sub-struktur unit kerja pendukung' }}
         </p>
       </div>
-    </div>
 
-    <x-ui.button href="{{ $backUrl }}" variant="secondary" class="shrink-0">
-      <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
-      Kembali
-    </x-ui.button>
+      <div class="flex flex-wrap items-center gap-2">
+        @if ($isEdit)
+          <x-ui.button href="{{ route('master.departments.show', $department->id) }}" variant="primary" class="shrink-0">
+            <x-slot name="icon"><i class="fa-solid fa-eye text-xs"></i></x-slot>
+            Lihat Detail
+          </x-ui.button>
+        @endif
+        <x-ui.button href="{{ $backUrl }}" variant="secondary" class="shrink-0">
+          <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+          Kembali
+        </x-ui.button>
+      </div>
+    </div>
   </div>
 
   {{-- Panduan Menyusun Struktur --}}
-  <div class="flex items-start gap-3 rounded border border-primary-200 bg-primary-100/50 p-4 text-xs leading-relaxed text-slate-600">
+  <div class="dash-enter flex items-start gap-3 rounded border border-primary-200 bg-primary-100/50 p-4 text-xs leading-relaxed text-slate-600">
     <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 ring-1 ring-primary-200">
       <i class="fa-solid fa-sitemap text-xs"></i>
     </div>
@@ -466,7 +481,7 @@
     @endif
 
     {{-- ── Kelompok 3: Kop Surat ── --}}
-    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+    <section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
       <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
         <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
           <i class="fa-regular fa-image"></i>

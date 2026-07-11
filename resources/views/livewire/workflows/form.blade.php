@@ -1,33 +1,40 @@
 <div class="p-1 space-y-4">
 
-  {{-- Header Halaman --}}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-    <div class="flex items-center gap-2.5">
-      <div class="p-1.5 bg-primary-100 rounded text-primary-600">
-        <i class="fa-solid fa-route text-base"></i>
-      </div>
-      <div>
-        <h1 class="text-base font-bold text-slate-800 uppercase tracking-wide">
+  {{-- Header Halaman (title card) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid fa-route pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid fa-diagram-project text-[9px]"></i>
+          {{ $isEdit ? 'Perbarui Alur' : 'Alur Baru' }}
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">
           {{ $isEdit ? 'Edit Workflow SPPD' : 'Tambah Workflow SPPD' }}
         </h1>
-        <p class="text-[11px] text-slate-500 font-medium">
+        <p class="mt-1 text-xs text-slate-500">
           {{ $isEdit
             ? 'Ubah parameter aturan urutan dan batas alur persetujuan skema SPPD terkait'
             : 'Inisiasi konfigurasi aturan urutan dan batas alur persetujuan SPPD baru' }}
         </p>
       </div>
-    </div>
 
-    <a wire:navigate href="{{ route('master.workflows.index') }}"
-      class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-      <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali
-    </a>
+      <x-ui.button href="{{ route('master.workflows.index') }}" variant="secondary" class="shrink-0 font-bold">
+        <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+        Kembali
+      </x-ui.button>
+    </div>
   </div>
 
   <form wire:submit="save" class="space-y-4">
 
     {{-- Blok 1: Parameter Informasi Aturan --}}
-    <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-3 border-b border-slate-200 bg-slate-50/50">
         <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
           <i class="fa-solid fa-sliders text-primary-500"></i>Konfigurasi Parameter Aturan
@@ -90,7 +97,7 @@
     </div>
 
     {{-- Blok 2: Manajemen Alur Urutan Persetujuan --}}
-    <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-4">
         <div class="space-y-0.5">
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">

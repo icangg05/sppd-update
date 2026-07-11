@@ -1,22 +1,28 @@
 <div x-data="{ showResetModal: false }">
 	<div class="mx-auto max-w-4xl space-y-6 p-1">
 
-		{{-- Header Halaman --}}
-		<div class="dash-enter flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div class="flex items-center gap-3">
-				<div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-					<i class="fa-solid {{ $isEdit ? 'fa-user-pen' : 'fa-user-plus' }} text-lg"></i>
-				</div>
-				<div>
-					<h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+		{{-- Header Halaman (title card) --}}
+		<div
+			class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+			{{-- Watermark institusional (tipis, hanya karakter). --}}
+			<i class="fa-solid {{ $isEdit ? 'fa-user-pen' : 'fa-user-plus' }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+				aria-hidden="true"></i>
+
+			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+				<div class="min-w-0 leading-tight">
+					<span
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						<i class="fa-solid {{ $isEdit ? 'fa-pen-nib' : 'fa-user-plus' }} text-[9px]"></i>
+						{{ $isEdit ? 'Perbarui Data' : 'Registrasi Pegawai' }}
+					</span>
+					<h1 class="text-xl font-bold tracking-tight text-slate-800">
 						{{ $isEdit ? 'Edit' : 'Tambah' }} Pegawai
 					</h1>
-					<p class="mt-0.5 text-sm text-slate-500">
-						{{ $isEdit ? 'Ubah informasi profil, penempatan, atau kredensial pengguna sistem.' : 'Tambahkan pegawai baru ke dalam sistem.' }}
+					<p class="mt-1 text-xs text-slate-500">
+						{{ $isEdit ? 'Ubah informasi profil, penempatan, atau kredensial pengguna sistem' : 'Tambahkan pegawai baru ke dalam sistem' }}
 					</p>
 				</div>
-			</div>
-			<div class="flex flex-wrap items-center gap-2">
+				<div class="flex flex-wrap items-center gap-2">
 				@if ($isEdit)
 					<x-ui.button href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $listType])) }}"
 						variant="primary" class="shrink-0">
@@ -33,6 +39,7 @@
 					</x-slot>
 					Kembali
 				</x-ui.button>
+				</div>
 			</div>
 		</div>
 

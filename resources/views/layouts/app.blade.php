@@ -52,7 +52,7 @@
 		</main>
 
 		{{-- Footer institusional: atribusi di kiri, versi di kanan --}}
-		<footer class="border-t border-slate-200 bg-white/80 backdrop-blur-sm">
+		<footer class="shadow border-t border-slate-200 bg-white/80 backdrop-blur-sm">
 			<div
 				class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-slate-500 sm:flex-row">
 				<div class="flex items-center gap-2">

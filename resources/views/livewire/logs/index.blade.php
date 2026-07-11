@@ -2,27 +2,35 @@
 
   @php $isTte = $this->isTte(); @endphp
 
-  {{-- Header --}}
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-3">
-      <div class="flex size-11 shrink-0 items-center justify-center rounded ring-1 {{ $isTte ? 'bg-emerald-50 text-emerald-600 ring-emerald-100' : 'bg-primary-50 text-primary-600 ring-primary-100' }}">
-        <i class="fa-solid {{ $isTte ? 'fa-pen-nib' : 'fa-clock-rotate-left' }} text-lg"></i>
-      </div>
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{{ $isTte ? 'Logs TTE' : 'Logs Aktivitas' }}</h1>
-        <p class="mt-0.5 text-sm text-slate-500">
-          {{ $isTte ? 'Riwayat penandatanganan elektronik dokumen.' : 'Riwayat aktivitas pengguna & perubahan data dalam sistem.' }}
+  {{-- Header (title card — aksen adaptif: emerald untuk TTE, primary untuk aktivitas) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white {{ $isTte ? 'to-emerald-50/50' : 'to-primary-50/50' }} px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid {{ $isTte ? 'fa-pen-nib text-emerald-500/6' : 'fa-clock-rotate-left text-primary-500/6' }} pointer-events-none absolute -right-3 -top-4 text-8xl"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] ring-1 ring-inset {{ $isTte ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/15' : 'bg-primary-50 text-primary-700 ring-primary-600/15' }}">
+          <i class="fa-solid {{ $isTte ? 'fa-certificate' : 'fa-clock-rotate-left' }} text-[9px]"></i>
+          {{ $isTte ? 'Riwayat TTE' : 'Jejak Aktivitas' }}
+          <span class="ml-1 tabular-nums {{ $isTte ? 'text-emerald-600/70' : 'text-primary-600/70' }}">· {{ $totalLogs }}</span>
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">{{ $isTte ? 'Logs TTE' : 'Logs Aktivitas' }}</h1>
+        <p class="mt-1 text-xs text-slate-500">
+          {{ $isTte ? 'Riwayat penandatanganan elektronik dokumen' : 'Riwayat aktivitas pengguna & perubahan data dalam sistem' }}
         </p>
       </div>
-    </div>
 
-    @if ($this->isSuperAdmin())
-      <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
-        class="shrink-0 font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
-        <x-slot name="icon"><i class="fa-solid fa-trash-can text-xs"></i></x-slot>
-        Bersihkan Log
-      </x-ui.button>
-    @endif
+      @if ($this->isSuperAdmin())
+        <x-ui.button wire:click="confirmClear" type="button" variant="danger" :disabled="$totalLogs === 0"
+          class="shrink-0 font-bold {{ $totalLogs === 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
+          <x-slot name="icon"><i class="fa-solid fa-trash-can text-xs"></i></x-slot>
+          Bersihkan Log
+        </x-ui.button>
+      @endif
+    </div>
   </div>
 
   {{-- Filter / Pencarian --}}
@@ -55,7 +63,7 @@
   </div>
 
   {{-- Table --}}
-  <div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
+  <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,event">
     <div class="overflow-x-auto">
       <table class="w-full text-left whitespace-nowrap border-collapse">

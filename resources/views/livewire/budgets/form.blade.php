@@ -1,30 +1,45 @@
 <div class="mx-auto max-w-4xl space-y-6 p-1">
 
-  {{-- Header Halaman --}}
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-3">
-      <div class="flex size-11 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-        <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} text-lg"></i>
-      </div>
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+  {{-- Header Halaman (title card) --}}
+  <div
+    class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+    {{-- Watermark institusional (tipis, hanya karakter). --}}
+    <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+      aria-hidden="true"></i>
+
+    <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0 leading-tight">
+        <span
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          <i class="fa-solid {{ $isEdit ? 'fa-file-pen' : 'fa-file-circle-plus' }} text-[9px]"></i>
+          {{ $isEdit ? 'Perbarui DPA' : 'Input DPA' }}
+        </span>
+        <h1 class="text-xl font-bold tracking-tight text-slate-800">
           {{ $isEdit ? 'Edit Data DPA' : 'Input Data DPA' }}
         </h1>
-        <p class="mt-0.5 text-sm text-slate-500">Lengkapi rincian dokumen pelaksanaan anggaran di bawah ini.</p>
+        <p class="mt-1 text-xs text-slate-500">Lengkapi rincian dokumen pelaksanaan anggaran di bawah ini</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        @if ($isEdit)
+          <x-ui.button href="{{ route('master.budgets.show', $budget->id) }}" variant="primary" class="shrink-0">
+            <x-slot name="icon"><i class="fa-solid fa-eye text-xs"></i></x-slot>
+            Lihat Detail
+          </x-ui.button>
+        @endif
+        <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary" class="shrink-0">
+          <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
+          Kembali
+        </x-ui.button>
       </div>
     </div>
-
-    <x-ui.button href="{{ route('master.budgets.index') }}" variant="secondary" class="shrink-0">
-      <x-slot name="icon"><i class="fa-solid fa-arrow-left text-xs"></i></x-slot>
-      Kembali
-    </x-ui.button>
   </div>
 
   {{-- Form --}}
   <form wire:submit="save" class="space-y-6">
 
     {{-- ── Kelompok 1: Sumber & Klasifikasi ── --}}
-    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+    <section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
       <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
         <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
           <i class="fa-solid fa-layer-group"></i>
@@ -94,7 +109,7 @@
     </section>
 
     {{-- ── Kelompok 2: Rincian & Pagu ── --}}
-    <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+    <section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
       <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
         <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
           <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -125,11 +140,40 @@
             placeholder="Deskripsi pelengkap anggaran..." required />
         </div>
 
-        {{-- Pagu Total --}}
+        {{-- Pagu Total (input bertopeng: tampil berformat ribuan, nilai mentah ke Livewire) --}}
         <div>
-          <x-form.input wire:model="total_amount" type="number" label="Pagu Total (Rp)"
-            placeholder="0" class="font-mono font-bold text-slate-800" required
-            hint="Angka saja, tanpa titik atau koma." />
+          <label for="total_amount" class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
+            Pagu Total (Rp) <span class="text-rose-500">*</span>
+          </label>
+          <div
+            x-data="{
+              display: '',
+              format(v) {
+                const digits = String(v ?? '').replace(/\D/g, '');
+                return digits === '' ? '' : digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+              },
+              init() {
+                this.display = this.format($wire.total_amount);
+              },
+              onInput(e) {
+                const digits = e.target.value.replace(/\D/g, '');
+                $wire.total_amount = digits;
+                this.display = this.format(digits);
+              },
+            }"
+            x-init="init()"
+            class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-semibold text-slate-500">Rp</span>
+            <input type="text" id="total_amount" name="total_amount" inputmode="numeric" required
+              placeholder="0"
+              x-bind:value="display"
+              x-on:input="onInput($event)"
+              class="w-full rounded border px-3 py-2 pl-9 text-sm font-mono font-bold text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('total_amount') border-red-400 @else border-slate-300 @enderror" />
+          </div>
+          <p class="mt-1 text-xs text-slate-500">Ketik angka saja — pemisah ribuan otomatis.</p>
+          @error('total_amount')
+            <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+          @enderror
         </div>
       </div>
     </section>
