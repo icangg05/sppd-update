@@ -5,10 +5,7 @@ use App\Http\Controllers\BudgetController;
 use App\Livewire\Auth\Login;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\SppdActualExpenseController;
-use App\Http\Controllers\SppdAdvanceReceiptController;
 use App\Http\Controllers\SppdController;
-use App\Http\Controllers\SppdCostDetailController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KirimChatWebhookController;
@@ -111,24 +108,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd/{sppd}/final-costs', [SppdController::class, 'finalCosts'])->name('sppd.final-costs');
     Route::get('/sppd/{sppd}/report-input', [SppdController::class, 'reportInput'])->name('sppd.report-input');
 
-    // CRUD: Rincian Biaya Perjalanan Dinas
-    Route::post('/sppd/{sppd}/cost-details', [SppdCostDetailController::class, 'store'])->name('sppd.cost-details.store');
-    Route::put('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'update'])->name('sppd.cost-details.update');
-    Route::delete('/sppd/{sppd}/cost-details/{cost}', [SppdCostDetailController::class, 'destroy'])->name('sppd.cost-details.destroy');
-
-    // CRUD: Laporan Pengeluaran Riil
-    Route::post('/sppd/{sppd}/actual-expenses', [SppdActualExpenseController::class, 'store'])->name('sppd.actual-expenses.store');
-    Route::put('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'update'])->name('sppd.actual-expenses.update');
-    Route::delete('/sppd/{sppd}/actual-expenses/{expense}', [SppdActualExpenseController::class, 'destroy'])->name('sppd.actual-expenses.destroy');
-
-    // Kuitansi Panjar (create or update)
-    Route::post('/sppd/{sppd}/advance-receipts', [SppdAdvanceReceiptController::class, 'storeOrUpdate'])->name('sppd.advance-receipts.store');
+    // CRUD Rincian Biaya & Pengeluaran Riil ditangani komponen Livewire
+    // (App\Livewire\Sppd\CostDetails & ActualExpenses), tanpa route tersendiri.
 
     // Update PPTK
     Route::put('/sppd/{sppd}/pptk', [SppdController::class, 'updatePptk'])->name('sppd.update-pptk');
 
-    // Laporan Perjalanan (store/update)
-    Route::post('/sppd/{sppd}/report', [SppdController::class, 'storeReport'])->name('sppd.report.store');
+    // Laporan Perjalanan ditangani komponen Livewire (App\Livewire\Sppd\TravelReport).
 
     // TTE / Electronic signature
     // Route::post('/sppd/{sppd}/sign/{type}', [SppdDigitalSignatureController::class, 'request'])->name('sppd.sign');

@@ -29,6 +29,10 @@ class RegencyIndex extends Component
   public string $name = '';
   public string $province_id = '';
 
+  // Mode tambah: input hingga 5 kabupaten/kota sekaligus dalam satu provinsi.
+  public array $names = [''];
+  public const MAX_NAMES = 5;
+
   // Konfirmasi hapus
   public bool $showDeleteModal = false;
   public ?int $deletingId = null;
@@ -58,9 +62,25 @@ class RegencyIndex extends Component
 
   public function openCreateModal(): void
   {
-    $this->reset(['name', 'province_id', 'editingId']);
+    $this->reset(['name', 'province_id', 'editingId', 'names']);
     $this->resetValidation();
     $this->showFormModal = true;
+  }
+
+  public function addNameRow(): void
+  {
+    if (count($this->names) < self::MAX_NAMES) {
+      $this->names[] = '';
+    }
+  }
+
+  public function removeNameRow(int $i): void
+  {
+    if (count($this->names) <= 1) {
+      return;
+    }
+    unset($this->names[$i]);
+    $this->names = array_values($this->names);
   }
 
   public function openEditModal(int $id): void
@@ -76,6 +96,16 @@ class RegencyIndex extends Component
 
   public function save(): void
   {
+    if ($this->editingId) {
+      $this->saveEdit();
+      return;
+    }
+
+    $this->saveBatch();
+  }
+
+  private function saveEdit(): void
+  {
     $this->validate([
       'name'        => ['required', 'string', 'max:255'],
       'province_id' => ['required', 'exists:provinces,id'],
@@ -90,22 +120,68 @@ class RegencyIndex extends Component
       return;
     }
 
-    $data = [
+    Regency::findOrFail($this->editingId)->update([
       'name'        => trim($this->name),
       'province_id' => $this->province_id,
-    ];
-
-    if ($this->editingId) {
-      Regency::findOrFail($this->editingId)->update($data);
-      $message = 'Kabupaten/kota berhasil diperbarui.';
-    } else {
-      Regency::create($data);
-      $message = 'Kabupaten/kota baru berhasil ditambahkan.';
-    }
+    ]);
 
     $this->reset(['name', 'province_id', 'editingId']);
     $this->showFormModal = false;
     $this->resetPage();
+    $this->toastSuccess('Kabupaten/kota berhasil diperbarui.');
+  }
+
+  private function saveBatch(): void
+  {
+    $this->validate(['province_id' => ['required', 'exists:provinces,id']]);
+
+    // Kumpulkan nama non-kosong, buang duplikat dalam batch (case-insensitive).
+    $names = [];
+    foreach ($this->names as $raw) {
+      $n = trim($raw);
+      if ($n === '') {
+        continue;
+      }
+      if (mb_strlen($n) > 255) {
+        $this->addError('names', 'Setiap nama maksimal 255 karakter.');
+        return;
+      }
+      $names[mb_strtolower($n)] = $n;
+    }
+
+    if (empty($names)) {
+      $this->addError('names', 'Isi minimal satu nama kabupaten/kota.');
+      return;
+    }
+
+    // Nama yang sudah ada di provinsi ini dilewati (bukan error fatal).
+    $created = 0;
+    $skipped = [];
+    foreach ($names as $key => $n) {
+      $exists = Regency::where('province_id', $this->province_id)
+        ->whereRaw('LOWER(name) = ?', [$key])
+        ->exists();
+      if ($exists) {
+        $skipped[] = $n;
+        continue;
+      }
+      Regency::create(['name' => $n, 'province_id' => $this->province_id]);
+      $created++;
+    }
+
+    if ($created === 0) {
+      $this->toastError('Semua nama sudah terdaftar pada provinsi ini.');
+      return;
+    }
+
+    $this->reset(['names', 'province_id', 'editingId']);
+    $this->showFormModal = false;
+    $this->resetPage();
+
+    $message = "{$created} kabupaten/kota berhasil ditambahkan.";
+    if ($skipped) {
+      $message .= ' Dilewati (sudah ada): ' . implode(', ', $skipped) . '.';
+    }
     $this->toastSuccess($message);
   }
 

@@ -123,8 +123,43 @@
       <x-form.searchable-select wire:model="province_id" name="province_id" label="Provinsi" :options="$provinceFormOptions"
         placeholder="— Pilih Provinsi —" searchPlaceholder="Cari provinsi..." required />
 
-      <x-form.input name="name" label="Nama Kabupaten/Kota" wire:model="name" required
-        placeholder="Contoh: Kota Kendari" />
+      @if ($editingId)
+        <x-form.input name="name" label="Nama Kabupaten/Kota" wire:model="name" required
+          placeholder="Contoh: Kota Kendari" />
+      @else
+        <div>
+          <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
+            Nama Kabupaten/Kota <span class="text-rose-500">*</span>
+          </label>
+          <div class="space-y-2">
+            @foreach ($names as $i => $n)
+              <div class="flex items-start gap-2" wire:key="name-row-{{ $i }}">
+                <x-form.input name="names.{{ $i }}" wire:model="names.{{ $i }}" wrapperClass="flex-1"
+                  placeholder="Contoh: Kota Kendari" />
+                @if (count($names) > 1)
+                  <button type="button" wire:click="removeNameRow({{ $i }})"
+                    class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+                    title="Hapus baris">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                  </button>
+                @endif
+              </div>
+            @endforeach
+          </div>
+
+          @error('names')
+            <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+          @enderror
+
+          @if (count($names) < \App\Livewire\RegencyIndex::MAX_NAMES)
+            <button type="button" wire:click="addNameRow"
+              class="mt-2 inline-flex items-center gap-1.5 rounded border border-dashed border-primary-300 bg-primary-50/50 px-2.5 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-100">
+              <i class="fa-solid fa-plus text-[10px]"></i> Tambah baris
+            </button>
+          @endif
+          <p class="mt-1.5 text-xs text-slate-500">Bisa menambahkan hingga {{ \App\Livewire\RegencyIndex::MAX_NAMES }} kabupaten/kota sekaligus dalam satu provinsi.</p>
+        </div>
+      @endif
 
       <div class="flex items-center justify-end gap-2 pt-1">
         <x-ui.button type="button" variant="secondary" x-on:click="$wire.showFormModal = false">Batal</x-ui.button>

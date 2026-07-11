@@ -12,6 +12,9 @@
       {{-- Watermark institusional (sangat tipis, hanya karakter — bukan aksen baru). --}}
       <i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
         aria-hidden="true"></i>
+      {{-- Ornamen garis vertikal (selaras laman lain) --}}
+      <span class="pointer-events-none absolute inset-y-3 left-0 w-1 rounded-r bg-linear-to-b from-emerald-400/40 to-primary-400/40"
+        aria-hidden="true"></span>
 
       <div class="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div class="flex flex-col items-start gap-1.5">

@@ -9,6 +9,9 @@
 			class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
 			<i class="fa-solid fa-file-contract pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
 				aria-hidden="true"></i>
+			{{-- Ornamen garis vertikal (selaras laman laporan) --}}
+			<span class="pointer-events-none absolute inset-y-3 left-0 w-1 rounded-r bg-linear-to-b from-emerald-400/40 to-primary-400/40"
+				aria-hidden="true"></span>
 
 			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 				<div class="min-w-0 leading-tight">

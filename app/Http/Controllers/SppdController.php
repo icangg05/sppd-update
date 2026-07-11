@@ -317,53 +317,6 @@ class SppdController extends Controller
     return view('sppd.report_input', compact('sppd'));
   }
 
-  /**
-   * Store or update Laporan Perjalanan
-   */
-  public function storeReport(Request $request, SppdRequest $sppd)
-  {
-    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
-
-    $hasReportFile = $sppd->report?->report_file;
-    $hasDocFile = $sppd->report?->documentation_file;
-
-    $validated = $request->validate([
-      'report_date' => 'required|date',
-      'report_file' => ($hasReportFile ? 'nullable' : 'required') . '|file|max:20480',
-      'documentation_file' => ($hasDocFile ? 'nullable' : 'required') . '|image|max:20480',
-    ]);
-
-    if ($request->hasFile('report_file')) {
-      if ($sppd->report?->report_file) {
-        Storage::disk('public')->delete($sppd->report->report_file);
-      }
-      $validated['report_file'] = $request->file('report_file')
-        ->store(date('Y') . '/laporan_perjalanan', 'public');
-    }
-
-    if ($request->hasFile('documentation_file')) {
-      if ($sppd->report?->documentation_file) {
-        Storage::disk('public')->delete($sppd->report->documentation_file);
-      }
-      $validated['documentation_file'] = $request->file('documentation_file')
-        ->store(date('Y') . '/dokumentasi_perjalanan', 'public');
-    }
-
-    // Calculate total expense from actual expenses
-    $validated['total_expense'] = $sppd->actualExpenses()->sum('amount');
-
-    $sppd->report()->updateOrCreate(
-      ['sppd_request_id' => $sppd->id],
-      $validated
-    );
-
-    return back()->with('success', 'Laporan perjalanan berhasil disimpan.');
-  }
-
-
-
   private function resolveSptApproval(SppdRequest $sppd)
   {
     $approval = $sppd->approvals()->where('signs_spt', true)->first();

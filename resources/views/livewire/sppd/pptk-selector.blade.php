@@ -21,21 +21,20 @@
 		</div>
 
 		@if ($this->canManage())
-			<div class="flex w-full flex-col gap-2 sm:flex-row sm:items-end md:w-auto">
+			<div class="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch md:w-auto">
 				<x-form.searchable-select
 					wire:model="pptk_id"
 					:options="$options"
 					placeholder="— Pilih PPTK —"
 					searchPlaceholder="Cari nama / NIP..."
-					wrapperClass="w-full sm:w-72"
-					class="py-1.5" />
+					wrapperClass="w-full sm:w-72" />
 
 				<x-ui.button
 					variant="primary"
 					size="sm"
 					wire:click="updatePptk"
 					wire:target="updatePptk"
-					class="shrink-0 py-2">
+					class="shrink-0">
 					<x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
 					Simpan
 				</x-ui.button>

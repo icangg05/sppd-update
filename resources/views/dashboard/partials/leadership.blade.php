@@ -17,7 +17,7 @@
 
 <div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
   {{-- Antrean Persetujuan (tugas utama approver — diberi bobot 2/3 lebar) --}}
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
+  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-amber-400 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
@@ -54,7 +54,7 @@
   <div class="flex flex-col gap-5">
     {{-- Antrean Tanda Tangan (jika bisa sign) --}}
     @if ($pendingSignatures->isNotEmpty())
-      <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+      <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-violet-400 bg-white shadow-sm">
         <div class="border-b border-slate-100 p-4">
           <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
             <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
@@ -66,7 +66,7 @@
             <a wire:navigate href="{{ route('sppd.show', $sig->sppdRequest) }}"
               class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50">
               <span class="line-clamp-1 font-medium text-slate-700">{{ $sig->sppdRequest->purpose ?? '-' }}</span>
-              <span class="shrink-0 rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-violet-600">
+              <span class="shrink-0 rounded bg-violet-50 px-1.5 py-0.5 text-xs font-bold uppercase text-violet-600">
                 {{ $sig->document_type }}
               </span>
             </a>
@@ -76,9 +76,11 @@
     @endif
 
     {{-- Keputusan terakhir --}}
-    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-slate-300 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
-        <h3 class="text-sm font-bold text-slate-800">Keputusan Terakhir Anda</h3>
+        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <i class="fa-solid fa-gavel text-slate-400"></i> Keputusan Terakhir Anda
+        </h3>
       </div>
       <div class="flex flex-col divide-y divide-slate-100">
         @forelse ($recentDecisions as $dec)

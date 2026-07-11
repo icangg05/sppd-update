@@ -17,10 +17,12 @@
 
 {{-- Charts: Trend + Distribusi Status --}}
 <div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
+  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-blue-400 bg-white shadow-sm lg:col-span-2">
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <div>
-        <h3 class="text-sm font-bold text-slate-800">Tren Pengajuan SPPD</h3>
+        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <i class="fa-solid fa-chart-line text-blue-500"></i> Tren Pengajuan SPPD
+        </h3>
         <p class="mt-0.5 text-xs text-slate-500">Masuk vs selesai 12 bulan terakhir</p>
       </div>
       <div class="flex gap-4 text-xs font-medium text-slate-600">
@@ -31,9 +33,11 @@
     <div class="relative h-60 w-full p-4"><canvas id="trendChart"></canvas></div>
   </div>
 
-  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
-      <h3 class="text-sm font-bold text-slate-800">Distribusi Status</h3>
+      <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+        <i class="fa-solid fa-chart-pie text-emerald-500"></i> Distribusi Status
+      </h3>
       <p class="mt-0.5 text-xs text-slate-500">Sebaran status SPPD (lingkup Anda)</p>
     </div>
     <div class="relative h-40 w-full p-4"><canvas id="statusDonutChart"></canvas></div>
@@ -56,9 +60,11 @@
 {{-- Pemakaian anggaran per OPD (super_admin) + SPPD terbaru --}}
 <div class="dash-enter grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
   @if ($topByUsage->count() > 1)
-    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+    <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-primary-400 bg-white shadow-sm">
       <div class="border-b border-slate-100 p-4">
-        <h3 class="text-sm font-bold text-slate-800">Pemakaian Anggaran per OPD</h3>
+        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <i class="fa-solid fa-building-columns text-primary-500"></i> Pemakaian Anggaran per OPD
+        </h3>
         <p class="mt-0.5 text-xs text-slate-500">6 OPD dengan persentase realisasi tertinggi</p>
       </div>
       <div class="flex flex-col gap-4 p-4">
@@ -69,7 +75,7 @@
               <span class="shrink-0 font-mono font-bold text-slate-600">{{ number_format($opd['percentage'], 1, ',', '.') }}%</span>
             </div>
             <x-ui.budget-bar :percentage="$opd['percentage']" height="h-2" />
-            <p class="font-mono text-[11px] text-slate-500">
+            <p class="font-mono text-xs text-slate-500">
               Rp {{ number_format($opd['realisasi'], 0, ',', '.') }} / Rp {{ number_format($opd['pagu'], 0, ',', '.') }}
             </p>
           </div>
@@ -83,7 +89,7 @@
 
 {{-- Antrean persetujuan (bila admin juga approver) --}}
 @if ($pendingApprovals->isNotEmpty())
-  <div class="dash-enter rounded border border-slate-200 bg-white shadow-sm">
+  <div class="dash-enter rounded border border-l-2 border-slate-200 border-l-amber-400 bg-white shadow-sm">
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
@@ -105,7 +111,7 @@
 @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    (function() {
       Chart.defaults.font.size = 12;
       Chart.defaults.font.family = "'Geist', ui-sans-serif, system-ui, sans-serif";
       Chart.defaults.color = '#64748b';
@@ -153,6 +159,6 @@
           options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 4, padding: 10 } } }
         });
       }
-    });
+    })();
   </script>
 @endpush
