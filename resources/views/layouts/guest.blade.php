@@ -9,6 +9,9 @@
 	<title>{{ config('app.name') }}</title>
 	<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">
+	<link rel="manifest" href="{{ asset('manifest.json') }}">
+	<meta name="theme-color" content="#0c4a6e">
+	<meta name="mobile-web-app-capable" content="yes">
 	<link rel="preconnect" href="https://fonts.bunny.net">
 	<link href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|geist-mono:400,500,600" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
