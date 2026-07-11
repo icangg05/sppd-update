@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
+	<meta name="vapid-public-key" content="{{ config('webpush.vapid.public_key') }}">
 
 	<title>@yield('title', 'Dashboard') - {{ config('app.name', 'SPPD') }}</title>
 
@@ -21,6 +22,7 @@
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 	<script src="{{ asset('js/jquery-4.0.0.min.js') }}"></script>
+	<script src="{{ asset('js/push-notifications.js') }}" defer></script>
 
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 

@@ -23,6 +23,15 @@
 		</div>
 
 		<div class="flex items-center gap-3 sm:gap-5">
+			{{-- Notifikasi Push PWA --}}
+			<button id="push-notification-btn"
+				class="relative hidden rounded-full p-1.5 text-primary-200 transition-all hover:bg-primary-600/30 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+				title="Aktifkan Notifikasi Web">
+				<i id="push-notification-icon" class="fa-regular fa-bell text-lg"></i>
+				<span id="push-notification-badge"
+					class="absolute right-0.5 top-0.5 hidden size-2 rounded-full bg-rose-500 ring-2 ring-primary-700"></span>
+			</button>
+
 			{{-- Notifikasi: log pembaruan sistem (changelog) --}}
 			<x-notifications />
 
