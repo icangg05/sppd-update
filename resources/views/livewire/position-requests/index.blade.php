@@ -82,7 +82,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,statusFilter">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No.</th>
@@ -99,11 +99,11 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($requests as $i => $req)
             <tr wire:key="req-{{ $req->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $requests->firstItem() + $i }}.
               </td>
-              <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $req->name }}</td>
-              <td class="py-2.5 px-4 text-[11px] max-w-xs">
+              <td data-label="Nama Jabatan" class="py-2.5 px-4 font-semibold text-slate-900">{{ $req->name }}</td>
+              <td data-label="Alasan" class="py-2.5 px-4 text-[11px] max-w-xs">
                 @if($req->status === \App\Enums\PositionRequestStatus::REJECTED && $req->review_note)
                   <span class="font-semibold text-rose-600">Ditolak:</span>
                   <span class="text-rose-500 whitespace-normal" title="{{ $req->review_note }}">{{ $req->review_note }}</span>
@@ -115,10 +115,10 @@
                 @endif
               </td>
               @if($isSuperAdmin)
-                <td class="py-2.5 px-4 text-slate-600 font-medium">{{ $req->requester?->name ?? '—' }}</td>
-                <td class="py-2.5 px-4 text-slate-500 text-[11px] truncate max-w-40">{{ $req->department?->name ?? '—' }}</td>
+                <td data-label="Pengusul" class="py-2.5 px-4 text-slate-600 font-medium">{{ $req->requester?->name ?? '—' }}</td>
+                <td data-label="OPD" class="py-2.5 px-4 text-slate-500 text-[11px] truncate max-w-40">{{ $req->department?->name ?? '—' }}</td>
               @endif
-              <td class="py-2.5 px-4">
+              <td data-label="Status" class="py-2.5 px-4">
                 <x-ui.badge :color="$req->status->color()">{{ $req->status->label() }}</x-ui.badge>
               </td>
               @php
@@ -127,7 +127,7 @@
                 $canEdit    = $canManage && $isPending;
                 $canDelete  = $canManage;
               @endphp
-              <td class="py-2.5 px-4">
+              <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   @if($isSuperAdmin && $isPending)
                     <button type="button" wire:click="openVerifyModal({{ $req->id }})"

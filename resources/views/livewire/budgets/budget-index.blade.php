@@ -99,7 +99,7 @@
 		wire:loading.class="opacity-60" wire:target="search,year,source,department_id">
 
 		<div class="overflow-x-auto">
-			<table class="w-full text-left whitespace-nowrap">
+			<table class="table-stack w-full text-left whitespace-nowrap">
 				<thead
 					class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
 					<tr>
@@ -117,42 +117,42 @@
 				<tbody class="divide-y divide-slate-100 text-slate-700">
 					@forelse($budgets as $budget)
 						<tr class="hover:bg-slate-50/50 transition-colors">
-							<td class="py-3.5 px-4 text-center text-xs font-semibold text-slate-500">
+							<td class="stack-hide py-3.5 px-4 text-center text-xs font-semibold text-slate-500">
 								{{ $loop->iteration + ($budgets->currentPage() - 1) * $budgets->perPage() }}.
 							</td>
 
-							<td class="py-3.5 px-4 max-w-56 whitespace-normal">
+							<td data-label="SKPD / Instansi" class="py-3.5 px-4 max-w-56 whitespace-normal">
 								<div class="text-sm font-bold text-slate-900 leading-tight">{{ $budget->department?->name ?? '-' }}</div>
 								@if ($budget->department?->parent)
 									<div class="text-[11px] text-slate-500 leading-tight mt-0.5">{{ $budget->department->parent->name }}</div>
 								@endif
 							</td>
 
-							<td class="py-3.5 px-4 text-center text-xs font-mono font-medium text-slate-500">
+							<td data-label="TA" class="py-3.5 px-4 text-center text-xs font-mono font-medium text-slate-500">
 								{{ $budget->year }}
 							</td>
 
-							<td class="py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
+							<td data-label="Program / Kegiatan" class="py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
 								<div class="text-xs font-bold text-primary-700 leading-tight mb-1">{{ $budget->program }}</div>
 								<div class="text-[11px] text-slate-500 leading-relaxed">{{ $budget->activity }}</div>
 							</td>
 
-							<td class="py-3.5 px-4 whitespace-nowrap">
+							<td data-label="Kode Rekening" class="py-3.5 px-4 whitespace-nowrap">
 								<span
 									class="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-mono font-medium text-slate-600 border border-slate-200/60">
 									{{ $budget->account_code }}
 								</span>
 							</td>
 
-							<td class="py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
+							<td data-label="Uraian" class="py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
 								<div class="text-sm font-medium text-slate-700 leading-normal">{{ $budget->description }}</div>
 							</td>
 
-							<td class="py-3.5 px-4 text-right font-mono text-sm font-semibold text-slate-900">
+							<td data-label="Pagu Total" class="py-3.5 px-4 text-right font-mono text-sm font-semibold text-slate-900">
 								Rp {{ number_format($budget->total_amount, 0, ',', '.') }}
 							</td>
 
-							<td class="py-3.5 px-4 text-right text-xs font-semibold">
+							<td data-label="Sisa Pagu" class="py-3.5 px-4 text-right text-xs font-semibold">
 								@if ($budget->balance < 0)
 									<span
 										class="inline-flex items-center rounded bg-rose-50 px-2 py-0.5 font-mono text-rose-700 ring-1 ring-inset ring-rose-600/10">
@@ -166,7 +166,7 @@
 								@endif
 							</td>
 
-							<td class="py-3.5 px-4 text-center">
+							<td data-label="Aksi" class="py-3.5 px-4 text-center">
 								<div class="flex items-center justify-center gap-1">
 									{{-- Detail --}}
 									<a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"

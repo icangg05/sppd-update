@@ -126,7 +126,7 @@
 	<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
 		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-clip">
-			<table class="w-full text-left table-fixed">
+			<table class="table-stack w-full text-left table-fixed">
 				<thead
 					class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm">
 					<tr>
@@ -165,7 +165,7 @@
 						{{-- Department group header row when department changes --}}
 						@if ($deptId !== $lastDeptId)
 							@php $lastDeptId = $deptId; @endphp
-							<tr class="bg-slate-50/80 border-y border-slate-100">
+							<tr class="stack-group bg-slate-50/80 border-y border-slate-100">
 								<td colspan="{{ $colCount }}" class="py-1.5 px-4">
 									<div class="flex items-center gap-2" style="padding-left: {{ $indent }}px">
 										@if ($depth > 0)
@@ -183,10 +183,10 @@
 						@endif
 
 						<tr class="hover:bg-slate-50/50 transition-colors" wire:key="user-{{ $user->id }}">
-							<td class="py-3 px-4 text-center text-xs text-slate-500">{{ $users->firstItem() + $i }}.</td>
+							<td class="stack-hide py-3 px-4 text-center text-xs text-slate-500">{{ $users->firstItem() + $i }}.</td>
 
 							{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
-							<td class="py-2.5 px-4">
+							<td data-label="Pegawai" class="py-2.5 px-4">
 								<div class="flex items-center gap-3" style="padding-left: {{ $indent }}px">
 									<span
 										class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-700 ring-1 ring-primary-100"
@@ -201,23 +201,23 @@
 							</td>
 
 							@if (auth()->user()->hasRole('super_admin'))
-								<td class="py-3 px-4 text-sm text-slate-600 wrap-break-word">{{ $user->department?->name ?? '-' }}</td>
+								<td data-label="Instansi" class="py-3 px-4 text-sm text-slate-600 wrap-break-word">{{ $user->department?->name ?? '-' }}</td>
 							@endif
 
 							@if ($isDprd)
-								<td class="py-3 px-4">
+								<td data-label="Jabatan DPRD" class="py-3 px-4">
 									<div class="text-[13px] text-slate-600 text-wrap">{{ $user->dprd_jabatan ?? '-' }}</div>
 								</td>
 
-								<td class="py-3 px-4">
+								<td data-label="Partai / Fraksi" class="py-3 px-4">
 									<div class="text-[13px] text-slate-600 text-wrap">{{ $user->partai ?? '-' }}</div>
 								</td>
 							@else
-								<td class="py-3 px-4">
+								<td data-label="Jabatan" class="py-3 px-4">
 									<div class="text-[13px] text-slate-600 text-wrap">{{ $user->position?->name ?? '-' }}</div>
 								</td>
 
-								<td class="py-3 px-4">
+								<td data-label="Pangkat / Gol." class="py-3 px-4">
 									@if ($user->rank)
 										<p class="text-[13px] text-slate-800">{{ $user->rank->name }}</p>
 										<p class="text-xs text-slate-500">{{ $user->rank->group }}</p>
@@ -227,15 +227,15 @@
 								</td>
 							@endif
 
-							<td class="py-3 px-4">
-								<div class="flex flex-nowrap gap-1">
+							<td data-label="Role" class="py-3 px-4">
+								<div class="flex flex-wrap gap-1">
 									@foreach ($user->roles as $role)
 										<x-ui.badge :color="$role->color ?? 'slate'" class="whitespace-nowrap">{{ $role->label }}</x-ui.badge>
 									@endforeach
 								</div>
 							</td>
 
-							<td class="py-3 px-4 text-center">
+							<td data-label="Status" class="py-3 px-4 text-center">
 								@if ($user->is_active)
 									<span
 										class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
@@ -249,7 +249,7 @@
 								@endif
 							</td>
 
-							<td class="py-3 px-4 text-right">
+							<td data-label="Aksi" class="py-3 px-4 text-right">
 								<div class="flex items-center justify-end gap-1">
 									{{-- Toggle Status --}}
 									<button type="button" wire:click="toggleActive({{ $user->id }})"

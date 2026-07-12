@@ -101,7 +101,7 @@
 
     {{-- Daftar Personel --}}
     <div class="dash-enter overflow-x-auto rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
-        <table class="w-full text-left border-collapse">
+        <table class="table-stack w-full text-left border-collapse">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <th class="py-3 px-4 text-center w-12">No.</th>
@@ -117,8 +117,8 @@
                         $hasPanjar = $receipt && $receipt->amount > 0;
                     @endphp
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-3 px-4 text-center font-mono font-semibold text-slate-500">{{ $index + 1 }}.</td>
-                        <td class="py-3 px-4">
+                        <td class="stack-hide py-3 px-4 text-center font-mono font-semibold text-slate-500">{{ $index + 1 }}.</td>
+                        <td data-label="Pegawai" class="py-3 px-4">
                             <div class="flex items-center gap-2">
                                 @if ($person['label'] === 'Pelaksana')
                                     <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Pelaksana</span>
@@ -128,7 +128,7 @@
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4">
+                        <td data-label="Nominal Panjar" class="py-3 px-4">
                             <div class="flex flex-col gap-1">
                                 <div class="relative max-w-45" x-data="{ v: @entangle('amounts.'.$person['id']) }">
                                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-slate-400">Rp</span>
@@ -143,8 +143,8 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="py-3 px-4 text-right">
-                            <div class="flex items-center justify-end gap-1.5">
+                        <td data-label="Aksi Cetak" class="py-3 px-4 text-right">
+                            <div class="flex flex-wrap items-center justify-end gap-1.5">
                                 {{-- Cetak Panjar --}}
                                 @if ($hasPanjar && $hasBendahara)
                                     <a :href="'{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' + '&date=' + printDate"

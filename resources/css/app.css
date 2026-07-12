@@ -370,3 +370,75 @@
     @apply px-4 py-3 align-middle;
   }
 }
+
+/* ───── Tabel responsif (kartu di mobile, tanpa scroll horizontal) ─────
+ * Tambahkan class `table-stack` pada <table>, `data-label="Kolom"` pada tiap
+ * <td>, dan `stack-hide` pada sel yang tak perlu di mobile (mis. kolom No.).
+ * Di bawah md tiap baris berubah jadi kartu label→nilai. Inert di desktop. */
+@media (max-width: 767px) {
+  .table-stack thead {
+    display: none;
+  }
+
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tfoot {
+    display: block;
+    width: 100%;
+  }
+
+  .table-stack tbody tr,
+  .table-stack tfoot tr {
+    display: block;
+    white-space: normal;
+    @apply mb-3 rounded border border-slate-200 bg-white px-3.5 py-1 shadow-sm;
+  }
+
+  .table-stack tbody td,
+  .table-stack tfoot td {
+    display: flex;
+    white-space: normal;
+    @apply w-full items-center justify-between gap-3 border-0 py-1.5 text-right;
+  }
+
+  .table-stack td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    @apply text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400;
+  }
+
+  .table-stack td.stack-hide {
+    display: none;
+  }
+
+  /* Sel dengan konten panjang (daftar/rincian): label di atas, konten penuh di
+     bawah — bukan sejajar kiri-kanan yang menyempit. */
+  .table-stack td.stack-block {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .table-stack td.stack-block[data-label]::before {
+    margin-bottom: 0.375rem;
+  }
+
+  /* Baris pengelompok (mis. header departemen): strip label, bukan kartu. */
+  .table-stack tbody tr.stack-group {
+    margin-bottom: 0.25rem;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    @apply bg-slate-100;
+  }
+
+  .table-stack tbody tr.stack-group td {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* Baris empty-state (colspan): tetap terpusat, tanpa label. */
+  .table-stack tbody td[colspan] {
+    @apply justify-center text-center;
+  }
+}

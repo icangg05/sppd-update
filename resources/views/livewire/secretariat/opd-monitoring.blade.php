@@ -89,7 +89,7 @@
 
   {{-- Tabel Data --}}
   <div class="dash-enter table-wrapper">
-    <table class="table">
+    <table class="table table-stack">
       <thead>
         <tr>
           <th class="w-12 text-center">No.</th>
@@ -104,16 +104,16 @@
       <tbody>
         @forelse ($sppds as $i => $sppd)
           <tr wire:key="mon-{{ $sppd->id }}">
-            <td class="text-center text-xs font-semibold text-slate-500">
+            <td class="stack-hide text-center text-xs font-semibold text-slate-500">
               {{ $sppds->firstItem() + $i }}.
             </td>
 
-            <td>
+            <td data-label="Pelaksana">
               <p class="font-semibold text-slate-800">{{ $sppd->user->name ?? '-' }}</p>
               <p class="text-[11px] text-primary-600 mt-0.5 font-medium">{{ $sppd->user->department?->name ?? '-' }}</p>
             </td>
 
-            <td class="max-w-xs">
+            <td data-label="Maksud" class="max-w-xs">
               <p class="truncate font-medium text-slate-700" title="{{ $sppd->purpose }}">{{ $sppd->purpose }}</p>
               <p class="mt-0.5 truncate text-xs text-slate-500">
                 <i class="fa-solid fa-location-dot"></i>
@@ -121,16 +121,16 @@
               </p>
             </td>
 
-            <td class="whitespace-nowrap text-xs leading-normal">
+            <td data-label="Tanggal" class="whitespace-nowrap text-xs leading-normal">
               <p class="font-medium text-slate-700">{{ $sppd->start_date->translatedFormat('d M Y') }}</p>
               <p class="text-slate-500">s/d {{ $sppd->end_date->translatedFormat('d M Y') }}</p>
             </td>
 
-            <td class="whitespace-nowrap">
+            <td data-label="Status" class="whitespace-nowrap">
               <x-ui.badge :status="$sppd->status->value" class="px-2.5 py-1 text-xs">{{ $sppd->status->label() }}</x-ui.badge>
             </td>
 
-            <td class="whitespace-nowrap text-right">
+            <td data-label="Aksi" class="whitespace-nowrap text-right">
               <div class="inline-flex items-center gap-1.5">
                 @if ($tab === 'no_report')
                   <a href="{{ route('sppd.report-input', $sppd) }}" wire:navigate

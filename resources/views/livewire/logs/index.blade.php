@@ -57,7 +57,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,event">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-10 text-center">No.</th>
@@ -180,14 +180,14 @@
               }
             @endphp
             <tr wire:key="log-{{ $activity->id }}" class="hover:bg-slate-50/50 transition-colors align-top">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">{{ $activities->firstItem() + $i }}.</td>
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">{{ $activities->firstItem() + $i }}.</td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Waktu" class="py-2.5 px-4">
                 <div class="font-semibold text-slate-800">{{ $activity->created_at->translatedFormat('d M Y') }}</div>
                 <div class="text-[11px] text-slate-500">{{ $activity->created_at->format('H:i:s') }} &middot; {{ $activity->created_at->diffForHumans() }}</div>
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Pengguna" class="py-2.5 px-4">
                 @if ($activity->causer)
                   <div class="font-semibold text-slate-800">{{ $activity->causer->name }}</div>
                   <div class="text-[11px] text-slate-500">{{ $activity->causer->username ?? '' }}</div>
@@ -196,7 +196,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Event" class="py-2.5 px-4 text-center">
                 @if ($activity->event)
                   <x-ui.badge :color="$eventColor" class="uppercase tracking-wide">{{ $displayEvent }}</x-ui.badge>
                 @else
@@ -204,7 +204,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 whitespace-normal max-w-md">
+              <td data-label="Deskripsi" class="py-2.5 px-4 whitespace-normal max-w-md">
                 <span class="text-slate-700">{!! $descHtml !!}</span>
 
                 @php
@@ -266,7 +266,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Objek" class="py-2.5 px-4">
                 @if ($subjectName)
                   <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-700">{{ $subjectName }}</code>
                   @if ($activity->subject_id)
@@ -281,7 +281,7 @@
               </td>
 
               @if ($isTte)
-                <td class="py-2.5 px-4 text-center">
+                <td data-label="Aksi" class="py-2.5 px-4 text-center">
                   @if ($activity->subject && $activity->subject_type === \App\Models\SppdRequest::class)
                     <a href="{{ route('sppd.show', $activity->subject_id) }}" target="_blank" rel="noopener noreferrer"
                       class="inline-flex items-center justify-center rounded border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-700 transition hover:bg-emerald-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"

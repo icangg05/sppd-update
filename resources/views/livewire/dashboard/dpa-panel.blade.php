@@ -15,7 +15,7 @@
     </div>
 
     {{-- Tinggi dibatasi (~5 baris terlihat), sisanya bisa di-scroll. --}}
-    <div class="max-h-104 divide-y divide-slate-100 overflow-y-auto">
+    <div class="max-h-104 divide-y divide-slate-200 overflow-y-auto">
       @forelse ($items as $item)
         <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 flex-1 items-start gap-3">
@@ -77,7 +77,7 @@
 
   {{-- Modal rincian (konten di-query lazy saat tombol diklik) --}}
   <x-ui.modal show="$wire.showDetail" maxWidth="max-w-2xl" icon="fa-solid fa-magnifying-glass-chart"
-    title="Rincian Realisasi" :description="$detail['name'] ?? null">
+    title="Rincian Realisasi" :description="$detail['name'] ?? null" :closeable="false">
 
     @if ($detail)
       {{-- Ringkasan item --}}

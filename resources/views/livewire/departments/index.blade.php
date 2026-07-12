@@ -68,7 +68,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm"
     wire:loading.class="opacity-60" wire:target="search,type">
     <div class="overflow-x-clip">
-      <table class="w-full text-left border-collapse">
+      <table class="table-stack w-full text-left border-collapse">
         <thead
           class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm [&_th]:pt-5 [&_th]:pb-3">
           <tr>
@@ -93,11 +93,11 @@
             @endphp
             <tr wire:key="dept-{{ $dept->id }}"
               class="transition-colors {{ $isOwnDept ? 'bg-primary-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $departments->firstItem() + $i }}
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Unit Kerja" class="py-2.5 px-4">
                 <div class="flex items-center">
                   {{-- Indentasi Pohon Struktur --}}
                   @if(isset($dept->tree_level) && $dept->tree_level > 0)
@@ -119,36 +119,36 @@
                 </div>
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Kode Unit" class="py-2.5 px-4">
                 <span
                   class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 border border-slate-200/50">
                   {{ $dept->code ?? '—' }}
                 </span>
               </td>
 
-              <td class="py-2.5 px-4 text-slate-600 font-medium">
+              <td data-label="Pimpinan" class="py-2.5 px-4 text-slate-600 font-medium">
                 {{ $dept->head?->name ?? '—' }}
               </td>
 
               @if($isSuperAdmin)
-                <td class="py-2.5 px-4">
+                <td data-label="Tipe" class="py-2.5 px-4">
                   <span
                     class="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">
                     {{ $dept->type->label() }}
                   </span>
                 </td>
-                <td class="py-2.5 px-4 text-slate-500 text-[11px] truncate max-w-40">
+                <td data-label="Unit Induk" class="py-2.5 px-4 text-slate-500 text-[11px] truncate max-w-40">
                   {{ $dept->parent?->name ?? '—' }}
                 </td>
-                <td class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
+                <td data-label="Pegawai" class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
                   {{ $dept->users_count }}
                 </td>
-                <td class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
+                <td data-label="Sub-Unit" class="py-2.5 px-3 text-center font-mono font-semibold text-slate-700">
                   {{ $dept->children_count }}
                 </td>
               @endif
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Aksi" class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1">
                   {{-- Tombol Detail --}}
                   <a wire:navigate href="{{ route('master.departments.show', $dept->id) }}"

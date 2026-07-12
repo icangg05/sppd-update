@@ -57,7 +57,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,provinceFilter">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No.</th>
@@ -69,12 +69,12 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($regencies as $i => $regency)
             <tr wire:key="regency-{{ $regency->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $regencies->firstItem() + $i }}.
               </td>
-              <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $regency->name }}</td>
-              <td class="py-2.5 px-4 text-slate-600 font-medium">{{ $regency->province?->name ?? '—' }}</td>
-              <td class="py-2.5 px-4">
+              <td data-label="Nama Kab/Kota" class="py-2.5 px-4 font-semibold text-slate-900">{{ $regency->name }}</td>
+              <td data-label="Provinsi" class="py-2.5 px-4 text-slate-600 font-medium">{{ $regency->province?->name ?? '—' }}</td>
+              <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   <button type="button" wire:click="openEditModal({{ $regency->id }})"
                     class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"

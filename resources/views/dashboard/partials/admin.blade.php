@@ -6,7 +6,7 @@
     $kpis = [
       ['label' => 'Total SPPD', 'value' => $stats['total'], 'icon' => 'fa-file-lines', 'tone' => 'blue'],
       ['label' => 'Dalam Proses', 'value' => $stats['in_progress'], 'icon' => 'fa-hourglass-half', 'tone' => 'amber'],
-      ['label' => 'Selesai', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'emerald'],
+      ['label' => 'Selesai', 'value' => $stats['approved'] + $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'emerald'],
       ['label' => 'Ditolak', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'rose'],
     ];
   @endphp
@@ -21,13 +21,12 @@
     <div class="flex items-center justify-between border-b border-slate-100 p-4">
       <div>
         <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="fa-solid fa-chart-line text-blue-500"></i> Tren Pengajuan SPPD
+          <i class="fa-solid fa-chart-line text-emerald-500"></i> Tren Perjalanan Disetujui
         </h3>
-        <p class="mt-0.5 text-xs text-slate-500">Masuk vs selesai 12 bulan terakhir</p>
+        <p class="mt-0.5 text-xs text-slate-500">Per minggu, 12 minggu terakhir</p>
       </div>
       <div class="flex gap-4 text-xs font-medium text-slate-600">
-        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-blue-500"></span> Masuk</div>
-        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-emerald-500"></span> Selesai</div>
+        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-emerald-500"></span> Disetujui</div>
       </div>
     </div>
     <div class="relative h-60 w-full p-4"><canvas id="trendChart"></canvas></div>
@@ -126,28 +125,24 @@
 
       const trendCtx = document.getElementById('trendChart');
       if (trendCtx) {
-        const trendData = @json($monthlyTrend);
+        const trendData = @json($weeklyApproved);
         const c = trendCtx.getContext('2d');
-        const gBlue = c.createLinearGradient(0, 0, 0, 200);
-        gBlue.addColorStop(0, 'rgba(59,130,246,0.2)');
-        gBlue.addColorStop(1, 'rgba(59,130,246,0)');
         const gGreen = c.createLinearGradient(0, 0, 0, 200);
         gGreen.addColorStop(0, 'rgba(16,185,129,0.2)');
         gGreen.addColorStop(1, 'rgba(16,185,129,0)');
         new Chart(trendCtx, {
           type: 'line',
           data: {
-            labels: trendData.map(d => d.month),
+            labels: trendData.map(d => d.week),
             datasets: [
-              { label: 'Masuk', data: trendData.map(d => d.masuk), borderColor: '#3b82f6', backgroundColor: gBlue, fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5 },
-              { label: 'Selesai', data: trendData.map(d => d.selesai), borderColor: '#10b981', backgroundColor: gGreen, fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5 },
+              { label: 'Disetujui', data: trendData.map(d => d.count), borderColor: '#10b981', backgroundColor: gGreen, fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5 },
             ]
           },
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e293b', cornerRadius: 4, padding: 10 } },
             interaction: { mode: 'index', intersect: false },
-            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } } }
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' }, border: { display: false } } }
           }
         });
       }

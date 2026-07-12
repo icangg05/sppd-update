@@ -191,25 +191,21 @@ class DashboardController extends Controller
     $base = $this->scopedSppd($user);
     $stats = $this->statusCounts($base);
 
-    // Tren 12 bulan (ter-scope)
-    $monthlyTrend = [];
+    // Tren perjalanan disetujui per minggu (12 minggu terakhir, ter-scope).
+    // Disetujui = status APPROVED atau COMPLETED (perjalanan yang sudah di-acc).
+    $weeklyApproved = [];
     for ($i = 11; $i >= 0; $i--) {
-      $date = now()->subMonths($i);
-      $masuk = (clone $base)
-        ->whereYear('created_at', $date->year)
-        ->whereMonth('created_at', $date->month)
+      $start = now()->startOfWeek()->subWeeks($i);
+      $end = (clone $start)->endOfWeek();
+      $count = (clone $base)
+        ->whereIn('status', [SppdStatus::APPROVED, SppdStatus::COMPLETED])
+        ->whereBetween('created_at', [$start, $end])
         ->count();
-      $selesai = (clone $base)
-        ->whereYear('created_at', $date->year)
-        ->whereMonth('created_at', $date->month)
-        ->where('status', SppdStatus::COMPLETED)
-        ->count();
-      $monthlyTrend[] = ['month' => $date->format('M'), 'masuk' => $masuk, 'selesai' => $selesai];
+      $weeklyApproved[] = ['week' => $start->translatedFormat('d M'), 'count' => $count];
     }
 
     $statusDistribution = [
-      ['label' => 'Selesai',   'count' => $stats['completed'],   'color' => '#10b981'],
-      ['label' => 'Disetujui', 'count' => $stats['approved'],    'color' => '#22c55e'],
+      ['label' => 'Selesai',   'count' => $stats['approved'] + $stats['completed'], 'color' => '#10b981'],
       ['label' => 'Di Proses', 'count' => $stats['in_progress'], 'color' => '#3b82f6'],
       ['label' => 'Ditolak',   'count' => $stats['rejected'],    'color' => '#ef4444'],
     ];
@@ -241,7 +237,7 @@ class DashboardController extends Controller
       ->take(6)
       ->values();
 
-    return compact('stats', 'monthlyTrend', 'statusDistribution', 'recentSppd', 'pendingApprovals', 'topByUsage');
+    return compact('stats', 'weeklyApproved', 'statusDistribution', 'recentSppd', 'pendingApprovals', 'topByUsage');
   }
 
   private function leadershipData(User $user): array

@@ -57,7 +57,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,groupFilter">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No.</th>
@@ -70,18 +70,18 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($ranks as $i => $rank)
             <tr wire:key="rank-{{ $rank->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $ranks->firstItem() + $i }}.
               </td>
-              <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $rank->name }}</td>
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Nama Pangkat" class="py-2.5 px-4 font-semibold text-slate-900">{{ $rank->name }}</td>
+              <td data-label="Golongan" class="py-2.5 px-4 text-center">
                 @if($rank->group)
                   <x-ui.badge color="indigo">Golongan {{ $rank->group }}</x-ui.badge>
                 @else
                   <span class="text-slate-300">—</span>
                 @endif
               </td>
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Pegawai" class="py-2.5 px-4 text-center">
                 @if($rank->users_count > 0)
                   <a href="{{ route('master.users.index', ['rank_id' => $rank->hashid()]) }}" wire:navigate
                     class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
@@ -92,7 +92,7 @@
                   <span class="text-slate-500 font-medium">0</span>
                 @endif
               </td>
-              <td class="py-2.5 px-4">
+              <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   <button type="button" wire:click="openEditModal({{ $rank->id }})"
                     class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"

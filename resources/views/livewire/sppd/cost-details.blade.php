@@ -122,7 +122,7 @@
 
     {{-- Tabel --}}
     <div class="dash-enter overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
-        <table class="w-full text-left border-collapse text-sm">
+        <table class="table-stack w-full text-left border-collapse text-sm">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <th class="py-3 px-4 text-center w-12 font-bold">No.</th>
@@ -139,8 +139,8 @@
                         $total = $costs->sum('total');
                     @endphp
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="py-3 px-4 text-center font-semibold text-slate-500">{{ $index + 1 }}.</td>
-                        <td class="py-3 px-4">
+                        <td class="stack-hide py-3 px-4 text-center font-semibold text-slate-500">{{ $index + 1 }}.</td>
+                        <td data-label="Pegawai" class="stack-block py-3 px-4">
                             <div class="flex items-center flex-wrap gap-2">
                                 @if ($person['label'] === 'Pelaksana')
                                     <span
@@ -156,7 +156,7 @@
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>
                         </td>
-                        <td class="py-3 px-4">
+                        <td data-label="Rincian Biaya" class="stack-block py-3 px-4">
                             <div class="space-y-1.5 max-w-xl">
                                 @forelse ($costs as $cost)
                                     <div
@@ -175,7 +175,7 @@
                                                         {{ number_format($cost->total, 0, ',', '.') }}</span></span>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div class="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                                             @if ($cost->receipt_photo)
                                                 <a href="{{ asset('storage/' . $cost->receipt_photo) }}" target="_blank"
                                                     class="text-emerald-600 p-1 cursor-pointer" title="Lihat Bukti/Nota">
@@ -202,12 +202,12 @@
                                 @endforelse
                             </div>
                         </td>
-                        <td class="py-3 px-4 text-right">
+                        <td data-label="Total Biaya" class="py-3 px-4 text-right">
                             <span class="font-bold {{ $total > 0 ? 'text-emerald-700 font-mono' : 'text-slate-400' }}">
                                 Rp {{ number_format($total, 0, ',', '.') }}
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-right">
+                        <td data-label="Aksi" class="py-3 px-4 text-right">
                             <div class="flex items-center justify-end gap-1.5">
                                 @if ($canManage)
                                     <button type="button"
@@ -235,13 +235,13 @@
             </tbody>
             <tfoot>
                 <tr class="border-t-2 border-slate-200 bg-slate-50/80">
-                    <td colspan="3" class="py-3 px-4 text-right text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <td colspan="3" class="stack-hide py-3 px-4 text-right text-xs font-bold uppercase tracking-wide text-slate-500">
                         <i class="fa-solid fa-sack-dollar mr-1.5 text-emerald-600"></i> Total Keseluruhan
                     </td>
-                    <td class="py-3 px-4 text-right font-mono text-sm font-bold text-emerald-700">
+                    <td data-label="Total Keseluruhan" class="py-3 px-4 text-right font-mono text-sm font-bold text-emerald-700">
                         Rp {{ number_format($grandTotal, 0, ',', '.') }}
                     </td>
-                    <td class="py-3 px-4"></td>
+                    <td class="stack-hide py-3 px-4"></td>
                 </tr>
             </tfoot>
         </table>

@@ -45,7 +45,7 @@
 
   {{-- Tabel Data --}}
   <div class="dash-enter table-wrapper">
-    <table class="table">
+    <table class="table table-stack">
       <thead>
         <tr>
           <th class="w-12 text-center">No.</th>
@@ -62,16 +62,16 @@
         @forelse ($approvals as $i => $appr)
           @php $sppd = $appr->sppdRequest; @endphp
           <tr wire:key="appr-{{ $appr->id }}">
-            <td class="text-center text-xs font-semibold text-slate-500">
+            <td class="stack-hide text-center text-xs font-semibold text-slate-500">
               {{ $approvals->firstItem() + $i }}.
             </td>
 
-            <td>
+            <td data-label="Pelaksana">
               <p class="font-semibold text-slate-800">{{ $sppd?->user?->name ?? '-' }}</p>
               <p class="text-[11px] text-primary-600 mt-0.5 font-medium">{{ $sppd?->user?->department?->name ?? '-' }}</p>
             </td>
 
-            <td class="max-w-xs">
+            <td data-label="Maksud" class="max-w-xs">
               <p class="truncate font-medium text-slate-700" title="{{ $sppd?->purpose }}">
                 {{ $sppd?->purpose ?? '-' }}
               </p>
@@ -81,11 +81,11 @@
               </p>
             </td>
 
-            <td class="whitespace-nowrap">
+            <td data-label="Keputusan" class="whitespace-nowrap">
               <x-ui.badge :color="$appr->status->color()">{{ $appr->status->label() }}</x-ui.badge>
             </td>
 
-            <td class="whitespace-nowrap">
+            <td data-label="Tanda Tangan" class="whitespace-nowrap">
               @if ($appr->signs_spt || $appr->signs_sppd)
                 <div class="flex flex-wrap gap-1">
                   @if ($appr->signs_spt)
@@ -104,7 +104,7 @@
               @endif
             </td>
 
-            <td class="whitespace-nowrap text-xs leading-normal">
+            <td data-label="Waktu" class="whitespace-nowrap text-xs leading-normal">
               @if ($appr->acted_at)
                 <p class="font-medium text-slate-700">{{ $appr->acted_at->translatedFormat('d F Y') }}</p>
                 <p class="text-slate-500">{{ $appr->acted_at->format('H:i') }}</p>
@@ -113,7 +113,7 @@
               @endif
             </td>
 
-            <td class="whitespace-nowrap text-right">
+            <td data-label="Aksi" class="whitespace-nowrap text-right">
               @if ($sppd)
                 <a href="{{ route('sppd.show', $sppd) }}" wire:navigate
                   class="inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200">

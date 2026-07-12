@@ -91,7 +91,7 @@
 
     {{-- Tabel pengeluaran per pegawai --}}
     <div class="dash-enter overflow-x-auto rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
-        <table class="w-full border-collapse text-left text-sm">
+        <table class="table-stack w-full border-collapse text-left text-sm">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <th class="w-12 px-4 py-3 text-center font-bold">No.</th>
@@ -108,8 +108,8 @@
                         $total = $expenses->sum('amount');
                     @endphp
                     <tr class="transition-colors hover:bg-slate-50">
-                        <td class="px-4 py-3 text-center font-semibold text-slate-400 tabular-nums">{{ $index + 1 }}</td>
-                        <td class="px-4 py-3">
+                        <td class="stack-hide px-4 py-3 text-center font-semibold text-slate-400 tabular-nums">{{ $index + 1 }}</td>
+                        <td data-label="Pegawai" class="stack-block px-4 py-3">
                             <div class="flex items-center gap-2">
                                 @if ($person['label'] === 'Pelaksana')
                                     <span class="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Pelaksana</span>
@@ -119,7 +119,7 @@
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3">
+                        <td data-label="Pengeluaran Riil" class="stack-block px-4 py-3">
                             <div class="max-w-xl space-y-1.5">
                                 @forelse ($expenses as $exp)
                                     <div class="group flex items-center justify-between gap-2 rounded border border-sky-200 bg-sky-50 px-2.5 py-1.5 transition-colors hover:bg-sky-100">
@@ -128,7 +128,7 @@
                                             <span class="font-mono text-xs tabular-nums text-slate-600 font-semibold">| Rp {{ number_format($exp->amount, 0, ',', '.') }}</span>
                                         </div>
                                         @if ($canManage)
-                                            <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                            <div class="flex items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                                                 <button type="button" wire:click="openEdit({{ $exp->id }})"
                                                     class="cursor-pointer rounded p-0.5 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-800" title="Edit">
                                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
@@ -145,12 +145,12 @@
                                 @endforelse
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-right">
+                        <td data-label="Total" class="px-4 py-3 text-right">
                             <span class="font-mono text-sm font-bold tabular-nums {{ $total > 0 ? 'text-emerald-700' : 'text-slate-400' }}">
                                 Rp {{ number_format($total, 0, ',', '.') }}
                             </span>
                         </td>
-                        <td class="px-4 py-3">
+                        <td data-label="Aksi" class="px-4 py-3">
                             <div class="flex items-center justify-end gap-1.5">
                                 @if ($canManage)
                                     <button type="button"
@@ -180,13 +180,13 @@
             </tbody>
             <tfoot>
                 <tr class="border-t-2 border-slate-200 bg-slate-50/80">
-                    <td colspan="3" class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <td colspan="3" class="stack-hide px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">
                         <i class="fa-solid fa-coins mr-1.5 text-emerald-600"></i> Total Keseluruhan
                     </td>
-                    <td class="px-4 py-3 text-right font-mono text-sm font-bold text-emerald-700">
+                    <td data-label="Total Keseluruhan" class="px-4 py-3 text-right font-mono text-sm font-bold text-emerald-700">
                         Rp {{ number_format($grandTotal, 0, ',', '.') }}
                     </td>
-                    <td class="px-4 py-3"></td>
+                    <td class="stack-hide px-4 py-3"></td>
                 </tr>
             </tfoot>
         </table>

@@ -16,10 +16,10 @@
     </a>
   </div>
 
-  <div class="flex max-h-72 flex-col gap-2 overflow-y-auto p-3">
+  <div class="flex max-h-72 flex-col divide-y divide-slate-200 overflow-y-auto">
     @forelse ($items as $item)
       <a wire:navigate href="{{ route('sppd.show', $item) }}"
-        class="flex flex-col gap-2 rounded border border-transparent p-2.5 transition hover:border-slate-100 hover:bg-slate-50 focus:outline-none focus-visible:border-primary-200 focus-visible:bg-primary-50/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
+        class="flex flex-col gap-2 p-3 transition hover:bg-sky-50 focus:outline-none focus-visible:bg-primary-50/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
         <div class="flex items-start justify-between gap-3">
           <p class="line-clamp-2 text-sm font-medium leading-snug text-slate-800 lg:line-clamp-1">{{ $item->purpose }}</p>
           <x-ui.badge :color="$item->status->color()" class="shrink-0 uppercase">{{ $item->status->label() }}</x-ui.badge>

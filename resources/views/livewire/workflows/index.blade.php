@@ -46,7 +46,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No.</th>
@@ -61,15 +61,15 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($workflows as $i => $w)
             <tr wire:key="workflow-{{ $w->id }}" class="hover:bg-slate-50/50 transition-colors">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $workflows->firstItem() + $i }}.
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Nama Workflow" class="py-2.5 px-4">
                 <span class="font-bold text-slate-900 tracking-wide whitespace-pre-wrap">{{ $w->name }}</span>
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Instansi & Jabatan" class="py-2.5 px-4">
                 <div class="space-y-1 text-[11px]">
                   <span class="block text-slate-700 font-medium">
                     <i class="fa-solid fa-building text-slate-500 mr-1 text-[10px]"></i>Tipe Instansi:
@@ -104,7 +104,7 @@
                 </div>
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Tujuan Wilayah" class="py-2.5 px-4">
                 @if (is_array($w->destination) && count($w->destination) > 0)
                   <div class="flex flex-wrap gap-1">
                     @foreach ($w->destination as $d)
@@ -122,7 +122,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Alur Persetujuan" class="py-2.5 px-4">
                 <div class="flex flex-wrap gap-1.5 items-center">
                   @foreach ($w->steps as $idx => $step)
                     @php
@@ -157,7 +157,7 @@
                 </div>
               </td>
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Status" class="py-2.5 px-4 text-center">
                 @if ($w->is_active)
                   <span
                     class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 uppercase">
@@ -171,7 +171,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Aksi" class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1">
                   <a wire:navigate href="{{ route('master.workflows.edit', $w->id) }}"
                     class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"

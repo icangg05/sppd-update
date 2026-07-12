@@ -47,7 +47,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-10 text-center">No.</th>
@@ -61,20 +61,20 @@
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse ($roles as $i => $role)
             <tr wire:key="role-{{ $role->id }}" class="hover:bg-slate-50/50 transition-colors">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">{{ $roles->firstItem() + $i }}.</td>
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">{{ $roles->firstItem() + $i }}.</td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Nama Role" class="py-2.5 px-4">
                 <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-700">{{ $role->name }}</code>
                 @if ($role->name === 'super_admin')
                   <span class="ml-1 inline-flex items-center rounded bg-amber-100 px-1 py-0.5 text-[9px] font-black text-amber-700 uppercase">Protected</span>
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 font-semibold text-slate-800">
+              <td data-label="Label" class="py-2.5 px-4 font-semibold text-slate-800">
                 {{ $role->label ?? '-' }}
               </td>
 
-              <td class="py-2.5 px-4">
+              <td data-label="Permissions" class="py-2.5 px-4">
                 @if ($role->permissions->count() > 0)
                   <div class="flex flex-wrap gap-1">
                     @foreach ($role->permissions->take(5) as $perm)
@@ -93,7 +93,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Pengguna" class="py-2.5 px-4 text-center">
                 @if ($role->users_count > 0)
                   <a href="{{ route('master.users.index', array_filter(['role' => $role->name, 'type' => in_array($role->name, ['anggota_dprd', 'pimpinan_dprd']) ? 'dprd' : ''])) }}" wire:navigate
                     class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-600/20 transition hover:bg-violet-100"
@@ -105,7 +105,7 @@
                 @endif
               </td>
 
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Aksi" class="py-2.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1">
                   <a wire:navigate href="{{ route('master.roles.edit', $role->id) }}"
                     class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"

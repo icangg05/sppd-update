@@ -57,7 +57,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
     wire:loading.class="opacity-60" wire:target="search,scopeFilter">
     <div class="overflow-x-auto">
-      <table class="w-full text-left whitespace-nowrap border-collapse">
+      <table class="table-stack w-full text-left whitespace-nowrap border-collapse">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
           <tr>
             <th class="py-2.5 px-3 w-12 text-center">No.</th>
@@ -79,17 +79,17 @@
           @forelse($positions as $i => $position)
             @php $scopeValue = ($position->uniqueness_scope ?? \App\Enums\PositionScope::NONE)->value; @endphp
             <tr wire:key="position-{{ $position->id }}" class="transition-colors hover:bg-slate-50/50">
-              <td class="py-2.5 px-3 text-center text-slate-500 font-medium">
+              <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $positions->firstItem() + $i }}.
               </td>
-              <td class="py-2.5 px-4 font-semibold text-slate-900">{{ $position->name }}</td>
-              <td class="py-2.5 px-4 text-center text-slate-500 font-medium">{{ $position->level }}</td>
-              <td class="py-2.5 px-4">
+              <td data-label="Nama Jabatan" class="py-2.5 px-4 font-semibold text-slate-900">{{ $position->name }}</td>
+              <td data-label="Level" class="py-2.5 px-4 text-center text-slate-500 font-medium">{{ $position->level }}</td>
+              <td data-label="Cakupan" class="py-2.5 px-4">
                 <x-ui.badge :color="$scopeColors[$scopeValue] ?? 'slate'">
                   {{ ($position->uniqueness_scope ?? \App\Enums\PositionScope::NONE)->label() }}
                 </x-ui.badge>
               </td>
-              <td class="py-2.5 px-4 text-center">
+              <td data-label="Pemangku" class="py-2.5 px-4 text-center">
                 @if($position->users_count > 0)
                   <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
                     class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
@@ -100,7 +100,7 @@
                   <span class="text-slate-500 font-medium">0</span>
                 @endif
               </td>
-              <td class="py-2.5 px-4">
+              <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   <button type="button" wire:click="openEditModal({{ $position->id }})"
                     class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
