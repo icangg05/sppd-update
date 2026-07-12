@@ -486,7 +486,7 @@
 						<div class="space-y-1">
 							@php
 								$jabatanOptions = collect($dprdJabatans)
-									->map(fn($jabatan) => ['value' => $jabatan->value, 'label' => $jabatan->label()])
+									->map(fn($jabatan) => ['value' => $jabatan->value, 'label' => $jabatan->label(true)])
 									->all();
 							@endphp
 							<x-form.searchable-select wire:model.live="dprd_jabatan" name="dprd_jabatan" label="Jabatan DPRD"

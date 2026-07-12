@@ -3,6 +3,7 @@
 namespace App\Livewire\Sppd;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\EmployeeType;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
 use App\Models\Province;
@@ -586,6 +587,18 @@ class SppdCreateDetails extends Component
       } else {
         $userQuery->where('department_id', Auth::user()->department_id);
       }
+    }
+
+    // Cocokkan status DPRD pengikut dengan pelaksana: pelaksana anggota DPRD
+    // hanya boleh mengikutsertakan sesama anggota DPRD, dan sebaliknya.
+    $dprdMember = function ($q) {
+      $q->where('employee_type', EmployeeType::DPRD)
+        ->orWhereHas('roles', fn ($r) => $r->whereIn('name', ['anggota_dprd', 'pimpinan_dprd']));
+    };
+    if ($pelaksana->isDprdMember()) {
+      $userQuery->where($dprdMember);
+    } else {
+      $userQuery->whereNot($dprdMember);
     }
 
     // Tampilkan default 100 pegawai; selebihnya dicari lewat pencarian. Selalu

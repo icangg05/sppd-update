@@ -179,7 +179,7 @@
 						<div class="sm:col-span-2 space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Jabatan</label>
 							<p class="text-sm font-semibold text-slate-800">
-								<i class="fa-solid fa-briefcase mr-1.5 text-slate-500"></i>{{ $user->position?->name ?? '-' }}
+								<i class="fa-solid fa-briefcase mr-1.5 text-slate-500"></i>{{ $user->isDprdMember() ? (\App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? ($user->dprd_jabatan ?? '-')) : ($user->position?->name ?? '-') }}
 							</p>
 						</div>
 

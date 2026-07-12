@@ -118,21 +118,11 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td style="text-align: center;">1.</td>
-							<td>{{ $sppd->user->name }}</td>
-							<td style="text-transform: uppercase;">
-								{{ $sppd->user->isDprdMember() ? $sppd->user->dprd_jabatan ?? 'ANGGOTA DPRD' : $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-') }}
-							</td>
-							<td></td>
-						</tr>
-						@foreach ($sppd->followers as $index => $follower)
+						@foreach ($participants as $index => $participant)
 							<tr>
-								<td style="text-align: center;">{{ $index + 2 }}.</td>
-								<td>{{ $follower->user->name }}</td>
-								<td style="text-transform: uppercase;">
-									{{ $follower->user->isDprdMember() ? $follower->user->dprd_jabatan ?? 'ANGGOTA DPRD' : $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')) }}
-								</td>
+								<td style="text-align: center;">{{ $index + 1 }}.</td>
+								<td>{{ $participant['name'] }}</td>
+								<td style="text-transform: uppercase;">{{ $participant['jabatan'] }}</td>
 								<td></td>
 							</tr>
 						@endforeach

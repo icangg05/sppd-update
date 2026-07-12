@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\DprdJabatan;
 use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Enums\DepartmentType;
 use App\Enums\EmployeeType;
@@ -463,7 +464,29 @@ class SppdController extends Controller
 
     $viewName = $isDprdMember ? 'exports.spt_dprd' : 'exports.spt';
 
-    return Pdf::loadView($viewName, compact('sppd', 'pdfData'))
+    // SPT DPRD: peserta (pelaksana + pengikut) diurutkan berdasarkan jabatan
+    // DPRD dari tertinggi ke terendah. Non-DPRD/ tanpa jabatan ditaruh di akhir.
+    $participants = collect();
+    if ($isDprdMember) {
+      $makeRow = function (User $u, ?string $travelPosition = null): array {
+        $jabatan = $u->isDprdMember()
+          ? (DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->label(true) ?? $u->dprd_jabatan ?? 'ANGGOTA DPRD')
+          : ($travelPosition ?? ($u->position->name ?? ($u->roles->first()->name ?? '-')));
+
+        return [
+          'name' => $u->name,
+          'jabatan' => $jabatan,
+          'level' => DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->level() ?? PHP_INT_MAX,
+        ];
+      };
+
+      $participants = collect([$makeRow($sppd->user)])
+        ->merge($sppd->followers->map(fn ($f) => $makeRow($f->user, $f->travel_position)))
+        ->sortBy('level')
+        ->values();
+    }
+
+    return Pdf::loadView($viewName, compact('sppd', 'pdfData', 'participants'))
       ->setPaper('f4', 'portrait')
       ->stream('SPT-' . Str::slug($sppd->document_number ?: $sppd->id) . '.pdf');
   }

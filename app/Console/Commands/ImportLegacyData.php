@@ -440,7 +440,7 @@ class ImportLegacyData extends Command
         ]);
 
         // Pimpinan = Ketua/Wakil Ketua DPRD; selain itu anggota biasa.
-        $roleId = in_array($jabatan, [DprdJabatan::KETUA, DprdJabatan::WAKIL_1, DprdJabatan::WAKIL_2, DprdJabatan::WAKIL_3], true)
+        $roleId = in_array($jabatan, [DprdJabatan::KETUA, DprdJabatan::WAKIL_1, DprdJabatan::WAKIL_2], true)
           ? $rolePimpinan
           : $roleAnggota;
         if ($roleId) {
@@ -470,21 +470,37 @@ class ImportLegacyData extends Command
   {
     $s = $this->normalize($raw); // huruf besar, alfanumerik+spasi
 
-    // Pimpinan DPRD (mengandung "DPRD" agar tidak tertukar dgn "wakil ketua komisi").
+    // Pimpinan DPRD (mengandung "DPRD" agar tidak tertukar dgn pimpinan komisi).
     if (str_contains($s, 'KETUA DPRD')) return DprdJabatan::KETUA;
     if (str_contains($s, 'DPRD')) {
-      if (str_contains($s, 'WAKIL KETUA III')) return DprdJabatan::WAKIL_3;
       if (str_contains($s, 'WAKIL KETUA II')) return DprdJabatan::WAKIL_2;
       if (str_contains($s, 'WAKIL KETUA I')) return DprdJabatan::WAKIL_1;
     }
 
-    // Keanggotaan komisi (anggota/ketua/wakil/sekretaris komisi). Cek angka terbesar dulu.
-    if (preg_match('/KOMISI?\s*IV\b/', $s) || str_contains($s, 'KOMISI 4')) return DprdJabatan::KOMISI_4;
-    if (preg_match('/KOMISI?\s*III\b/', $s) || str_contains($s, 'KOMISI 3')) return DprdJabatan::KOMISI_3;
-    if (preg_match('/KOMISI?\s*II\b/', $s) || str_contains($s, 'KOMISI 2')) return DprdJabatan::KOMISI_2;
-    if (preg_match('/KOMISI?\s*I\b/', $s) || str_contains($s, 'KOMISI 1')) return DprdJabatan::KOMISI_1;
+    // Keanggotaan komisi: tentukan nomor komisi (I/II/III, angka terbesar dulu),
+    // lalu tingkat jabatannya (Wakil > Sekretaris > Ketua > Anggota).
+    $k = match (true) {
+      (bool) (preg_match('/KOMISI?\s*III\b/', $s) || str_contains($s, 'KOMISI 3')) => 3,
+      (bool) (preg_match('/KOMISI?\s*II\b/', $s) || str_contains($s, 'KOMISI 2')) => 2,
+      (bool) (preg_match('/KOMISI?\s*I\b/', $s) || str_contains($s, 'KOMISI 1')) => 1,
+      default => null,
+    };
+    if ($k !== null) {
+      if (str_contains($s, 'WAKIL')) {
+        return [1 => DprdJabatan::WAKIL_KOMISI_1, 2 => DprdJabatan::WAKIL_KOMISI_2, 3 => DprdJabatan::WAKIL_KOMISI_3][$k];
+      }
+      if (str_contains($s, 'SEKRETARIS')) {
+        return [1 => DprdJabatan::SEKRETARIS_KOMISI_1, 2 => DprdJabatan::SEKRETARIS_KOMISI_2, 3 => DprdJabatan::SEKRETARIS_KOMISI_3][$k];
+      }
+      if (str_contains($s, 'KETUA')) {
+        return [1 => DprdJabatan::KETUA_KOMISI_1, 2 => DprdJabatan::KETUA_KOMISI_2, 3 => DprdJabatan::KETUA_KOMISI_3][$k];
+      }
+      return [1 => DprdJabatan::KOMISI_1, 2 => DprdJabatan::KOMISI_2, 3 => DprdJabatan::KOMISI_3][$k];
+    }
 
-    return null; // mis. "ANGGOTA" tanpa komisi
+    if (str_contains($s, 'ANGGOTA')) return DprdJabatan::ANGGOTA;
+
+    return null;
   }
 
   /** Petakan nama partai/fraksi bebas lama ke enum DprdPartai. */

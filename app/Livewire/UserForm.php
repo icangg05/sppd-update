@@ -241,14 +241,15 @@ class UserForm extends Component
   protected function uniqueDprdJabatanRule(): \Closure
   {
     return function (string $attribute, $value, \Closure $fail) {
-      $singletons = [
-        DprdJabatan::KETUA->value,
-        DprdJabatan::WAKIL_1->value,
-        DprdJabatan::WAKIL_2->value,
-        DprdJabatan::WAKIL_3->value,
+      // Semua jabatan bersifat tunggal kecuali anggota (komisi maupun tanpa komisi).
+      $shared = [
+        DprdJabatan::KOMISI_1->value,
+        DprdJabatan::KOMISI_2->value,
+        DprdJabatan::KOMISI_3->value,
+        DprdJabatan::ANGGOTA->value,
       ];
 
-      if (! in_array($value, $singletons, true)) {
+      if (in_array($value, $shared, true)) {
         return;
       }
 

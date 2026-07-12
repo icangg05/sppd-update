@@ -16,4 +16,8 @@ return [
 
     // Kata kunci nama kota/kabupaten tempat kedudukan (dipakai pada query LIKE).
     'home_base_regency_keyword' => env('SPPD_HOME_BASE_REGENCY', 'Kendari'),
+
+    // Imbuhan wilayah untuk jabatan pimpinan DPRD pada dokumen, mis. jadi
+    // "Ketua DPRD Kota Kendari". Kosongkan ('') untuk menonaktifkan.
+    'dprd_region' => env('SPPD_DPRD_REGION', 'Kota Kendari'),
 ];

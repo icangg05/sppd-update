@@ -206,7 +206,7 @@
 
 							@if ($isDprd)
 								<td data-label="Jabatan DPRD" class="py-3 px-4">
-									<div class="text-[13px] text-slate-600 text-wrap">{{ $user->dprd_jabatan ?? '-' }}</div>
+									<div class="text-[13px] text-slate-600 text-wrap">{{ \App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? ($user->dprd_jabatan ?? '-') }}</div>
 								</td>
 
 								<td data-label="Partai / Fraksi" class="py-3 px-4">
