@@ -9,7 +9,6 @@ use App\Http\Controllers\SppdController;
 use App\Http\Controllers\SppdDigitalSignatureController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\KirimChatWebhookController;
-use App\Http\Controllers\PushSubscriptionController;
 use App\Jobs\LogQueueHeartbeatJob;
 use App\Livewire\Sppd\SppdCalendar;
 use App\Livewire\Sppd\SppdCreate;
@@ -89,10 +88,6 @@ Route::middleware('auth')->group(function () {
 
         return response()->json(['ok' => true]);
     })->name('notifications.seen');
-
-    // Push Notifications subscriptions
-    Route::post('/push-subscription', [PushSubscriptionController::class, 'store'])->name('push-subscription.store');
-    Route::delete('/push-subscription', [PushSubscriptionController::class, 'destroy'])->name('push-subscription.destroy');
 
     // SPPD — Livewire Full-Page Components
     Route::get('/sppd', SppdIndex::class)->name('sppd.index');
@@ -196,25 +191,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/logs', \App\Livewire\LogIndex::class)->defaults('scope', 'system')->name('logs.index');
         Route::get('/logs/tte', \App\Livewire\LogIndex::class)->defaults('scope', 'tte')->name('logs.tte');
     });
-
-    // Uji Coba Push Notification Instan
-    Route::get('/test-push', function () {
-        $user = Auth::user();
-        if (!$user) {
-            return 'Silakan login terlebih dahulu.';
-        }
-        
-        $count = $user->pushSubscriptions()->count();
-        
-        app(App\Services\WebPushService::class)->sendToUser(
-            $user, 
-            'Uji Coba Push!', 
-            'Ini adalah notifikasi push uji coba pada ' . now()->toTimeString(), 
-            route('dashboard')
-        );
-        
-        return "Notifikasi telah dikirim ke {$user->name}. Jumlah browser terdaftar: {$count}.";
-    })->name('test-push');
 
     // API
     Route::get('/api/provinces/{province}/regencies', [SppdController::class, 'getRegencies'])->name('api.regencies');

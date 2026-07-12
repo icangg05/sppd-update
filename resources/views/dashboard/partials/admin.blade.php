@@ -109,9 +109,12 @@
 @endif
 
 @push('scripts')
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    // Chart.js dimuat via loader dengan callback supaya tidak bergantung pada
+    // urutan eksekusi script saat wire:navigate (Chart bisa belum ada saat
+    // script inline jalan). Kalau sudah dimuat (navigasi berikutnya), langsung.
     (function() {
+      function drawCharts() {
       Chart.defaults.font.size = 12;
       Chart.defaults.font.family = "'Geist', ui-sans-serif, system-ui, sans-serif";
       Chart.defaults.color = '#64748b';
@@ -158,6 +161,16 @@
           data: { labels: filtered.map(s => s.label), datasets: [{ data: filtered.map(s => s.count), backgroundColor: filtered.map(s => s.color), borderWidth: 0, hoverOffset: 4 }] },
           options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 4, padding: 10 } } }
         });
+      }
+      }
+
+      if (window.Chart) {
+        drawCharts();
+      } else {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        s.onload = drawCharts;
+        document.head.appendChild(s);
       }
     })();
   </script>

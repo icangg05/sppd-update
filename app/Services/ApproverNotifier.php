@@ -25,13 +25,6 @@ class ApproverNotifier
             '📝 *PENGAJUAN SPPD BARU*',
             'Terdapat pengajuan SPPD baru yang memerlukan persetujuan Anda.'
         );
-
-        $this->sendPush(
-            $sppd,
-            $approval,
-            'Pengajuan SPPD Baru',
-            "Terdapat pengajuan SPPD baru dari {$sppd->user->name} yang memerlukan persetujuan Anda."
-        );
     }
 
     /**
@@ -45,40 +38,6 @@ class ApproverNotifier
             '📝 *PERBAIKAN DOKUMEN SPPD (REVISI)*',
             'Pegawai telah mengirimkan perbaikan/revisi data SPPD berikut yang memerlukan persetujuan kembali dari Anda.'
         );
-
-        $this->sendPush(
-            $sppd,
-            $approval,
-            'Perbaikan Dokumen SPPD (Revisi)',
-            "Pegawai {$sppd->user->name} telah mengirimkan perbaikan data SPPD yang memerlukan persetujuan kembali dari Anda."
-        );
-    }
-
-    /**
-     * Dispatch push notification job for the approver.
-     */
-    protected function sendPush(SppdRequest $sppd, SppdApproval $approval, string $title, string $body): void
-    {
-        try {
-            $approver = $approval->approver;
-            if (!$approver) {
-                return;
-            }
-
-            $detailUrl = route('sppd.show', $sppd);
-
-            \App\Jobs\SendPushNotificationJob::dispatch(
-                $approver->id,
-                $title,
-                $body,
-                $detailUrl
-            );
-        } catch (\Exception $e) {
-            Log::warning('Gagal dispatch push notification ke approver SPPD.', [
-                'sppd_id' => $sppd->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**

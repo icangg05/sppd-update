@@ -111,11 +111,6 @@ class User extends Authenticatable
     return $this->hasMany(SppdDigitalSignature::class, 'signer_id');
   }
 
-  public function pushSubscriptions(): HasMany
-  {
-    return $this->hasMany(PushSubscription::class);
-  }
-
   public function isDprdMember(): bool
   {
     return $this->employee_type === EmployeeType::DPRD

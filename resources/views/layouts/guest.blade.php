@@ -25,7 +25,7 @@
 	{{-- Notifikasi Toast global (mis. setelah logout) --}}
 	<x-ui.toast />
 
-	<div class="h-dvh lg:h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8">
+	<div class="relative overflow-hidden min-h-dvh lg:min-h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8">
 
 		<!-- Efek cahaya di dekat bulatan -->
 		<div

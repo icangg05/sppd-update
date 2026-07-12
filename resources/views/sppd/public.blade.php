@@ -30,26 +30,41 @@
 		</div>
 
 		{{-- Judul & Status --}}
-		<div class="mb-6 flex flex-col gap-3 rounded border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-			<div class="leading-tight">
-				<h1 class="text-lg font-bold text-slate-800">Detail Surat Perjalanan Dinas</h1>
-				<p class="mt-1 font-mono text-sm text-slate-500">
-					<i class="fa-solid fa-hashtag mr-1 text-xs text-slate-500"></i>
-					{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
-				</p>
+		<div class="dash-enter relative mb-6 overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 shadow-sm">
+			{{-- Garis aksen atas (ornamen). --}}
+			<div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary-600 via-primary-400 to-transparent"></div>
+			{{-- Watermark institusional (tipis). --}}
+			<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-3 text-8xl text-primary-500/6" aria-hidden="true"></i>
+			{{-- Ornamen titik-titik (dot grid). --}}
+			<div class="pointer-events-none absolute right-28 top-4 hidden h-14 w-28 sm:block"
+				style="background-image: radial-gradient(rgba(30,128,198,.22) 1px, transparent 1px); background-size: 9px 9px;"
+				aria-hidden="true"></div>
+
+			<div class="relative flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+				<div class="min-w-0 leading-tight">
+					<span class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
+					</span>
+					<h1 class="text-2xl font-bold tracking-tight text-slate-800">Detail Surat Perjalanan Dinas</h1>
+					<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
+						<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
+						{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
+					</p>
+					<p class="mt-1 text-sm text-slate-500">Informasi resmi perjalanan dinas — dapat dilihat oleh publik (read-only).</p>
+				</div>
+				<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit shrink-0 rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+					{{ $sppd->status->label() }}
+				</x-ui.badge>
 			</div>
-			<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
-				{{ $sppd->status->label() }}
-			</x-ui.badge>
 		</div>
 
 		<div class="space-y-6">
 
 			{{-- Informasi Perjalanan --}}
-			<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-					<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
-						<i class="fa-solid fa-address-card text-primary-600"></i> Informasi Perjalanan
+			<div class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+				<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+					<h3 class="flex items-center gap-2.5 text-sm font-bold tracking-wide text-slate-700">
+						<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-address-card text-[11px]"></i></span> Informasi Perjalanan
 					</h3>
 				</div>
 				<div class="grid grid-cols-1 gap-x-8 gap-y-5 p-5 sm:grid-cols-2">
@@ -96,25 +111,33 @@
 						<p class="text-sm font-semibold text-slate-800">{{ $sppd->creator?->name ?? '-' }}</p>
 					</div>
 					<div class="border-t border-slate-100 pt-3 sm:col-span-2">
-						<p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Maksud Perjalanan</p>
-						<p class="text-sm font-medium leading-relaxed text-slate-800">{{ $sppd->purpose }}</p>
+						<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+							<i class="fa-solid fa-bullseye text-[11px] text-primary-500"></i> Maksud Perjalanan
+						</p>
+						<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->purpose }}</p>
 					</div>
 					@if ($sppd->problem)
 						<div class="border-t border-slate-100 pt-3 sm:col-span-2">
-							<p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Persoalan</p>
-							<p class="rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">{{ $sppd->problem }}</p>
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-circle-question text-[11px] text-primary-500"></i> Persoalan
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->problem }}</p>
 						</div>
 					@endif
 					@if ($sppd->facts)
 						<div class="border-t border-slate-100 pt-3 sm:col-span-2">
-							<p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Fakta-Fakta Yang Mempengaruhi</p>
-							<p class="rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">{{ $sppd->facts }}</p>
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-clipboard-list text-[11px] text-primary-500"></i> Fakta-Fakta Yang Mempengaruhi
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->facts }}</p>
 						</div>
 					@endif
 					@if ($sppd->analysis)
 						<div class="border-t border-slate-100 pt-3 sm:col-span-2">
-							<p class="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Analisis</p>
-							<p class="rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">{{ $sppd->analysis }}</p>
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-magnifying-glass-chart text-[11px] text-primary-500"></i> Analisis
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->analysis }}</p>
 						</div>
 					@endif
 					@if ($sppd->notes)
@@ -128,10 +151,10 @@
 
 			{{-- Pembebanan Anggaran --}}
 			@if ($sppd->budget)
-				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
-							<i class="fa-solid fa-money-check-dollar text-primary-600"></i> Pembebanan Anggaran
+				<div class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="flex items-center gap-2.5 text-sm font-bold tracking-wide text-slate-700">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-money-check-dollar text-[11px]"></i></span> Pembebanan Anggaran
 						</h3>
 					</div>
 					<div class="grid grid-cols-1 gap-x-8 gap-y-5 p-5 sm:grid-cols-2">
@@ -153,10 +176,10 @@
 
 			{{-- Lokasi Tujuan --}}
 			@if ($sppd->destinations->count())
-				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
-							<i class="fa-solid fa-map-location-dot text-primary-600"></i> Lokasi Tujuan
+				<div class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="flex items-center gap-2.5 text-sm font-bold tracking-wide text-slate-700">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-map-location-dot text-[11px]"></i></span> Lokasi Tujuan
 						</h3>
 					</div>
 					<div class="space-y-3 p-5">
@@ -180,10 +203,10 @@
 
 			{{-- Daftar Pengikut --}}
 			@if ($sppd->followers->count())
-				<div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
-							<i class="fa-solid fa-users text-primary-600"></i> Daftar Pengikut
+				<div class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="flex items-center gap-2.5 text-sm font-bold tracking-wide text-slate-700">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-users text-[11px]"></i></span> Daftar Pengikut
 						</h3>
 					</div>
 					<div class="flex flex-wrap gap-2.5 p-5">

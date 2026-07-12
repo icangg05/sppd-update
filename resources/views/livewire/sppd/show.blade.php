@@ -4,29 +4,36 @@
 
 	{{-- Header Halaman & Aksi --}}
 	<div
-		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
+		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 shadow-sm">
+		{{-- Garis aksen atas (ornamen). --}}
+		<div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary-600 via-primary-400 to-transparent"></div>
 		{{-- Watermark institusional (tipis, hanya karakter). --}}
-		<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+		<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-3 text-8xl text-primary-500/6"
 			aria-hidden="true"></i>
+		{{-- Ornamen titik-titik (dot grid). --}}
+		<div class="pointer-events-none absolute right-28 top-4 hidden h-14 w-28 md:block"
+			style="background-image: radial-gradient(rgba(30,128,198,.22) 1px, transparent 1px); background-size: 9px 9px;"
+			aria-hidden="true"></div>
 
-		<div class="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
+		<div class="relative flex flex-col justify-between gap-4 px-5 py-4 md:flex-row md:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
-					<i class="fa-solid fa-file-lines text-[9px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
 				</span>
-				<h1 class="text-xl font-bold tracking-tight text-balance text-slate-800">Detail Surat Perjalanan Dinas</h1>
-				<p class="mt-1 font-mono text-sm text-slate-500">
-					<i class="fa-solid fa-hashtag text-xs text-slate-500 mr-1"></i>
+				<h1 class="text-2xl font-bold tracking-tight text-balance text-slate-800">Detail Surat Perjalanan Dinas</h1>
+				<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
+					<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
 					{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
 				</p>
+				<p class="mt-1 text-sm text-slate-500">Rincian lengkap perjalanan dinas, alur persetujuan, dan status tanda tangan elektronik.</p>
 			</div>
 
 			<div class="flex flex-wrap items-center gap-2.5">
 			{{-- Tombol Edit Perbaikan --}}
 			@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 				<a href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}" wire:navigate
-					class="inline-flex items-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100 hover:text-amber-800">
+					class="inline-flex items-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-bold text-amber-700 shadow-2xs transition hover:bg-amber-100 hover:text-amber-800">
 					<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Perbaikan
 				</a>
 			@endif
@@ -38,40 +45,40 @@
 					@csrf
 					@method('DELETE')
 					<button type="submit"
-						class="inline-flex items-center gap-1.5 rounded bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700">
+						class="inline-flex items-center gap-1.5 rounded border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-bold text-rose-600 shadow-2xs transition hover:bg-rose-100 hover:text-rose-700">
 						<i class="fa-solid fa-trash-can"></i> Batalkan Pengajuan
 					</button>
 				</form>
 			@endif
 
-			{{-- Tombol Portal Selanjutnya --}}
+			{{-- Dokumen SPT / SPPD — aksen indigo (dibedakan dari tombol Selanjutnya). --}}
+			<button type="button" @click="showDocModal = true"
+				class="inline-flex items-center gap-1.5 rounded border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-100 hover:text-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1">
+				<i class="fa-solid fa-file-pdf text-indigo-600"></i>
+				Lihat Dokumen
+			</button>
+
+			{{-- Link Publik — aksen teal (dibedakan dari tombol Selanjutnya). --}}
+			<a href="{{ $sppd->publicUrl() }}" target="_blank" rel="noopener"
+				class="inline-flex items-center gap-1.5 rounded border border-teal-200 bg-teal-50 px-3.5 py-2 text-sm font-bold text-teal-700 shadow-2xs transition hover:bg-teal-100 hover:text-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1">
+				<i class="fa-solid fa-share-nodes text-teal-600"></i>
+				Link Publik
+			</a>
+
+			{{-- Tombol Portal Selanjutnya (aksi utama / CTA). --}}
 			@if (in_array($sppd->status->value, ['approved', 'completed']))
 				<a href="{{ route('sppd.next', ['sppd' => $sppd, 'from' => 'show']) }}" wire:navigate
-					class="group inline-flex items-center gap-2 rounded bg-primary-600 py-1.5 pl-3.5 pr-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
+					class="group inline-flex items-center gap-2 rounded bg-primary-600 py-1.5 pl-4 pr-1.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
 					<span>Selanjutnya</span>
 					<span
 						class="flex size-6 items-center justify-center rounded-full bg-white/20 transition group-hover:translate-x-0.5">
-						<i class="fa-solid fa-arrow-right text-[10px]"></i>
+						<i class="fa-solid fa-arrow-right text-[11px]"></i>
 					</span>
 				</a>
 			@endif
 
-			{{-- Dokumen SPT / SPPD --}}
-			<button type="button" @click="showDocModal = true"
-				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
-				<i class="fa-solid fa-file-pdf text-primary-600 text-[13px]"></i>
-				Lihat Dokumen
-			</button>
-
-			{{-- Link Publik (read-only, tanpa alur persetujuan & status TTE) --}}
-			<a href="{{ $sppd->publicUrl() }}" target="_blank" rel="noopener"
-				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-200/80 hover:text-slate-900">
-				<i class="fa-solid fa-share-nodes text-primary-600 text-[13px]"></i>
-				Link Publik
-			</a>
-
 			{{-- Garis Pemisah --}}
-			<div class="hidden sm:block border-l border-slate-300 h-5 self-center mx-0.5"></div>
+			<div class="hidden sm:block border-l border-slate-300 h-6 self-center mx-0.5"></div>
 
 			{{-- Badge Status --}}
 			<x-ui.badge :status="$sppd->status->value" class="inline-block rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
@@ -80,7 +87,7 @@
 
 			{{-- Tombol Kembali --}}
 			<a href="{{ $from === 'approval' ? route('sppd.index', ['filter' => 'approval']) : route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters())) }}" wire:navigate
-				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+				class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50">
 				<i class="fa-solid fa-arrow-left text-slate-500"></i> Kembali
 			</a>
 			</div>
@@ -94,10 +101,10 @@
 		<div class="space-y-6 xl:col-span-2">
 
 			{{-- 1. Info Perjalanan --}}
-			<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-address-card text-[11px]"></i></span> Informasi Perjalanan
+			<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+				<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+					<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+						<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-address-card text-[11px]"></i></span> Informasi Perjalanan
 					</h3>
 				</div>
 				<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
@@ -149,28 +156,33 @@
 						<p class="text-sm font-semibold text-slate-800">{{ $sppd->creator?->name ?? '-' }}</p>
 					</div>
 					<div class="sm:col-span-2 pt-3 border-t border-slate-100">
-						<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Maksud Perjalanan</p>
-						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->purpose }}</p>
+						<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+							<i class="fa-solid fa-bullseye text-[11px] text-primary-500"></i> Maksud Perjalanan
+						</p>
+						<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->purpose }}</p>
 					</div>
 					@if ($sppd->problem)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
-							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Persoalan</p>
-						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->problem }}</p>
-
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-circle-question text-[11px] text-primary-500"></i> Persoalan
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->problem }}</p>
 						</div>
 					@endif
 					@if ($sppd->facts)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
-							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Fakta-Fakta Yang Mempengaruhi</p>
-						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->facts }}</p>
-
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-clipboard-list text-[11px] text-primary-500"></i> Fakta-Fakta Yang Mempengaruhi
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->facts }}</p>
 						</div>
 					@endif
 					@if ($sppd->analysis)
 						<div class="sm:col-span-2 pt-3 border-t border-slate-100">
-							<p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Analisis</p>
-						<p class="text-sm font-medium text-slate-800 bg-slate-50 p-3 rounded border border-slate-200 leading-relaxed">{{ $sppd->analysis }}</p>
-
+							<p class="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+								<i class="fa-solid fa-magnifying-glass-chart text-[11px] text-primary-500"></i> Analisis
+							</p>
+							<p class="rounded border border-slate-200 border-l-2 border-l-primary-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->analysis }}</p>
 						</div>
 					@endif
 					@if ($sppd->notes)
@@ -205,10 +217,10 @@
 
 			{{-- Pembebanan Anggaran --}}
 			@if ($sppd->budget)
-				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-money-check-dollar text-[11px]"></i></span> Pembebanan Anggaran
+				<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-money-check-dollar text-[11px]"></i></span> Pembebanan Anggaran
 						</h3>
 					</div>
 					<div class="p-5 grid grid-cols-1 gap-y-5 gap-x-8 sm:grid-cols-2">
@@ -239,10 +251,10 @@
 
 			{{-- 2. Tujuan --}}
 			@if ($sppd->destinations->count())
-				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-map-location-dot text-[11px]"></i></span> Lokasi Tujuan
+				<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-map-location-dot text-[11px]"></i></span> Lokasi Tujuan
 						</h3>
 					</div>
 					<div class="p-5 space-y-3">
@@ -266,10 +278,10 @@
 
 			{{-- 3. Pengikut --}}
 			@if ($sppd->followers->count())
-				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-users text-[11px]"></i></span> Daftar Pengikut
+				<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+						<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-users text-[11px]"></i></span> Daftar Pengikut
 						</h3>
 					</div>
 					<div class="p-5 flex flex-wrap gap-2.5">
@@ -300,10 +312,10 @@
 		<div class="space-y-6">
 
 			{{-- Timeline Persetujuan --}}
-			<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
-					<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-list-check text-[11px]"></i></span> Alur Persetujuan
+			<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+				<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5">
+					<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+						<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-list-check text-[11px]"></i></span> Alur Persetujuan
 					</h3>
 				</div>
 				<div class="p-5">
@@ -549,10 +561,10 @@
 			@endphp
 
 			@if ($showSppdStatus || $showSptStatus)
-				<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
-					<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3 flex items-center justify-between">
-						<h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-file-shield text-[11px]"></i></span> Status TTE Dokumen
+				<div class="dash-enter relative rounded border border-slate-200 bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-0.5 before:bg-linear-to-r before:from-primary-400 before:via-primary-300 before:to-transparent">
+					<div class="relative border-b border-slate-100 bg-linear-to-r from-slate-50 via-slate-50/60 to-transparent px-5 py-3.5 flex items-center justify-between">
+						<h3 class="text-sm font-bold tracking-wide text-slate-700 flex items-center gap-2.5">
+							<span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary-50 to-primary-100 text-primary-600 ring-1 ring-inset ring-primary-200/60 shadow-2xs"><i class="fa-solid fa-file-shield text-[11px]"></i></span> Status TTE Dokumen
 						</h3>
 					</div>
 					<div class="p-4 divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
