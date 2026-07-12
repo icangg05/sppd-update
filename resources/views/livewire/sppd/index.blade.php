@@ -215,8 +215,8 @@
 
 
 
-	{{-- Tabel Data --}}
-	<div class="dash-enter table-wrapper">
+	{{-- Tabel Data (desktop / tablet) --}}
+	<div class="dash-enter hidden md:block table-wrapper">
 		<table class="table">
 			<thead>
 				<tr>
@@ -232,45 +232,6 @@
 
 			<tbody>
 				@forelse($sppds as $i => $sppd)
-					@php
-						$statusBadge = match ($sppd->status->value) {
-						    'draft' => ['bg' => 'bg-amber-50 border-amber-200', 'text' => 'text-amber-700', 'label' => 'Masuk'],
-						    'in_progress' => $sppd->revision_note
-						        ? ['bg' => 'bg-orange-50 border-orange-200', 'text' => 'text-orange-700', 'label' => 'Revisi']
-						        : ['bg' => 'bg-blue-50 border-blue-200', 'text' => 'text-blue-700', 'label' => 'Proses'],
-						    'approved', 'completed', 'verified', 'signed' => [
-						        'bg' => 'bg-emerald-50 border-emerald-200',
-						        'text' => 'text-emerald-700',
-						        'label' => 'Selesai',
-						    ],
-						    'rejected' => ['bg' => 'bg-red-50 border-red-200', 'text' => 'text-red-700', 'label' => 'Ditolak'],
-						    'pending', 'revision' => [
-						        'bg' => 'bg-orange-50 border-orange-200',
-						        'text' => 'text-orange-700',
-						        'label' => 'Revisi',
-						    ],
-						    'returned' => ['bg' => 'bg-pink-50 border-pink-200', 'text' => 'text-pink-700', 'label' => 'Kembali'],
-						    default => [
-						        'bg' => 'bg-slate-50 border-slate-200',
-						        'text' => 'text-slate-700',
-						        'label' => $sppd->status->label(),
-						    ],
-						};
-
-						$allGreen = false;
-						if (in_array($sppd->status->value, ['approved', 'completed'])) {
-						    $isPastEndDate = today()->greaterThan($sppd->end_date);
-						    $isRealized = $sppd->actualExpenses->isNotEmpty() && $sppd->costDetails->isNotEmpty();
-						    $isReported =
-						        $sppd->report &&
-						        $sppd->report->report_date &&
-						        $sppd->report->report_file &&
-						        $sppd->report->documentation_file;
-
-						    $allGreen = $isPastEndDate && $isRealized && $isReported;
-						}
-					@endphp
-
 					<tr>
 						<td class="text-center text-xs font-semibold text-slate-500">
 							{{ $sppds->firstItem() + $i }}.
@@ -324,118 +285,11 @@
 						</td>
 
 						<td class="whitespace-nowrap">
-							@if (in_array($sppd->status->value, ['approved', 'completed']))
-								@if (today()->lessThanOrEqualTo($sppd->end_date))
-									<span
-										class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide">
-										Perjalanan Disetujui
-									</span>
-								@else
-									<div class="flex flex-col gap-1 w-[180px]">
-										<span
-											class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center whitespace-normal leading-tight">
-											Perjalanan Selesai dan Masukkan Laporan
-										</span>
-
-										@if ($sppd->actualExpenses->isNotEmpty() && $sppd->costDetails->isNotEmpty())
-											<span
-												class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
-												Sudah Realisasi
-											</span>
-										@else
-											<span
-												class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
-												Belum Realisasi
-											</span>
-										@endif
-
-										@if ($sppd->report && $sppd->report->report_date && $sppd->report->report_file && $sppd->report->documentation_file)
-											<span
-												class="inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 tracking-wide text-center">
-												Sudah Upload Laporan
-											</span>
-										@else
-											<span
-												class="inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-700 tracking-wide text-center">
-												Belum Upload Laporan
-											</span>
-										@endif
-									</div>
-								@endif
-							@else
-								<span
-									class="inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wide {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
-									{{ \App\Helpers\SmartTitle::convert($statusBadge['label']) }}
-								</span>
-							@endif
+							@include('livewire.sppd.partials.status-cell', ['sppd' => $sppd])
 						</td>
 
 						<td class="whitespace-nowrap">
-							<div class="flex flex-col gap-1 w-[115px]">
-								<a
-									href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}"
-									wire:navigate
-									class="inline-flex items-center justify-center gap-1.5 rounded border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-200 w-full text-center">
-									<i class="fa-solid fa-eye text-[10px] text-slate-500"></i>
-									<span>Lihat</span>
-								</a>
-
-								@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-									<a
-										href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}"
-										wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
-										<i class="fa-solid fa-pen-to-square text-[10px] text-amber-600"></i>
-										<span>Edit Perbaikan</span>
-									</a>
-								@endif
-
-								@if (in_array($sppd->status->value, ['approved', 'completed']))
-									<a
-										href="{{ route('sppd.next', $sppd) }}" wire:navigate
-										class="inline-flex items-center justify-center gap-1.5 rounded bg-primary-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
-										<span>Selanjutnya</span>
-										<i class="fa-solid fa-arrow-right text-[10px]"></i>
-									</a>
-
-									@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-										@if ($allGreen)
-											<button
-												type="button"
-												wire:click="startSppdLanjutan({{ $sppd->id }})"
-												wire:loading.attr="disabled"
-												class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-												<i class="fa-solid fa-plus text-[10px]" wire:loading.remove
-													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
-												<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading
-													wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
-												<span>SPPD Lanjutan</span>
-											</button>
-										@endif
-									@endif
-								@endif
-
-								@if (auth()->user()->hasRole('super_admin'))
-									{{-- Super admin dapat menghapus SPPD apa pun secara permanen. --}}
-									<button
-										type="button"
-										wire:click="confirmDelete({{ $sppd->id }})"
-										title="Hapus SPPD"
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
-										<i class="fa-solid fa-trash text-[10px]"></i>
-										<span>Hapus</span>
-									</button>
-								@elseif ($sppd->status->value === 'in_progress' && auth()->user()->hasRole('admin_opd'))
-									<button
-										type="button"
-										wire:click="confirmDelete({{ $sppd->id }})"
-										title="Batalkan Pengajuan"
-										class="inline-flex items-center justify-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 transition hover:bg-red-100 w-full text-center">
-										<i class="fa-solid fa-trash text-[10px]"></i>
-										<span>Batalkan</span>
-									</button>
-								@endif
-							</div>
+							@include('livewire.sppd.partials.row-actions', ['sppd' => $sppd, 'isApprovalMode' => $isApprovalMode])
 						</td>
 					</tr>
 
@@ -460,5 +314,71 @@
 			</div>
 		@endif
 	</div>
+
+	{{-- Kartu Data (mobile) --}}
+	<div class="md:hidden space-y-3">
+		@forelse($sppds as $i => $sppd)
+			<div class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+				<div class="absolute inset-y-0 left-0 w-1 bg-primary-500/80"></div>
+				<div class="space-y-3 p-4 pl-5">
+					{{-- Pelaksana + Domain --}}
+					<div class="flex items-start justify-between gap-3">
+						<div class="min-w-0">
+							<p class="font-bold leading-tight text-slate-800">{{ $sppd->user->name }}</p>
+							@if (!auth()->user()->hasRole('super_admin'))
+								<p class="mt-0.5 text-[11px] font-medium text-primary-600">{{ $sppd->user->department?->name ?? '-' }}</p>
+							@else
+								<p class="mt-0.5 text-xs text-slate-500">{{ $sppd->budget?->department?->name ?? '-' }}</p>
+							@endif
+						</div>
+						<span class="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+							{{ $sppd->domain->shortLabel() }}
+						</span>
+					</div>
+
+					{{-- Maksud --}}
+					<div>
+						<p class="line-clamp-2 text-sm font-medium leading-snug text-slate-700" title="{{ $sppd->purpose }}">{{ $sppd->purpose }}</p>
+						<p class="mt-1 truncate text-xs text-slate-500">
+							{{ $sppd->category?->name }} · <span class="font-mono">{{ $sppd->document_number ?? 'Belum bernomor' }}</span>
+						</p>
+					</div>
+
+					{{-- Tanggal --}}
+					<div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+						<i class="fa-regular fa-calendar text-primary-500"></i>
+						<span class="font-medium text-slate-600">{{ $sppd->start_date->translatedFormat('d M Y') }}</span>
+						<i class="fa-solid fa-arrow-right text-[9px] text-slate-400"></i>
+						<span>{{ $sppd->end_date->translatedFormat('d M Y') }}</span>
+					</div>
+
+					{{-- Status --}}
+					<div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5">
+						<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</span>
+						<div class="flex flex-wrap gap-1">
+							@include('livewire.sppd.partials.status-cell', ['sppd' => $sppd, 'stackClass' => 'w-full'])
+						</div>
+					</div>
+
+					{{-- Aksi --}}
+					<div class="border-t border-slate-100 pt-2.5">
+						@include('livewire.sppd.partials.row-actions', ['sppd' => $sppd, 'isApprovalMode' => $isApprovalMode, 'wrapperClass' => 'grid grid-cols-2 gap-2'])
+					</div>
+				</div>
+			</div>
+		@empty
+			<div class="rounded border border-slate-200 bg-white py-12 text-center shadow-sm">
+				<div class="flex flex-col items-center gap-2 text-slate-500">
+					<i class="fa-solid fa-file-lines text-3xl text-slate-200"></i>
+					<p class="text-sm">{{ $isApprovalMode ? 'Tidak ada SPPD yang menunggu persetujuan Anda.' : 'Belum ada data SPPD.' }}</p>
+				</div>
+			</div>
+		@endforelse
+
+		@if ($sppds->hasPages())
+			<div class="mt-1">{{ $sppds->links() }}</div>
+		@endif
+	</div>
+
 
 </div>
