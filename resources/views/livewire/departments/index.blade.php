@@ -68,7 +68,7 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm"
     wire:loading.class="opacity-60" wire:target="search,type">
     <div class="overflow-x-clip">
-      <table class="table-stack w-full text-left border-collapse">
+      <table class="table-stack w-full text-left border-collapse md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
         <thead
           class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm [&_th]:pt-5 [&_th]:pb-3">
           <tr>

@@ -126,7 +126,7 @@
 	<div class="dash-enter rounded border border-slate-200 bg-white shadow-sm" wire:loading.class="opacity-60"
 		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-clip">
-			<table class="table-stack w-full text-left table-fixed">
+			<table class="table-stack w-full text-left table-fixed md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
 				<thead
 					class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm">
 					<tr>

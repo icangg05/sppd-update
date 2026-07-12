@@ -84,7 +84,7 @@ class SppdCreate extends Component
     ];
 
     // 1. Cek perjalanan aktif
-    $hasActiveTravel = SppdRequest::where('user_id', $user->id)
+    $activeSppd = SppdRequest::where('user_id', $user->id)
       ->where(function ($q) {
         $q->where('status', SppdStatus::IN_PROGRESS)
           ->orWhere(function ($q2) {
@@ -92,11 +92,13 @@ class SppdCreate extends Component
               ->where('end_date', '>=', today());
           });
       })
-      ->exists();
+      ->first();
 
-    if ($hasActiveTravel) {
+    if ($activeSppd) {
       $this->errorMessageName = $user->name;
-      $this->errorMessage = 'masih memiliki SPPD aktif (sedang dalam proses approval atau masih dalam periode perjalanan).';
+      $this->errorMessage = $activeSppd->status === SppdStatus::IN_PROGRESS
+        ? 'masih memiliki SPPD yang sedang dalam proses persetujuan.'
+        : 'masih memiliki SPPD yang sedang dalam periode perjalanan.';
       return;
     }
 
@@ -127,7 +129,7 @@ class SppdCreate extends Component
     }
 
     if (! $this->hasHeader) {
-      $this->errorMessage = 'Unit kerja ' . $this->userInfo['department'] . ' belum mengunggah Kop Surat Resmi. Harap hubungi Admin OPD Anda untuk melengkapi data dokumen.';
+      $this->errorMessage = 'Unit kerja ' . e($this->userInfo['department']) . ' belum mengunggah <strong class="font-semibold text-slate-800">Kop Surat</strong> Resmi. Harap hubungi <strong class="font-semibold text-slate-800">Admin OPD</strong> Anda untuk melengkapi data dokumen.';
       return;
     }
 

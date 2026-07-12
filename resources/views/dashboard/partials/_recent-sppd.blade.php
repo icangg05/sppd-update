@@ -16,7 +16,7 @@
     </a>
   </div>
 
-  <div class="flex max-h-72 flex-col divide-y divide-slate-200 overflow-y-auto">
+  <div class="flex flex-col divide-y divide-slate-200">
     @forelse ($items as $item)
       <a wire:navigate href="{{ route('sppd.show', $item) }}"
         class="flex flex-col gap-2 p-3 transition hover:bg-sky-50 focus:outline-none focus-visible:bg-primary-50/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
@@ -25,6 +25,8 @@
           <x-ui.badge :color="$item->status->color()" class="shrink-0 uppercase">{{ $item->status->label() }}</x-ui.badge>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          @php $isSegera = strtolower($item->urgency ?? '') === 'segera'; @endphp
+          <x-ui.badge :color="$isSegera ? 'rose' : 'slate'" class="shrink-0 uppercase">{{ $isSegera ? 'Segera' : 'Biasa' }}</x-ui.badge>
           <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $item->user->name ?? '-' }}</span>
           <span class="text-slate-300">&bull;</span>
           <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i>

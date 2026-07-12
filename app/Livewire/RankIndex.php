@@ -21,12 +21,14 @@ class RankIndex extends Component
   #[Url(keep: true)]
   public string $groupFilter = '';
 
-  // Golongan/ruang kepangkatan PNS (I/a sampai IV/e).
+  // Golongan/ruang kepangkatan PNS (I/a s.d. IV/e) + golongan PPPK (I s.d. XVII).
   public array $groupOptions = [
     'I/a', 'I/b', 'I/c', 'I/d',
     'II/a', 'II/b', 'II/c', 'II/d',
     'III/a', 'III/b', 'III/c', 'III/d',
     'IV/a', 'IV/b', 'IV/c', 'IV/d', 'IV/e',
+    'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX',
+    'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII',
   ];
 
   // Form tambah / edit

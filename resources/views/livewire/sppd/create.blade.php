@@ -238,31 +238,38 @@
 									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
-								@php $isBusy = $errorMessageName !== ''; @endphp
+								@php
+						$isBusy = $errorMessageName !== '';
+						// Pegawai masih punya SPPD aktif (sementara) → kuning.
+						// Alur/konfigurasi belum dibuat (blocking) → merah.
+						$c = $isBusy
+							? ['border' => 'border-amber-300', 'from' => 'from-amber-50/70', 'wm' => 'text-amber-500/10', 'node' => 'bg-amber-100 text-amber-600 ring-amber-50', 'icon' => 'fa-user-clock', 'title' => 'text-slate-700']
+							: ['border' => 'border-red-300', 'from' => 'from-red-50/70', 'wm' => 'text-red-500/10', 'node' => 'bg-red-100 text-red-600 ring-red-50', 'icon' => 'fa-link-slash', 'title' => 'text-red-700'];
+					@endphp
 								{{-- Empty state kompak: rantai persetujuan putus (berornamen + animasi) --}}
 								<div class="w-full">
-									<div class="relative flex flex-col items-center gap-2.5 overflow-hidden rounded-lg border border-dashed border-amber-300 bg-linear-to-br from-amber-50/70 via-white to-white px-4 py-4">
+									<div class="relative flex flex-col items-center gap-2.5 overflow-hidden rounded-lg border border-dashed {{ $c['border'] }} bg-linear-to-br {{ $c['from'] }} via-white to-white px-4 py-4">
 										{{-- Ornamen watermark --}}
-										<i class="fa-solid fa-diagram-project pointer-events-none absolute -bottom-3 -right-2 text-6xl text-amber-500/10" aria-hidden="true"></i>
+										<i class="fa-solid fa-diagram-project pointer-events-none absolute -bottom-3 -right-2 text-6xl {{ $c['wm'] }}" aria-hidden="true"></i>
 
 										{{-- Rantai node: pelaksana → simpul putus → tak diketahui --}}
 										<div class="relative flex items-center gap-1.5" aria-hidden="true">
 											<span class="flex size-6 items-center justify-center rounded-full bg-slate-200 text-[10px] text-slate-400"><i class="fa-solid fa-user"></i></span>
 											<span class="h-0.5 w-5 rounded-full bg-slate-300"></span>
-											<span class="flex size-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 ring-4 ring-amber-50 animate-pulse"><i class="fa-solid {{ $isBusy ? 'fa-user-clock' : 'fa-link-slash' }} text-sm"></i></span>
+											<span class="flex size-8 items-center justify-center rounded-full ring-4 animate-pulse {{ $c['node'] }}"><i class="fa-solid {{ $c['icon'] }} text-sm"></i></span>
 											<span class="w-5 border-t-2 border-dashed border-slate-300"></span>
 											<span class="flex size-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-300"><i class="fa-solid fa-question"></i></span>
 										</div>
 
 										<div class="relative text-center">
-											<p class="text-sm font-bold text-slate-700">{{ $isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia' }}</p>
+											<p class="text-sm font-bold {{ $c['title'] }}">{{ $isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia' }}</p>
 											<p class="mt-0.5 text-xs leading-relaxed text-slate-500">
 												@if ($isBusy)
 													Pegawai <strong class="font-semibold text-slate-700">{{ $errorMessageName }}</strong> {{ $errorMessage }}
 												@elseif ($errorMessageRole !== '')
 													{{ $errorMessage }} <span class="whitespace-nowrap">(Role: <strong class="font-semibold text-slate-700">{{ $errorMessageRole }}</strong>)</span>
 												@else
-													{{ $errorMessage }}
+													{!! $errorMessage !!}
 												@endif
 											</p>
 										</div>
@@ -275,21 +282,21 @@
 					{{-- Pesan Kesalahan / Validasi Alur Instansi — hanya bila ada langkah yang
 					     tampil (kasus tanpa langkah pesannya sudah menyatu di kartu empty-state). --}}
 					@if ($errorMessage !== '' && count($steps) > 0)
-						<div id="workflow-error-msg" class="mt-4 rounded border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">
-							<div class="flex gap-2">
-								<i class="fa-solid fa-circle-exclamation shrink-0 mt-0.5"></i>
-								<div>
-									<span class="font-bold">Peringatan Validasi:</span>
-									<span>
-										@if ($errorMessageName !== '')
-											Pegawai <strong class="font-bold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
-										@elseif ($errorMessageRole !== '')
-											{{ $errorMessage }} (Role Pelaksana: <strong class="font-bold">{{ $errorMessageRole }}</strong>).
-										@else
-											{{ $errorMessage }}
-										@endif
-									</span>
-								</div>
+						<div id="workflow-error-msg" class="mt-4.5 flex items-start gap-3 overflow-hidden rounded-lg border border-red-200 bg-linear-to-br from-red-50 via-white to-white p-3.5 shadow-2xs">
+							<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50">
+								<i class="fa-solid fa-triangle-exclamation text-sm"></i>
+							</span>
+							<div class="min-w-0 leading-tight">
+								<p class="text-[11px] font-bold uppercase tracking-wide text-red-700">Peringatan Validasi</p>
+								<p class="mt-0.5 text-xs leading-relaxed text-slate-600">
+									@if ($errorMessageName !== '')
+										Pegawai <strong class="font-semibold text-slate-800">{{ $errorMessageName }}</strong> {{ $errorMessage }}
+									@elseif ($errorMessageRole !== '')
+										{{ $errorMessage }} <span class="whitespace-nowrap">(Role Pelaksana: <strong class="font-semibold text-slate-800">{{ $errorMessageRole }}</strong>)</span>
+									@else
+										{!! $errorMessage !!}
+									@endif
+								</p>
 							</div>
 						</div>
 					@endif

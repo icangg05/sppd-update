@@ -2,21 +2,24 @@
 
 	@if ($errorMessage)
 		<div
-			class="flex items-center justify-between gap-3 rounded border border-red-200 bg-red-50 p-4 text-xs text-red-800 shadow-sm transition-all duration-300">
-			<div class="flex items-start gap-2 flex-1">
-				<i class="fa-solid fa-triangle-exclamation text-red-600 text-sm shrink-0 mt-0.5"></i>
-				<span class="font-medium leading-relaxed">
-					{{ $errorMessage }}
+			class="flex items-start gap-3 overflow-hidden rounded-lg border border-red-200 bg-linear-to-br from-red-50 via-white to-white p-3.5 shadow-2xs transition-all duration-300">
+			<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50">
+				<i class="fa-solid fa-triangle-exclamation text-sm"></i>
+			</span>
+			<div class="min-w-0 flex-1 leading-tight">
+				<p class="text-[11px] font-bold uppercase tracking-wide text-red-700">Peringatan Validasi</p>
+				<p class="mt-0.5 text-xs leading-relaxed text-slate-600">
+					{!! $errorMessage !!}
 					@if (!empty($simulatedSteps))
 						<button type="button" wire:click="$set('showWorkflowModal', true)"
 							class="font-bold text-red-700 hover:text-red-950 underline cursor-pointer ml-1">
 							Cek Detail Alur Pejabat
 						</button>
 					@endif
-				</span>
+				</p>
 			</div>
 			<button type="button" wire:click="$set('errorMessage', null)"
-				class="text-red-400 hover:text-red-600 shrink-0 cursor-pointer">
+				class="shrink-0 cursor-pointer text-slate-400 hover:text-red-600">
 				<i class="fa-solid fa-xmark text-sm"></i>
 			</button>
 		</div>
@@ -217,7 +220,9 @@
 
 	{{-- Tabel Data (desktop / tablet) --}}
 	<div class="dash-enter hidden md:block table-wrapper">
-		<table class="table">
+		{{-- min-w agar saat layar sempit/di-zoom kolom tetap lebar & wrapper scroll horizontal (bukan kolom gepeng).
+		     Baris dirapatkan (py lebih kecil) khusus tabel ini tanpa mengubah .table global. --}}
+		<table class="table min-w-225 [&_thead_th]:py-2.5 [&_tbody_td]:py-2">
 			<thead>
 				<tr>
 					<th class="w-12 text-center">No.</th>
@@ -356,7 +361,7 @@
 					<div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5">
 						<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</span>
 						<div class="flex flex-wrap gap-1">
-							@include('livewire.sppd.partials.status-cell', ['sppd' => $sppd, 'stackClass' => 'w-full'])
+							@include('livewire.sppd.partials.status-cell', ['sppd' => $sppd, 'stackClass' => 'items-start'])
 						</div>
 					</div>
 

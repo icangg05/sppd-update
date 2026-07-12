@@ -99,7 +99,7 @@
 		wire:loading.class="opacity-60" wire:target="search,year,source,department_id">
 
 		<div class="overflow-x-auto">
-			<table class="table-stack w-full text-left whitespace-nowrap">
+			<table class="table-stack w-full text-left whitespace-nowrap md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
 				<thead
 					class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
 					<tr>

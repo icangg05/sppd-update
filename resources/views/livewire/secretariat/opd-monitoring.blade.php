@@ -89,7 +89,7 @@
 
   {{-- Tabel Data --}}
   <div class="dash-enter table-wrapper">
-    <table class="table table-stack">
+    <table class="table table-stack md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
       <thead>
         <tr>
           <th class="w-12 text-center">No.</th>
