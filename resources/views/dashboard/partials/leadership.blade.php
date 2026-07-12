@@ -5,7 +5,7 @@
   @php
     $kpis = [
       ['label' => 'Menunggu Persetujuan', 'value' => $pendingApprovals->count(), 'icon' => 'fa-clipboard-check', 'tone' => 'amber'],
-      ['label' => 'Menunggu TTE', 'value' => $pendingSignatures->count(), 'icon' => 'fa-signature', 'tone' => 'violet'],
+      ['label' => 'Menunggu TTE', 'value' => $pendingTteCount, 'icon' => 'fa-signature', 'tone' => 'violet'],
       ['label' => 'Selesai (lingkup)', 'value' => $stats['completed'], 'icon' => 'fa-circle-check', 'tone' => 'emerald'],
       ['label' => 'Ditolak (lingkup)', 'value' => $stats['rejected'], 'icon' => 'fa-circle-xmark', 'tone' => 'rose'],
     ];
@@ -31,8 +31,12 @@
     <div class="flex max-h-112 flex-col divide-y divide-slate-100 overflow-y-auto">
       @forelse ($pendingApprovals as $appr)
         @php $sppd = $appr->sppdRequest; @endphp
-        <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-slate-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
-          <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ $sppd->purpose }}</p>
+        @php $urgency = $sppd->urgency ?? 'Biasa'; @endphp
+        <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-sky-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
+          <div class="flex min-w-0 items-center gap-2">
+            <x-ui.badge :color="$urgency === 'Segera' ? 'rose' : 'slate'" class="shrink-0">{{ $urgency }}</x-ui.badge>
+            <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ $sppd->purpose }}</p>
+          </div>
           <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $sppd->user->name ?? '-' }}</span>
             <span class="text-slate-300">&bull;</span>

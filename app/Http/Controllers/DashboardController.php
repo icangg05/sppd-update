@@ -214,10 +214,16 @@ class DashboardController extends Controller
       ->with(['user', 'category', 'budget.department', 'destinations.regency', 'costDetails'])
       ->latest()->take(6)->get();
 
+    // Urut Segera dulu (join ke sppd_requests), lalu terbaru. Diurut di SQL
+    // sebelum take(5) agar SPPD Segera tetap muncul walau bukan yang terbaru.
     $pendingApprovals = SppdApproval::with(['sppdRequest.user'])
-      ->where('approver_id', $user->id)
-      ->where('status', ApprovalStatus::PENDING)
-      ->latest()->take(5)->get();
+      ->where('sppd_approvals.approver_id', $user->id)
+      ->where('sppd_approvals.status', ApprovalStatus::PENDING)
+      ->join('sppd_requests', 'sppd_requests.id', '=', 'sppd_approvals.sppd_request_id')
+      ->select('sppd_approvals.*')
+      ->orderByRaw("sppd_requests.urgency = 'Segera' desc")
+      ->latest('sppd_approvals.created_at')
+      ->take(5)->get();
 
     // Top OPD berdasarkan % pemakaian anggaran (dari budget yang sudah dimuat).
     $topByUsage = $budgets
@@ -245,10 +251,15 @@ class DashboardController extends Controller
     $base = $this->scopedSppd($user);
     $stats = $this->statusCounts($base);
 
+    // Urut Segera dulu (join ke sppd_requests), lalu terbaru.
     $pendingApprovals = SppdApproval::with(['sppdRequest.user', 'sppdRequest.destinations.regency', 'sppdRequest.costDetails'])
-      ->where('approver_id', $user->id)
-      ->where('status', ApprovalStatus::PENDING)
-      ->latest()->get();
+      ->where('sppd_approvals.approver_id', $user->id)
+      ->where('sppd_approvals.status', ApprovalStatus::PENDING)
+      ->join('sppd_requests', 'sppd_requests.id', '=', 'sppd_approvals.sppd_request_id')
+      ->select('sppd_approvals.*')
+      ->orderByRaw("sppd_requests.urgency = 'Segera' desc")
+      ->latest('sppd_approvals.created_at')
+      ->get();
 
     $pendingSignatures = collect();
     if ($user->can('sppd.sign')) {
@@ -258,12 +269,19 @@ class DashboardController extends Controller
         ->latest()->get();
     }
 
+    // "Menunggu TTE": penandatanganan menyatu dengan persetujuan (TTE terjadi saat
+    // approver ber-signs_spt/signs_sppd menyetujui), jadi tak pernah ada tanda tangan
+    // ber-status PENDING tersendiri. Hitung dari antrean persetujuan yang butuh TTE.
+    $pendingTteCount = $pendingApprovals
+      ->filter(fn ($a) => $a->signs_spt || $a->signs_sppd)
+      ->count();
+
     $recentDecisions = SppdApproval::with(['sppdRequest.user'])
       ->where('approver_id', $user->id)
       ->whereIn('status', [ApprovalStatus::APPROVED, ApprovalStatus::REJECTED])
       ->latest()->take(5)->get();
 
-    return compact('stats', 'pendingApprovals', 'pendingSignatures', 'recentDecisions');
+    return compact('stats', 'pendingApprovals', 'pendingSignatures', 'pendingTteCount', 'recentDecisions');
   }
 
   private function requesterData(User $user): array

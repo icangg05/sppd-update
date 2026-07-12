@@ -124,6 +124,28 @@
   }
 }
 
+/* Simpul alur persetujuan muncul beruntun (stagger via inline animation-delay). */
+@keyframes flowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.flow-node {
+  animation: flowIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-node {
+    animation: none;
+  }
+}
+
 /* Angka (di app ini selalu font-mono: rupiah, kode rekening, persentase)
    dirender sebagai tabular figures agar digit rata rapi di kolom tabel uang.
    Satu sumber kebenaran, berlaku app-wide. */

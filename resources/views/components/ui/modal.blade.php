@@ -5,7 +5,9 @@
 	// isyarat bahwa modal harus ditutup lewat tombol.
 	$outsideClick = $closeable ? ($show . ' = false') : 'shake = false; $nextTick(() => shake = true)';
 @endphp
-<div x-data="{ shake: false }"
+{{-- display:contents → root bukan flex/grid item, jadi tak menambah `gap` di
+     container induk (mis. flex flex-col gap-4). Konten visual tetap di-teleport. --}}
+<div class="contents" x-data="{ shake: false }"
 	{{-- Kunci scroll body selama modal terbuka. Pakai counter global agar aman
 	     bila ada beberapa modal: body baru bisa discroll lagi setelah semua tutup. --}}
 	x-init="

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Vinkla\Hashids\Facades\Hashids;
 
 #[Layout('layouts.app')]
 class SppdCreate extends Component
@@ -28,6 +29,19 @@ class SppdCreate extends Component
   public function mount(): void
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat membuat SPPD.');
+
+    // Kembali dari Tahap 2: pulihkan pilihan pelaksana & domain agar tetap terpilih.
+    // user_id datang sebagai hashid (getRouteKey), jadi perlu di-decode dulu.
+    if (in_array(request('domain'), ['dalam_daerah', 'lddp', 'ldlp'], true)) {
+      $this->domain = request('domain');
+    }
+    if ($hashid = request('user_id')) {
+      $decoded = Hashids::decode($hashid);
+      if (! empty($decoded)) {
+        $this->user_id = (int) $decoded[0];
+        $this->checkWorkflow();
+      }
+    }
   }
 
   public function updatedUserId(): void

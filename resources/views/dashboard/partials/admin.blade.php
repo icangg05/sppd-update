@@ -97,9 +97,13 @@
     </div>
     <div class="divide-y divide-slate-100">
       @foreach ($pendingApprovals as $appr)
+        @php $urgency = $appr->sppdRequest->urgency ?? 'Biasa'; @endphp
         <a wire:navigate href="{{ route('sppd.show', $appr->sppdRequest) }}"
           class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50">
-          <span class="line-clamp-1 font-medium text-slate-700">{{ $appr->sppdRequest->purpose }}</span>
+          <span class="flex min-w-0 items-center gap-2">
+            <x-ui.badge :color="$urgency === 'Segera' ? 'rose' : 'slate'" class="shrink-0">{{ $urgency }}</x-ui.badge>
+            <span class="line-clamp-1 font-medium text-slate-700">{{ $appr->sppdRequest->purpose }}</span>
+          </span>
           <span class="shrink-0 text-xs text-slate-500">{{ $appr->sppdRequest->user->name }}</span>
         </a>
       @endforeach

@@ -588,22 +588,34 @@ class SppdCreateDetails extends Component
       }
     }
 
+    // Tampilkan default 100 pegawai; selebihnya dicari lewat pencarian. Selalu
+    // dibatasi agar tidak memuat seluruh pegawai se-OPD sekaligus (berat).
     if ($this->searchFollower !== '') {
       $userQuery->where('name', 'like', '%' . $this->searchFollower . '%');
     }
-    $users = $userQuery->orderBy('name')->get();
+    $users = $userQuery->orderBy('name')->limit(100)->get();
+
+    // Pengikut yang sudah dipilih dimuat terpisah (jumlahnya kecil) agar tetap
+    // tampil di kolom ringkasan meski tidak ada di hasil pencarian saat ini.
+    $selectedFollowerUsers = $this->followers
+      ? User::whereIn('id', $this->followers)->orderBy('name')->get()
+      : collect();
 
     $provinces = Province::orderBy('name')->get();
 
-    // Active followers
-    $activeFollowerIds = SppdRequest::whereIn('user_id', $users->pluck('id'))
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
+    // Pegawai sibuk — dibedakan: sedang dalam perjalanan (SPPD disetujui &
+    // periodenya belum lewat) vs masih dalam proses persetujuan (IN_PROGRESS).
+    $followerIds = $users->pluck('id');
+
+    $travelingFollowerIds = SppdRequest::whereIn('user_id', $followerIds)
+      ->where('status', SppdStatus::APPROVED)
+      ->where('end_date', '>=', today())
+      ->pluck('user_id')
+      ->unique()
+      ->toArray();
+
+    $pendingFollowerIds = SppdRequest::whereIn('user_id', $followerIds)
+      ->where('status', SppdStatus::IN_PROGRESS)
       ->pluck('user_id')
       ->unique()
       ->toArray();
@@ -621,7 +633,9 @@ class SppdCreateDetails extends Component
       'users',
       'provinces',
       'steps',
-      'activeFollowerIds',
+      'selectedFollowerUsers',
+      'travelingFollowerIds',
+      'pendingFollowerIds',
       'isInspektorat'
     ))->title('Detail Perjalanan Dinas');
   }

@@ -2,16 +2,18 @@
 
 namespace App\Livewire\Auth;
 
+use App\Livewire\Concerns\InteractsWithToast;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.guest')]
 class Login extends Component
 {
+  use InteractsWithToast;
+
   public string $username = 'admin.diskominfo';
   public string $password = 'pass1234';
   public bool $remember = false;
@@ -45,33 +47,31 @@ class Login extends Component
 
   public function login()
   {
-    $this->validate([
-      'username' => ['required', 'string'],
-      'password' => ['required', 'string'],
-    ], [], [
-      'username' => 'username',
-      'password' => 'password',
-    ]);
+    if (trim($this->username) === '' || trim($this->password) === '') {
+      $this->toastError('Username dan password wajib diisi.');
 
-    $this->ensureIsNotRateLimited();
+      return;
+    }
+
+    if ($this->isRateLimited()) {
+      return;
+    }
 
     if (! Auth::attempt(['username' => $this->username, 'password' => $this->password], $this->remember)) {
       RateLimiter::hit($this->throttleKey(), self::DECAY_SECONDS);
       $this->syncLockout();
+      $this->toastError('Username atau password salah.');
 
-      throw ValidationException::withMessages([
-        'username' => 'Username atau password salah.',
-      ]);
+      return;
     }
 
     $user = Auth::user();
 
     if (! $user->is_active) {
       Auth::logout();
+      $this->toastError('Akun Anda tidak aktif. Hubungi administrator.');
 
-      throw ValidationException::withMessages([
-        'username' => 'Akun Anda tidak aktif. Hubungi administrator.',
-      ]);
+      return;
     }
 
     RateLimiter::clear($this->throttleKey());
@@ -84,17 +84,16 @@ class Login extends Component
   }
 
   /** Tolak login bila percobaan sudah melebihi batas, sambil set hitung mundur. */
-  protected function ensureIsNotRateLimited(): void
+  protected function isRateLimited(): bool
   {
     if (! RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
-      return;
+      return false;
     }
 
     $this->syncLockout();
+    $this->toastError("Terlalu banyak percobaan gagal. Coba lagi dalam {$this->lockoutSeconds} detik.");
 
-    throw ValidationException::withMessages([
-      'username' => "Terlalu banyak percobaan gagal. Coba lagi dalam {$this->lockoutSeconds} detik.",
-    ]);
+    return true;
   }
 
   protected function syncLockout(): void

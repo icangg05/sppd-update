@@ -399,6 +399,13 @@ class SppdIndex extends Component
     ))->title($title);
   }
 
+  /** Set pesan error inline sekaligus tampilkan toast (dipakai startSppdLanjutan). */
+  private function failLanjutan(string $message): void
+  {
+    $this->errorMessage = $message;
+    $this->toastError($message);
+  }
+
   public function startSppdLanjutan(int $sppdId): void
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
@@ -409,13 +416,13 @@ class SppdIndex extends Component
 
     $sppd = SppdRequest::with('user.department')->find($sppdId);
     if (! $sppd) {
-      $this->errorMessage = 'Data SPPD tidak ditemukan.';
+      $this->failLanjutan('Data SPPD tidak ditemukan.');
       return;
     }
 
     $user = $sppd->user;
     if (! $user) {
-      $this->errorMessage = 'Pegawai pelaksana tidak ditemukan.';
+      $this->failLanjutan('Pegawai pelaksana tidak ditemukan.');
       return;
     }
 
@@ -432,14 +439,14 @@ class SppdIndex extends Component
       ->exists();
 
     if ($hasActiveTravel) {
-      $this->errorMessage = 'Pegawai ' . $user->name . ' masih memiliki SPPD aktif lainnya (sedang dalam proses approval atau masih dalam periode perjalanan).';
+      $this->failLanjutan('Pegawai ' . $user->name . ' masih memiliki SPPD aktif lainnya (sedang dalam proses approval atau masih dalam periode perjalanan).');
       return;
     }
 
     // 2. Cek Kop Surat
     $hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
     if (! $hasHeader) {
-      $this->errorMessage = 'Unit kerja ' . ($user->department?->name ?? 'Tanpa Unit Kerja') . ' belum mengunggah Kop Surat Resmi. Harap hubungi Admin OPD Anda untuk melengkapi data dokumen.';
+      $this->failLanjutan('Unit kerja ' . ($user->department?->name ?? 'Tanpa Unit Kerja') . ' belum mengunggah Kop Surat Resmi. Harap hubungi Admin OPD Anda untuk melengkapi data dokumen.');
       return;
     }
 
@@ -449,7 +456,7 @@ class SppdIndex extends Component
 
     if (empty($steps)) {
       $roleLabel = $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role');
-      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin) untuk role: ' . $roleLabel . '.';
+      $this->failLanjutan('Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin) untuk role: ' . $roleLabel . '.');
       return;
     }
 
@@ -462,7 +469,7 @@ class SppdIndex extends Component
 
     if (! $allStepsFound) {
       $this->simulatedSteps = $steps;
-      $this->errorMessage = 'Ada pejabat struktural yang belum ditentukan dalam alur ini. Harap lengkapi struktur organisasi di menu Unit Kerja.';
+      $this->failLanjutan('Ada pejabat struktural yang belum ditentukan dalam alur ini. Harap lengkapi struktur organisasi di menu Unit Kerja.');
       return;
     }
 

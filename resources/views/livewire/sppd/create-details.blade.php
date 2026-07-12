@@ -16,7 +16,7 @@
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
 				<p class="mt-1 text-xs text-slate-500">Isi detail & lengkapi data pengajuan.</p>
 			</div>
-			<x-ui.button href="{{ route('sppd.create') }}" wire:navigate variant="secondary">
+			<x-ui.button href="{{ route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain]) }}" wire:navigate variant="secondary">
 				<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
 				Kembali ke Tahap 1
 			</x-ui.button>
@@ -51,19 +51,38 @@
 				<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-3">
 					<i class="fa-solid fa-diagram-project text-slate-500"></i> Pratinjau Alur Verifikasi / Persetujuan
 				</h4>
-				<div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+				{{-- Alur Langkah — timeline horizontal ringkas (vertikal di mobile) --}}
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
 					@foreach ($steps as $step)
-						<div class="flex items-center gap-2.5 rounded border border-emerald-200 bg-emerald-50/50 p-2.5 shadow-2xs">
-							<div
-								class="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-2xs">
+						@php
+							$isFound = ($step['status'] ?? 'found') === 'found';
+							$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : 'bg-red-600 ring-red-100';
+							$roleClass = $isFound ? 'text-emerald-700' : 'text-red-600';
+							$nameClass = $isFound ? 'text-slate-800' : 'text-red-700 italic';
+						@endphp
+
+						<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
+							style="animation-delay: {{ $loop->index * 90 }}ms">
+							<span class="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ring-4 {{ $nodeClass }}">
 								{{ $loop->iteration }}
-							</div>
-							<div class="min-w-0 leading-tight">
-								<p class="text-xs font-bold uppercase tracking-wide text-emerald-600">{{ $step['role_label'] }}</p>
-								<p class="text-sm font-semibold text-emerald-950 truncate mt-0.5" title="{{ $step['approver_name'] }}">
-									{{ $step['approver_name'] }}</p>
-							</div>
+								@if ($isFound)
+									<i class="fa-solid fa-check absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-white text-[7px] text-emerald-600 ring-1 ring-emerald-200"></i>
+								@endif
+							</span>
+							<span class="min-w-0 leading-tight">
+								<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
+								<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+							</span>
 						</div>
+
+						@if (! $loop->last)
+							{{-- Konektor alur: vertikal di mobile, horizontal + chevron di desktop --}}
+							<div class="flex shrink-0 items-center sm:px-1.5" aria-hidden="true">
+								<span class="ml-3.5 h-4 w-0.5 rounded-full bg-slate-200 sm:hidden"></span>
+								<span class="hidden h-0.5 w-6 rounded-full bg-slate-200 sm:block"></span>
+								<i class="fa-solid fa-chevron-right hidden text-[10px] text-slate-300 sm:-ml-1 sm:block"></i>
+							</div>
+						@endif
 					@endforeach
 				</div>
 			</div>
@@ -310,28 +329,50 @@
 					<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						@forelse ($users as $u)
 							@if ($u->id != $pelaksana->id)
-								@php $isActive = in_array($u->id, $activeFollowerIds); @endphp
+								@php
+									$isTraveling = in_array($u->id, $travelingFollowerIds);
+									$isPending = !$isTraveling && in_array($u->id, $pendingFollowerIds);
+									$isBusy = $isTraveling || $isPending;
+								@endphp
 								<label
-									class="follower-item flex items-start gap-2.5 rounded border border-slate-200 bg-white p-2.5 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer {{ $isActive ? 'opacity-60 cursor-not-allowed bg-rose-50/50 border-rose-200' : '' }}">
+									class="follower-item flex items-start gap-2.5 rounded border border-slate-200 bg-white p-2.5 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer {{ $isTraveling ? 'opacity-60 cursor-not-allowed bg-rose-50/50 border-rose-200' : ($isPending ? 'opacity-60 cursor-not-allowed bg-amber-50/50 border-amber-200' : '') }}">
 									<input type="checkbox" wire:model.live="followers" value="{{ $u->id }}"
 										class="follower-cb rounded border-slate-300 text-primary-600 focus:ring-primary-500 mt-0.5"
-										@disabled($isActive)>
+										@disabled($isBusy)>
 									<div class="min-w-0 leading-tight">
 										<span class="block text-xs font-semibold text-slate-700 truncate follower-name">{{ $u->name }}</span>
-										<span class="block text-[10px] text-slate-500 font-mono mt-0.5">{{ $u->nip }}</span>
-										@if ($isActive)
-											<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
+										@if ($u->nip)
+												<span class="block text-[10px] text-slate-500 font-mono mt-0.5">{{ $u->nip }}</span>
+											@endif
+											@if ($u->employee_type === \App\Enums\EmployeeType::DPRD)
+												<span class="block text-[10px] font-semibold text-primary-600 mt-0.5">Anggota DPRD</span>
+											@endif
+										@if ($isTraveling)
+											<span class="inline-block text-[10px] text-rose-600 font-semibold mt-0.5"><i
 													class="fa-solid fa-route"></i> Sedang dalam perjalanan dinas</span>
+										@elseif ($isPending)
+											<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
+													class="fa-solid fa-hourglass-half"></i> Dalam proses persetujuan</span>
 										@endif
 									</div>
 								</label>
 							@endif
 						@empty
 							<div class="col-span-full text-center py-8 text-xs font-medium text-slate-500 italic">
-								<i class="fa-solid fa-user-slash text-base mb-1 block text-slate-300"></i> Pegawai tidak ditemukan
+								@if ($searchFollower === '')
+									<i class="fa-solid fa-user-slash text-base mb-1 block text-slate-300"></i> Belum ada pegawai di unit ini
+								@else
+									<i class="fa-solid fa-user-slash text-base mb-1 block text-slate-300"></i> Pegawai tidak ditemukan
+								@endif
 							</div>
 						@endforelse
 					</div>
+
+					@if ($searchFollower === '' && $users->count() >= 100)
+						<p class="mt-2 text-center text-[10px] font-medium text-slate-400 italic">
+							<i class="fa-solid fa-circle-info"></i> Menampilkan 100 pegawai. Gunakan pencarian untuk menemukan lainnya.
+						</p>
+					@endif
 				</div>
 			</div>
 
@@ -442,7 +483,7 @@
 					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 max-h-64 overflow-y-auto">
 						@if ($isInspektorat)
 							@forelse ($followers as $fId)
-								@php $folUser = $users->firstWhere('id', $fId); @endphp
+								@php $folUser = $selectedFollowerUsers->firstWhere('id', $fId); @endphp
 								@if ($folUser)
 									<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
 										<span class="text-xs font-semibold text-slate-700 truncate">
@@ -469,7 +510,7 @@
 							@endforelse
 						@else
 							@forelse ($followers as $fId)
-								@php $folUser = $users->firstWhere('id', $fId); @endphp
+								@php $folUser = $selectedFollowerUsers->firstWhere('id', $fId); @endphp
 								@if ($folUser)
 									<div class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white"><i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i> {{ $folUser->name }}</div>
 								@endif

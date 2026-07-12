@@ -44,8 +44,11 @@
 					['value' => 'lddp', 'label' => 'Luar Daerah Dalam Provinsi (LDDP)'],
 					['value' => 'ldlp', 'label' => 'Luar Daerah Luar Provinsi (LDLP)'],
 				];
+				$selectedPrefix = $selectedUser
+					? ($selectedUser->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $selectedUser->nip)
+					: null;
 				$selectedUserLabel = $selectedUser
-					? trim(($selectedUser->nip ? $selectedUser->nip . ' - ' : '') . $selectedUser->name)
+					? trim(($selectedPrefix ? $selectedPrefix . ' - ' : '') . $selectedUser->name)
 					: null;
 			@endphp
 			<div class="p-5 grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -146,7 +149,8 @@
 											:class="highlighted === {{ $loop->index }}
 												? 'bg-primary-100 text-primary-800'
 												: ({{ $user_id == $u->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
-											{{ trim(($u->nip ? $u->nip . ' - ' : '') . $u->name) }}
+											@php $prefix = $u->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $u->nip; @endphp
+											{{ trim(($prefix ? $prefix . ' - ' : '') . $u->name) }}
 										</button>
 									</li>
 								@empty
@@ -196,45 +200,81 @@
 						</div>
 					</div>
 
-					{{-- Grid Langkah Alur --}}
-					<div id="workflow-steps" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+					{{-- Alur Langkah — timeline horizontal ringkas (vertikal di mobile) --}}
+					<div id="workflow-steps" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
 						@forelse ($steps as $index => $step)
 							@php
 								$isFound = $step['status'] === 'found';
-								$cardClass = $isFound ? 'bg-emerald-50/60 border-emerald-200 shadow-2xs' : 'bg-red-50 border-red-200 ring-1 ring-red-200';
-								$badgeClass = $isFound ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white';
-								$labelClass = $isFound ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold';
-								$nameClass = $isFound ? 'text-emerald-900 font-bold' : 'text-red-700 italic font-medium';
+								$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : 'bg-red-600 ring-red-100';
+								$roleClass = $isFound ? 'text-emerald-700' : 'text-red-600';
+								$nameClass = $isFound ? 'text-slate-800' : 'text-red-700 italic';
 							@endphp
 
-							<div class="flex items-center gap-3 rounded border p-3 transition-all {{ $cardClass }}">
-								<div class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-2xs {{ $badgeClass }}">
+							<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
+								style="animation-delay: {{ $index * 90 }}ms">
+								<span class="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ring-4 {{ $nodeClass }}">
 									{{ $index + 1 }}
-								</div>
-								<div class="flex-1 min-w-0 leading-tight">
-									<p class="text-xs uppercase tracking-wider {{ $labelClass }}">
-										{{ $step['role_label'] }}
-									</p>
-									<p class="text-sm mt-0.5 truncate {{ $nameClass }}" title="{{ $step['approver_name'] }}">
-										{{ $step['approver_name'] }}
-									</p>
-								</div>
+									@if ($isFound)
+										<i class="fa-solid fa-check absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-white text-[7px] text-emerald-600 ring-1 ring-emerald-200"></i>
+									@endif
+								</span>
+								<span class="min-w-0 leading-tight">
+									<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
+									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+								</span>
 							</div>
+
+							@if (! $loop->last)
+								{{-- Konektor alur: vertikal di mobile, horizontal + chevron di desktop --}}
+								<div class="flex shrink-0 items-center sm:px-1.5" aria-hidden="true">
+									<span class="ml-3.5 h-4 w-0.5 rounded-full bg-slate-200 sm:hidden"></span>
+									<span class="hidden h-0.5 w-6 rounded-full bg-slate-200 sm:block"></span>
+									<i class="fa-solid fa-chevron-right hidden text-[10px] text-slate-300 sm:-ml-1 sm:block"></i>
+								</div>
+							@endif
 						@empty
 							@if ($errorMessage === '')
-								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-500 italic">
+								<div class="w-full py-6 text-center text-sm font-medium text-slate-500 italic">
 									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
-								<div class="col-span-full py-6 text-center text-sm font-medium text-slate-500 italic">
-									<i class="fa-solid fa-triangle-exclamation mr-2 text-amber-500"></i>Alur persetujuan tidak tersedia.
+								@php $isBusy = $errorMessageName !== ''; @endphp
+								{{-- Empty state kompak: rantai persetujuan putus (berornamen + animasi) --}}
+								<div class="w-full">
+									<div class="relative flex flex-col items-center gap-2.5 overflow-hidden rounded-lg border border-dashed border-amber-300 bg-linear-to-br from-amber-50/70 via-white to-white px-4 py-4">
+										{{-- Ornamen watermark --}}
+										<i class="fa-solid fa-diagram-project pointer-events-none absolute -bottom-3 -right-2 text-6xl text-amber-500/10" aria-hidden="true"></i>
+
+										{{-- Rantai node: pelaksana → simpul putus → tak diketahui --}}
+										<div class="relative flex items-center gap-1.5" aria-hidden="true">
+											<span class="flex size-6 items-center justify-center rounded-full bg-slate-200 text-[10px] text-slate-400"><i class="fa-solid fa-user"></i></span>
+											<span class="h-0.5 w-5 rounded-full bg-slate-300"></span>
+											<span class="flex size-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 ring-4 ring-amber-50 animate-pulse"><i class="fa-solid {{ $isBusy ? 'fa-user-clock' : 'fa-link-slash' }} text-sm"></i></span>
+											<span class="w-5 border-t-2 border-dashed border-slate-300"></span>
+											<span class="flex size-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-300"><i class="fa-solid fa-question"></i></span>
+										</div>
+
+										<div class="relative text-center">
+											<p class="text-sm font-bold text-slate-700">{{ $isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia' }}</p>
+											<p class="mt-0.5 text-xs leading-relaxed text-slate-500">
+												@if ($isBusy)
+													Pegawai <strong class="font-semibold text-slate-700">{{ $errorMessageName }}</strong> {{ $errorMessage }}
+												@elseif ($errorMessageRole !== '')
+													{{ $errorMessage }} <span class="whitespace-nowrap">(Role: <strong class="font-semibold text-slate-700">{{ $errorMessageRole }}</strong>)</span>
+												@else
+													{{ $errorMessage }}
+												@endif
+											</p>
+										</div>
+									</div>
 								</div>
 							@endif
 						@endforelse
 					</div>
 
-					{{-- Pesan Kesalahan / Validasi Alur Instansi --}}
-					@if ($errorMessage !== '')
+					{{-- Pesan Kesalahan / Validasi Alur Instansi — hanya bila ada langkah yang
+					     tampil (kasus tanpa langkah pesannya sudah menyatu di kartu empty-state). --}}
+					@if ($errorMessage !== '' && count($steps) > 0)
 						<div id="workflow-error-msg" class="mt-4 rounded border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">
 							<div class="flex gap-2">
 								<i class="fa-solid fa-circle-exclamation shrink-0 mt-0.5"></i>
