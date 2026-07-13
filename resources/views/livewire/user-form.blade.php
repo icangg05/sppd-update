@@ -96,6 +96,11 @@
 						<x-form.input wire:model="nik" name="nik" label="NIK (Nomor Induk Kependudukan)"
 							placeholder="16 digit angka" class="font-mono" />
 					</div>
+
+          <div class="space-y-1">
+						<x-form.input wire:model="email" type="email" name="email" label="Email Resmi"
+							placeholder="email@contoh.com" />
+					</div>
 				</div>
 			</section>
 
@@ -140,11 +145,6 @@
 						@error('username')
 							<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
 						@enderror
-					</div>
-
-					<div class="space-y-1">
-						<x-form.input wire:model="email" type="email" name="email" label="Email Resmi"
-							placeholder="email@contoh.com" />
 					</div>
 
 					<div class="space-y-1 sm:col-span-2">

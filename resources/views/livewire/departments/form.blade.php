@@ -118,13 +118,14 @@
           @endif
         </div>
 
-        {{-- Kode & Tipe — hanya untuk OPD induk --}}
-        @if ($isRoot)
-          <div class="space-y-0.5">
-            <x-form.input wire:model="code" name="code" label="Kode Unit Kerja"
-              placeholder="Misal: 15.42.5" class="font-mono" />
-          </div>
+        {{-- Kode — selalu tampil --}}
+        <div class="space-y-0.5">
+          <x-form.input wire:model="code" name="code" label="Kode Unit Kerja"
+            placeholder="Misal: 15.42.5" class="font-mono" />
+        </div>
 
+        {{-- Tipe — hanya untuk OPD induk --}}
+        @if ($isRoot)
           <div class="space-y-0.5">
             @if ($isSuperAdmin)
               @php

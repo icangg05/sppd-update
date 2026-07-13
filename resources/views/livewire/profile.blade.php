@@ -82,39 +82,40 @@
 				</div>
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<x-form.input wire:model="name" label="Nama Lengkap" required placeholder="Nama lengkap" />
+          <div class="sm:col-span-2">
+            <x-form.input wire:model="name" label="Nama Lengkap" required placeholder="Nama lengkap" />
+          </div>
 
-					{{-- Username dengan tombol generate --}}
-					<div>
-						<label for="username" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
-							Username <span class="text-rose-500">*</span>
-						</label>
-						<div class="flex gap-2">
-							<input wire:model="username" type="text" id="username" name="username" required
-								placeholder="Username"
-								class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('username') border-red-400 @else border-slate-300 @enderror" />
+          {{-- Username dengan tombol generate --}}
+          <div>
+            <label for="username" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+              Username <span class="text-rose-500">*</span>
+            </label>
+            <div class="flex gap-2">
+              <input wire:model="username" type="text" id="username" name="username" required
+                placeholder="Username"
+                class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('username') border-red-400 @else border-slate-300 @enderror" />
 
-							<button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
-								wire:target="generateUsername" title="Buat username unik otomatis dari Nama Lengkap"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95 disabled:opacity-50">
-								<span wire:loading.remove wire:target="generateUsername">
-									<i class="fa-solid fa-wand-magic-sparkles text-sm"></i> Generate
-								</span>
-								<span wire:loading wire:target="generateUsername">
-									<i class="fa-solid fa-spinner fa-spin text-sm"></i> Membuat...
-								</span>
-							</button>
-						</div>
-						@error('username')
-							<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-						@enderror
-					</div>
+              <button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
+                wire:target="generateUsername" title="Buat username unik otomatis dari Nama Lengkap"
+                class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95 disabled:opacity-50">
+                <span wire:loading.remove wire:target="generateUsername">
+                  <i class="fa-solid fa-wand-magic-sparkles text-sm"></i> Generate
+                </span>
+                <span wire:loading wire:target="generateUsername">
+                  <i class="fa-solid fa-spinner fa-spin text-sm"></i> Membuat...
+                </span>
+              </button>
+            </div>
+            @error('username')
+              <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+            @enderror
+          </div>
 
-					<x-form.input wire:model="email" type="email" label="Email" placeholder="email@contoh.go.id" />
-					<div class="hidden sm:block"></div>
-					<x-form.input wire:model="nip" label="NIP" placeholder="Nomor Induk Pegawai" class="font-mono" />
-					<x-form.input wire:model="nik" label="NIK" placeholder="16 digit angka" class="font-mono" />
-				</div>
+          <x-form.input wire:model="email" type="email" label="Email" placeholder="email@contoh.go.id" />
+          <x-form.input wire:model="nip" label="NIP" placeholder="Nomor Induk Pegawai" class="font-mono" />
+          <x-form.input wire:model="nik" label="NIK" placeholder="16 digit angka" class="font-mono" />
+        </div>
 			</div>
 
 			{{-- Hemat scroll: kolom kiri (WhatsApp + Ganti Password) berdampingan dengan Organisasi. --}}
