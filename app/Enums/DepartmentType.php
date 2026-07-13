@@ -16,6 +16,19 @@ enum DepartmentType: string
   case SUBBAGIAN   = 'subbagian';
   case ASISTEN     = 'asisten';
 
+  /**
+   * Entitas yang mengelola datanya sendiri (anggaran/SPPD) dan terpisah dari
+   * zona data induknya — mis. Kelurahan di bawah Kecamatan, Puskesmas di bawah
+   * Dinas Kesehatan. Lihat Department::getScopedDescendantIds/getScopeRootDepartment.
+   */
+  public function isIndependentZone(): bool
+  {
+    return match ($this) {
+      self::KELURAHAN, self::PUSKESMAS => true,
+      default => false,
+    };
+  }
+
   public function label(): string
   {
     return match ($this) {

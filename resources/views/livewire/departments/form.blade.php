@@ -147,10 +147,23 @@
           </div>
         @else
           <div class="space-y-0.5">
-            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Tipe Entitas (mengikuti induk)</label>
-            <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
-              {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
-            </div>
+            @if ($isSuperAdmin)
+              @php
+                $typeOptions = collect($types)
+                  ->map(fn($t) => ['value' => $t->value, 'label' => $t->label()])
+                  ->all();
+              @endphp
+              <x-form.searchable-select wire:model.live="type" name="type" label="Tipe Entitas" required
+                :options="$typeOptions" placeholder="— Pilih Tipe —" searchPlaceholder="Cari tipe..." />
+              <p class="text-[10px] text-slate-500 font-medium mt-0.5">
+                <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Bawaan mengikuti induk; ubah bila unit ini entitas mandiri (mis. Kelurahan di bawah Kecamatan).
+              </p>
+            @else
+              <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Tipe Entitas (mengikuti induk)</label>
+              <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
+                {{ collect($types)->firstWhere('value', $type)?->label() ?? '—' }}
+              </div>
+            @endif
           </div>
         @endif
 
@@ -163,152 +176,11 @@
           </div>
         @endif
 
-        {{-- Pemilihan Kepala / Pimpinan — pencarian server-side (Penuh 2 Kolom) --}}
-        <div class="md:col-span-2 space-y-0.5">
-          {{-- Pimpinan: dropdown dengan pencarian server-side (live) agar tidak memuat seluruh pegawai --}}
-          <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
-            Kepala / Pimpinan Penanggung Jawab
-          </label>
-          <div x-data="{
-              open: false,
-              dropUp: false,
-              highlighted: 0,
-              coords: { top: 0, left: 0, width: 0 },
-              position() {
-                const r = this.$refs.trigger.getBoundingClientRect();
-                const margin = 4;
-                const panelH = this.$refs.panel?.offsetHeight || 320;
-                const spaceBelow = window.innerHeight - r.bottom;
-                const spaceAbove = r.top;
-                this.dropUp = spaceBelow < panelH + margin && spaceAbove > spaceBelow;
-                this.coords = {
-                  top: this.dropUp ? Math.max(margin, r.top - panelH - margin) : r.bottom + margin,
-                  left: r.left,
-                  width: r.width,
-                };
-              },
-              items() {
-                return this.$refs.list ? Array.from(this.$refs.list.querySelectorAll('[data-opt]')) : [];
-              },
-              move(dir) {
-                const len = this.items().length;
-                if (!len) return;
-                let n = this.highlighted + dir;
-                if (n < 0) n = len - 1;
-                if (n >= len) n = 0;
-                this.highlighted = n;
-                this.$nextTick(() => this.items()[this.highlighted]?.scrollIntoView({ block: 'nearest' }));
-              },
-              pick() {
-                (this.items()[this.highlighted] || this.items()[0])?.click();
-              },
-              canAutoFocus() {
-                return window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-              },
-              toggle() {
-                this.open = !this.open;
-                if (this.open) {
-                  this.highlighted = 0;
-                  this.$nextTick(() => { this.position(); if (this.canAutoFocus()) this.$refs.searchHead?.focus(); });
-                }
-              },
-              onOutside(e) {
-                if (!this.open) return;
-                if (this.$refs.trigger.contains(e.target)) return;
-                if (this.$refs.panel?.contains(e.target)) return;
-                this.open = false;
-              },
-            }"
-            @keydown.escape.window="open = false"
-            @click.window="onOutside($event)"
-            @scroll.window.capture="if (open) position()"
-            @resize.window="if (open) position()"
-            class="relative">
-            @php
-              $selectedHeadLabel = $selectedHead
-                ? trim(($selectedHead->nip ? $selectedHead->nip . ' - ' : '') . $selectedHead->name)
-                : null;
-            @endphp
-            <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
-              class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
-              <span class="truncate text-left {{ $selectedHeadLabel ? 'text-slate-800' : 'text-slate-500' }}">
-                {{ $selectedHeadLabel ?? '— Pilih Pimpinan —' }}
-              </span>
-              <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
-                :class="open && 'rotate-180'"></i>
-            </button>
-
-            <div x-ref="panel" x-show="open" x-cloak
-              x-transition:enter="transition ease-out duration-100"
-              x-transition:enter-start="opacity-0 scale-95"
-              x-transition:enter-end="opacity-100 scale-100"
-              x-transition:leave="transition ease-in duration-75"
-              x-transition:leave-start="opacity-100 scale-100"
-              x-transition:leave-end="opacity-0 scale-95"
-              :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
-              class="overflow-hidden rounded border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
-              <div class="border-b border-slate-100 p-2">
-                <div class="relative">
-                  <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
-                  <input x-ref="searchHead" type="text" wire:model.live.debounce.300ms="searchHead"
-                    @input="highlighted = 0"
-                    @keydown.arrow-down.prevent="move(1)"
-                    @keydown.arrow-up.prevent="move(-1)"
-                    @keydown.enter.prevent="pick()"
-                    @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
-                    placeholder="Cari nama / NIP pegawai..."
-                    class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
-                </div>
-              </div>
-              <ul x-ref="list" class="max-h-56 overflow-auto py-1">
-                <li wire:key="head-opt-none">
-                  <button type="button" data-opt wire:click="clearHead"
-                    @click="open = false" @mouseenter="highlighted = 0"
-                    class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
-                    :class="highlighted === 0
-                      ? 'bg-primary-100 text-primary-800'
-                      : ({{ empty($head_id) ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-500 italic hover:bg-primary-50')">
-                    — Tanpa Pimpinan —
-                  </button>
-                </li>
-                @foreach ($heads as $h)
-                  <li wire:key="head-opt-{{ $h->id }}">
-                    <button type="button" data-opt wire:click="selectHead({{ $h->id }})"
-                      @click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
-                      class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
-                      :class="highlighted === {{ $loop->index + 1 }}
-                        ? 'bg-primary-100 text-primary-800'
-                        : ({{ $head_id == $h->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
-                      {{ trim(($h->nip ? $h->nip . ' - ' : '') . $h->name) }}
-                    </button>
-                  </li>
-                @endforeach
-                @if ($heads->isEmpty())
-                  <li class="px-3 py-2 text-xs text-slate-500">
-                    {{ trim($searchHead) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai pada instansi induk pengampu.' }}
-                  </li>
-                @endif
-                @if ($headsHasMore)
-                  <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
-                    Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
-                  </li>
-                @endif
-              </ul>
-            </div>
-          </div>
-          <p class="text-[10px] text-slate-500 font-medium mt-0.5">
-            <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Hanya memuat pegawai yang terdaftar di instansi induk pengampu.
-          </p>
-          @error('head_id')
-            <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-          @enderror
-        </div>
-
       </div>{{-- /grid Identitas & Struktur --}}
     </section>
 
-    {{-- ── Kelompok 2: Penandatangan "Setuju Bayar" (dokumen cetak) — hanya saat edit ── --}}
-    @if ($isEdit)
+    {{-- ── Kelompok 2: Penandatangan "Setuju Bayar" (dokumen cetak) — hanya di root zona data ── --}}
+    @if ($isScopeRoot)
       <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
         <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
           <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">

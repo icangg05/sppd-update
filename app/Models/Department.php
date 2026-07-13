@@ -146,7 +146,11 @@ class Department extends Model
   public function getScopeRootDepartment(): self
   {
     $dept = $this;
-    while ($dept->parent !== null && $dept->parent->can_view_children_data) {
+    while (
+      $dept->parent !== null
+      && ! $dept->type->isIndependentZone()
+      && $dept->parent->can_view_children_data
+    ) {
       $dept = $dept->parent;
     }
 
@@ -167,6 +171,11 @@ class Department extends Model
 
     $ids = collect();
     foreach ($this->children as $child) {
+      // Entitas zona mandiri (kelurahan, puskesmas) kelola anggaran/SPPD sendiri —
+      // tidak ikut zona induk walau induk berbagi data ke bawah.
+      if ($child->type->isIndependentZone()) {
+        continue;
+      }
       $ids->push($child->id);
       $ids = $ids->merge($child->getScopedDescendantIds());
     }
@@ -189,44 +198,45 @@ class Department extends Model
    * Penandatangan "Setuju Bayar" pada dokumen cetak (kuitansi, pengeluaran
    * riil, rincian biaya) untuk pegawai di department ini.
    *
-   * Urutan resolusi user: setting department sendiri → setting OPD induk
-   * (naik satu level, sama seperti logika cetak lama) → user role kepala_opd
-   * di OPD induk → di department sendiri. User tersimpan yang nonaktif dilewati.
-   * Label di-resolve terpisah (department sendiri → OPD induk) agar tetap
-   * berlaku walau kolom user kosong; null = label bawaan per dokumen.
+   * Resolusi naik dari department ini sampai root zona data (mis. Dinas) —
+   * setting yang paling dekat menang. Cukup diatur SEKALI di tingkat Dinas:
+   * semua sub-unit di bawahnya (Bidang/Seksi) otomatis mewarisi tanpa perlu
+   * diset satu-satu. User tersimpan yang nonaktif dilewati; bila tak ada setting
+   * eksplisit, fallback ke user role kepala_opd di root zona. Label di-resolve
+   * terpisah agar tetap berlaku walau kolom user kosong (null = label bawaan
+   * per dokumen). Zona mandiri (kelurahan/puskesmas) berhenti di dirinya sendiri.
    *
    * @return array{user: ?User, label: ?string, opd: Department}
    */
   public function resolveSetujuBayar(): array
   {
-    $opd = $this->parent_id ? ($this->parent ?? $this) : $this;
+    $scopeRoot = $this->getScopeRootDepartment();
 
-    $user = null;
-    foreach ([$this, $opd] as $dept) {
+    $user  = null;
+    $label = null;
+    $dept  = $this;
+    while (true) {
       $candidate = $dept->setujuBayarUser;
-      if ($candidate && $candidate->is_active) {
+      if (! $user && $candidate && $candidate->is_active) {
         $user = $candidate;
+      }
+      if ($label === null && $dept->setuju_bayar_label) {
+        $label = $dept->setuju_bayar_label;
+      }
+      if ($dept->id === $scopeRoot->id || $dept->parent === null) {
         break;
       }
+      $dept = $dept->parent;
     }
 
     if (! $user) {
       $user = User::role('kepala_opd')
-        ->where('department_id', $opd->id)
+        ->where('department_id', $scopeRoot->id)
         ->where('is_active', true)
         ->first();
-
-      if (! $user && $opd->id !== $this->id) {
-        $user = User::role('kepala_opd')
-          ->where('department_id', $this->id)
-          ->where('is_active', true)
-          ->first();
-      }
     }
 
-    $label = $this->setuju_bayar_label ?? $opd->setuju_bayar_label;
-
-    return ['user' => $user, 'label' => $label, 'opd' => $opd];
+    return ['user' => $user, 'label' => $label, 'opd' => $scopeRoot];
   }
 
   /**

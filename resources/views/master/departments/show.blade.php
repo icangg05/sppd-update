@@ -182,50 +182,6 @@
       {{-- Sektor Samping: Penanggung Jawab & Statistik (1 Kolom) --}}
       <div class="space-y-6">
 
-        {{-- Card Profil Pimpinan --}}
-        <div class="dash-enter bg-white rounded border border-slate-200 border-t-2 border-t-primary-500 shadow-sm overflow-hidden">
-          <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/50 px-4 py-3.5">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-              <i class="fa-solid fa-user-tie"></i>
-            </div>
-            <h3 class="text-sm font-bold text-slate-800">Pimpinan Unit Kerja</h3>
-          </div>
-
-          <div class="p-4 text-xs">
-            @if ($department->head)
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary-200 bg-primary-100 text-sm font-bold text-primary-700 shadow-inner">
-                  {{ strtoupper(substr($department->head->name, 0, 1)) }}
-                </div>
-                <div class="space-y-0.5 min-w-0">
-                  <p class="font-bold text-slate-900 truncate tracking-wide text-xs">{{ $department->head->name }}</p>
-                  <p class="text-[11px] font-semibold text-slate-500 truncate uppercase">
-                    {{ $department->head->position?->name ?? 'Pimpinan / Kepala' }}</p>
-                  <div
-                    class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded font-mono text-[10px] text-slate-600 mt-1">
-                    <i class="fa-solid fa-id-card text-[10px] text-slate-500"></i> NIP: {{ $department->head->nip ?? '-' }}
-                  </div>
-                </div>
-              </div>
-            @else
-              <div class="text-center py-4 space-y-2">
-                <div
-                  class="w-9 h-9 bg-slate-100 text-slate-500 rounded flex items-center justify-center mx-auto border border-slate-200">
-                  <i class="fa-solid fa-user-slash text-sm"></i>
-                </div>
-                <div class="space-y-0.5">
-                  <p class="font-medium text-slate-500">Pimpinan belum ditentukan</p>
-                  <a wire:navigate href="{{ route('master.departments.edit', $department->id) }}"
-                    class="inline-block text-[11px] font-bold text-primary-600 hover:text-primary-700">
-                    Atur Pimpinan Sekarang &rarr;
-                  </a>
-                </div>
-              </div>
-            @endif
-          </div>
-        </div>
-
         {{-- Card Statistik Internal Pegawai --}}
         @if (!$department->parent_id)
           <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
