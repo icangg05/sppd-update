@@ -16,9 +16,21 @@
 
 return [
   // Penanda versi changelog. Saat berubah, lonceng menampilkan titik "belum dibaca".
-  'version' => '2026.06.26.1',
+  'version' => '2026.07.13.1',
 
   'items' => [
+    [
+      'title' => 'Install sebagai Aplikasi (PWA)',
+      'description' => 'Pasang SPPD ke layar utama ponsel atau desktop agar terbuka seperti aplikasi — lebih cepat, tanpa membuka browser dulu.',
+      'icon' => 'fa-solid fa-mobile-screen-button',
+      'color' => 'cyan',
+      'date' => '2026-07-13',
+      // Sorot sebagai fitur terbaru + tautan ke halaman panduan khusus.
+      'featured' => true,
+      'badge' => 'Baru',
+      'guide' => 'guide.pwa',
+      'guide_label' => 'Panduan Install',
+    ],
     [
       'title' => 'Fitur Notifikasi WhatsApp',
       'description' => 'Verifikasi nomor & notifikasi persetujuan SPPD kini langsung lewat WhatsApp agar tidak terlewat.',
@@ -29,6 +41,7 @@ return [
       'featured' => true,
       'badge' => 'Terbaru',
       'guide' => 'guide.whatsapp',
+      'guide_label' => 'Panduan WhatsApp',
     ],
     [
       'title' => 'Antarmuka Lebih Responsive',

@@ -420,7 +420,7 @@
   .table-stack tfoot td {
     display: flex;
     white-space: normal;
-    @apply w-full items-center justify-between gap-3 border-0 py-1.5 text-right;
+    @apply w-full items-center justify-between gap-3 border-0 py-1 text-right;
   }
 
   .table-stack td[data-label]::before {
@@ -442,7 +442,7 @@
   }
 
   .table-stack td.stack-block[data-label]::before {
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.125rem;
   }
 
   /* Baris pengelompok (mis. header departemen): strip label, bukan kartu. */

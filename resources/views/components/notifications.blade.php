@@ -19,6 +19,12 @@
     'slate' => 'bg-slate-100 text-slate-600',
     'rose' => 'bg-rose-50 text-rose-600',
   ];
+
+  // Warna kartu unggulan per token (literal agar terpindai Tailwind).
+  $featuredColors = [
+    'emerald' => ['wrap' => 'from-emerald-50 ring-emerald-100', 'bar' => 'bg-emerald-500', 'chip' => 'bg-emerald-500 shadow-emerald-500/30', 'badge' => 'bg-emerald-600', 'btn' => 'bg-emerald-600 hover:bg-emerald-700'],
+    'cyan' => ['wrap' => 'from-primary-50 ring-primary-100', 'bar' => 'bg-primary-500', 'chip' => 'bg-primary-600 shadow-primary-500/30', 'badge' => 'bg-primary-600', 'btn' => 'bg-primary-600 hover:bg-primary-700'],
+  ];
 @endphp
 
 <div x-data="notificationCenter({{ $count }}, {{ $unread ? 'true' : 'false' }}, @js($seenUrl))" class="relative"
@@ -36,11 +42,11 @@
   </button>
 
   {{-- Backdrop (mobile fullscreen) --}}
-  <div x-show="open" x-cloak x-transition.opacity @click="open = false"
+  <div x-show="open" x-cloak x-transition.opacity @click="close()"
     class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm sm:hidden"></div>
 
   {{-- Panel: fullscreen di mobile, dropdown di desktop --}}
-  <div x-show="open" x-cloak @click.outside="open = false" @keydown.escape.window="open = false"
+  <div x-show="open" x-cloak @click.outside="close()" @keydown.escape.window="close()"
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="opacity-0 translate-y-2 sm:-translate-y-2 sm:scale-95"
     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -64,7 +70,7 @@
           v{{ config('app.sppd_version', $version) }}
         </span>
         {{-- Tombol tutup (mobile) --}}
-        <button type="button" @click="open = false"
+        <button type="button" @click="close()"
           class="inline-flex size-8 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 sm:hidden"
           aria-label="Tutup">
           <i class="fa-solid fa-xmark"></i>
@@ -78,18 +84,19 @@
         @php $chip = $chipColors[$item['color'] ?? 'slate'] ?? $chipColors['slate']; @endphp
 
         @if (!empty($item['featured']))
+          @php $fc = $featuredColors[$item['color'] ?? 'emerald'] ?? $featuredColors['emerald']; @endphp
           {{-- Item unggulan: disorot --}}
-          <div class="relative bg-gradient-to-br from-emerald-50 to-white px-4 py-4 ring-1 ring-inset ring-emerald-100">
-            <span class="absolute left-0 top-0 h-full w-1 bg-emerald-500"></span>
+          <div class="relative bg-gradient-to-br to-white px-4 py-4 ring-1 ring-inset {{ $fc['wrap'] }}">
+            <span class="absolute left-0 top-0 h-full w-1 {{ $fc['bar'] }}"></span>
             <div class="flex gap-3">
-              <div class="flex size-11 shrink-0 items-center justify-center rounded bg-emerald-500 text-lg text-white shadow-sm shadow-emerald-500/30">
+              <div class="flex size-11 shrink-0 items-center justify-center rounded text-lg text-white shadow-sm {{ $fc['chip'] }}">
                 <i class="{{ $item['icon'] ?? 'fa-brands fa-whatsapp' }}"></i>
               </div>
               <div class="min-w-0 flex-1">
                 <p class="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-800">
                   {{ $item['title'] }}
                   @if (!empty($item['badge']))
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white {{ $fc['badge'] }}">
                       <i class="fa-solid fa-star text-[8px]"></i> {{ $item['badge'] }}
                     </span>
                   @endif
@@ -97,9 +104,9 @@
                 <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ $item['description'] }}</p>
 
                 @if (!empty($item['guide']))
-                  <a href="{{ route($item['guide']) }}" wire:navigate @click="open = false"
-                    class="mt-2.5 inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-                    <i class="fa-solid fa-book-open text-[11px]"></i> Buka Panduan WhatsApp
+                  <a href="{{ route($item['guide']) }}" wire:navigate @click="closeForNav()"
+                    class="mt-2.5 inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition {{ $fc['btn'] }}">
+                    <i class="fa-solid fa-book-open text-[11px]"></i> {{ $item['guide_label'] ?? 'Buka Panduan' }}
                   </a>
                 @endif
 
@@ -148,9 +155,44 @@
           count: count,
           unread: unread, // status awal per-user dari server
           seenUrl: seenUrl,
+          _pushed: false, // menandai entri history yang kita sisipkan (mobile)
+          init() {
+            // Tombol Kembali (mobile) menutup panel, bukan pindah halaman.
+            window.addEventListener('popstate', () => {
+              if (this.open) {
+                this._pushed = false; // entri sudah dikonsumsi oleh aksi back
+                this.open = false;
+              }
+            });
+          },
+          isMobile() {
+            return window.matchMedia('(max-width: 639px)').matches;
+          },
           toggle() {
-            this.open = !this.open;
-            if (this.open) this.markSeen();
+            this.open ? this.close() : this.openPanel();
+          },
+          openPanel() {
+            this.open = true;
+            this.markSeen();
+            // Sisipkan entri history di mobile agar Kembali menutup panel.
+            if (this.isMobile()) {
+              history.pushState({ notif: true }, '');
+              this._pushed = true;
+            }
+          },
+          close() {
+            if (!this.open) return;
+            this.open = false;
+            if (this._pushed) {
+              this._pushed = false;
+              history.back(); // buang entri yang kita sisipkan
+            }
+          },
+          closeForNav() {
+            // Menutup lalu berpindah halaman (link panduan): serahkan history
+            // ke navigasi SPA, jangan panggil history.back().
+            this.open = false;
+            this._pushed = false;
           },
           markSeen() {
             if (!this.unread) return;

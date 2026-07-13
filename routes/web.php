@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
 
     // Panduan fitur
     Route::view('/panduan/whatsapp', 'guides.whatsapp')->name('guide.whatsapp');
+    Route::view('/panduan/install', 'guides.pwa')->name('guide.pwa');
 
     // Menu pejabat kepemimpinan (daftar role dari config/menu_access.php)
     $leadershipRoles = implode('|', config('menu_access.leadership')) . '|super_admin';

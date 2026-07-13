@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c4a6e">
+  <title>Tidak Ada Koneksi — SPPD Kota Kendari</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #1e80c6; --primary-dark: #175987;
+      --ink: #0f172a; --muted: #64748b;
+      --danger: #dc2626; --success: #059669;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(120% 90% at 50% -10%, #eaf4fc 0%, #f8fafc 55%, #f1f5f9 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { width: 100%; max-width: 400px; text-align: center; }
+
+    /* Ornamen cincin di belakang ikon */
+    .badge {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      margin: 0 auto 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .badge .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(30, 128, 198, 0.18);
+    }
+    .badge .ring.r1 { inset: 0; }
+    .badge .ring.r2 { inset: 14px; border-color: rgba(30, 128, 198, 0.28); }
+    .badge .core {
+      width: 68px; height: 68px;
+      border-radius: 16px;
+      background: linear-gradient(160deg, var(--primary), var(--primary-dark));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 12px 28px -8px rgba(23, 89, 135, 0.55);
+    }
+    .badge .core svg { width: 34px; height: 34px; color: #fff; }
+    .badge .dot {
+      position: absolute; bottom: 6px; right: 10px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--danger); border: 3px solid #fff;
+      transition: background .2s;
+    }
+    body.is-online .badge .dot { background: var(--success); }
+
+    h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+    p.lead { margin-top: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--muted); }
+
+    .status {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-top: 18px; padding: 6px 14px;
+      border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+      background: rgba(220, 38, 38, 0.1); color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      transition: all .2s;
+    }
+    .status .pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    body.is-online .status {
+      background: rgba(5, 150, 105, 0.1); color: #047857;
+      border-color: rgba(5, 150, 105, 0.25);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      margin-top: 26px; width: 100%;
+      padding: 13px 20px; border: 0; border-radius: 12px;
+      font-family: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      color: #fff; background: linear-gradient(160deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 10px 22px -10px rgba(23, 89, 135, 0.7);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 14px 26px -10px rgba(23, 89, 135, 0.75); }
+    .btn:active { transform: translateY(0); }
+    .btn svg { width: 17px; height: 17px; }
+    .btn.loading { opacity: .7; pointer-events: none; }
+    .btn.loading svg { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hint { margin-top: 16px; font-size: 0.72rem; color: #94a3b8; line-height: 1.6; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+      .btn.loading svg { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="badge" aria-hidden="true">
+      <span class="ring r1"></span>
+      <span class="ring r2"></span>
+      <span class="core">
+        <!-- ikon wifi-off -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 2l20 20"/>
+          <path d="M8.5 16.5a5 5 0 0 1 7 0"/>
+          <path d="M5 12.86a10 10 0 0 1 5.17-2.7"/>
+          <path d="M19 12.86a10 10 0 0 0-5.55-2.79"/>
+          <path d="M2.5 9.87a15 15 0 0 1 4.06-2.5"/>
+          <path d="M21.5 9.87A15 15 0 0 0 12 6.5"/>
+          <path d="M12 20h.01"/>
+        </svg>
+      </span>
+      <span class="dot"></span>
+    </div>
+
+    <h1>Tidak ada koneksi internet</h1>
+    <p class="lead">
+      SPPD sedang tidak dapat terhubung ke jaringan. Periksa Wi-Fi atau data seluler Anda,
+      lalu coba lagi.
+    </p>
+
+    <div class="status" id="status">
+      <span class="pulse"></span>
+      <span id="statusText">Sedang offline</span>
+    </div>
+
+    <button class="btn" id="retry" type="button">
+      <!-- ikon refresh -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+        <path d="M21 3v6h-6"/>
+      </svg>
+      <span id="retryText">Coba Lagi</span>
+    </button>
+
+    <p class="hint">Halaman akan terbuka otomatis begitu koneksi kembali.</p>
+  </main>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('retry');
+      var retryText = document.getElementById('retryText');
+      var statusText = document.getElementById('statusText');
+
+      function returnUrl() {
+        try { return sessionStorage.getItem('sppd:lastUrl') || '/'; } catch (e) { return '/'; }
+      }
+
+      function render() {
+        var online = navigator.onLine;
+        document.body.classList.toggle('is-online', online);
+        statusText.textContent = online ? 'Koneksi tersedia' : 'Sedang offline';
+      }
+
+      function retry() {
+        btn.classList.add('loading');
+        retryText.textContent = 'Menghubungkan…';
+        // Kembali ke halaman terakhir; bila masih offline, SW menampilkan halaman ini lagi.
+        window.location.replace(returnUrl());
+      }
+
+      btn.addEventListener('click', retry);
+      // Begitu jaringan kembali, langsung buka aplikasi.
+      window.addEventListener('online', retry);
+      window.addEventListener('offline', render);
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -121,7 +121,7 @@
 								{{ $loop->iteration + ($budgets->currentPage() - 1) * $budgets->perPage() }}.
 							</td>
 
-							<td data-label="SKPD / Instansi" class="py-3.5 px-4 max-w-56 whitespace-normal">
+							<td data-label="SKPD / Instansi" class="stack-block py-3.5 px-4 max-w-56 whitespace-normal">
 								<div class="text-sm font-bold text-slate-900 leading-tight">{{ $budget->department?->name ?? '-' }}</div>
 								@if ($budget->department?->parent)
 									<div class="text-[11px] text-slate-500 leading-tight mt-0.5">{{ $budget->department->parent->name }}</div>
@@ -132,7 +132,7 @@
 								{{ $budget->year }}
 							</td>
 
-							<td data-label="Program / Kegiatan" class="py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
+							<td data-label="Program / Kegiatan" class="stack-block py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
 								<div class="text-xs font-bold text-primary-700 leading-tight mb-1">{{ $budget->program }}</div>
 								<div class="text-[11px] text-slate-500 leading-relaxed">{{ $budget->activity }}</div>
 							</td>
@@ -144,7 +144,7 @@
 								</span>
 							</td>
 
-							<td data-label="Uraian" class="py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
+							<td data-label="Uraian" class="stack-block py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
 								<div class="text-sm font-medium text-slate-700 leading-normal">{{ $budget->description }}</div>
 							</td>
 

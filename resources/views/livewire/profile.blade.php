@@ -52,7 +52,7 @@
 					@else
 						<span
 							class="inline-flex items-center rounded px-2 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 bg-amber-50">
-							<i class="fa-solid fa-triangle-exclamation mr-1.5 text-[11px]"></i>
+							<i class="fa-brands fa-whatsapp mr-1.5 text-[11px]"></i>
 							Belum Verifikasi
 						</span>
 					@endif
