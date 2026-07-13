@@ -7,7 +7,8 @@ const CACHE = "sppd-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.add(OFFLINE_URL)));
+  // Cache halaman offline; abaikan bila gagal sesaat agar install tidak menolak.
+  e.waitUntil(caches.open(CACHE).then((c) => c.add(OFFLINE_URL)).catch(() => {}));
   self.skipWaiting();
 });
 

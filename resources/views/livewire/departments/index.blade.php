@@ -68,11 +68,11 @@
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm"
     wire:loading.class="opacity-60" wire:target="search,type">
     <div class="overflow-x-clip">
-      <table class="table-stack w-full text-left border-collapse md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
+      <table class="table-stack w-full text-left border-collapse md:[&_thead_th]:py-2 md:[&_tbody_td]:py-1">
         <thead
           class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm [&_th]:pt-5 [&_th]:pb-3">
           <tr>
-            <th class="py-2.5 px-3 w-12 text-center">No</th>
+            <th class="py-2.5 px-3 w-12 text-center">No.</th>
             <th class="py-2.5 px-4">Nama Unit Kerja / Struktur</th>
             <th class="py-2.5 px-4 w-28">Kode Unit</th>
             <th class="py-2.5 px-4">Pimpinan Kepala</th>
@@ -94,7 +94,7 @@
             <tr wire:key="dept-{{ $dept->id }}"
               class="transition-colors {{ $isOwnDept ? 'bg-primary-50/40 font-semibold' : 'hover:bg-slate-50/50' }}">
               <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
-                {{ $departments->firstItem() + $i }}
+                {{ $departments->firstItem() + $i }}.
               </td>
 
               <td data-label="Unit Kerja" class="py-2.5 px-4">
@@ -133,7 +133,7 @@
               @if($isSuperAdmin)
                 <td data-label="Tipe" class="py-2.5 px-4">
                   <span
-                    class="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200">
+                    class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold border {{ $dept->type->badgeClasses() }}">
                     {{ $dept->type->label() }}
                   </span>
                 </td>

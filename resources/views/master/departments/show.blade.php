@@ -69,7 +69,7 @@
                   <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Instansi</label>
                   <div>
                     <span
-                      class="inline-flex items-center rounded bg-primary-50 px-2 py-0.5 font-bold text-primary-700 border border-primary-100 uppercase text-[10px]">
+                      class="inline-flex items-center rounded px-2 py-0.5 font-bold border uppercase text-[10px] {{ $department->type->badgeClasses() }}">
                       {{ $department->type->label() }}
                     </span>
                   </div>
