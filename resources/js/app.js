@@ -23,12 +23,12 @@ if ("serviceWorker" in navigator) {
     });
   }
 
-  // Paksa link target="_blank" (dokumen) selalu buka di browser eksternal — di
-  // semua mode termasuk desktop. Di PWA standalone ini mencegah Custom Tab yang
-  // membuat tombol "kembali" me-reset aplikasi. Ctrl/Cmd/middle-click dibiarkan
-  // agar "buka di tab baru" manual tetap jalan.
-  // ponytail: window.open bergantung platform (Android Chrome buka browser
-  //           sistem); kalau ada device yang tetap in-app, upgrade ke intent://.
+  // Buka link target="_blank" (dokumen) tanpa tab baru.
+  // - Mobile: navigasi di tab yang sama, jadi tombol "kembali" balik ke halaman
+  //   SPPD dan tidak menutup aplikasi (Custom Tab / tab baru menutup app saat back).
+  // - Desktop: tetap buka di browser eksternal.
+  // Ctrl/Cmd/middle-click dibiarkan agar "buka di tab baru" manual tetap jalan.
+  const isMobile = /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
   document.addEventListener(
     "click",
     (e) => {
@@ -36,7 +36,11 @@ if ("serviceWorker" in navigator) {
       const a = e.target.closest && e.target.closest('a[target="_blank"]');
       if (!a || !a.href) return;
       e.preventDefault();
-      window.open(a.href, "_blank", "noopener");
+      if (isMobile) {
+        location.href = a.href;
+      } else {
+        window.open(a.href, "_blank", "noopener");
+      }
     },
     true
   );
