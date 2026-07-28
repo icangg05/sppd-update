@@ -26,7 +26,16 @@ class ApprovalHistory extends Component
   #[Url(keep: true)]
   public string $decision = '';
 
+  /** Tahun perjalanan (start_date SPPD), '' = semua. */
+  #[Url(keep: true)]
+  public string $year = '';
+
   public function updatedSearch(): void
+  {
+    $this->resetPage();
+  }
+
+  public function updatedYear(): void
   {
     $this->resetPage();
   }
@@ -40,6 +49,7 @@ class ApprovalHistory extends Component
   {
     $this->search = '';
     $this->decision = '';
+    $this->year = '';
     $this->resetPage();
   }
 
@@ -54,6 +64,11 @@ class ApprovalHistory extends Component
 
     if ($this->decision !== '' && in_array($this->decision, $decided, true)) {
       $query->where('status', $this->decision);
+    }
+
+    if ($this->year !== '') {
+      $year = $this->year;
+      $query->whereHas('sppdRequest', fn ($q) => $q->whereYear('start_date', $year));
     }
 
     if ($this->search !== '') {
@@ -71,8 +86,24 @@ class ApprovalHistory extends Component
       ->paginate(15)
       ->onEachSide(1);
 
+    // Tahun diambil dari riwayat pejabat ini saja agar tak menawarkan tahun kosong.
+    $yearOptions = collect([['value' => '', 'label' => 'Semua Tahun']])
+      ->concat(
+        SppdApproval::query()
+          ->where('approver_id', Auth::id())
+          ->whereIn('sppd_approvals.status', $decided)
+          ->join('sppd_requests', 'sppd_requests.id', '=', 'sppd_approvals.sppd_request_id')
+          ->selectRaw('DISTINCT YEAR(sppd_requests.start_date) as y')
+          ->orderByDesc('y')
+          ->pluck('y')
+          ->map(fn ($y) => ['value' => (string) $y, 'label' => (string) $y])
+      )
+      ->values()
+      ->all();
+
     return view('livewire.leadership.approval-history', [
       'approvals' => $approvals,
+      'yearOptions' => $yearOptions,
     ])->title('Riwayat Persetujuan');
   }
 }

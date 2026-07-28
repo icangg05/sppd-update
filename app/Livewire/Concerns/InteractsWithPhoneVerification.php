@@ -185,11 +185,24 @@ trait InteractsWithPhoneVerification
     $this->showVerifyModal = false;
   }
 
+  /**
+   * Boleh mengirim pesan tes. Komponen menimpa ini bila punya saklar notifikasi
+   * sendiri (mis. Profile: notifikasi WhatsApp dinonaktifkan pengguna).
+   */
+  protected function canSendTestMessage(): bool
+  {
+    return true;
+  }
+
   /** Buka modal konfirmasi sebelum mengirim pesan tes. */
   public function confirmTestMessage(): void
   {
     if (! $this->phoneVerified || empty(trim($this->phone))) {
       $this->toastError('Nomor belum terverifikasi.');
+      return;
+    }
+    if (! $this->canSendTestMessage()) {
+      $this->toastWarning('Notifikasi WhatsApp sedang nonaktif. Aktifkan dulu untuk mengirim pesan tes.');
       return;
     }
     $this->showTestConfirm = true;
@@ -210,8 +223,8 @@ trait InteractsWithPhoneVerification
     // Tutup modal konfirmasi; hasil disampaikan lewat toast.
     $this->showTestConfirm = false;
 
-    if (! $this->phoneVerified || empty(trim($this->phone))) {
-      $this->toastError('Nomor belum terverifikasi.');
+    if (! $this->phoneVerified || empty(trim($this->phone)) || ! $this->canSendTestMessage()) {
+      $this->toastError('Pesan tes tidak dapat dikirim: nomor belum terverifikasi atau notifikasi nonaktif.');
       return;
     }
 

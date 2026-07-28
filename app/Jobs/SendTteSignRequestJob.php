@@ -130,7 +130,7 @@ class SendTteSignRequestJob implements ShouldQueue
               $sppd->update(['status' => SppdStatus::APPROVED]);
 
               $recipient = $sppd->creator ?? $sppd->user;
-              if ($recipient && $recipient->phone && $recipient->phone_verified) {
+              if ($recipient && $recipient->canReceiveWhatsApp()) {
                 $applicantName = $sppd->user?->name ?? 'Pegawai';
                 $purpose = $sppd->purpose;
                 $detailUrl = route('sppd.show', $sppd);
@@ -157,7 +157,7 @@ class SendTteSignRequestJob implements ShouldQueue
                 ->where('status', ApprovalStatus::PENDING)
                 ->first();
 
-              if ($nextApproval && $nextApproval->approver && $nextApproval->approver->phone && $nextApproval->approver->phone_verified) {
+              if ($nextApproval && $nextApproval->approver && $nextApproval->approver->canReceiveWhatsApp()) {
                 $approver = $nextApproval->approver;
                 $applicantName = $sppd->user?->name ?? 'Pegawai';
                 $purpose = $sppd->purpose;

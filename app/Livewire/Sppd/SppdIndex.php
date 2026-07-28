@@ -46,6 +46,9 @@ class SppdIndex extends Component
   public string $jabatan = '';
 
   #[Url(keep: true)]
+  public string $year = '';
+
+  #[Url(keep: true)]
   public string $filter = '';
 
   private const SESSION_KEY = 'sppd.index.filters';
@@ -142,6 +145,10 @@ class SppdIndex extends Component
     if ($this->search === '' && ! empty($saved['search'])) {
       $this->search = $saved['search'];
     }
+
+    if ($this->year === '' && ! empty($saved['year'])) {
+      $this->year = $saved['year'];
+    }
   }
 
   public function activeFilterLabel(): string
@@ -160,6 +167,7 @@ class SppdIndex extends Component
       'status'  => $this->status,
       'domain'  => $this->domain,
       'search'  => $this->search,
+      'year'    => $this->year,
     ]]);
   }
 
@@ -173,6 +181,7 @@ class SppdIndex extends Component
   public function resetFilters(): void
   {
     $this->search = '';
+    $this->year = '';
     $this->errorMessage = null;
     $this->simulatedSteps = [];
     $this->showWorkflowModal = false;
@@ -207,6 +216,12 @@ class SppdIndex extends Component
   }
 
   public function updatedJabatan(): void
+  {
+    $this->persistFilters();
+    $this->resetPage();
+  }
+
+  public function updatedYear(): void
   {
     $this->persistFilters();
     $this->resetPage();
@@ -343,6 +358,10 @@ class SppdIndex extends Component
       }
     }
 
+    if ($this->year !== '') {
+      $query->whereYear('start_date', $this->year);
+    }
+
     if ($this->search !== '') {
       $search = $this->search;
       $query->where(function ($q) use ($search) {
@@ -376,6 +395,18 @@ class SppdIndex extends Component
       ->values()
       ->all();
 
+    // Tahun diambil dari data yang ada agar tidak menawarkan tahun kosong.
+    $yearOptions = collect([['value' => '', 'label' => 'Semua Tahun']])
+      ->concat(
+        SppdRequest::query()
+          ->selectRaw('DISTINCT YEAR(start_date) as y')
+          ->orderByDesc('y')
+          ->pluck('y')
+          ->map(fn($y) => ['value' => (string) $y, 'label' => (string) $y])
+      )
+      ->values()
+      ->all();
+
     $domainOptions = collect([['value' => '', 'label' => 'Semua Domain']])
       ->concat(collect($domains)->map(fn($dom) => [
         'value' => $dom->value,
@@ -396,6 +427,7 @@ class SppdIndex extends Component
       'jabatanOptions',
       'statusOptions',
       'domainOptions',
+      'yearOptions',
     ))->title($title);
   }
 

@@ -171,6 +171,12 @@
 					</div>
 				@endif
 
+					{{-- Filter tahun perjalanan --}}
+					<div class="w-full md:w-40">
+						<x-form.searchable-select wire:model.live="year" name="year" :options="$yearOptions"
+							placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." />
+					</div>
+
 				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
 					<x-ui.button href="{{ route('sppd.create') }}" variant="primary" class="justify-center">
 						<x-slot name="icon">
@@ -200,12 +206,18 @@
 					<x-form.searchable-select wire:model.live="domain" name="domain" :options="$domainOptions"
 						placeholder="Semua Domain" searchPlaceholder="Cari domain..." />
 				</div>
+			@else
+				{{-- Mode persetujuan tak punya baris tombol jabatan, jadi filter tahun ikut di bar ini. --}}
+				<div class="w-full sm:w-40">
+					<x-form.searchable-select wire:model.live="year" name="year" :options="$yearOptions"
+						placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." />
+				</div>
 			@endif
 
 			@php
 				$hasActiveFilters = $isApprovalMode
-					? $search !== ''
-					: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $filter !== '';
+					? $search !== '' || $year !== ''
+					: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $year !== '' || $filter !== '';
 			@endphp
 			<div class="flex items-center gap-2 shrink-0">
 				<x-ui.button type="button" variant="secondary" wire:click="resetFilters" :disabled="!$hasActiveFilters">

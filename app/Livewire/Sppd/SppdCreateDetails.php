@@ -35,20 +35,20 @@ class SppdCreateDetails extends Component
   // Form inputs
   public ?int $budget_id = null;
   public ?int $category_id = null;
-  public string $purpose = 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta';
-  public string $problem = 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta';
-  public string $facts = 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta';
-  public string $analysis = 'Melaksanakan Koordinasi Terkait Kerjasama Media di TvOne Dan Koordinasi Terkait Aplikasi Jaki Dan Iklan Video Trone Di Pemprov DKI Jakarta';
+  public string $purpose = '';
+  public string $problem = '';
+  public string $facts = '';
+  public string $analysis = '';
 
   public string $start_date;
   public string $end_date;
-  public string $transport_type = 'Darat';
-  public string $transport_name = 'Mobil';
-  public string $departure_place = 'Kantor Kominfo';
+  public string $transport_type = '';
+  public string $transport_name = '';
+  public string $departure_place = '';
   public string $urgency = 'Biasa';
 
-  public string $spt_date = '2026-04-21';
-  public string $sppd_date = '2026-04-23';
+  public string $spt_date = '';
+  public string $sppd_date = '';
   public ?string $document_number = null;
   public $attachment;
 
@@ -120,6 +120,8 @@ class SppdCreateDetails extends Component
 
       $this->start_date = date('Y-m-d');
       $this->end_date = date('Y-m-d');
+      $this->spt_date = date('Y-m-d');
+      $this->sppd_date = date('Y-m-d');
 
       $user = User::with('department')->find($this->user_id);
       if (! $user) {

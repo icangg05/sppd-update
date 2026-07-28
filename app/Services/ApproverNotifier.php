@@ -48,7 +48,7 @@ class ApproverNotifier
     {
         try {
             $approver = $approval->approver;
-            if (! $approver || ! $approver->phone || ! $approver->phone_verified) {
+            if (! $approver || ! $approver->canReceiveWhatsApp()) {
                 return;
             }
 

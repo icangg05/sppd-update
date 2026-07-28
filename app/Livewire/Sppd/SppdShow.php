@@ -403,7 +403,7 @@ class SppdShow extends Component
   {
     try {
       $recipient = $sppd->creator ?? $sppd->user;
-      if ($recipient && $recipient->phone && $recipient->phone_verified) {
+      if ($recipient && $recipient->canReceiveWhatsApp()) {
         $purpose      = $sppd->purpose;
         $detailUrl    = route('sppd.show', $sppd);
         $actorName    = $actor?->name ?? 'Pejabat';

@@ -25,7 +25,10 @@
 
 
 
-	<form wire:submit.prevent="openConfirmModal" enctype="multipart/form-data" id="form-sppd-store">
+	{{-- autocomplete="off" (diwarisi semua field): autofill browser mengisi DOM tanpa memicu event,
+	     sehingga Livewire mengirim nilai kosong/beda ke server. Tidak dikosongkan lewat JS karena
+	     form ini juga dipakai untuk perbaikan SPPD dengan nilai bawaan dari server. --}}
+	<form wire:submit.prevent="openConfirmModal" enctype="multipart/form-data" id="form-sppd-store" autocomplete="off">
 		{{-- Ringkasan Informasi Pelaksana & Alur --}}
 		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 			<div class="rounded border border-slate-200 bg-white p-4 shadow-sm leading-tight flex flex-col justify-between">
@@ -97,10 +100,14 @@
 			</div>
 			<div class="p-5">
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<x-form.textarea wire:model="purpose" label="Perihal (Maksud Perjalanan Dinas)" rows="4" required />
-					<x-form.textarea wire:model="problem" label="Persoalan" rows="4" />
-					<x-form.textarea wire:model="facts" label="Fakta yang mempengaruhi" rows="4" />
-					<x-form.textarea wire:model="analysis" label="Analisis" rows="4" />
+					<x-form.textarea wire:model="purpose" label="Perihal (Maksud Perjalanan Dinas)" rows="4" required
+							placeholder="Contoh: Melaksanakan koordinasi terkait kerja sama media di Pemprov DKI Jakarta" />
+					<x-form.textarea wire:model="problem" label="Persoalan" rows="4"
+							placeholder="Contoh: Belum ada kesepakatan teknis publikasi antara dinas dan mitra media" />
+					<x-form.textarea wire:model="facts" label="Fakta yang mempengaruhi" rows="4"
+							placeholder="Contoh: Surat undangan Nomor 005/… tanggal 12 Juli 2026 dan target publikasi triwulan III" />
+					<x-form.textarea wire:model="analysis" label="Analisis" rows="4"
+							placeholder="Contoh: Koordinasi langsung diperlukan agar materi publikasi selesai sebelum batas waktu" />
 				</div>
 			</div>
 		</div>
@@ -117,11 +124,12 @@
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 					<x-form.searchable-select wire:model="transport_type" name="transport_type" label="Jenis Angkutan"
 						required placeholder="— Pilih —" searchPlaceholder="Cari angkutan..."
-						:options="['Darat', 'Laut', 'Udara']" />
+						:options="[['value' => '', 'label' => '— Pilih —'], 'Darat', 'Laut', 'Udara']" />
 					<x-form.searchable-select wire:model="transport_name" name="transport_name" label="Nama Kendaraan"
 						required placeholder="— Pilih —" searchPlaceholder="Cari kendaraan..."
-						:options="['Motor', 'Mobil', 'Pesawat', 'Kapal', 'Kereta', 'Lainnya']" />
-					<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required />
+						:options="[['value' => '', 'label' => '— Pilih —'], 'Motor', 'Mobil', 'Pesawat', 'Kapal', 'Kereta', 'Lainnya']" />
+					<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required
+							placeholder="Contoh: Kantor Dinas Kominfo Kendari" />
 					<x-form.input type="date" wire:model="start_date" label="Tanggal Berangkat" required />
 					<x-form.input type="date" wire:model="end_date" label="Tanggal Kembali" required />
 				</div>
@@ -215,6 +223,7 @@
 					@php
 						$budgetOptions = $budgets
 							->map(fn($b) => ['value' => $b->id, 'label' => ($b->program ?? '-') . ' | ' . ($b->activity ?? '-')])
+							->prepend(['value' => '', 'label' => '— Pilih —'])
 							->values();
 						$categoryOptions = $categories
 							->map(fn($c) => ['value' => $c->id, 'label' => $c->name])

@@ -8,6 +8,7 @@ use App\Models\SppdApproval;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,6 +20,7 @@ use Livewire\WithPagination;
  * berrealisasi biaya. Berbeda dari Daftar SPPD (index) yang menampilkan semua data.
  */
 #[Layout('layouts.app')]
+#[Title('Monitoring Tindak Lanjut SPPD')]
 class OpdMonitoring extends Component
 {
   use WithPagination;
@@ -31,7 +33,16 @@ class OpdMonitoring extends Component
   #[Url(keep: true)]
   public string $search = '';
 
+  /** Tahun perjalanan (start_date), '' = semua. */
+  #[Url(keep: true)]
+  public string $year = '';
+
   public function updatedSearch(): void
+  {
+    $this->resetPage();
+  }
+
+  public function updatedYear(): void
   {
     $this->resetPage();
   }
@@ -45,7 +56,16 @@ class OpdMonitoring extends Component
   public function resetFilters(): void
   {
     $this->search = '';
+    $this->year = '';
     $this->resetPage();
+  }
+
+  /** Lingkup OPD user + filter tahun, dipakai tabel maupun hitungan tab. */
+  private function scopedSppdForYear(\App\Models\User $user): Builder
+  {
+    $q = $this->scopedSppd($user);
+
+    return $this->year !== '' ? $q->whereYear('start_date', $this->year) : $q;
   }
 
   /** Pegawai yang sedang dalam periode perjalanan (disetujui & tanggal mencakup hari ini). */
@@ -90,13 +110,13 @@ class OpdMonitoring extends Component
     $user = Auth::user();
 
     $counts = [
-      'ongoing'    => $this->scopeOngoing($this->scopedSppd($user))->count(),
-      'no_report'  => $this->scopeNoReport($this->scopedSppd($user))->count(),
-      'no_expense' => $this->scopeNoExpense($this->scopedSppd($user))->count(),
+      'ongoing'    => $this->scopeOngoing($this->scopedSppdForYear($user))->count(),
+      'no_report'  => $this->scopeNoReport($this->scopedSppdForYear($user))->count(),
+      'no_expense' => $this->scopeNoExpense($this->scopedSppdForYear($user))->count(),
       'my_pending' => SppdApproval::readyForApprover($user->id)->count(),
     ];
 
-    $query = $this->applyTab($this->scopedSppd($user), $this->tab)
+    $query = $this->applyTab($this->scopedSppdForYear($user), $this->tab)
       ->with(['user.department', 'destinations.regency', 'report']);
 
     if ($this->search !== '') {
@@ -110,9 +130,22 @@ class OpdMonitoring extends Component
 
     $sppds = $query->latest('end_date')->paginate(15)->onEachSide(1);
 
+    // Tahun diambil dari data dalam lingkup OPD user agar tak menawarkan tahun kosong.
+    $yearOptions = collect([['value' => '', 'label' => 'Semua Tahun']])
+      ->concat(
+        $this->scopedSppd($user)
+          ->selectRaw('DISTINCT YEAR(start_date) as y')
+          ->orderByDesc('y')
+          ->pluck('y')
+          ->map(fn ($y) => ['value' => (string) $y, 'label' => (string) $y])
+      )
+      ->values()
+      ->all();
+
     return view('livewire.secretariat.opd-monitoring', [
       'sppds'  => $sppds,
       'counts' => $counts,
-    ])->title('Monitoring Tindak Lanjut SPPD');
+      'yearOptions' => $yearOptions,
+    ]);
   }
 }

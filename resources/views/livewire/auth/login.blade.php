@@ -28,13 +28,21 @@
 		</p>
 	</div>
 
-	<form wire:submit="login" class="mt-6 space-y-4">
+	{{-- Autofill browser mengisi DOM tanpa memicu event, sehingga state Livewire tetap kosong
+	     dan login gagal. Nilai hasil autofill dipancing sekali saat load agar ikut ter-sync.
+	     Sengaja TIDAK memakai autocomplete="off" supaya password manager tetap menawarkan simpan. --}}
+	<form wire:submit="login" class="mt-6 space-y-4"
+		x-init="window.addEventListener('load', () => setTimeout(() =>
+			$el.querySelectorAll('input:not([type=checkbox])').forEach(
+				i => i.value && i.dispatchEvent(new Event('input', { bubbles: true }))
+			), 100))">
 		<div>
 			<label for="username" class="block text-sm font-semibold text-sky-50">Username</label>
 			<input
 				wire:model="username"
 				type="text"
 				id="username"
+				name="username"
 				required
 				autofocus
 				autocomplete="username"
@@ -47,8 +55,12 @@
 			<div class="relative mt-2">
 				<input
 					wire:model="password"
+					{{-- type statis agar password manager mengenali form ini sebelum Alpine init;
+					     :type mengambil alih setelahnya untuk tombol lihat/sembunyikan. --}}
+					type="password"
 					:type="show ? 'text' : 'password'"
 					id="password"
+					name="password"
 					required
 					autocomplete="current-password"
 					class="w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 pr-12 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
@@ -79,8 +91,17 @@
 			wire:loading.attr="disabled"
 			wire:target="login"
 			class="w-full rounded bg-sky-300 px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
-			<span wire:loading.remove wire:target="login">Login</span>
-			<span wire:loading wire:target="login" x-cloak>Memproses…</span>
+			{{-- Tiga keadaan tombol: terkunci (anti-spam), sedang proses, dan normal. --}}
+			<span wire:loading.remove wire:target="login" x-show="remaining > 0" x-cloak
+				class="inline-flex items-center justify-center gap-2">
+				<i class="fa-solid fa-spinner fa-spin"></i>
+				Tunggu <span x-text="remaining"></span> detik
+			</span>
+			<span wire:loading.remove wire:target="login" x-show="remaining <= 0">Login</span>
+			<span wire:loading wire:target="login" x-cloak class="inline-flex items-center justify-center gap-2">
+				<i class="fa-solid fa-spinner fa-spin"></i>
+				Memproses…
+			</span>
 		</button>
 	</form>
 </div>

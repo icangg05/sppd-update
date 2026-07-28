@@ -25,6 +25,7 @@ class Profile extends Component
   public string $nip = '';
   public string $nik = '';
   public string $phone = '';
+  public bool $whatsappNotify = true;
 
   // Ganti password
   public string $current_password = '';
@@ -42,6 +43,7 @@ class Profile extends Component
     $this->nik = $user->nik ?? '';
     $this->phone = $user->phone ?? '';
     $this->phoneVerified = (bool) $user->phone_verified;
+    $this->whatsappNotify = (bool) $user->whatsapp_notify;
 
     // Memulihkan state verifikasi jika halaman di-refresh saat menunggu balasan.
     $this->restorePhoneVerificationState();
@@ -93,6 +95,21 @@ class Profile extends Component
       'phone' => null,
       'phone_verified' => false,
     ]);
+  }
+
+  protected function canSendTestMessage(): bool
+  {
+    return $this->whatsappNotify;
+  }
+
+  /** Saklar notifikasi WhatsApp; disimpan langsung agar tidak perlu tekan Simpan. */
+  public function updatedWhatsappNotify(bool $value): void
+  {
+    auth()->user()->update(['whatsapp_notify' => $value]);
+
+    $value
+      ? $this->toastSuccess('Notifikasi WhatsApp diaktifkan.')
+      : $this->toastWarning('Notifikasi WhatsApp dinonaktifkan.');
   }
 
   /** Membuat username ringkas & unik dari nama (lihat UsernameGenerator). */

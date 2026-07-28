@@ -28,6 +28,7 @@ class User extends Authenticatable
     'password',
     'phone',
     'phone_verified',
+    'whatsapp_notify',
     'changelog_seen_version',
     'employee_type',
     'department_id',
@@ -57,7 +58,14 @@ class User extends Authenticatable
       'employee_type' => EmployeeType::class,
       'is_active' => 'boolean',
       'phone_verified' => 'boolean',
+      'whatsapp_notify' => 'boolean',
     ];
+  }
+
+  /** Boleh dikirimi notifikasi WhatsApp: nomor terverifikasi & notifikasi tidak dimatikan sendiri. */
+  public function canReceiveWhatsApp(): bool
+  {
+    return ! empty($this->phone) && $this->phone_verified && $this->whatsapp_notify;
   }
 
   public function getActivitylogOptions(): LogOptions

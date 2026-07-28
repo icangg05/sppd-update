@@ -156,10 +156,12 @@
 								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 cursor-default">
 								<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
 							</button>
-							<button type="button" wire:click="confirmTestMessage" title="Tes kirim pesan ke nomor ini"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95">
-								<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
-							</button>
+							@if ($whatsappNotify)
+								<button type="button" wire:click="confirmTestMessage" title="Tes kirim pesan ke nomor ini"
+										class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95">
+									<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
+								</button>
+							@endif
 							<button type="button" @click="showResetModal = true" title="Ganti nomor WhatsApp"
 								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white active:scale-95">
 								<i class="fa-solid fa-rotate text-sm"></i> <span class="hidden sm:inline">Ganti</span>
@@ -198,6 +200,26 @@
 					@error('phone')
 						<p class="mt-0.5 text-xs text-red-500">{{ $message }}</p>
 					@enderror
+
+					{{-- Saklar notifikasi: nomor boleh terverifikasi tapi pesan tidak dikirim. --}}
+					@if ($phoneVerified)
+						<div class="mt-4 rounded border border-slate-200 bg-slate-50 p-3.5">
+							<p class="text-xs font-bold uppercase tracking-wide text-slate-600">Notifikasi WhatsApp</p>
+							<p class="mt-1 text-xs text-slate-500">Matikan bila tidak ingin menerima pesan pengajuan/persetujuan.
+								Nomor tetap terverifikasi.</p>
+							<div class="mt-2.5 flex flex-wrap gap-2">
+								@foreach ([1 => 'Aktif', 0 => 'Nonaktif'] as $val => $label)
+									<label
+										class="flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-xs font-semibold transition
+											{{ (int) $whatsappNotify === $val ? ($val ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-400 bg-white text-slate-700') : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-100' }}">
+										<input type="radio" wire:model.live="whatsappNotify" value="{{ $val }}"
+											class="size-3.5 border-slate-300 text-primary-600 focus:ring-primary-500">
+										{{ $label }}
+									</label>
+								@endforeach
+							</div>
+						</div>
+					@endif
 				</div>
 			</div>
 

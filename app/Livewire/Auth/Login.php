@@ -14,8 +14,8 @@ class Login extends Component
 {
   use InteractsWithToast;
 
-  public string $username = 'admin.diskominfo';
-  public string $password = 'pass1234';
+  public string $username = '';
+  public string $password = '';
   public bool $remember = false;
 
   /** Sisa detik penguncian (0 = tidak terkunci). Dipakai untuk hitung mundur. */

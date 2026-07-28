@@ -79,7 +79,10 @@
       <x-form.input name="search" wire:model.live.debounce.300ms="search" icon="fa-solid fa-magnifying-glass"
         loadingTarget="search" placeholder="Cari pelaksana, maksud, atau nomor surat..." wrapperClass="flex-1" />
 
-      <x-ui.button variant="secondary" wire:click="resetFilters" :disabled="$search === ''"
+      <x-form.searchable-select wire:model.live="year" name="year" wrapperClass="w-full sm:w-40"
+        placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." :options="$yearOptions" />
+
+      <x-ui.button variant="secondary" wire:click="resetFilters" :disabled="$search === '' && $year === ''"
         class="w-full shrink-0 sm:w-auto">
         <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
         Reset

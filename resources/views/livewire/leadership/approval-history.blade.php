@@ -35,8 +35,11 @@
           ['value' => 'rejected', 'label' => 'Ditolak'],
         ]" />
 
+      <x-form.searchable-select wire:model.live="year" wrapperClass="w-full sm:w-40"
+        placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." :options="$yearOptions" />
+
       <x-ui.button variant="secondary" wire:click="resetFilters"
-        :disabled="$search === '' && $decision === ''" class="w-full shrink-0 sm:w-auto">
+        :disabled="$search === '' && $decision === '' && $year === ''" class="w-full shrink-0 sm:w-auto">
         <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
         Reset
       </x-ui.button>

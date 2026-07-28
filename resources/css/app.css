@@ -147,6 +147,50 @@
   }
 }
 
+/* Ornamen bulatan & badge di halaman tamu (login). Keyframes-nya dipanggil
+   lewat utility arbitrary Tailwind `animate-[float_9s_…]` di guest.blade.php;
+   tanpa definisi di sini animasinya diam total. Amplitudo dibuat cukup besar
+   agar gerakannya terbaca di layar besar. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(14px, -26px, 0) scale(1.06);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-22px, 16px, 0) scale(0.94);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  [class*='animate-[float'],
+  [class*='animate-[sway'],
+  [class*='animate-[fadeUp'] {
+    animation: none;
+  }
+}
+
 /* Angka (di app ini selalu font-mono: rupiah, kode rekening, persentase)
    dirender sebagai tabular figures agar digit rata rapi di kolom tabel uang.
    Satu sumber kebenaran, berlaku app-wide. */

@@ -15,6 +15,8 @@ return [
 
   'sppd_version' => '4.0',
 
+  'survey_url' => env('SURVEY_URL', '#'),
+
   'name' => env('APP_NAME', 'Laravel'),
 
   /*
