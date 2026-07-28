@@ -3,7 +3,7 @@
 //   Halaman HTML tidak di-cache agar tidak menampilkan data lama / sesi kedaluwarsa.
 // - Aset statis (css/js/img): network-first, fallback ke cache saat offline.
 // ponytail: tanpa precache versi aset; cukup offline fallback + cache dasar.
-const CACHE = "sppd-v2";
+const CACHE = "sppd-v3";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (e) => {
@@ -26,8 +26,20 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
 
   // Permintaan halaman: utamakan jaringan; offline -> tampilkan halaman offline.
+  // caches.match() bisa undefined -> respondWith wajib selalu dapat Response.
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).catch(() => caches.match(OFFLINE_URL)));
+    e.respondWith(
+      fetch(req).catch(async () => {
+        const cached = await caches.match(OFFLINE_URL);
+        return (
+          cached ||
+          new Response("<h1>Offline</h1><p>Tidak ada koneksi.</p>", {
+            status: 503,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          })
+        );
+      })
+    );
     return;
   }
 
@@ -39,6 +51,6 @@ self.addEventListener("fetch", (e) => {
         caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(req))
+      .catch(async () => (await caches.match(req)) || Response.error())
   );
 });
