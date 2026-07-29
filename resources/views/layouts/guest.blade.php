@@ -63,7 +63,7 @@
 						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
 				</div>
 
-				<div class="dash-enter space-y-2 px-1 text-center">
+				<div class="dash-enter space-y-2 px-1 text-center uppercase">
 					<h1 class="text-[1.7rem] font-black leading-tight text-white sm:text-[1.85rem]">SPPD Elektronik<br>Kota
 						Kendari</h1>
 					<p class="text-sm leading-6 text-sky-50/90">Sistem perjalanan dinas modern untuk OPD</p>
