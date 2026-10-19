@@ -147,7 +147,7 @@
             <div class="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-start sm:justify-between">
               <dt class="font-medium text-slate-500">Tujuan</dt>
               <dd class="text-right text-slate-700 sm:max-w-xs">
-                {{ $sppd->destinations->map(fn ($d) => $d->regency?->name)->filter()->join(', ') ?: '—' }}
+                {{ $sppd->destinations->map(fn ($d) => $d->place_name)->filter()->join(', ') ?: '—' }}
               </dd>
             </div>
           @endif

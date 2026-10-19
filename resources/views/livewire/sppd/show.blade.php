@@ -265,7 +265,7 @@
 								</div>
 								<div class="min-w-0 leading-tight">
 									<p class="text-sm font-bold text-slate-800">
-										{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}</p>
+										{{ $dest->location_label }}</p>
 									@if ($dest->address)
 										<p class="text-xs text-slate-500 mt-1">{{ $dest->address }}</p>
 									@endif

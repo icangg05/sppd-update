@@ -122,7 +122,7 @@
                   <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-slate-500">
                     <span class="inline-flex items-center gap-1">
                       <i class="fa-solid fa-location-dot text-slate-400"></i>
-                      {{ $sppd->destinations->first()?->regency?->name ?? 'Tujuan' }}
+                      {{ $sppd->destinations->first()?->place_name ?? 'Tujuan' }}
                     </span>
                     <span class="text-slate-300">•</span>
                     <span>{{ $sppd->duration_days }} hari</span>

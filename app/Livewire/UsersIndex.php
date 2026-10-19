@@ -100,6 +100,21 @@ class UsersIndex extends Component
     $this->toastSuccess("Pegawai {$user->name} berhasil {$status}.");
   }
 
+  /** Buka blokir login pegawai yang terblokir karena berulang kali salah password. */
+  public function unblockLogin(int $id): void
+  {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
+    $user = User::findOrFail($id);
+    $user->resetLoginAttempts();
+
+    activity('auth')
+      ->performedOn($user)
+      ->log("Blokir login akun {$user->username} dibuka");
+
+    $this->toastSuccess("Blokir login {$user->name} berhasil dibuka.");
+  }
+
   public function deleteUser(int $id): void
   {
     $user = User::findOrFail($id);

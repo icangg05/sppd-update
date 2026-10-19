@@ -35,6 +35,12 @@ class SmartTitle
     ];
 
     /**
+     * Kata depan/sambung yang dibiarkan huruf kecil oleh capitalizeWords(). Sengaja
+     * lebih sempit dari $lowercase agar nama tempat (mis. "Jl. Antara") tak ikut kecil.
+     */
+    private static array $minorWords = ['di', 'ke', 'dari', 'dan', 'yang'];
+
+    /**
      * Akronim / singkatan yang harus selalu HURUF BESAR.
      * Tambahkan sesuai kebutuhan instansi / domain Anda.
      */
@@ -93,6 +99,35 @@ class SmartTitle
         }
 
         return implode('', $result);
+    }
+
+    /**
+     * Kapitalkan huruf pertama setiap kata tanpa mengubah huruf lainnya, sehingga
+     * akronim yang diketik pengguna (mis. KBRI, PEMDI) tetap utuh. Cocok untuk
+     * isian bebas seperti alamat & nama tempat. Kata depan/sambung umum (di, ke,
+     * dari, dan, yang) di tengah teks tetap huruf kecil.
+     *
+     * @example
+     *   SmartTitle::capitalizeWords('kantor camat di poasia')
+     *   // → "Kantor Camat di Poasia"
+     */
+    public static function capitalizeWords(?string $string): ?string
+    {
+        if ($string === null) {
+            return null;
+        }
+
+        return preg_replace_callback(
+            '/(^|[\s(\/])(\p{Ll})(\p{L}*)/u',
+            function ($m) {
+                if ($m[1] !== '' && in_array($m[2] . $m[3], self::$minorWords, true)) {
+                    return $m[0];
+                }
+
+                return $m[1] . mb_strtoupper($m[2]) . $m[3];
+            },
+            trim($string),
+        );
     }
 
     /**

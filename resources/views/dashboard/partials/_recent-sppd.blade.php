@@ -30,7 +30,7 @@
           <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $item->user->name ?? '-' }}</span>
           <span class="text-slate-300">&bull;</span>
           <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i>
-            {{ $item->destinations->first()?->regency?->name ?? '-' }}</span>
+            {{ $item->destinations->first()?->place_name ?? '-' }}</span>
           <span class="text-slate-300">&bull;</span>
           <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($item->costDetails->sum('total'), 0, ',', '.') }}</span>
         </div>

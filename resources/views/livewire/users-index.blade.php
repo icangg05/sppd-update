@@ -247,10 +247,26 @@
 										<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Nonaktif
 									</span>
 								@endif
+								@if ($user->isLoginBlocked())
+									<span title="Diblokir sejak {{ $user->login_blocked_at->translatedFormat('d F Y H:i') }} karena berulang kali salah password"
+										class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+										<i class="fa-solid fa-user-lock text-[9px]"></i> Diblokir
+									</span>
+								@endif
 							</td>
 
 							<td data-label="Aksi" class="py-3 px-4 text-right">
 								<div class="flex items-center justify-end gap-1">
+									{{-- Buka blokir login (khusus Super Admin) --}}
+									@if ($user->isLoginBlocked() && auth()->user()->hasRole('super_admin'))
+										<button type="button" wire:click="unblockLogin({{ $user->id }})"
+											wire:confirm="Buka blokir login untuk {{ $user->name }}?"
+											title="Buka Blokir Login"
+											class="rounded p-1.5 text-xs font-medium text-rose-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+											<i class="fa-solid fa-unlock"></i>
+										</button>
+									@endif
+
 									{{-- Toggle Status --}}
 									<button type="button" wire:click="toggleActive({{ $user->id }})"
 										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"

@@ -249,13 +249,11 @@
 						a. &nbsp;Tempat Berangkat<br>
 						b. &nbsp;Tempat Tujuan
 					</td>
+					{{-- Indentasi gantung: isian yang panjang turun baris sejajar dengan teks, bukan di bawah "a."/"b.". --}}
 					<td>
-						a. &nbsp;{{ $sppd->departure_place ?? '-' }}<br>
-						b.&nbsp;@foreach ($sppd->destinations as $dest)
-							{{ $dest->address ?? '' }}@if (!$loop->last)
-								,
-							@endif
-						@endforeach
+						<div style="padding-left: 10pt; text-indent: -10pt;">a. &nbsp;{{ $sppd->departure_place ?? '-' }}</div>
+						{{-- Tujuan luar negeri sudah memuat koma ("Alamat, Kota, Negara"), jadi antartujuan dipisah titik koma. --}}
+						<div style="padding-left: 10pt; text-indent: -10pt;">b. &nbsp;{{ $sppd->destinations->pluck('full_address')->filter()->implode($sppd->domain === \App\Enums\SppdDomain::LUAR_NEGERI ? '; ' : ', ') }}</div>
 					</td>
 				</tr>
 				<tr>
@@ -404,20 +402,23 @@
 						$dest = $isDalamDaerah ? null : $sppd->destinations->get($destIndex);
 						$nextDest = $isDalamDaerah ? null : $sppd->destinations->get($destIndex + 1);
 					@endphp
+					{{-- Titik dua punya kolom sendiri agar isian yang panjang (mis. "Kota, Negara")
+					     turun baris tetap sejajar dengan awal teks, bukan di bawah titik dua. --}}
 					<tr>
 						<td style="height: 100px; position: relative;">
 							<table class="table-right">
 								<tr>
 									<td style="width: 14px;">{{ $toRoman($i) }}.</td>
-									<td style="width: 90px;">Tiba Di</td>
-									<td style="text-transform: uppercase;">
-										: {{ $dest->regency->name ?? '' }}
-									</td>
+									<td style="width: 90px;">Tiba di</td>
+									<td style="width: 6px;">:</td>
+									<td>{{ $dest?->place_name ?? '' }}</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Pada Tanggal</td>
-									<td>: @if ($dest && $i == 2)
+									<td>:</td>
+									<td>
+										@if ($dest && $i == 2)
 											{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}
 										@endif
 									</td>
@@ -426,10 +427,11 @@
 									<td style="width: 14px;"></td>
 									<td>Jabatan</td>
 									<td>:</td>
+									<td></td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
-									<td colspan="2">
+									<td colspan="3">
 										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 									</td>
 								</tr>
@@ -440,26 +442,30 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td style="width: 90px;">Berangkat dari</td>
-									<td style="text-transform: uppercase;">: {{ $dest->regency->name ?? '' }}</td>
+									<td style="width: 6px;">:</td>
+									<td>{{ $dest?->place_name ?? '' }}</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Ke</td>
-									<td style="text-transform: uppercase;">: {{ $nextDest->regency->name ?? '' }}</td>
+									<td>:</td>
+									<td>{{ $nextDest?->place_name ?? '' }}</td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Pada Tanggal</td>
 									<td>:</td>
+									<td></td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
 									<td>Jabatan</td>
 									<td>:</td>
+									<td></td>
 								</tr>
 								<tr>
 									<td style="width: 14px;"></td>
-									<td colspan="2">
+									<td colspan="3">
 										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
 									</td>
 								</tr>
@@ -474,7 +480,7 @@
 						<table class="table-right">
 							<tr>
 								<td style="width: 14px;">VI.</td>
-								<td style="width: 100%;">Tiba Di <br>(Tempat Kedudukan)</td>
+								<td style="width: 100%;">Tiba di <br>(Tempat Kedudukan)</td>
 								<td>: Kendari</td>
 							</tr>
 							<tr>

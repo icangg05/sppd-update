@@ -154,29 +154,42 @@
 						</div>
 					@else
 						<div id="multi-dest-fields">
+							@php $isLuarNegeri = $domain === 'luar_negeri'; @endphp
 							<div id="dest-wrap" class="space-y-2.5">
 								@foreach ($destinations as $index => $dest)
-									@php
-										$provinceOptions = $provinces
-											->filter(fn($p) => !($domain === 'ldlp' && $p->name === 'Sulawesi Tenggara'))
-											->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
-											->values();
-										$regencyOptions = $this->getRegenciesForProvince($dest['province_id'])
-											->map(fn($r) => ['value' => $r->id, 'label' => $r->name])
-											->values();
-									@endphp
 									<div class="dest-row grid grid-cols-1 {{ $domain === 'lddp' ? 'md:grid-cols-2' : 'md:grid-cols-3' }} gap-2 p-3 bg-slate-50/80 border border-slate-200 rounded relative items-start">
-										<div class="{{ $domain === 'lddp' ? 'hidden' : '' }}">
-											<x-form.searchable-select wire:model.live="destinations.{{ $index }}.province_id"
-												:options="$provinceOptions" placeholder="— Provinsi —" searchPlaceholder="Cari provinsi..." required />
-										</div>
-										{{-- wire:key memuat province_id agar komponen di-render ulang saat
-										     provinsi berubah, sehingga opsi kabupaten (yang di-init Alpine
-										     sekali saat mount) ikut diperbarui. --}}
-										<div wire:key="regency-{{ $index }}-{{ $dest['province_id'] ?: 'none' }}">
-											<x-form.searchable-select wire:model="destinations.{{ $index }}.regency_id"
-												:options="$regencyOptions" placeholder="— Kabupaten/Kota —" searchPlaceholder="Cari kabupaten/kota..." required />
-										</div>
+										@if ($isLuarNegeri)
+											{{-- Luar negeri: negara dari daftar baku, kota diketik bebas. --}}
+											<x-form.searchable-select wire:model="destinations.{{ $index }}.country"
+												:options="$countries" placeholder="— Negara —" searchPlaceholder="Cari negara..." required />
+											<div>
+												<input type="text" wire:model="destinations.{{ $index }}.city"
+													class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
+													placeholder="Kota tujuan (misal: Tokyo)" required>
+												@error("destinations.{$index}.city") <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+											</div>
+										@else
+											@php
+												$provinceOptions = $provinces
+													->filter(fn($p) => !($domain === 'ldlp' && $p->name === 'Sulawesi Tenggara'))
+													->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
+													->values();
+												$regencyOptions = $this->getRegenciesForProvince($dest['province_id'])
+													->map(fn($r) => ['value' => $r->id, 'label' => $r->name])
+													->values();
+											@endphp
+											<div class="{{ $domain === 'lddp' ? 'hidden' : '' }}">
+												<x-form.searchable-select wire:model.live="destinations.{{ $index }}.province_id"
+													:options="$provinceOptions" placeholder="— Provinsi —" searchPlaceholder="Cari provinsi..." required />
+											</div>
+											{{-- wire:key memuat province_id agar komponen di-render ulang saat
+											     provinsi berubah, sehingga opsi kabupaten (yang di-init Alpine
+											     sekali saat mount) ikut diperbarui. --}}
+											<div wire:key="regency-{{ $index }}-{{ $dest['province_id'] ?: 'none' }}">
+												<x-form.searchable-select wire:model="destinations.{{ $index }}.regency_id"
+													:options="$regencyOptions" placeholder="— Kabupaten/Kota —" searchPlaceholder="Cari kabupaten/kota..." required />
+											</div>
+										@endif
 										<div class="flex gap-2">
 											<input type="text" wire:model="destinations.{{ $index }}.address"
 												class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 flex-1 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"

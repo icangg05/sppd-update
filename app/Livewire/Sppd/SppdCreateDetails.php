@@ -17,6 +17,7 @@ use App\Services\QueueHealthService;
 use App\Services\SppdWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
@@ -96,21 +97,15 @@ class SppdCreateDetails extends Component
 
       $this->destinations = [];
       foreach ($sppd->destinations as $dest) {
-        if ($this->domain === 'dalam_daerah') {
-          $this->destinations[] = [
-            'province_id' => $dest->province_id,
-            'regency_id' => $dest->regency_id,
-            'address' => '',
-            'address_only' => $dest->address,
-          ];
-        } else {
-          $this->destinations[] = [
-            'province_id' => $dest->province_id,
-            'regency_id' => $dest->regency_id,
-            'address' => $dest->address,
-            'address_only' => '',
-          ];
-        }
+        $isDalamDaerah = $this->domain === 'dalam_daerah';
+        $this->destinations[] = [
+          'province_id' => $dest->province_id,
+          'regency_id' => $dest->regency_id,
+          'country' => $dest->country ?? '',
+          'city' => $dest->city ?? '',
+          'address' => $isDalamDaerah ? '' : $dest->address,
+          'address_only' => $isDalamDaerah ? $dest->address : '',
+        ];
       }
 
       $user = $sppd->user;
@@ -134,15 +129,7 @@ class SppdCreateDetails extends Component
         $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
       }
 
-      $seSultra = Province::where('name', config('sppd.default_province_name'))->first();
-      $this->destinations = [
-        [
-          'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
-          'regency_id' => '',
-          'address' => '',
-          'address_only' => '',
-        ]
-      ];
+      $this->destinations = [$this->emptyDestination()];
     }
 
     // Security check in mount
@@ -191,10 +178,21 @@ class SppdCreateDetails extends Component
       return;
     }
 
-    $seSultra = Province::where('name', config('sppd.default_province_name'))->first();
-    $this->destinations[] = [
-      'province_id' => ($this->domain === 'lddp' && $seSultra) ? $seSultra->id : '',
+    $this->destinations[] = $this->emptyDestination();
+  }
+
+  /** Baris tujuan kosong; LDDP otomatis memakai provinsi induk. */
+  protected function emptyDestination(): array
+  {
+    $seSultra = $this->domain === 'lddp'
+      ? Province::where('name', config('sppd.default_province_name'))->first()
+      : null;
+
+    return [
+      'province_id' => $seSultra?->id ?? '',
       'regency_id' => '',
+      'country' => '',
+      'city' => '',
       'address' => '',
       'address_only' => '',
     ];
@@ -240,10 +238,16 @@ class SppdCreateDetails extends Component
         'destinations' => 'required|array|min:1',
         'destinations.*.province_id' => 'required_if:domain,lddp,ldlp',
         'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp',
-        'destinations.*.address' => 'required_if:domain,lddp,ldlp|string|max:500',
+        'destinations.*.country' => ['required_if:domain,luar_negeri', Rule::in(config('countries'))],
+        'destinations.*.city' => 'required_if:domain,luar_negeri|string|max:150',
+        'destinations.*.address' => 'required_if:domain,lddp,ldlp,luar_negeri|string|max:500',
         'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
         'followers' => 'nullable|array',
         'followers.*' => 'exists:users,id',
+      ], [
+        'destinations.*.country.required_if' => 'Negara tujuan wajib dipilih.',
+        'destinations.*.country.in' => 'Negara tujuan tidak valid.',
+        'destinations.*.city.required_if' => 'Kota tujuan wajib diisi.',
       ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
       // Toast ringkas selain error inline, lalu lempar ulang agar modal tetap
@@ -306,7 +310,7 @@ class SppdCreateDetails extends Component
           $summarizeRelations = function (SppdRequest $s): array {
             return [
               'destinations' => $s->destinations()->with('regency')->orderBy('id')->get()
-                ->map(fn ($d) => collect([$d->address, $d->regency?->name])->filter()->implode(', '))
+                ->map(fn ($d) => collect([$d->address, $d->place_name])->filter()->implode(', '))
                 ->implode(' | '),
               'followers' => $s->followers()->with('user')->orderBy('id')->get()
                 ->map(fn ($f) => $f->user?->name ?? ('#' . $f->user_id))
@@ -341,25 +345,7 @@ class SppdCreateDetails extends Component
           $sppd->destinations()->delete();
           $sppd->followers()->delete();
 
-          // Save destinations
-          foreach ($this->destinations as $dest) {
-            if ($this->domain === 'dalam_daerah') {
-              $sultra = Province::where('name', config('sppd.default_province_name'))->first();
-              $kendari = Regency::where('name', 'LIKE', '%' . config('sppd.home_base_regency_keyword') . '%')->where('province_id', $sultra?->id)->first();
-
-              $sppd->destinations()->create([
-                'address' => $dest['address_only'],
-                'province_id' => $sultra?->id,
-                'regency_id' => $kendari?->id,
-              ]);
-            } else {
-              $sppd->destinations()->create([
-                'province_id' => $dest['province_id'] ?? null,
-                'regency_id' => $dest['regency_id'] ?? null,
-                'address' => $dest['address'] ?? null,
-              ]);
-            }
-          }
+          $this->saveDestinations($sppd);
 
           // Save followers
           if (! empty($this->followers)) {
@@ -436,25 +422,7 @@ class SppdCreateDetails extends Component
             'attachment' => $attachmentPath,
           ]);
 
-          // Save destinations
-          foreach ($this->destinations as $dest) {
-            if ($this->domain === 'dalam_daerah') {
-              $sultra = Province::where('name', config('sppd.default_province_name'))->first();
-              $kendari = Regency::where('name', 'LIKE', '%' . config('sppd.home_base_regency_keyword') . '%')->where('province_id', $sultra?->id)->first();
-
-              $sppd->destinations()->create([
-                'address' => $dest['address_only'],
-                'province_id' => $sultra?->id,
-                'regency_id' => $kendari?->id,
-              ]);
-            } else {
-              $sppd->destinations()->create([
-                'province_id' => $dest['province_id'] ?? null,
-                'regency_id' => $dest['regency_id'] ?? null,
-                'address' => $dest['address'] ?? null,
-              ]);
-            }
-          }
+          $this->saveDestinations($sppd);
 
           // Save followers
           if (! empty($this->followers)) {
@@ -517,6 +485,36 @@ class SppdCreateDetails extends Component
     } catch (\Exception $e) {
       $this->toastError($e->getMessage());
       $this->showConfirmModal = false;
+    }
+  }
+
+  /** Simpan baris tujuan sesuai domain perjalanan. */
+  protected function saveDestinations(SppdRequest $sppd): void
+  {
+    foreach ($this->destinations as $dest) {
+      if ($this->domain === 'dalam_daerah') {
+        // Dalam daerah selalu bertujuan di tempat kedudukan (provinsi & kota induk).
+        $sultra = Province::where('name', config('sppd.default_province_name'))->first();
+        $kendari = Regency::where('name', 'LIKE', '%' . config('sppd.home_base_regency_keyword') . '%')->where('province_id', $sultra?->id)->first();
+
+        $sppd->destinations()->create([
+          'address' => $dest['address_only'],
+          'province_id' => $sultra?->id,
+          'regency_id' => $kendari?->id,
+        ]);
+      } elseif ($this->domain === 'luar_negeri') {
+        $sppd->destinations()->create([
+          'country' => $dest['country'] ?? null,
+          'city' => $dest['city'] ?? null,
+          'address' => $dest['address'] ?? null,
+        ]);
+      } else {
+        $sppd->destinations()->create([
+          'province_id' => $dest['province_id'] ?? null,
+          'regency_id' => $dest['regency_id'] ?? null,
+          'address' => $dest['address'] ?? null,
+        ]);
+      }
     }
   }
 
@@ -617,6 +615,7 @@ class SppdCreateDetails extends Component
       : collect();
 
     $provinces = Province::orderBy('name')->get();
+    $countries = config('countries');
 
     // Pegawai sibuk — dibedakan: sedang dalam perjalanan (SPPD disetujui &
     // periodenya belum lewat) vs masih dalam proses persetujuan (IN_PROGRESS).
@@ -647,6 +646,7 @@ class SppdCreateDetails extends Component
       'categories',
       'users',
       'provinces',
+      'countries',
       'steps',
       'selectedFollowerUsers',
       'travelingFollowerIds',

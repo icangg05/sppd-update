@@ -17,6 +17,7 @@ use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
@@ -24,6 +25,10 @@ class UserForm extends Component
 {
   use InteractsWithToast;
   use InteractsWithPhoneVerification;
+
+  // Role operasional yang tidak terkait jabatan — tidak ditimpa otomatis saat
+  // jabatan diganti (agar super admin tak kehilangan akses & admin OPD tak turun jadi staf).
+  private const ROLES_NOT_FROM_POSITION = ['super_admin', 'admin_opd'];
 
   public ?User $user = null;
   public bool $isEdit = false;
@@ -320,6 +325,89 @@ class UserForm extends Component
   public function selectPosition($id): void
   {
     $this->position_id = (int) $id;
+    $this->applyPositionRole(auto: true);
+  }
+
+  /**
+   * Samakan role dengan role default jabatan terpilih. Saat otomatis (jabatan
+   * baru dipilih), role operasional seperti Admin OPD tidak ditimpa; lewat
+   * tombol "Gunakan role ini" role selalu disamakan.
+   */
+  public function applyPositionRole(bool $auto = false): void
+  {
+    // Selain Super Admin, role selalu diturunkan otomatis (lihat roleFollowingPosition()).
+    if (! $this->canEditRole()) {
+      return;
+    }
+
+    $roleName = $this->positionDefaultRole();
+    if (! $roleName) {
+      return;
+    }
+
+    if ($auto && in_array($this->role, self::ROLES_NOT_FROM_POSITION, true)) {
+      return;
+    }
+
+    $this->role = $roleName;
+    $this->resetErrorBag('role');
+  }
+
+  /**
+   * Hanya Super Admin yang boleh memilih role secara bebas. Admin OPD melihat
+   * role terkunci yang mengikuti jabatan / jabatan DPRD.
+   */
+  public function canEditRole(): bool
+  {
+    return auth()->user()->hasRole('super_admin');
+  }
+
+  /**
+   * Role default jabatan terpilih, bila ada dan role-nya terdaftar.
+   */
+  private function positionDefaultRole(): ?string
+  {
+    $roleName = $this->position_id ? Position::whereKey($this->position_id)->value('default_role') : null;
+
+    return $roleName && Role::where('name', $roleName)->exists() ? $roleName : null;
+  }
+
+  /**
+   * Role yang berlaku bila pengisi formulir bukan Super Admin. Dihitung di
+   * server (bukan dari input) agar Admin OPD tidak bisa memberi role sembarang.
+   */
+  private function roleFollowingPosition(): string
+  {
+    $original = $this->isEdit ? $this->user->roles->first()?->name : null;
+
+    // Kewenangan operasional (Super Admin / Admin OPD) hanya bisa diubah Super Admin.
+    if (in_array($original, self::ROLES_NOT_FROM_POSITION, true)) {
+      return $original;
+    }
+
+    // Anggota DPRD: Ketua DPRD => Pimpinan DPRD, selain itu Anggota DPRD.
+    if ($this->isDprdMember()) {
+      return $this->dprd_jabatan === DprdJabatan::KETUA->value ? 'pimpinan_dprd' : 'anggota_dprd';
+    }
+
+    if ($positionRole = $this->positionDefaultRole()) {
+      return $positionRole;
+    }
+
+    // Jabatan tanpa role default: pertahankan role lama (kecuali role DPRD), atau staf.
+    return $original && ! in_array($original, ['pimpinan_dprd', 'anggota_dprd'], true) ? $original : 'staf';
+  }
+
+  /**
+   * Jabatan baru dari modal tambah jabatan langsung dipilih (role ikut terisi).
+   */
+  #[On('position-saved')]
+  public function onPositionSaved(int $id, bool $created = false): void
+  {
+    if ($created) {
+      $this->searchPosition = '';
+      $this->selectPosition($id);
+    }
   }
 
   public function clearPosition(): void
@@ -351,6 +439,10 @@ class UserForm extends Component
 
   public function save()
   {
+    if (! $this->canEditRole()) {
+      $this->role = $this->roleFollowingPosition();
+    }
+
     try {
       $this->validate();
     } catch (ValidationException $e) {
@@ -456,6 +548,11 @@ class UserForm extends Component
 
   public function render()
   {
+    // Field role terkunci untuk selain Super Admin — tampilkan role yang benar-benar akan disimpan.
+    if (! $this->canEditRole()) {
+      $this->role = $this->roleFollowingPosition();
+    }
+
     // Pencarian jabatan server-side: hanya memuat sebagian data (bukan seluruh jabatan).
     $positionQuery = Position::query();
     if (trim($this->searchPosition) !== '') {
@@ -470,13 +567,20 @@ class UserForm extends Component
     // Jabatan terpilih tetap tampil di trigger walau di luar hasil pencarian.
     $selectedPosition = $this->position_id ? Position::find($this->position_id) : null;
 
+    // Role default jabatan terpilih — untuk petunjuk sinkron jabatan ↔ role.
+    $roles = Role::all();
+    $positionRole = $selectedPosition?->default_role
+      ? $roles->firstWhere('name', $selectedPosition->default_role)
+      : null;
+
     return view('livewire.user-form', [
       'departments' => $this->getHierarchicalDepartments(),
       'ranks' => Rank::orderBy('group')->get(),
       'positions' => $positions,
       'positionsHasMore' => $positionsHasMore,
       'selectedPosition' => $selectedPosition,
-      'roles' => Role::all(),
+      'positionRole' => $positionRole,
+      'roles' => $roles,
       'employeeTypes' => EmployeeType::cases(),
       'dprdJabatans' => DprdJabatan::cases(),
       'dprdPartais' => DprdPartai::cases(),

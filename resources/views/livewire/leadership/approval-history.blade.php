@@ -80,7 +80,7 @@
               </p>
               <p class="mt-0.5 truncate text-xs text-slate-500">
                 <i class="fa-solid fa-location-dot"></i>
-                {{ $sppd?->destinations->first()?->regency?->name ?? '-' }}
+                {{ $sppd?->destinations->first()?->place_name ?? '-' }}
               </p>
             </td>
 

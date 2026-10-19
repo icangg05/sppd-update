@@ -425,7 +425,14 @@
 											</li>
 										@endforeach
 										@if ($positions->isEmpty() && trim($searchPosition) !== '')
-											<li class="px-3 py-2 text-xs text-slate-500">Jabatan tidak ditemukan.</li>
+											<li class="space-y-2 px-3 py-2 text-xs text-slate-500">
+												<p>Jabatan tidak ditemukan.</p>
+												<x-ui.button size="sm" variant="secondary" class="w-full"
+													x-on:click="open = false; $dispatch('open-position-form', { name: $wire.searchPosition })">
+													<x-slot:icon><i class="fa-solid fa-plus text-[10px]"></i></x-slot:icon>
+													Tambah "{{ trim($searchPosition) }}" sebagai jabatan baru
+												</x-ui.button>
+											</li>
 										@endif
 										@if ($positionsHasMore)
 											<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
@@ -441,10 +448,10 @@
 							<p class="text-xs text-slate-500">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
 								dipangku satu pegawai aktif sesuai lingkupnya.</p>
 							<p class="text-xs text-slate-500">Jabatan tidak ada?
-								<a href="{{ route('master.position-requests.index') }}#ajukan-jabatan" target="_blank"
+								<button type="button" x-on:click="$dispatch('open-position-form', { name: $wire.searchPosition })"
 									class="font-semibold text-primary-600 hover:text-primary-700 hover:underline">
-									Ajukan jabatan baru <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-								</a>
+									<i class="fa-solid fa-plus text-[9px]"></i> Tambah jabatan baru
+								</button>
 							</p>
 						</div>
 					@endunless
@@ -461,10 +468,43 @@
 								->values()
 								->all();
 						@endphp
+						{{-- Hanya Super Admin yang memilih role; selain itu role terkunci mengikuti jabatan. --}}
 						<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
-							required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..." />
-						<p class="text-xs text-slate-500">Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD,
-							Camat, Lurah, dll.) hanya boleh dipegang satu pegawai aktif sesuai lingkupnya.</p>
+							required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..."
+							:disabled="! $this->canEditRole()" />
+						@if ($positionRole && ! $this->isDprdContext())
+							@if ($role === $positionRole->name)
+								<p class="text-xs font-medium text-emerald-700">
+									<i class="fa-solid fa-circle-check mr-0.5"></i>
+									Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>.
+								</p>
+							@else
+								<div class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+									<span>
+										<i class="fa-solid fa-triangle-exclamation mr-0.5"></i>
+										Jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span> umumnya memakai role
+										<span class="font-semibold">{{ $positionRole->label }}</span>.
+									</span>
+									@if ($this->canEditRole())
+										<x-ui.button size="sm" variant="warning" wire:click="applyPositionRole" wire:target="applyPositionRole">
+											Gunakan role ini
+										</x-ui.button>
+									@else
+										<span>Role {{ $roles->firstWhere('name', $role)?->label ?? $role }} hanya dapat diubah oleh Super Admin.</span>
+									@endif
+								</div>
+							@endif
+						@endif
+						<p class="text-xs text-slate-500">
+							@if ($this->canEditRole())
+								Role terisi otomatis dari jabatan dan tetap bisa diubah.
+							@else
+								<i class="fa-solid fa-lock mr-0.5 text-[10px]"></i>
+								Role mengikuti jabatan secara otomatis dan hanya dapat diubah oleh Super Admin.
+							@endif
+							Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD, Camat, Lurah, dll.) hanya boleh dipegang
+							satu pegawai aktif sesuai lingkupnya.
+						</p>
 					</div>
 				</div>
 			</section>
@@ -524,6 +564,11 @@
 		</form>
 
 		@include('livewire.partials.phone-verification')
+		
+		{{-- Modal tambah jabatan — di luar <form> pegawai agar tidak menjadi form bersarang. --}}
+		@unless ($this->isDprdContext())
+			<livewire:position-form-modal />
+		@endunless
 
 	</div>
 </div>

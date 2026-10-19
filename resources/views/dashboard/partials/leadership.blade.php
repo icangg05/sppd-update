@@ -41,7 +41,7 @@
             <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $sppd->user->name ?? '-' }}</span>
             <span class="text-slate-300">&bull;</span>
             <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i>
-              {{ $sppd->destinations->first()?->regency?->name ?? '-' }}</span>
+              {{ $sppd->destinations->first()?->place_name ?? '-' }}</span>
             <span class="text-slate-300">&bull;</span>
             <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($sppd->costDetails->sum('total'), 0, ',', '.') }}</span>
           </div>

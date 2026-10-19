@@ -222,7 +222,13 @@
 			<td class="label" style="padding-top: 20px;">Untuk</td>
 			<td class="separator" style="padding-top: 20px;">:</td>
 			<td style="padding-top: 20px; padding-left: 5px; text-align: justify;">
-				<span class="bold">{{ $sppd->purpose }}</span> Selama {{ $pdfData['duration'] }} hari dari tanggal
+				{{-- Format: "<maksud> di <tempat tujuan> Selama N hari dari tanggal ... s/d ...". --}}
+				@php $tempatTujuan = $sppd->destinations->pluck('full_address')->filter()->join(', ', ' dan '); @endphp
+				<span class="bold">{{ rtrim(trim($sppd->purpose), '.') }}</span>
+				@if ($tempatTujuan !== '')
+					di {{ $tempatTujuan }}
+				@endif
+				Selama {{ $pdfData['duration'] }} hari dari tanggal
 				{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }} s/d
 				{{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}.
 			</td>

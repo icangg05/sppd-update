@@ -150,7 +150,7 @@
 						<td style="padding: 0 10px;">:</td>
 						<td>
 							@foreach ($sppd->destinations as $dest)
-								{{ $dest->regency->name }}{{ !$loop->last ? ', ' : '' }}
+								{{ $dest->place_name }}{{ !$loop->last ? ', ' : '' }}
 							@endforeach
 						</td>
 					</tr>

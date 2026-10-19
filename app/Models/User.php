@@ -57,6 +57,9 @@ class User extends Authenticatable
       'password' => 'hashed',
       'employee_type' => EmployeeType::class,
       'is_active' => 'boolean',
+      'failed_login_attempts' => 'integer',
+      'login_locked_until' => 'datetime',
+      'login_blocked_at' => 'datetime',
       'phone_verified' => 'boolean',
       'whatsapp_notify' => 'boolean',
     ];
@@ -66,6 +69,22 @@ class User extends Authenticatable
   public function canReceiveWhatsApp(): bool
   {
     return ! empty($this->phone) && $this->phone_verified && $this->whatsapp_notify;
+  }
+
+  /** Diblokir dari login karena berulang kali salah password; hanya super_admin yang dapat membuka. */
+  public function isLoginBlocked(): bool
+  {
+    return $this->login_blocked_at !== null;
+  }
+
+  /** Buka blokir login dan reset hitungan percobaan gagal. */
+  public function resetLoginAttempts(): void
+  {
+    $this->forceFill([
+      'failed_login_attempts' => 0,
+      'login_locked_until' => null,
+      'login_blocked_at' => null,
+    ])->save();
   }
 
   public function getActivitylogOptions(): LogOptions

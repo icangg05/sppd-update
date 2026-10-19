@@ -155,23 +155,34 @@ class KirimChatNotificationTest extends TestCase
         });
     }
 
-    public function test_kirim_chat_webhook_verifies_successfully(): void
+    /**
+     * Menyiapkan verifikasi pending seperti yang dilakukan
+     * InteractsWithPhoneVerification::startVerification().
+     */
+    private function pendingVerification(string $token, string $phone, string $normalizedPhone): void
     {
-        Queue::fake();
-
-        $token = 'V-12345';
         \Illuminate\Support\Facades\Cache::put("wa_verification:{$token}", [
-            'phone' => '081341770730',
+            'phone' => $phone,
             'name' => 'Budi',
             'email' => 'budi@example.com',
             'user_id' => null,
         ], now()->addMinutes(15));
 
+        \Illuminate\Support\Facades\Cache::put("wa_verification_phone:{$normalizedPhone}", $token, now()->addMinutes(15));
+    }
+
+    public function test_kirim_chat_webhook_verifies_successfully(): void
+    {
+        Queue::fake();
+
+        $token = 'V-12345';
+        $this->pendingVerification($token, '081341770730', '6281341770730');
+
         $payload = [
             'event' => 'message.received',
             'data' => [
                 'from' => '6281341770730',
-                'message' => "📱 VERIFIKASI WA SPPD\nKode Verifikasi: {$token}",
+                'message' => "Verifikasi WhatsApp SPPD Kendari\n📱 *Nomor:* 6281341770730",
             ]
         ];
 
@@ -183,7 +194,7 @@ class KirimChatNotificationTest extends TestCase
         $status = \Illuminate\Support\Facades\Cache::get("wa_verified_status:{$token}");
         $this->assertNotNull($status);
         $this->assertTrue($status['verified']);
-        $this->assertEquals('081341770730', $status['phone']);
+        $this->assertEquals('6281341770730', $status['phone']);
 
         Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
             return $job->phone === '6281341770730' &&
@@ -191,15 +202,18 @@ class KirimChatNotificationTest extends TestCase
         });
     }
 
-    public function test_kirim_chat_webhook_fails_with_expired_or_invalid_token(): void
+    public function test_kirim_chat_webhook_fails_when_sender_number_mismatch(): void
     {
         Queue::fake();
+
+        $token = 'V-11111';
+        $this->pendingVerification($token, '081341770730', '6281341770730');
 
         $payload = [
             'event' => 'message.received',
             'data' => [
-                'from' => '6281341770730',
-                'message' => "📱 VERIFIKASI WA SPPD\nKode Verifikasi: V-99999",
+                'from' => '6289999999999',
+                'message' => "Verifikasi WhatsApp SPPD Kendari\n📱 *Nomor:* 6281341770730",
             ]
         ];
 
@@ -208,25 +222,68 @@ class KirimChatNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson(['success' => false]);
 
+        $this->assertNull(\Illuminate\Support\Facades\Cache::get("wa_verified_status:{$token}"));
+        $this->assertNotNull(\Illuminate\Support\Facades\Cache::get("wa_verification_failed:{$token}"));
+
         Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
-            return $job->phone === '6281341770730' &&
+            return $job->phone === '6289999999999' &&
                 str_contains($job->message, 'VERIFIKASI GAGAL');
         });
     }
 
+    public function test_kirim_chat_webhook_fails_with_expired_token(): void
+    {
+        Queue::fake();
 
+        $token = 'V-99999';
+
+        // Pemetaan nomor → token masih ada, tetapi payload verifikasinya sudah kedaluwarsa.
+        \Illuminate\Support\Facades\Cache::put("wa_verification_phone:6281341770730", $token, now()->addMinutes(15));
+
+        $payload = [
+            'event' => 'message.received',
+            'data' => [
+                'from' => '6281341770730',
+                'message' => "Verifikasi WhatsApp SPPD Kendari\n📱 *Nomor:* 6281341770730",
+            ]
+        ];
+
+        $response = $this->postJson(route('webhook.kirimchat'), $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => false]);
+
+        $this->assertNull(\Illuminate\Support\Facades\Cache::get("wa_verified_status:{$token}"));
+
+        Queue::assertNotPushed(SendWhatsAppNotificationJob::class);
+    }
+
+    public function test_kirim_chat_webhook_ignores_message_without_verification_format(): void
+    {
+        Queue::fake();
+
+        $payload = [
+            'event' => 'message.received',
+            'data' => [
+                'from' => '6281341770730',
+                'message' => 'Halo, saya mau tanya soal SPPD.',
+            ]
+        ];
+
+        $response = $this->postJson(route('webhook.kirimchat'), $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => false]);
+
+        Queue::assertNotPushed(SendWhatsAppNotificationJob::class);
+    }
 
     public function test_kirim_chat_webhook_verifies_successfully_with_actual_payload(): void
     {
         Queue::fake();
 
         $token = 'V-54321';
-        \Illuminate\Support\Facades\Cache::put("wa_verification:{$token}", [
-            'phone' => '081341770730',
-            'name' => 'Budi',
-            'email' => 'budi@example.com',
-            'user_id' => null,
-        ], now()->addMinutes(15));
+        $this->pendingVerification($token, '081341770730', '6281341770730');
 
         $payload = [
             'event_type' => 'message.received',
@@ -238,7 +295,7 @@ class KirimChatNotificationTest extends TestCase
                 'customer_phone' => '6281341770730',
                 'direction' => 'inbound',
                 'message_type' => 'text',
-                'content' => "Verifikasi WhatsApp SPPD Kendari:\n📱 *Nomor:* 081341770730\n🔑 *Kode:* {$token}\n\n_Jangan ubah isi pesan ini. Silakan kirim, lalu cek status secara berkala di halaman browser Anda._",
+                'content' => "Verifikasi WhatsApp SPPD Kendari\n📱 *Nomor:* 6281341770730\n\nKirim pesan ini untuk memverifikasi nomor WhatsApp Anda.",
                 'channel' => 'whatsapp',
                 'customer_name' => 'ilmifaizan',
                 'wam_id' => 'wamid.HBgNNjI4MTM0MTc3MDczMBUCABIYIEFDMTJFMDRCMkE3REJFRDY4Rjg3QUY1NzAxNUU2QkU2AA==',
@@ -249,7 +306,7 @@ class KirimChatNotificationTest extends TestCase
                         'id' => 'wamid.HBgNNjI4MTM0MTc3MDczMBUCABIYIEFDMTJFMDRCMkE3REJFRDY4Rjg3QUY1NzAxNUU2QkU2AA==',
                         'timestamp' => '1781022139',
                         'text' => [
-                            'body' => "Verifikasi WhatsApp SPPD Kendari:\n📱 *Nomor:* 081341770730\n🔑 *Kode:* {$token}\n\n_Jangan ubah isi pesan ini. Silakan kirim, lalu cek status secara berkala di halaman browser Anda._",
+                            'body' => "Verifikasi WhatsApp SPPD Kendari\n📱 *Nomor:* 6281341770730",
                         ],
                         'type' => 'text',
                     ],
@@ -265,7 +322,7 @@ class KirimChatNotificationTest extends TestCase
         $status = \Illuminate\Support\Facades\Cache::get("wa_verified_status:{$token}");
         $this->assertNotNull($status);
         $this->assertTrue($status['verified']);
-        $this->assertEquals('081341770730', $status['phone']);
+        $this->assertEquals('6281341770730', $status['phone']);
 
         Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
             return $job->phone === '6281341770730' &&

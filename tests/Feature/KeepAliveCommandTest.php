@@ -2,36 +2,58 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\SendWhatsAppNotificationJob;
-use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class KeepAliveCommandTest extends TestCase
 {
-    public function test_keepalive_command_dispatches_job_to_configured_phone(): void
+    protected function setUp(): void
     {
-        Queue::fake();
+        parent::setUp();
+        config(['kirimchat.base_url' => 'https://api-prod.kirim.chat/api/v1/public']);
+        config(['kirimchat.api_key' => 'test-key']);
+    }
+
+    public function test_keepalive_command_pings_activity_endpoint(): void
+    {
+        Http::fake([
+            'https://api-prod.kirim.chat/api/v1/public/health' => Http::response([
+                'success' => true,
+                'data' => ['status' => 'ok', 'authenticated' => true],
+            ], 200),
+        ]);
 
         config(['kirimchat.keepalive.enabled' => true]);
-        config(['kirimchat.keepalive.phone' => '081341770730']);
-        config(['kirimchat.keepalive.message' => 'Ping keep-alive layanan SPPD.']);
 
         $this->artisan('wa:keepalive')->assertExitCode(0);
 
-        Queue::assertPushed(SendWhatsAppNotificationJob::class, function ($job) {
-            return $job->phone === '081341770730'
-                && str_contains($job->message, 'Ping keep-alive layanan SPPD.');
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://api-prod.kirim.chat/api/v1/public/health'
+                && $request->hasHeader('Authorization', 'Bearer test-key');
         });
+    }
+
+    public function test_keepalive_command_still_succeeds_when_ping_fails(): void
+    {
+        Http::fake([
+            'https://api-prod.kirim.chat/api/v1/public/health' => Http::response(['success' => false], 401),
+        ]);
+
+        config(['kirimchat.keepalive.enabled' => true]);
+
+        $this->artisan('wa:keepalive')->assertExitCode(0);
+
+        Http::assertSentCount(1);
     }
 
     public function test_keepalive_command_skips_when_disabled(): void
     {
-        Queue::fake();
+        Http::fake();
 
         config(['kirimchat.keepalive.enabled' => false]);
 
         $this->artisan('wa:keepalive')->assertExitCode(0);
 
-        Queue::assertNotPushed(SendWhatsAppNotificationJob::class);
+        Http::assertNothingSent();
     }
 }

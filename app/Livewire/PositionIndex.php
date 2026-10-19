@@ -3,13 +3,14 @@
 namespace App\Livewire;
 
 use App\Enums\PositionScope;
-use App\Helpers\SmartTitle;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Position;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.app')]
 class PositionIndex extends Component
@@ -23,22 +24,14 @@ class PositionIndex extends Component
   #[Url(keep: true)]
   public string $scopeFilter = '';
 
-  // Form tambah / edit
-  public bool $showFormModal = false;
-  public ?int $editingId = null;
-  public string $name = '';
-  public int $level = 1000;
-  public string $scope = PositionScope::NONE->value;
+  // Sumber jabatan — Super Admin: system / opd; Admin OPD: mine.
+  #[Url(keep: true)]
+  public string $sourceFilter = '';
 
   // Konfirmasi hapus
   public bool $showDeleteModal = false;
   public ?int $deletingId = null;
   public ?string $deletingName = null;
-
-  public function mount(): void
-  {
-    abort_unless(auth()->user()->hasRole('super_admin'), 403);
-  }
 
   public function updatedSearch(): void
   {
@@ -50,73 +43,33 @@ class PositionIndex extends Component
     $this->resetPage();
   }
 
+  public function updatedSourceFilter(): void
+  {
+    $this->resetPage();
+  }
+
   public function resetFilters(): void
   {
-    $this->search      = '';
-    $this->scopeFilter = '';
+    $this->search       = '';
+    $this->scopeFilter  = '';
+    $this->sourceFilter = '';
     $this->resetPage();
   }
 
-  public function openCreateModal(): void
+  #[On('position-saved')]
+  public function onPositionSaved(): void
   {
-    $this->reset(['name', 'level', 'scope', 'editingId']);
-    $this->resetValidation();
-    $this->showFormModal = true;
-  }
-
-  public function openEditModal(int $id): void
-  {
-    $position = Position::findOrFail($id);
-
-    $this->editingId = $position->id;
-    $this->name      = $position->name;
-    $this->level     = $position->level;
-    $this->scope     = ($position->uniqueness_scope ?? PositionScope::NONE)->value;
-    $this->resetValidation();
-    $this->showFormModal = true;
-  }
-
-  public function save(): void
-  {
-    $this->validate([
-      'name'  => ['required', 'string', 'max:255'],
-      'level' => ['required', 'integer', 'min:0', 'max:9999'],
-      'scope' => ['required', 'in:' . implode(',', array_column(PositionScope::cases(), 'value'))],
-    ]);
-
-    // Cegah duplikasi nama jabatan (case-insensitive).
-    $existing = Position::findByName($this->name);
-    if ($existing && $existing->id !== $this->editingId) {
-      $this->toastError("Jabatan \"{$existing->name}\" sudah terdaftar.");
-      return;
-    }
-
-    $data = [
-      'name'             => SmartTitle::convert(trim($this->name)),
-      'level'            => $this->level,
-      'uniqueness_scope' => $this->scope,
-    ];
-
-    if ($this->editingId) {
-      Position::findOrFail($this->editingId)->update($data);
-      $message = 'Jabatan berhasil diperbarui.';
-    } else {
-      Position::create($data);
-      $message = 'Jabatan baru berhasil ditambahkan.';
-    }
-
-    $this->reset(['name', 'level', 'scope', 'editingId']);
-    $this->showFormModal = false;
     $this->resetPage();
-    $this->toastSuccess($message);
   }
 
   public function confirmDelete(int $id): void
   {
-    $position = Position::find($id);
+    $position = Position::with('creator')->find($id);
     if (! $position) {
       return;
     }
+
+    abort_unless($position->isManageableBy(auth()->user()), 403);
 
     $this->deletingId      = $position->id;
     $this->deletingName    = $position->name;
@@ -141,7 +94,8 @@ class PositionIndex extends Component
       return;
     }
 
-    $position = Position::withCount('users')->findOrFail($this->deletingId);
+    $position = Position::with('creator')->withCount('users')->findOrFail($this->deletingId);
+    abort_unless($position->isManageableBy(auth()->user()), 403);
 
     // Proteksi: jabatan yang masih dipakai pegawai tidak boleh dihapus.
     if ($position->users_count > 0) {
@@ -160,7 +114,13 @@ class PositionIndex extends Component
 
   public function render()
   {
-    $query = Position::withCount('users')->orderBy('level')->orderBy('name');
+    $user         = auth()->user();
+    $isSuperAdmin = $user->hasRole('super_admin');
+
+    $query = Position::with('creator.department')
+      ->withCount('users')
+      ->orderBy('level')
+      ->orderBy('name');
 
     if ($this->search !== '') {
       $query->where('name', 'like', "%{$this->search}%");
@@ -170,10 +130,21 @@ class PositionIndex extends Component
       $query->where('uniqueness_scope', $this->scopeFilter);
     }
 
-    $positions = $query->paginate(20)->onEachSide(1);
-    $scopes    = PositionScope::cases();
+    match (true) {
+      $isSuperAdmin && $this->sourceFilter === 'system' => $query->whereNull('created_by'),
+      $isSuperAdmin && $this->sourceFilter === 'opd'    => $query->whereNotNull('created_by'),
+      ! $isSuperAdmin && $this->sourceFilter === 'mine' => $query->whereHas(
+        'creator',
+        fn ($q) => $q->where('department_id', $user->department_id ?? 0)
+      ),
+      default => null,
+    };
 
-    return view('livewire.positions.index', compact('positions', 'scopes'))
+    $positions  = $query->paginate(20)->onEachSide(1);
+    $scopes     = PositionScope::cases();
+    $roleLabels = Role::pluck('label', 'name');
+
+    return view('livewire.positions.index', compact('positions', 'scopes', 'roleLabels', 'isSuperAdmin'))
       ->title('Kelola Data Jabatan');
   }
 }

@@ -16,9 +16,30 @@
 
 return [
   // Penanda versi changelog. Saat berubah, lonceng menampilkan titik "belum dibaca".
-  'version' => '2026.07.13.1',
+  'version' => '2026.10.19.2',
 
   'items' => [
+    [
+      'title' => 'Admin OPD Bisa Menambah Jabatan Sendiri',
+      'description' => 'Tanpa pengajuan lagi: tambah jabatan langsung dari menu Data Jabatan atau form pegawai. Role sistem pegawai kini otomatis mengikuti jabatan yang dipilih.',
+      'icon' => 'fa-solid fa-id-badge',
+      'color' => 'indigo',
+      'date' => '2026-10-19',
+    ],
+    [
+      'title' => 'Perjalanan Dinas Luar Negeri',
+      'description' => 'Domain baru Luar Negeri: pilih negara & kota tujuan langsung saat membuat SPPD.',
+      'icon' => 'fa-solid fa-earth-asia',
+      'color' => 'sky',
+      'date' => '2026-10-19',
+    ],
+    [
+      'title' => 'Keamanan Login Diperketat',
+      'description' => 'Salah password 3 kali, akun dikunci 1 menit. Bila salah 3 kali lagi, akun diblokir dan perlu dibuka oleh Super Admin.',
+      'icon' => 'fa-solid fa-shield-halved',
+      'color' => 'rose',
+      'date' => '2026-10-19',
+    ],
     [
       'title' => 'Install sebagai Aplikasi (PWA)',
       'description' => 'Pasang SPPD ke layar utama ponsel atau desktop agar terbuka seperti aplikasi — lebih cepat, tanpa membuka browser dulu.',

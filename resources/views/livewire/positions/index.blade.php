@@ -16,10 +16,16 @@
           <span class="ml-1 tabular-nums text-primary-600/70">· {{ $positions->total() }}</span>
         </span>
         <h1 class="text-xl font-bold tracking-tight text-slate-800">Kelola Data Jabatan</h1>
-        <p class="mt-1 text-xs text-slate-500">Tambah, ubah, dan hapus master jabatan beserta cakupan keunikannya</p>
+        <p class="mt-1 text-xs text-slate-500">
+          @if ($isSuperAdmin)
+            Tambah dan kelola master jabatan, role default, serta cakupan keunikannya
+          @else
+            Tambah jabatan yang belum ada. Jabatan tambahan OPD Anda bisa diubah atau dihapus di sini.
+          @endif
+        </p>
       </div>
 
-      <x-ui.button type="button" wire:click="openCreateModal" variant="primary" class="shrink-0 font-bold">
+      <x-ui.button type="button" x-on:click="$dispatch('open-position-form')" variant="primary" class="shrink-0 font-bold">
         <i class="fa-solid fa-plus text-xs"></i> Tambah Jabatan
       </x-ui.button>
     </div>
@@ -43,7 +49,24 @@
           placeholder="Semua Cakupan" searchPlaceholder="Cari cakupan..." />
       </div>
 
-      @php $canReset = $search !== '' || $scopeFilter !== ''; @endphp
+      @php
+        $sourceOptions = $isSuperAdmin
+          ? [
+            ['value' => '', 'label' => 'Semua Sumber'],
+            ['value' => 'system', 'label' => 'Bawaan sistem'],
+            ['value' => 'opd', 'label' => 'Ditambahkan admin OPD'],
+          ]
+          : [
+            ['value' => '', 'label' => 'Semua Jabatan'],
+            ['value' => 'mine', 'label' => 'Milik OPD saya'],
+          ];
+      @endphp
+      <div class="w-full sm:w-56">
+        <x-form.searchable-select wire:model.live="sourceFilter" name="sourceFilter" :options="$sourceOptions"
+          :placeholder="$sourceOptions[0]['label']" searchPlaceholder="Cari sumber..." />
+      </div>
+
+      @php $canReset = $search !== '' || $scopeFilter !== '' || $sourceFilter !== ''; @endphp
       <div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
         <x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="! $canReset">
           <x-slot:icon><i class="fa-solid fa-rotate-right text-xs text-slate-500"></i></x-slot:icon>
@@ -55,7 +78,7 @@
 
   {{-- Tabel --}}
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
-    wire:loading.class="opacity-60" wire:target="search,scopeFilter">
+    wire:loading.class="opacity-60" wire:target="search,scopeFilter,sourceFilter">
     <div class="overflow-x-auto">
       <table class="table-stack w-full text-left whitespace-nowrap border-collapse md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
@@ -64,6 +87,10 @@
             <th class="py-2.5 px-4">Nama Jabatan</th>
             <th class="py-2.5 px-4 w-20 text-center">Level</th>
             <th class="py-2.5 px-4">Cakupan Keunikan</th>
+            <th class="py-2.5 px-4">Role Default</th>
+            @if ($isSuperAdmin)
+              <th class="py-2.5 px-4">Ditambahkan Oleh</th>
+            @endif
             <th class="py-2.5 px-4 w-24 text-center">Pemangku</th>
             <th class="py-2.5 px-4 w-28 text-center">Aksi</th>
           </tr>
@@ -77,18 +104,45 @@
             ];
           @endphp
           @forelse($positions as $i => $position)
-            @php $scopeValue = ($position->uniqueness_scope ?? \App\Enums\PositionScope::NONE)->value; @endphp
+            @php
+              $scopeValue = ($position->uniqueness_scope ?? \App\Enums\PositionScope::NONE)->value;
+              $canManage = $position->isManageableBy(auth()->user());
+            @endphp
             <tr wire:key="position-{{ $position->id }}" class="transition-colors hover:bg-slate-50/50">
               <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $positions->firstItem() + $i }}.
               </td>
-              <td data-label="Nama Jabatan" class="py-2.5 px-4 font-semibold text-slate-900">{{ $position->name }}</td>
+              <td data-label="Nama Jabatan" class="py-2.5 px-4 font-semibold text-slate-900">
+                {{ $position->name }}
+                @if (! $isSuperAdmin && $canManage)
+                  <x-ui.badge color="cyan" class="ml-1.5">OPD Anda</x-ui.badge>
+                @endif
+              </td>
               <td data-label="Level" class="py-2.5 px-4 text-center text-slate-500 font-medium">{{ $position->level }}</td>
               <td data-label="Cakupan" class="py-2.5 px-4">
                 <x-ui.badge :color="$scopeColors[$scopeValue] ?? 'slate'">
                   {{ ($position->uniqueness_scope ?? \App\Enums\PositionScope::NONE)->label() }}
                 </x-ui.badge>
               </td>
+              <td data-label="Role Default" class="py-2.5 px-4">
+                @if ($position->default_role)
+                  <x-ui.badge color="violet">{{ $roleLabels[$position->default_role] ?? $position->default_role }}</x-ui.badge>
+                @else
+                  <span class="text-slate-400">—</span>
+                @endif
+              </td>
+              @if ($isSuperAdmin)
+                <td data-label="Ditambahkan Oleh" class="py-2.5 px-4">
+                  @if ($position->creator)
+                    <div class="font-semibold text-slate-800">{{ $position->creator->name }}</div>
+                    <div class="text-[11px] text-slate-500">{{ $position->creator->department?->name ?? '—' }}</div>
+                  @elseif ($position->created_by)
+                    <span class="italic text-slate-400">Pegawai terhapus</span>
+                  @else
+                    <span class="text-slate-400">Bawaan sistem</span>
+                  @endif
+                </td>
+              @endif
               <td data-label="Pemangku" class="py-2.5 px-4 text-center">
                 @if($position->users_count > 0)
                   <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
@@ -101,8 +155,9 @@
                 @endif
               </td>
               <td data-label="Aksi" class="py-2.5 px-4">
+                @if ($canManage)
                 <div class="flex items-center justify-center gap-1.5">
-                  <button type="button" wire:click="openEditModal({{ $position->id }})"
+                  <button type="button" x-on:click="$dispatch('open-position-form', { id: {{ $position->id }} })"
                     class="inline-flex items-center justify-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
                     title="Edit">
                     <i class="fa-solid fa-pen-to-square text-[10px]"></i>
@@ -113,11 +168,16 @@
                     <i class="fa-solid fa-trash-can text-[10px]"></i>
                   </button>
                 </div>
+                @else
+                  <div class="text-center text-slate-300" title="Hanya bisa diubah Super Admin atau OPD penambahnya">
+                    <i class="fa-solid fa-lock text-[10px]"></i>
+                  </div>
+                @endif
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="py-10 text-center text-slate-500">
+              <td colspan="{{ $isSuperAdmin ? 8 : 7 }}" class="py-10 text-center text-slate-500">
                 <div class="flex flex-col items-center justify-center gap-1.5">
                   <i class="fa-solid fa-id-badge text-2xl opacity-40"></i>
                   <p class="font-medium">Belum ada data jabatan</p>
@@ -136,36 +196,8 @@
     @endif
   </div>
 
-  {{-- Modal Tambah / Edit Jabatan --}}
-  <x-ui.modal show="$wire.showFormModal" :title="$editingId ? 'Edit Jabatan' : 'Tambah Jabatan Baru'"
-    :description="$editingId ? 'Perbarui data jabatan' : 'Tambahkan jabatan baru ke master data'"
-    icon="fa-solid fa-id-badge text-primary-600" :closeable="false">
-    <form wire:submit="save" class="space-y-4">
-      <x-form.input name="name" label="Nama Jabatan" wire:model="name" required
-        placeholder="Contoh: Analis Sumber Daya Manusia Aparatur" />
-
-      <x-form.input type="number" name="level" label="Level" wire:model="level" required min="0" max="9999"
-        hint="Urutan jabatan — semakin kecil semakin tinggi (mis. Walikota 1, Staf 1000)." />
-
-      @php
-        $scopeFormOptions = collect($scopes)
-          ->map(fn($s) => ['value' => $s->value, 'label' => $s->label()])
-          ->all();
-      @endphp
-      <x-form.searchable-select wire:model="scope" name="scope" label="Cakupan Keunikan" :options="$scopeFormOptions"
-        placeholder="— Pilih Cakupan —" searchPlaceholder="Cari cakupan..." required />
-
-      <div class="flex items-center justify-end gap-2 pt-1">
-        <x-ui.button type="button" variant="secondary" x-on:click="$wire.showFormModal = false">Batal</x-ui.button>
-        <x-ui.button type="submit">
-          <span wire:loading.remove wire:target="save">
-            <i class="fa-solid fa-floppy-disk"></i> {{ $editingId ? 'Simpan Perubahan' : 'Simpan' }}
-          </span>
-          <span wire:loading wire:target="save"><i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...</span>
-        </x-ui.button>
-      </div>
-    </form>
-  </x-ui.modal>
+  {{-- Modal Tambah / Edit Jabatan (dipakai bersama form pegawai) --}}
+  <livewire:position-form-modal />
 
   {{-- Modal Konfirmasi Hapus — hanya bisa ditutup lewat tombol --}}
   <x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Jabatan"

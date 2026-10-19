@@ -104,7 +104,7 @@
 		@if (auth()->user()->hasRole('super_admin'))
 		{{-- Grup: Kepegawaian --}}
 		@php
-			$openKepegawaian = request()->routeIs('master.users.*', 'master.position-requests.*', 'master.positions.*', 'master.ranks.*');
+			$openKepegawaian = request()->routeIs('master.users.*', 'master.positions.*', 'master.ranks.*');
 		@endphp
 		<div class="space-y-1" x-data="{ open: true }">
 			<button type="button" @click="open = !open"
@@ -133,13 +133,6 @@
 						<span>Anggota DPRD</span>
 					</a>
 				@endif
-
-				<a href="{{ route('master.position-requests.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
-					<span class="flex w-4 justify-center"><i class="fa-solid fa-user-plus fa-fw"></i></span>
-					<span class="flex-1">Pengajuan Jabatan</span>
-					<livewire:pending-position-request-badge />
-				</a>
 
 				@if (auth()->user()->hasRole('super_admin'))
 					<a href="{{ route('master.positions.index') }}" wire:navigate.hover
@@ -203,7 +196,7 @@
 		@else
 		{{-- Grup gabungan untuk admin_opd: Kepegawaian + Data Master --}}
 		@php
-			$openDataMaster = request()->routeIs('master.users.*', 'master.position-requests.*', 'master.budgets.*', 'master.departments.*');
+			$openDataMaster = request()->routeIs('master.users.*', 'master.positions.*', 'master.budgets.*', 'master.departments.*');
 		@endphp
 		<div class="space-y-1" x-data="{ open: true }">
 			<button type="button" @click="open = !open"
@@ -232,11 +225,10 @@
 					</a>
 				@endif
 
-				<a href="{{ route('master.position-requests.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.position-requests.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
-					<span class="flex w-4 justify-center"><i class="fa-solid fa-user-plus fa-fw"></i></span>
-					<span class="flex-1">Pengajuan Jabatan</span>
-					<livewire:pending-position-request-badge />
+				<a href="{{ route('master.positions.index') }}" wire:navigate.hover
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.positions.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+					<span class="flex w-4 justify-center"><i class="fa-solid fa-id-badge fa-fw"></i></span>
+					<span>Data Jabatan</span>
 				</a>
 
 				<a href="{{ route('master.budgets.index') }}" wire:navigate.hover

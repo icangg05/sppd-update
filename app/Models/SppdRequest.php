@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SignatureStatus;
+use App\Helpers\SmartTitle;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -294,6 +295,17 @@ class SppdRequest extends Model
     public function durationInDays(): int
     {
         return $this->start_date->diffInDays($this->end_date) + 1;
+    }
+
+    /** Tempat berangkat diketik bebas: huruf pertama tiap kata selalu kapital. */
+    public function getDeparturePlaceAttribute(?string $value): ?string
+    {
+        return SmartTitle::capitalizeWords($value);
+    }
+
+    public function setDeparturePlaceAttribute(?string $value): void
+    {
+        $this->attributes['departure_place'] = SmartTitle::capitalizeWords($value);
     }
 
     /**

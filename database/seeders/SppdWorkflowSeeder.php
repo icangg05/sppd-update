@@ -15,7 +15,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Walikota, Wakil Walikota & Asisten',
         'department_type' => ['setda', 'asisten'],
         'applicant_role'  => ['walikota', 'wakil_walikota', 'asisten'],
-        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => true],
           ['role' => 'walikota', 'signs_spt' => true, 'signs_sppd' => false]
@@ -27,7 +27,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Kasubag & Staf (Setda)',
         'department_type' => ['setda', 'bagian', 'subbagian'],
         'applicant_role'  => ['kabid_irban_kabag', 'kasubid_kasubag', 'staf'],
-        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'kabid_irban_kabag', 'signs_spt' => false, 'signs_sppd' => false],
           ['role' => 'asisten', 'signs_spt' => false, 'signs_sppd' => false],
@@ -40,7 +40,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Anggota DPRD',
         'department_type' => ['dprd'],
         'applicant_role'  => ['anggota_dprd', 'pimpinan_dprd'],
-        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'sekwan', 'signs_spt' => false, 'signs_sppd' => true],
           ['role' => 'pimpinan_dprd', 'signs_spt' => true, 'signs_sppd' => false]
@@ -52,7 +52,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Staff DPRD',
         'department_type' => ['dprd'],
         'applicant_role'  => ['staf'],
-        'destination'     => ['dalam_daerah', 'lddp', 'ldlp'],
+        'destination'     => ['dalam_daerah', 'lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'kabid_irban_kabag', 'signs_spt' => false, 'signs_sppd' => false],
           ['role' => 'sekwan', 'signs_spt' => true, 'signs_sppd' => true]
@@ -74,7 +74,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Sekwan',
         'department_type' => ['dprd'],
         'applicant_role'  => ['sekwan'],
-        'destination'     => ['lddp', 'ldlp'],
+        'destination'     => ['lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'sekwan', 'signs_spt' => false, 'signs_sppd' => true],
           ['role' => 'sekda', 'signs_spt' => false, 'signs_sppd' => false],
@@ -97,7 +97,7 @@ class SppdWorkflowSeeder extends Seeder
         'name'            => 'Kepala OPD',
         'department_type' => ['opd', 'dinkes'],
         'applicant_role'  => ['kepala_opd'],
-        'destination'     => ['lddp', 'ldlp'],
+        'destination'     => ['lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [
           ['role' => 'sekretaris_opd', 'signs_spt' => false, 'signs_sppd' => false],
           ['role' => 'kepala_opd', 'signs_spt' => false, 'signs_sppd' => true],

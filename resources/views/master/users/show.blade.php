@@ -95,6 +95,12 @@
 									<span class="size-1.5 rounded-full bg-rose-500"></span> Nonaktif
 								</span>
 							@endif
+							@if ($user->isLoginBlocked())
+								<span title="Buka blokir melalui menu Data Pegawai (khusus Super Admin)"
+									class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20 bg-rose-50">
+									<i class="fa-solid fa-user-lock text-[9px]"></i> Login Diblokir
+								</span>
+							@endif
 						</div>
 
 						{{-- Alert NIK --}}
@@ -270,7 +276,7 @@
 										<p class="text-xs text-slate-500 flex items-center gap-1">
 											<i class="fa-solid fa-location-dot text-slate-400"></i>
 											@foreach ($trip->destinations as $dest)
-												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
+												{{ $dest->location_label }}@if(!$loop->last) ; @endif
 											@endforeach
 										</p>
 										<p class="text-xs text-slate-500">
@@ -317,7 +323,7 @@
 										<p class="text-xs text-slate-500 flex items-center gap-1">
 											<i class="fa-solid fa-location-dot text-slate-400"></i>
 											@foreach ($trip->destinations as $dest)
-												{{ $dest->province->name }}{{ $dest->regency ? ', ' . $dest->regency->name : '' }}@if(!$loop->last) ; @endif
+												{{ $dest->location_label }}@if(!$loop->last) ; @endif
 											@endforeach
 										</p>
 										<p class="text-xs text-slate-500">

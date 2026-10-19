@@ -30,3 +30,6 @@ Thumbs.db
 /.pnpm-store
 
 /graphify-out
+
+# Backup database lokal
+/backup-*.sql

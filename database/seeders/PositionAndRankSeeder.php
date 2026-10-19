@@ -75,10 +75,10 @@ class PositionAndRankSeeder extends Seeder
     ];
 
     foreach ($positions as $pos) {
-      Position::updateOrCreate(
+      $this->fillDefaultRole(Position::updateOrCreate(
         ['name' => $pos['name']],
         ['uniqueness_scope' => $pos['scope']],
-      );
+      ));
     }
 
     // ── Jabatan lengkap Pemerintah Kota ──
@@ -408,10 +408,21 @@ class PositionAndRankSeeder extends Seeder
         default => PositionScope::NONE,
       };
 
-      Position::updateOrCreate(
+      $this->fillDefaultRole(Position::updateOrCreate(
         ['name' => $name],
         ['uniqueness_scope' => $scope],
-      );
+      ));
+    }
+  }
+
+  /**
+   * Isi role default dari pola nama hanya bila masih kosong, agar seed ulang
+   * tidak menimpa role yang sudah disesuaikan Super Admin.
+   */
+  private function fillDefaultRole(Position $position): void
+  {
+    if ($position->default_role === null) {
+      $position->update(['default_role' => Position::guessDefaultRole($position->name)]);
     }
   }
 }

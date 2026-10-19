@@ -41,7 +41,7 @@
           class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
           <div class="min-w-0">
             <p class="line-clamp-1 font-medium text-slate-700">{{ $item->purpose }}</p>
-            <p class="text-xs text-slate-500">{{ $item->destinations->first()?->regency?->name ?? '-' }}</p>
+            <p class="text-xs text-slate-500">{{ $item->destinations->first()?->place_name ?? '-' }}</p>
           </div>
           <span class="shrink-0 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700">Buat Laporan</span>
         </a>

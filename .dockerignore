@@ -6,6 +6,8 @@
 .git
 .pnpm-store
 
-docker-compose.dev.yml
 docker-compose.prod.yml
 Dockerfile
+
+# Backup database (berisi data pribadi) — jangan ikut ke image
+/backup-*.sql

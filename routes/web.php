@@ -20,7 +20,6 @@ use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
 use App\Livewire\PositionIndex;
-use App\Livewire\PositionRequestIndex;
 use App\Livewire\ProvinceIndex;
 use App\Livewire\RankIndex;
 use App\Livewire\RegencyIndex;
@@ -153,9 +152,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/departments/{department}/edit', DepartmentForm::class)->name('departments.edit');
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
 
-        // Pengajuan Jabatan — Admin OPD mengajukan, Super Admin memverifikasi.
-        // Aksi verifikasi (approve/reject) diguard super_admin di dalam komponen.
-        Route::get('/position-requests', PositionRequestIndex::class)->name('position-requests.index');
+        // Master Data Jabatan — Admin OPD menambah langsung; edit/hapus dibatasi
+        // pada jabatan tambahan OPD-nya (diguard di komponen). Super Admin kelola penuh.
+        Route::get('/positions', PositionIndex::class)->name('positions.index');
 
         // Budgets / Anggaran — form create/edit via Livewire full-page.
         Route::get('/budgets', BudgetIndex::class)->name('budgets.index');
@@ -166,9 +165,6 @@ Route::middleware('auth')->group(function () {
 
         // Workflows SPPD & Roles/Permissions — hanya super_admin.
         Route::middleware('role:super_admin')->group(function () {
-            // Master Data Jabatan — kelola penuh oleh Super Admin.
-            Route::get('/positions', PositionIndex::class)->name('positions.index');
-
             // Master Data Wilayah & Pangkat — kelola penuh oleh Super Admin.
             Route::get('/provinces', ProvinceIndex::class)->name('provinces.index');
             Route::get('/regencies', RegencyIndex::class)->name('regencies.index');

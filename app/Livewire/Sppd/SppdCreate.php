@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sppd;
 
+use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Models\SppdRequest;
 use App\Models\User;
@@ -32,7 +33,7 @@ class SppdCreate extends Component
 
     // Kembali dari Tahap 2: pulihkan pilihan pelaksana & domain agar tetap terpilih.
     // user_id datang sebagai hashid (getRouteKey), jadi perlu di-decode dulu.
-    if (in_array(request('domain'), ['dalam_daerah', 'lddp', 'ldlp'], true)) {
+    if (in_array(request('domain'), SppdDomain::values(), true)) {
       $this->domain = request('domain');
     }
     if ($hashid = request('user_id')) {
@@ -140,7 +141,7 @@ class SppdCreate extends Component
   {
     $this->validate([
       'user_id' => 'required|exists:users,id',
-      'domain' => 'required|in:dalam_daerah,lddp,ldlp',
+      'domain' => 'required|in:' . implode(',', SppdDomain::values()),
     ]);
 
     if (! $this->isComplete) {

@@ -15,6 +15,20 @@
 
 	{{-- Kesalahan login ditampilkan lewat toast (lihat komponen Login), bukan alert. --}}
 
+	{{-- Banner akun diblokir: hanya super_admin yang dapat membuka blokir --}}
+	@if ($blocked)
+		<div class="mt-3 flex items-start gap-3 rounded border border-rose-200 bg-rose-50 p-3.5 text-sm shadow-sm" role="alert">
+			<i class="fa-solid fa-user-lock mt-0.5 shrink-0 text-base text-rose-600"></i>
+			<div class="leading-snug">
+				<p class="font-bold text-rose-800">Akun diblokir</p>
+				<p class="mt-0.5 text-rose-700">
+					Akun ini diblokir karena berulang kali salah memasukkan password.
+					Harap hubungi <strong>Super Admin</strong> untuk membuka blokir.
+				</p>
+			</div>
+		</div>
+	@endif
+
 	{{-- Banner penguncian dengan hitung mundur yang terlihat --}}
 	<div x-show="remaining > 0" x-cloak
 		class="mt-3 flex items-center gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="status">
@@ -25,8 +39,29 @@
 		<p class="font-medium text-amber-800">
 			Terlalu banyak percobaan gagal. Coba lagi dalam
 			<span class="font-mono text-base font-bold text-amber-900" x-text="remaining"></span> detik.
+			@if ($attemptsBeforeBlock > 0)
+				<span class="mt-1 block text-xs font-semibold text-rose-700">
+					Jika password salah {{ $attemptsBeforeBlock }} kali lagi, akun akan diblokir dan harus dibuka oleh Super Admin.
+				</span>
+			@endif
 		</p>
 	</div>
+
+	{{-- Di luar hitung mundur: ingatkan sisa percobaan sebelum akun diblokir
+	     (tidak pernah tampil untuk super_admin karena akunnya tidak bisa diblokir). --}}
+	@if ($attemptsBeforeBlock > 0)
+		<div x-show="remaining <= 0" x-cloak
+			class="mt-3 flex items-center gap-3 rounded border border-rose-200 bg-rose-50 p-3.5 text-sm shadow-sm" role="status">
+			<i class="fa-solid fa-triangle-exclamation shrink-0 text-base text-rose-600"></i>
+			<p class="font-medium text-rose-800">
+				@if ($attemptsBeforeBlock === 1)
+					Kesempatan terakhir: jika password salah lagi, akun akan diblokir dan Anda harus menghubungi Super Admin.
+				@else
+					Sisa {{ $attemptsBeforeBlock }} kali percobaan. Jika password salah {{ $attemptsBeforeBlock }} kali lagi, akun akan diblokir dan Anda harus menghubungi Super Admin.
+				@endif
+			</p>
+		</div>
+	@endif
 
 	{{-- Autofill browser mengisi DOM tanpa memicu event, sehingga state Livewire tetap kosong
 	     dan login gagal. Nilai hasil autofill dipancing sekali saat load agar ikut ter-sync.

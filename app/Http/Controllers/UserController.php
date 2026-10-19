@@ -78,6 +78,10 @@ class UserController extends Controller
           })
           ->orWhereHas('destinations.regency', function ($rq) use ($search) {
             $rq->where('name', 'like', "%{$search}%");
+          })
+          ->orWhereHas('destinations', function ($dq) use ($search) {
+            $dq->where('country', 'like', "%{$search}%")
+              ->orWhere('city', 'like', "%{$search}%");
           });
       });
 
@@ -89,6 +93,10 @@ class UserController extends Controller
           })
           ->orWhereHas('destinations.regency', function ($rq) use ($search) {
             $rq->where('name', 'like', "%{$search}%");
+          })
+          ->orWhereHas('destinations', function ($dq) use ($search) {
+            $dq->where('country', 'like', "%{$search}%")
+              ->orWhere('city', 'like', "%{$search}%");
           });
       });
     }

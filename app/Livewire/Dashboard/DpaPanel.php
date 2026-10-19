@@ -77,7 +77,7 @@ class DpaPanel extends Component
         'url'    => route('sppd.show', $s),
         'purpose' => $s->purpose,
         'user'   => $s->user->name ?? '-',
-        'tujuan' => $s->destinations->first()?->regency?->name ?? '-',
+        'tujuan' => $s->destinations->first()?->place_name ?? '-',
         'status' => $s->status->label(),
         'color'  => $s->status->color(),
         'cost'   => (float) (($s->cd_sum ?? 0) + ($s->ae_sum ?? 0)),

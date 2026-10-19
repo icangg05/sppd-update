@@ -39,11 +39,9 @@
 
 			{{-- Input Grid Pemilihan Pelaksana & Domain --}}
 			@php
-				$domainOptions = [
-					['value' => 'dalam_daerah', 'label' => 'Dalam Daerah'],
-					['value' => 'lddp', 'label' => 'Luar Daerah Dalam Provinsi (LDDP)'],
-					['value' => 'ldlp', 'label' => 'Luar Daerah Luar Provinsi (LDLP)'],
-				];
+				$domainOptions = collect(\App\Enums\SppdDomain::cases())
+					->map(fn($d) => ['value' => $d->value, 'label' => $d->label()])
+					->all();
 				$selectedPrefix = $selectedUser
 					? ($selectedUser->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $selectedUser->nip)
 					: null;
