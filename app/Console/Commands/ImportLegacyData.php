@@ -211,7 +211,6 @@ class ImportLegacyData extends Command
           'username'      => $nip,
           'nip'           => $nip,
           'nik'           => trim((string) ($p->pegawai_nik ?? '')) ?: null,
-          'phone'         => trim((string) ($p->pegawai_nohp ?? '')) ?: null,
           'password'      => $hash,
           'employee_type' => 'pns',
           'department_id' => $deptId,

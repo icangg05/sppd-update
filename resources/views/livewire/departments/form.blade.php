@@ -52,7 +52,7 @@
       <p class="mb-1 font-bold text-primary-700">Panduan menyusun struktur</p>
       <ul class="list-disc space-y-0.5 pl-4">
         <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
-        <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi — tipe, kode, & kop surat otomatis mengikuti induk.</li>
+        <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi. Tipe, kode, & kop surat otomatis mengikuti induk.</li>
         <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
         <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
         @if ($parentLocked)
@@ -172,7 +172,7 @@
           <div class="md:col-span-2 space-y-0.5">
             <x-form.checkbox wire:model="can_view_children_data"
               label="Dapat Melihat Data Unit di Bawahnya"
-              hint="Bila dinonaktifkan, instansi ini tidak melihat data (SPPD, anggaran, pegawai) milik unit-unit di bawahnya — tiap unit tersebut mengelola datanya sendiri secara independen." />
+              hint="Bila dinonaktifkan, instansi ini tidak melihat data (SPPD, anggaran, pegawai) milik unit-unit di bawahnya. Tiap unit tersebut mengelola datanya sendiri secara independen." />
           </div>
         @endif
 
@@ -325,7 +325,7 @@
                       @endif
                       @if ($sbHasMore)
                         <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
-                          Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
+                          Menampilkan 25 hasil teratas. Persempit pencarian untuk melihat yang lain.
                         </li>
                       @endif
                     </ul>

@@ -50,7 +50,7 @@
 						<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
 						{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
 					</p>
-					<p class="mt-1 text-sm text-slate-500">Informasi resmi perjalanan dinas — dapat dilihat oleh publik (read-only).</p>
+					<p class="mt-1 text-sm text-slate-500">Informasi resmi perjalanan dinas yang dapat dilihat oleh publik (read-only).</p>
 				</div>
 				<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit shrink-0 rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
 					{{ $sppd->status->label() }}

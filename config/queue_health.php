@@ -6,7 +6,7 @@ return [
     | Queue Health Gate
     |--------------------------------------------------------------------------
     |
-    | Saat membuat/merevisi SPPD, sistem men-dispatch notifikasi WhatsApp ke
+    | Saat membuat/merevisi SPPD, sistem men-dispatch notifikasi Telegram ke
     | queue. Jika worker queue mati, notifikasi hanya menumpuk dan approver
     | tidak pernah tahu. Gate ini menolak pembuatan SPPD bila worker terdeteksi
     | tidak berjalan.

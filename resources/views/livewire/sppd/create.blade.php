@@ -158,7 +158,7 @@
 								@endforelse
 								@if ($usersHasMore)
 									<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
-										Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
+										Menampilkan 25 hasil teratas. Persempit pencarian untuk melihat yang lain.
 									</li>
 								@endif
 							</ul>

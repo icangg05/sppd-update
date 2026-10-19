@@ -6,7 +6,7 @@ use App\Enums\DprdJabatan;
 use App\Enums\DprdPartai;
 use App\Enums\EmployeeType;
 use App\Livewire\Concerns\InteractsWithToast;
-use App\Livewire\Concerns\InteractsWithPhoneVerification;
+use App\Livewire\Concerns\InteractsWithTelegramLink;
 use App\Enums\PositionScope;
 use App\Models\Department;
 use App\Models\Position;
@@ -24,7 +24,7 @@ use Spatie\Permission\Models\Role;
 class UserForm extends Component
 {
   use InteractsWithToast;
-  use InteractsWithPhoneVerification;
+  use InteractsWithTelegramLink;
 
   // Role operasional yang tidak terkait jabatan — tidak ditimpa otomatis saat
   // jabatan diganti (agar super admin tak kehilangan akses & admin OPD tak turun jadi staf).
@@ -44,7 +44,6 @@ class UserForm extends Component
   public $password = '';
   public $nip = '';
   public $nik = '';
-  public $phone = '';
   public $employee_type = '';
   public $department_id = '';
   public $rank_id = '';
@@ -58,7 +57,7 @@ class UserForm extends Component
   public $dprd_jabatan = '';
   public $partai = '';
 
-  // State verifikasi WhatsApp disediakan oleh InteractsWithPhoneVerification.
+  // State tautan Telegram disediakan oleh InteractsWithTelegramLink.
 
   public function mount(?User $user = null)
   {
@@ -71,7 +70,6 @@ class UserForm extends Component
       $this->email = $user->email;
       $this->nip = $user->nip;
       $this->nik = $user->nik;
-      $this->phone = $user->phone;
       $this->employee_type = $user->employee_type->value ?? '';
       $this->department_id = $user->department_id;
       $this->rank_id = $user->rank_id;
@@ -79,7 +77,7 @@ class UserForm extends Component
       $this->role = $user->roles->first()?->name ?? '';
       $this->dprd_jabatan = $user->dprd_jabatan ?? '';
       $this->partai = $user->partai ?? '';
-      $this->phoneVerified = (bool) $user->phone_verified;
+      $this->fillTelegramState($user->telegram_chat_id, $user->telegram_username);
 
       // Edit pegawai DPRD tetap dianggap konteks DPRD walau parameter URL hilang.
       if ($user->isDprdMember()) {
@@ -100,31 +98,34 @@ class UserForm extends Component
       }
     }
 
-    // Memulihkan state verifikasi jika halaman di-refresh saat menunggu balasan.
-    $this->restorePhoneVerificationState();
+    // Memulihkan polling jika halaman di-refresh saat menunggu pegawai menekan Start.
+    $this->restoreTelegramLinkState();
   }
 
-  protected function verificationUserId(): ?int
+  protected function linkUserId(): ?int
   {
     return $this->isEdit ? $this->user->id : null;
   }
 
-  protected function onPhoneVerified(string $phone): void
+  // Pegawai baru: chat_id hasil polling ikut disimpan saat tombol Simpan ditekan.
+  protected function onTelegramLinked(string $chatId, ?string $username): void
   {
     if ($this->isEdit && $this->user) {
       $this->user->update([
-        'phone' => $phone,
-        'phone_verified' => true,
+        'telegram_chat_id' => $chatId,
+        'telegram_username' => $username,
+        'telegram_linked_at' => now(),
       ]);
     }
   }
 
-  protected function onPhoneReset(): void
+  protected function onTelegramUnlinked(): void
   {
     if ($this->isEdit && $this->user) {
       $this->user->update([
-        'phone' => null,
-        'phone_verified' => false,
+        'telegram_chat_id' => null,
+        'telegram_username' => null,
+        'telegram_linked_at' => null,
       ]);
     }
   }
@@ -141,7 +142,6 @@ class UserForm extends Component
       // instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
       'nip' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nip', 'NIP')],
       'nik' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nik', 'NIK')],
-      'phone' => 'nullable|string|max:20',
       'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
@@ -214,27 +214,17 @@ class UserForm extends Component
         return;
       }
 
-      $perOpd = in_array($value, config('role_uniqueness.department', []), true);
-      $perSystem = in_array($value, config('role_uniqueness.system', []), true);
+      $holder = User::roleConflictHolder(
+        $value,
+        $this->department_id ? (int) $this->department_id : null,
+        $this->isEdit ? $this->user->id : null,
+      );
 
-      if (! $perOpd && ! $perSystem) {
-        return; // role boleh dipegang banyak pegawai
-      }
-
-      $query = User::role($value)->where('is_active', true);
-
-      if ($perOpd) {
-        $query->where('department_id', $this->department_id ? (int) $this->department_id : null);
-      }
-
-      if ($this->isEdit) {
-        $query->where('id', '!=', $this->user->id);
-      }
-
-      $holder = $query->first();
       if ($holder) {
         $label = Role::where('name', $value)->value('label') ?? $value;
-        $cakupan = $perOpd ? 'pada unit kerja ini' : 'di lingkup pemerintah daerah';
+        $cakupan = in_array($value, config('role_uniqueness.department', []), true)
+          ? 'pada unit kerja ini'
+          : 'di lingkup pemerintah daerah';
         $fail("Role {$label} sudah dipegang oleh {$holder->name} {$cakupan}. Nonaktifkan pejabat lama terlebih dahulu.");
       }
     };
@@ -363,11 +353,13 @@ class UserForm extends Component
   }
 
   /**
-   * Role default jabatan terpilih, bila ada dan role-nya terdaftar.
+   * Role jabatan terpilih yang berlaku di unit kerja pegawai (lihat
+   * Position::roleForDepartment), bila ada dan role-nya terdaftar.
    */
   private function positionDefaultRole(): ?string
   {
-    $roleName = $this->position_id ? Position::whereKey($this->position_id)->value('default_role') : null;
+    $position = $this->position_id ? Position::find($this->position_id) : null;
+    $roleName = $position?->roleForDepartment($this->department_id ? Department::find($this->department_id) : null);
 
     return $roleName && Role::where('name', $roleName)->exists() ? $roleName : null;
   }
@@ -415,8 +407,8 @@ class UserForm extends Component
     $this->position_id = '';
   }
 
-  // Metode verifikasi WhatsApp (openVerifyModal, checkVerification, dll.)
-  // disediakan oleh InteractsWithPhoneVerification.
+  // Metode tautan Telegram (openLinkModal, checkLinkStatus, dll.)
+  // disediakan oleh InteractsWithTelegramLink.
 
   /**
    * Membuat username ringkas & unik dari Nama Lengkap memakai UsernameGenerator
@@ -448,12 +440,6 @@ class UserForm extends Component
     } catch (ValidationException $e) {
       $this->toastError('Periksa kembali isian formulir.');
       throw $e;
-    }
-
-    if (!empty($this->phone) && !$this->phoneVerified) {
-      $this->addError('phone', 'Nomor telepon harus diverifikasi terlebih dahulu.');
-      $this->toastError('Nomor telepon harus diverifikasi terlebih dahulu.');
-      return;
     }
 
     $currentUser = auth()->user();
@@ -490,10 +476,6 @@ class UserForm extends Component
       $data['partai'] = null;
     }
 
-    if ($this->phoneVerified) {
-      $data['phone'] = $this->phone;
-    }
-
     if (!empty($this->password)) {
       $data['password'] = Hash::make($this->password);
     } elseif (!$this->isEdit) {
@@ -510,7 +492,11 @@ class UserForm extends Component
       return;
     } else {
       $data['is_active'] = true;
-      $data['phone_verified'] = $this->phoneVerified;
+      if ($this->telegramLinked) {
+        $data['telegram_chat_id'] = $this->telegramChatId;
+        $data['telegram_username'] = $this->telegramUsername ?: null;
+        $data['telegram_linked_at'] = now();
+      }
       $newUser = User::create($data);
       $newUser->assignRole($this->role);
       return redirect()->route('master.users.edit', [...$typeParam, 'user' => $newUser])->with('success', "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
@@ -567,10 +553,17 @@ class UserForm extends Component
     // Jabatan terpilih tetap tampil di trigger walau di luar hasil pencarian.
     $selectedPosition = $this->position_id ? Position::find($this->position_id) : null;
 
-    // Role default jabatan terpilih — untuk petunjuk sinkron jabatan ↔ role.
+    // Role jabatan terpilih di unit kerja ini — untuk petunjuk sinkron jabatan ↔ role.
     $roles = Role::all();
-    $positionRole = $selectedPosition?->default_role
-      ? $roles->firstWhere('name', $selectedPosition->default_role)
+    $positionRoleName = $this->positionDefaultRole();
+    $positionRole = $positionRoleName ? $roles->firstWhere('name', $positionRoleName) : null;
+    // true bila role default jabatan diturunkan ke Staf karena tak dikenal alur unit ini.
+    $positionRoleAdjusted = $positionRole && $positionRoleName !== $selectedPosition?->default_role;
+
+    // Jabatan kewilayahan (Camat/Lurah/Kapus) yang dipasang di jenis unit lain.
+    $selectedDepartment = $this->department_id ? Department::find($this->department_id) : null;
+    $positionRequiredType = $selectedPosition && ! $selectedPosition->fitsDepartment($selectedDepartment)
+      ? $selectedPosition->requiredDepartmentType()
       : null;
 
     return view('livewire.user-form', [
@@ -580,6 +573,8 @@ class UserForm extends Component
       'positionsHasMore' => $positionsHasMore,
       'selectedPosition' => $selectedPosition,
       'positionRole' => $positionRole,
+      'positionRoleAdjusted' => $positionRoleAdjusted,
+      'positionRequiredType' => $positionRequiredType,
       'roles' => $roles,
       'employeeTypes' => EmployeeType::cases(),
       'dprdJabatans' => DprdJabatan::cases(),

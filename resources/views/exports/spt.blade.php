@@ -172,7 +172,8 @@
 				'nip'     => $sppd->user->nip,
 				'jabatan' => $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-'),
 			];
-			foreach ($sppd->followers as $follower) {
+			// Pengikut diurutkan dari jabatan & golongan tertinggi (SppdRequest::followersForSpt).
+			foreach ($sppd->followersForSpt() as $follower) {
 				$peserta[] = [
 					'name'    => $follower->user->name,
 					'rank'    => $follower->user->rank->name ?? '-',

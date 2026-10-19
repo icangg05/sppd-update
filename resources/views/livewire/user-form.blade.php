@@ -1,4 +1,4 @@
-<div x-data="{ showResetModal: false }">
+<div x-data="{ showUnlinkModal: false }">
 	<div class="mx-auto max-w-5xl space-y-6 p-1">
 
 		{{-- Header Halaman (title card) --}}
@@ -46,7 +46,7 @@
 		{{-- Main Form --}}
 		<form wire:submit.prevent="save" class="space-y-6">
 
-			{{-- Hemat scroll: kolom kiri (Identitas Pegawai) berdampingan dengan Akun Sistem + WhatsApp. --}}
+			{{-- Hemat scroll: kolom kiri (Identitas Pegawai) berdampingan dengan Akun Sistem + Telegram. --}}
 			<div class="grid gap-6 lg:grid-cols-2 lg:items-start">
 
 			{{-- ── Kelompok 1: Identitas Pegawai (kolom kiri) ── --}}
@@ -104,7 +104,7 @@
 				</div>
 			</section>
 
-			{{-- Kolom kanan: Akun Sistem + Kontak WhatsApp ditumpuk --}}
+			{{-- Kolom kanan: Akun Sistem + Notifikasi Telegram ditumpuk --}}
 			<div class="space-y-6">
 
 			{{-- ── Kelompok 2: Akun Sistem ── --}}
@@ -163,97 +163,20 @@
 				</div>
 			</section>
 
-			{{-- ── Kelompok 3: Kontak WhatsApp ── --}}
+			{{-- ── Kelompok 3: Notifikasi Telegram ── --}}
 			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
 				<header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
-					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
-						<i class="fa-brands fa-whatsapp"></i>
+					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-sky-50 text-sky-500 ring-1 ring-sky-100">
+						<i class="fa-brands fa-telegram"></i>
 					</div>
 					<div>
-						<h3 class="text-sm font-bold text-slate-800">Kontak WhatsApp</h3>
-						<p class="text-xs text-slate-500">Dipakai untuk notifikasi & verifikasi sistem.</p>
+						<h3 class="text-sm font-bold text-slate-800">Notifikasi Telegram</h3>
+						<p class="text-xs text-slate-500">Notifikasi pengajuan & persetujuan SPPD dikirim lewat Telegram.</p>
 					</div>
 				</header>
 
 				<div class="p-5 sm:p-6">
-					<div class="space-y-1">
-						{{-- Phone Field dengan tombol verifikasi/ganti nomor --}}
-						<label for="phone" class="block text-xs font-bold uppercase tracking-wide text-slate-600">
-							No. Telepon / WhatsApp
-							<span class="ml-1 font-medium normal-case tracking-normal text-slate-400">(opsional)</span>
-						</label>
-						<div class="flex gap-2">
-							<input
-								wire:model="phone"
-								type="tel"
-								id="phone"
-								name="phone"
-								placeholder="Contoh: 08123456789"
-								inputmode="numeric"
-								pattern="[0-9+]*"
-								@if ($phoneVerified) readonly @endif
-								class="flex-1 block w-full rounded border px-3 py-2 text-sm text-slate-800 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
-
-							@if ($phoneVerified)
-								<button
-									type="button"
-									disabled
-									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 whitespace-nowrap cursor-default">
-									<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
-								</button>
-								<button
-									type="button"
-									wire:click="confirmTestMessage"
-									title="Tes kirim pesan ke nomor pegawai ini"
-									class="inline-flex items-center gap-1.5 rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95 whitespace-nowrap">
-									<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
-								</button>
-								<button
-									type="button"
-									@click="showResetModal = true"
-									title="Ganti nomor WhatsApp"
-									class="inline-flex items-center gap-1.5 rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white active:scale-95 whitespace-nowrap">
-									<i class="fa-solid fa-rotate text-sm"></i> <span class="hidden sm:inline">Ganti</span>
-								</button>
-							@else
-								<button
-									type="button"
-									wire:click="openVerifyModal"
-									wire:loading.attr="disabled"
-									wire:target="openVerifyModal"
-									title="Verifikasi nomor WhatsApp ini"
-									class="inline-flex items-center gap-1.5 rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white active:scale-95 whitespace-nowrap disabled:opacity-50">
-									<span wire:loading.remove wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
-										<i class="fa-brands fa-whatsapp text-sm"></i> <span class="hidden sm:inline">Verifikasi</span>
-									</span>
-									<span wire:loading wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
-										<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Memuat...</span>
-									</span>
-								</button>
-							@endif
-						</div>
-
-						@if ($phoneVerified)
-							<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-green-600">
-								<i class="fa-solid fa-circle-check mt-0.5"></i>
-								<span>Nomor telah diverifikasi dan terkunci. Gunakan tombol <strong>Ganti</strong> jika ingin mengubahnya.</span>
-							</p>
-						@elseif (filled($phone))
-							<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-amber-600">
-								<i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-								<span>Nomor ini belum diverifikasi. Tekan <strong>Verifikasi</strong> dulu agar bisa disimpan.</span>
-							</p>
-						@else
-							<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-slate-500">
-								<i class="fa-solid fa-circle-info mt-0.5"></i>
-								<span>Boleh dikosongkan. Isi lalu tekan <strong>Verifikasi</strong> jika ingin menerima notifikasi WhatsApp.</span>
-							</p>
-						@endif
-
-						@error('phone')
-							<p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
-						@enderror
-					</div>
+					@include('livewire.partials.telegram-status', ['testable' => true])
 				</div>
 			</section>
 
@@ -282,7 +205,7 @@
 								->map(fn($d) => ['value' => $d->id, 'label' => $d->display_name])
 								->all();
 						@endphp
-						<x-form.searchable-select wire:model="department_id" name="department_id"
+						<x-form.searchable-select wire:model.live="department_id" name="department_id"
 							label="Instansi / Unit Kerja (OPD)" required :options="$departmentOptions"
 							placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..."
 							hint="Pilih unit kerja tempat pegawai benar-benar ditempatkan. Daftar ditampilkan berjenjang (indentasi) sesuai struktur OPD induk → bidang/seksi; pilih unit yang paling spesifik." />
@@ -436,7 +359,7 @@
 										@endif
 										@if ($positionsHasMore)
 											<li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
-												Menampilkan 25 hasil teratas — persempit pencarian untuk yang lain.
+												Menampilkan 25 hasil teratas. Persempit pencarian untuk melihat yang lain.
 											</li>
 										@endif
 									</ul>
@@ -445,6 +368,13 @@
 							@error('position_id')
 								<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
 							@enderror
+							@if ($positionRequiredType)
+								<p class="text-xs font-medium text-amber-700">
+									<i class="fa-solid fa-triangle-exclamation mr-0.5"></i>
+									Jabatan {{ $selectedPosition->name }} seharusnya berada di unit {{ $positionRequiredType->label() }}.
+									Periksa kembali unit kerja pegawai. Role pimpinan tidak diberikan selama unitnya belum sesuai.
+								</p>
+							@endif
 							<p class="text-xs text-slate-500">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
 								dipangku satu pegawai aktif sesuai lingkupnya.</p>
 							<p class="text-xs text-slate-500">Jabatan tidak ada?
@@ -476,7 +406,7 @@
 							@if ($role === $positionRole->name)
 								<p class="text-xs font-medium text-emerald-700">
 									<i class="fa-solid fa-circle-check mr-0.5"></i>
-									Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>.
+									Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>{{ $positionRoleAdjusted ? ', disesuaikan dengan alur SPPD di unit kerja ini' : '' }}.
 								</p>
 							@else
 								<div class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
@@ -563,7 +493,7 @@
 			</div>
 		</form>
 
-		@include('livewire.partials.phone-verification')
+		@include('livewire.partials.telegram-link')
 		
 		{{-- Modal tambah jabatan — di luar <form> pegawai agar tidak menjadi form bersarang. --}}
 		@unless ($this->isDprdContext())

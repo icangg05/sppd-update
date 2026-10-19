@@ -26,9 +26,10 @@ class User extends Authenticatable
     'nip',
     'email',
     'password',
-    'phone',
-    'phone_verified',
-    'whatsapp_notify',
+    'telegram_chat_id',
+    'telegram_username',
+    'telegram_linked_at',
+    'telegram_notify',
     'changelog_seen_version',
     'employee_type',
     'department_id',
@@ -60,15 +61,15 @@ class User extends Authenticatable
       'failed_login_attempts' => 'integer',
       'login_locked_until' => 'datetime',
       'login_blocked_at' => 'datetime',
-      'phone_verified' => 'boolean',
-      'whatsapp_notify' => 'boolean',
+      'telegram_linked_at' => 'datetime',
+      'telegram_notify' => 'boolean',
     ];
   }
 
-  /** Boleh dikirimi notifikasi WhatsApp: nomor terverifikasi & notifikasi tidak dimatikan sendiri. */
-  public function canReceiveWhatsApp(): bool
+  /** Boleh dikirimi notifikasi Telegram: akun sudah terhubung & notifikasi tidak dimatikan sendiri. */
+  public function canReceiveTelegram(): bool
   {
-    return ! empty($this->phone) && $this->phone_verified && $this->whatsapp_notify;
+    return filled($this->telegram_chat_id) && $this->telegram_notify;
   }
 
   /** Diblokir dari login karena berulang kali salah password; hanya super_admin yang dapat membuka. */
@@ -91,7 +92,7 @@ class User extends Authenticatable
   {
     return LogOptions::defaults()
       ->logOnly([
-        'name', 'username', 'email', 'nip', 'nik', 'phone',
+        'name', 'username', 'email', 'nip', 'nik',
         'employee_type', 'department_id', 'rank_id', 'position_id',
         'dprd_jabatan', 'partai', 'is_active',
       ])
@@ -142,6 +143,27 @@ class User extends Authenticatable
   {
     return $this->employee_type === EmployeeType::DPRD
       || $this->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+  }
+
+  /**
+   * Pegawai aktif lain yang sudah memegang role kewenangan tunggal
+   * (config role_uniqueness: per sistem / per unit kerja). Null bila role
+   * boleh dipegang banyak pegawai atau masih kosong.
+   */
+  public static function roleConflictHolder(string $role, ?int $departmentId, ?int $exceptUserId = null): ?self
+  {
+    $perOpd = in_array($role, config('role_uniqueness.department', []), true);
+    $perSystem = in_array($role, config('role_uniqueness.system', []), true);
+
+    if (! $perOpd && ! $perSystem) {
+      return null;
+    }
+
+    return static::role($role)
+      ->where('is_active', true)
+      ->when($perOpd, fn ($q) => $q->where('department_id', $departmentId))
+      ->when($exceptUserId, fn ($q) => $q->where('id', '!=', $exceptUserId))
+      ->first();
   }
 
   /**

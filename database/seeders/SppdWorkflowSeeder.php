@@ -82,10 +82,10 @@ class SppdWorkflowSeeder extends Seeder
         ],
       ],
 
-      // Kepala OPD
+      // Kepala OPD (termasuk Camat, Lurah & Kepala Puskesmas yang memakai role kepala_opd)
       [
         'name'            => 'Kepala OPD',
-        'department_type' => ['opd', 'dinkes'],
+        'department_type' => ['opd', 'dinkes', 'kecamatan', 'kelurahan', 'puskesmas'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['dalam_daerah'],
         'steps'           => [
@@ -95,7 +95,7 @@ class SppdWorkflowSeeder extends Seeder
       ],
       [
         'name'            => 'Kepala OPD',
-        'department_type' => ['opd', 'dinkes'],
+        'department_type' => ['opd', 'dinkes', 'kecamatan', 'kelurahan', 'puskesmas'],
         'applicant_role'  => ['kepala_opd'],
         'destination'     => ['lddp', 'ldlp', 'luar_negeri'],
         'steps'           => [

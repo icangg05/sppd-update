@@ -638,8 +638,10 @@ namespace App\Models{
  * @property string|null $email
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property string $password
- * @property string|null $phone
- * @property bool $phone_verified
+ * @property string|null $telegram_chat_id
+ * @property string|null $telegram_username
+ * @property \Illuminate\Support\Carbon|null $telegram_linked_at
+ * @property bool $telegram_notify
  * @property \App\Enums\EmployeeType $employee_type
  * @property int|null $rank_id
  * @property int|null $position_id
@@ -688,8 +690,10 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereNip($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePartai($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhone($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoneVerified($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramChatId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramUsername($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramLinkedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramNotify($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoto($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePositionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRankId($value)

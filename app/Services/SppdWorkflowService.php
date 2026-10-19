@@ -160,6 +160,13 @@ class SppdWorkflowService
         return $user;
       }
 
+      // Zona mandiri (kelurahan/puskesmas) tidak mencari penyetuju ke unit
+      // induknya: pejabat yang kosong harus diisi, bukan dialihkan diam-diam
+      // ke Sekcam/Camat atau Dinas Kesehatan. Role tingkat kota tetap dicari global di bawah.
+      if ($currentDept->type?->isIndependentZone() && $currentDept->parent?->type !== $currentDept->type) {
+        break;
+      }
+
       // Move up to the parent department
       $currentDept = $currentDept->parent;
     }
@@ -171,6 +178,36 @@ class SppdWorkflowService
     }
 
     return null;
+  }
+
+  /**
+   * Apakah role berperan di workflow aktif untuk jenis unit kerja tertentu —
+   * sebagai pemohon maupun penyetuju. Dipakai untuk menurunkan role default
+   * jabatan: role yang tidak dikenal alur unitnya membuat pegawai tidak bisa
+   * mengajukan SPPD, jadi pegawai tersebut cukup memakai Staf.
+   */
+  public function roleUsedInWorkflows(string $role, ?string $departmentType): bool
+  {
+    return SppdWorkflow::where('is_active', true)
+      ->get(['department_type', 'applicant_role', 'steps'])
+      ->contains(function (SppdWorkflow $workflow) use ($role, $departmentType) {
+        $types = $workflow->department_type;
+        if (! empty($types) && ! in_array($departmentType, $types, true)) {
+          return false;
+        }
+
+        if (in_array($role, $workflow->applicant_role ?? [], true)) {
+          return true;
+        }
+
+        foreach ($workflow->steps ?? [] as $step) {
+          if ((is_array($step) ? ($step['role'] ?? null) : $step) === $role) {
+            return true;
+          }
+        }
+
+        return false;
+      });
   }
 
   public function getRoleSynonyms(string $role): array

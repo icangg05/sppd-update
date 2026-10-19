@@ -121,7 +121,7 @@
     <i class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
     <p>
       File berformat <strong>.sql.gz</strong> (SQL terkompresi). Simpan di tempat aman.
-      <strong>Restore</strong> sengaja tidak disediakan lewat aplikasi demi keamanan — pemulihan
+      <strong>Restore</strong> sengaja tidak disediakan lewat aplikasi demi keamanan. Pemulihan
       sebaiknya dilakukan administrator melalui CLI pada jendela pemeliharaan terkontrol.
     </p>
   </div>

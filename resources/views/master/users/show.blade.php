@@ -159,9 +159,21 @@
 						</div>
 
 						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">No. Telepon / WhatsApp</label>
-							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-solid fa-phone mr-1.5 text-slate-500"></i>{{ $user->phone ?? '-' }}</p>
+							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notifikasi Telegram</label>
+							@if ($user->telegram_chat_id)
+								<x-ui.badge color="sky">
+									<i class="fa-brands fa-telegram mr-1.5"></i>
+									Terhubung{{ $user->telegram_username ? ' · @' . $user->telegram_username : '' }}
+									@unless ($user->telegram_notify)
+										(dinonaktifkan pengguna)
+									@endunless
+								</x-ui.badge>
+							@else
+								<x-ui.badge color="slate">
+									<i class="fa-brands fa-telegram mr-1.5"></i>
+									Belum terhubung
+								</x-ui.badge>
+							@endif
 						</div>
 
 						<div class="sm:col-span-2 my-2">

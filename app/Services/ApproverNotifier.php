@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Jobs\SendWhatsAppNotificationJob;
+use App\Jobs\SendTelegramNotificationJob;
 use App\Models\SppdApproval;
 use App\Models\SppdRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Sumber tunggal untuk notifikasi WhatsApp ke approver SPPD.
+ * Sumber tunggal untuk notifikasi Telegram ke approver SPPD.
  * Sebelumnya logika ini terduplikasi di beberapa komponen Livewire.
  */
 class ApproverNotifier
@@ -41,14 +41,14 @@ class ApproverNotifier
     }
 
     /**
-     * Bangun pesan WhatsApp dan kirim ke approver bila nomornya terverifikasi.
+     * Bangun pesan notifikasi dan kirim ke approver bila akun Telegram-nya terhubung.
      * Error notifikasi sengaja ditelan (hanya di-log) agar tidak memblokir alur/transaksi utama.
      */
     protected function send(SppdRequest $sppd, SppdApproval $approval, string $header, string $intro): void
     {
         try {
             $approver = $approval->approver;
-            if (! $approver || ! $approver->canReceiveWhatsApp()) {
+            if (! $approver || ! $approver->canReceiveTelegram()) {
                 return;
             }
 
@@ -68,7 +68,7 @@ class ApproverNotifier
                 . "🔗 {$detailUrl}\n\n"
                 . "Terima kasih.";
 
-            SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
+            SendTelegramNotificationJob::dispatch($approver->telegram_chat_id, $message);
         } catch (\Exception $e) {
             Log::warning('Gagal mengirim notifikasi approver SPPD.', [
                 'sppd_id' => $sppd->id,

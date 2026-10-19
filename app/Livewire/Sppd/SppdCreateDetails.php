@@ -6,6 +6,8 @@ use App\Enums\ApprovalStatus;
 use App\Enums\EmployeeType;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
+use App\Models\Country;
+use App\Models\ForeignCity;
 use App\Models\Province;
 use App\Models\Regency;
 use App\Models\SppdCategory;
@@ -61,6 +63,12 @@ class SppdCreateDetails extends Component
   // Destinations
   public array $destinations = [];
 
+  /** Nilai pilihan kota luar negeri "Kota lain (ketik manual)". */
+  public const OTHER_CITY = '__other__';
+
+  /** Memo daftar kota per negara selama satu request (dipanggil per baris tujuan saat render). */
+  protected array $citiesByCountry = [];
+
   // Modal Confirmation Control
   public bool $showConfirmModal = false;
 
@@ -103,6 +111,7 @@ class SppdCreateDetails extends Component
           'regency_id' => $dest->regency_id,
           'country' => $dest->country ?? '',
           'city' => $dest->city ?? '',
+          'city_choice' => $this->cityChoiceFor($dest->country, $dest->city),
           'address' => $isDalamDaerah ? '' : $dest->address,
           'address_only' => $isDalamDaerah ? $dest->address : '',
         ];
@@ -155,6 +164,43 @@ class SppdCreateDetails extends Component
     if (preg_match('/^destinations\.(\d+)\.province_id$/', $name, $m)) {
       $this->destinations[(int) $m[1]]['regency_id'] = '';
     }
+
+    // Luar negeri: ganti negara mengosongkan kota; pilihan kota dari daftar
+    // langsung mengisi `city`, sedangkan "Kota lain" membuka isian manual.
+    if (preg_match('/^destinations\.(\d+)\.country$/', $name, $m)) {
+      $this->destinations[(int) $m[1]]['city'] = '';
+      $this->destinations[(int) $m[1]]['city_choice'] = '';
+    }
+
+    if (preg_match('/^destinations\.(\d+)\.city_choice$/', $name, $m)) {
+      $this->destinations[(int) $m[1]]['city'] = $value === self::OTHER_CITY ? '' : (string) $value;
+    }
+  }
+
+  /** Nama kota (urut abjad) milik negara tujuan luar negeri. */
+  public function getCitiesForCountry(?string $country): array
+  {
+    if (blank($country)) {
+      return [];
+    }
+
+    return $this->citiesByCountry[$country] ??= ForeignCity::whereHas('country', fn ($q) => $q->where('name', $country))
+      ->orderBy('name')
+      ->pluck('name')
+      ->all();
+  }
+
+  /** Pilihan dropdown kota untuk data tersimpan: kota dari daftar, atau "Kota lain" bila diketik manual. */
+  protected function cityChoiceFor(?string $country, ?string $city): string
+  {
+    if (blank($city)) {
+      return '';
+    }
+
+    $match = collect($this->getCitiesForCountry($country))
+      ->first(fn ($name) => mb_strtolower($name) === mb_strtolower($city));
+
+    return $match ?? self::OTHER_CITY;
   }
 
   public function getRegenciesForProvince($provinceId)
@@ -193,6 +239,7 @@ class SppdCreateDetails extends Component
       'regency_id' => '',
       'country' => '',
       'city' => '',
+      'city_choice' => '',
       'address' => '',
       'address_only' => '',
     ];
@@ -238,7 +285,7 @@ class SppdCreateDetails extends Component
         'destinations' => 'required|array|min:1',
         'destinations.*.province_id' => 'required_if:domain,lddp,ldlp',
         'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp',
-        'destinations.*.country' => ['required_if:domain,luar_negeri', Rule::in(config('countries'))],
+        'destinations.*.country' => ['required_if:domain,luar_negeri', Rule::exists('countries', 'name')],
         'destinations.*.city' => 'required_if:domain,luar_negeri|string|max:150',
         'destinations.*.address' => 'required_if:domain,lddp,ldlp,luar_negeri|string|max:500',
         'destinations.*.address_only' => 'required_if:domain,dalam_daerah|string|max:500',
@@ -246,7 +293,7 @@ class SppdCreateDetails extends Component
         'followers.*' => 'exists:users,id',
       ], [
         'destinations.*.country.required_if' => 'Negara tujuan wajib dipilih.',
-        'destinations.*.country.in' => 'Negara tujuan tidak valid.',
+        'destinations.*.country.exists' => 'Negara tujuan tidak valid.',
         'destinations.*.city.required_if' => 'Kota tujuan wajib diisi.',
       ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
@@ -271,7 +318,7 @@ class SppdCreateDetails extends Component
   public function submit()
   {
     // Gerbang otoritatif: tolak bila worker queue tidak berjalan, sehingga
-    // notifikasi WhatsApp ke approver dijamin dapat dikirim.
+    // notifikasi Telegram ke approver dijamin dapat dikirim.
     if (! app(QueueHealthService::class)->isWorkerHealthy()) {
       $this->toastError($this->queueDownMessage());
       $this->showConfirmModal = false;
@@ -615,7 +662,7 @@ class SppdCreateDetails extends Component
       : collect();
 
     $provinces = Province::orderBy('name')->get();
-    $countries = config('countries');
+    $countries = Country::selectOptions();
 
     // Pegawai sibuk — dibedakan: sedang dalam perjalanan (SPPD disetujui &
     // periodenya belum lewat) vs masih dalam proses persetujuan (IN_PROGRESS).

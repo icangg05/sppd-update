@@ -130,7 +130,7 @@ class SendTteSignRequestJob implements ShouldQueue
               $sppd->update(['status' => SppdStatus::APPROVED]);
 
               $recipient = $sppd->creator ?? $sppd->user;
-              if ($recipient && $recipient->canReceiveWhatsApp()) {
+              if ($recipient && $recipient->canReceiveTelegram()) {
                 $applicantName = $sppd->user?->name ?? 'Pegawai';
                 $purpose = $sppd->purpose;
                 $detailUrl = route('sppd.show', $sppd);
@@ -147,7 +147,7 @@ class SendTteSignRequestJob implements ShouldQueue
                   . "🔗 {$detailUrl}\n\n"
                   . "Terima kasih.";
 
-                SendWhatsAppNotificationJob::dispatch($recipient->phone, $message);
+                SendTelegramNotificationJob::dispatch($recipient->telegram_chat_id, $message);
               }
             } else {
               // Find the next approval step and notify the next approver
@@ -157,7 +157,7 @@ class SendTteSignRequestJob implements ShouldQueue
                 ->where('status', ApprovalStatus::PENDING)
                 ->first();
 
-              if ($nextApproval && $nextApproval->approver && $nextApproval->approver->canReceiveWhatsApp()) {
+              if ($nextApproval && $nextApproval->approver && $nextApproval->approver->canReceiveTelegram()) {
                 $approver = $nextApproval->approver;
                 $applicantName = $sppd->user?->name ?? 'Pegawai';
                 $purpose = $sppd->purpose;
@@ -177,7 +177,7 @@ class SendTteSignRequestJob implements ShouldQueue
                   . "🔗 {$detailUrl}\n\n"
                   . "Terima kasih.";
 
-                SendWhatsAppNotificationJob::dispatch($approver->phone, $message);
+                SendTelegramNotificationJob::dispatch($approver->telegram_chat_id, $message);
               }
             }
           }

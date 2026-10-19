@@ -24,6 +24,7 @@
   $featuredColors = [
     'emerald' => ['wrap' => 'from-emerald-50 ring-emerald-100', 'bar' => 'bg-emerald-500', 'chip' => 'bg-emerald-500 shadow-emerald-500/30', 'badge' => 'bg-emerald-600', 'btn' => 'bg-emerald-600 hover:bg-emerald-700'],
     'cyan' => ['wrap' => 'from-primary-50 ring-primary-100', 'bar' => 'bg-primary-500', 'chip' => 'bg-primary-600 shadow-primary-500/30', 'badge' => 'bg-primary-600', 'btn' => 'bg-primary-600 hover:bg-primary-700'],
+    'sky' => ['wrap' => 'from-sky-50 ring-sky-100', 'bar' => 'bg-sky-500', 'chip' => 'bg-sky-500 shadow-sky-500/30', 'badge' => 'bg-sky-600', 'btn' => 'bg-sky-600 hover:bg-sky-700'],
   ];
 @endphp
 
@@ -90,7 +91,7 @@
             <span class="absolute left-0 top-0 h-full w-1 {{ $fc['bar'] }}"></span>
             <div class="flex gap-3">
               <div class="flex size-11 shrink-0 items-center justify-center rounded text-lg text-white shadow-sm {{ $fc['chip'] }}">
-                <i class="{{ $item['icon'] ?? 'fa-brands fa-whatsapp' }}"></i>
+                <i class="{{ $item['icon'] ?? 'fa-solid fa-bell' }}"></i>
               </div>
               <div class="min-w-0 flex-1">
                 <p class="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-800">
@@ -141,7 +142,7 @@
 
     {{-- Footer --}}
     <div class="border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center sm:rounded-b">
-      <span class="text-[11px] text-slate-500">Sistem Perjalanan Dinas — Kota Kendari</span>
+      <span class="text-[11px] text-slate-500">Sistem Perjalanan Dinas Kota Kendari</span>
     </div>
   </div>
 </div>

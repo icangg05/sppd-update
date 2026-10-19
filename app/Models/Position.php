@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\DepartmentType;
 use App\Enums\PositionScope;
+use App\Services\SppdWorkflowService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +17,31 @@ class Position extends Model
   use LogsActivity;
 
   protected $fillable = ['name', 'level', 'uniqueness_scope', 'default_role', 'created_by'];
+
+  // Level (urutan) jabatan per role default — semakin kecil semakin tinggi.
+  // Dipakai untuk mengurutkan pengikut di dokumen SPT.
+  public const DEFAULT_LEVEL = 1000;
+
+  private const ROLE_LEVELS = [
+    'walikota'          => 1,
+    'wakil_walikota'    => 2,
+    'sekda'             => 3,
+    'asisten'           => 10,
+    'kepala_opd'        => 20,
+    'sekwan'            => 20,
+    'camat'             => 20,
+    'lurah'             => 20,
+    'kapus'             => 20,
+    'sekretaris_opd'    => 30,
+    'sekcam'            => 30,
+    'kabid_irban_kabag' => 40,
+    'kasubid_kasubag'   => 50,
+  ];
+
+  public static function levelForRole(?string $role): int
+  {
+    return self::ROLE_LEVELS[$role] ?? self::DEFAULT_LEVEL;
+  }
 
   public function getActivitylogOptions(): LogOptions
   {
@@ -94,9 +121,58 @@ class Position extends Model
   }
 
   /**
+   * Role yang berlaku bagi pemangku jabatan ini di unit kerja tertentu.
+   * Role default hanya dipakai bila dikenal workflow aktif untuk jenis unit
+   * tersebut (mis. Kabid/Kabag hanya ada di alur Setda & DPRD); bila tidak,
+   * pegawai memakai Staf agar tetap bisa mengajukan SPPD.
+   */
+  public function roleForDepartment(?Department $department): ?string
+  {
+    if (! $this->default_role) {
+      return null;
+    }
+
+    // Jabatan kewilayahan di unit yang tidak sesuai (mis. Camat tercatat di
+    // sebuah Dinas) tidak memberi role pimpinan — kemungkinan besar salah data.
+    if (! $this->fitsDepartment($department)) {
+      return 'staf';
+    }
+
+    return app(SppdWorkflowService::class)->roleUsedInWorkflows($this->default_role, $department?->type?->value)
+      ? $this->default_role
+      : 'staf';
+  }
+
+  /**
+   * Jenis unit kerja yang wajib bagi jabatan kewilayahan (Camat/Lurah/Kapus
+   * beserta sekretarisnya). Null bila jabatan boleh di unit mana pun.
+   */
+  public function requiredDepartmentType(): ?DepartmentType
+  {
+    $name = mb_strtolower(preg_replace('/\s+/', ' ', trim($this->name)));
+
+    return match (true) {
+      in_array($name, ['camat', 'sekretaris camat'], true) => DepartmentType::KECAMATAN,
+      in_array($name, ['lurah', 'sekretaris lurah', 'sekretaris kelurahan'], true) => DepartmentType::KELURAHAN,
+      str_starts_with($name, 'kepala puskesmas'), str_starts_with($name, 'kepala uptd puskesmas') => DepartmentType::PUSKESMAS,
+      default => null,
+    };
+  }
+
+  public function fitsDepartment(?Department $department): bool
+  {
+    $required = $this->requiredDepartmentType();
+
+    return $required === null || $department?->type === $required;
+  }
+
+  /**
    * Tebak role sistem default dari nama jabatan. Dipakai untuk mengisi data
    * awal dan saran saat jabatan baru ditambahkan. Mengembalikan null bila
    * nama ambigu (mis. Kepala UPTD Terminal) agar Super Admin yang menentukan.
+   *
+   * Kelurahan, kecamatan, dan puskesmas diperlakukan workflow sebagai OPD
+   * mandiri: kepalanya Kepala OPD dan sekretarisnya Sekretaris OPD.
    */
   public static function guessDefaultRole(string $name): ?string
   {
@@ -107,9 +183,11 @@ class Position extends Model
       'wakil walikota'       => 'wakil_walikota',
       'sekretaris daerah'    => 'sekda',
       'sekretaris dewan'     => 'sekwan',
-      'camat'                => 'camat',
-      'sekretaris camat'     => 'sekcam',
-      'lurah'                => 'lurah',
+      'camat'                => 'kepala_opd',
+      'sekretaris camat'     => 'sekretaris_opd',
+      'lurah'                => 'kepala_opd',
+      'sekretaris lurah'     => 'sekretaris_opd',
+      'sekretaris kelurahan' => 'sekretaris_opd',
       'sekretaris dinas'     => 'sekretaris_opd',
       'sekretaris badan'     => 'sekretaris_opd',
       'sekretaris inspektur' => 'sekretaris_opd',
@@ -126,8 +204,8 @@ class Position extends Model
     $prefixes = [
       'asisten apoteker'                  => 'staf',
       'asisten '                          => 'asisten',
-      'kepala puskesmas'                  => 'kapus',
-      'kepala uptd puskesmas'             => 'kapus',
+      'kepala puskesmas'                  => 'kepala_opd',
+      'kepala uptd puskesmas'             => 'kepala_opd',
       'sekretaris dinas '                 => 'sekretaris_opd',
       'sekretaris badan '                 => 'sekretaris_opd',
       'kepala dinas'                      => 'kepala_opd',

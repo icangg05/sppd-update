@@ -61,6 +61,7 @@ class PositionAndRankSeeder extends Seeder
       ['name' => 'Sekretaris Lurah', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Kepala Puskesmas', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Kepala Badan', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Sekretaris Badan', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Inspektur', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Sekretaris Inspektur', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Sekretaris Dewan', 'scope' => PositionScope::DEPARTMENT],
@@ -96,6 +97,7 @@ class PositionAndRankSeeder extends Seeder
       'Kepala Badan Pengelola Keuangan dan Aset Daerah',
       'Kepala Badan Pengelola Pajak dan Retribusi Daerah',
       'Kepala Badan Kesatuan Bangsa dan Politik',
+      'Kepala Badan Perencanaan Pembangunan Daerah',
       'Kepala Dinas Pendidikan Kepemudaan dan Olahraga',
       'Kepala Dinas Kesehatan',
       'Kepala Dinas Pekerjaan Umum dan Penataan Ruang',
@@ -416,13 +418,18 @@ class PositionAndRankSeeder extends Seeder
   }
 
   /**
-   * Isi role default dari pola nama hanya bila masih kosong, agar seed ulang
-   * tidak menimpa role yang sudah disesuaikan Super Admin.
+   * Isi role default (dari pola nama) dan level (dari role) hanya bila masih
+   * bawaan, agar seed ulang tidak menimpa pengaturan Super Admin.
    */
   private function fillDefaultRole(Position $position): void
   {
     if ($position->default_role === null) {
       $position->update(['default_role' => Position::guessDefaultRole($position->name)]);
+    }
+
+    // Jabatan yang baru dibuat belum memuat default kolom level dari database.
+    if ((int) ($position->level ?? Position::DEFAULT_LEVEL) === Position::DEFAULT_LEVEL) {
+      $position->update(['level' => Position::levelForRole($position->default_role)]);
     }
   }
 }

@@ -14,22 +14,21 @@ Artisan::command('inspire', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Keep-Alive WhatsApp (jaga akun Kirim.Chat tetap aktif)
+| Polling Bot Telegram (hanya untuk localhost/dev)
 |--------------------------------------------------------------------------
 |
-| Jadwal dinamis dikontrol lewat config('kirimchat.keepalive.*'):
-| frequency = everyMinute | hourly | daily | cron expression mentah.
+| Saat TELEGRAM_UPDATE_MODE=polling, pesan masuk bot (verifikasi /start)
+| diambil lewat long-polling getUpdates oleh container scheduler — pengganti
+| webhook yang tidak bisa menjangkau localhost. Tiap run berjalan ±55 detik.
+| Produksi memakai webhook (`php artisan telegram:webhook`).
 |
 */
-if (config('kirimchat.keepalive.enabled')) {
-    $event = Schedule::command('wa:keepalive')->withoutOverlapping();
-
-    match (config('kirimchat.keepalive.frequency', 'daily')) {
-        'everyMinute' => $event->everyMinute(),
-        'hourly' => $event->hourly(),
-        'daily' => $event->dailyAt((string) config('kirimchat.keepalive.time', '08:00')),
-        default => $event->cron((string) config('kirimchat.keepalive.frequency')),
-    };
+if (config('telegram.update_mode') === 'polling' && filled(config('telegram.bot_token'))) {
+    Schedule::command('telegram:poll --seconds=55')
+        ->name('telegram-poll')
+        ->everyMinute()
+        ->withoutOverlapping(2)
+        ->runInBackground();
 }
 
 /*
@@ -56,9 +55,8 @@ if (config('queue_health.enabled')) {
 |
 | Men-dispatch BackupDatabaseJob ke queue agar proses backup berjalan di worker
 | (bukan di scheduler). Hari & jam diatur lewat config('backup.*') (BACKUP_DAY,
-| BACKUP_TIME) — default Minggu 03:00 agar tidak bertabrakan dengan keepalive
-| Kirim.Chat (06:00). Job menyimpan satu file per minggu & menjaga retensi
-| sebanyak BACKUP_KEEP backup terbaru.
+| BACKUP_TIME) — default Minggu 03:00 di luar jam kerja. Job menyimpan satu
+| file per minggu & menjaga retensi sebanyak BACKUP_KEEP backup terbaru.
 |
 */
 Schedule::job(new BackupDatabaseJob())

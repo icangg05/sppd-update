@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -214,6 +215,21 @@ class SppdRequest extends Model
     public function followers(): HasMany
     {
         return $this->hasMany(SppdFollower::class);
+    }
+
+    /**
+     * Pengikut untuk dokumen SPT: jabatan tertinggi dulu (level jabatan kecil),
+     * lalu golongan tertinggi; sisanya tetap sesuai urutan input.
+     */
+    public function followersForSpt(): Collection
+    {
+        return $this->followers
+            ->sortBy([
+                fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
+                    <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
+                fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
+            ])
+            ->values();
     }
 
     public function approvals(): HasMany

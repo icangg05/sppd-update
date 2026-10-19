@@ -14,7 +14,6 @@ use App\Enums\SppdStatus;
 use App\Helpers\QrSimulator;
 use App\Helpers\Terbilang;
 use App\Jobs\SendTteSignRequestJob;
-use App\Jobs\SendWhatsAppNotificationJob;
 use App\Models\Budget;
 use App\Models\Department;
 use App\Models\Province;

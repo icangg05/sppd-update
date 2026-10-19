@@ -152,7 +152,7 @@
 
 		{{-- Grup: Data Master --}}
 		@php
-			$openDataMaster = request()->routeIs('master.budgets.*', 'master.departments.*', 'master.provinces.*', 'master.regencies.*');
+			$openDataMaster = request()->routeIs('master.budgets.*', 'master.departments.*', 'master.provinces.*', 'master.regencies.*', 'master.countries.*', 'master.foreign-cities.*');
 		@endphp
 		<div class="space-y-1" x-data="{ open: true }">
 			<button type="button" @click="open = !open"
@@ -189,6 +189,18 @@
 						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.regencies.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-city fa-fw"></i></span>
 						<span>Data Kabupaten/Kota</span>
+					</a>
+
+					<a href="{{ route('master.countries.index') }}" wire:navigate.hover
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.countries.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-earth-asia fa-fw"></i></span>
+						<span>Data Negara</span>
+					</a>
+
+					<a href="{{ route('master.foreign-cities.index') }}" wire:navigate.hover
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.foreign-cities.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-tree-city fa-fw"></i></span>
+						<span>Data Kota Luar Negeri</span>
 					</a>
 				@endif
 			</div>

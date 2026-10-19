@@ -49,23 +49,6 @@
           placeholder="Semua Cakupan" searchPlaceholder="Cari cakupan..." />
       </div>
 
-      @php
-        $sourceOptions = $isSuperAdmin
-          ? [
-            ['value' => '', 'label' => 'Semua Sumber'],
-            ['value' => 'system', 'label' => 'Bawaan sistem'],
-            ['value' => 'opd', 'label' => 'Ditambahkan admin OPD'],
-          ]
-          : [
-            ['value' => '', 'label' => 'Semua Jabatan'],
-            ['value' => 'mine', 'label' => 'Milik OPD saya'],
-          ];
-      @endphp
-      <div class="w-full sm:w-56">
-        <x-form.searchable-select wire:model.live="sourceFilter" name="sourceFilter" :options="$sourceOptions"
-          :placeholder="$sourceOptions[0]['label']" searchPlaceholder="Cari sumber..." />
-      </div>
-
       @php $canReset = $search !== '' || $scopeFilter !== '' || $sourceFilter !== ''; @endphp
       <div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
         <x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="! $canReset">
@@ -74,11 +57,31 @@
         </x-ui.button>
       </div>
     </div>
+
+    {{-- Tab sumber jabatan: bawaan sistem vs input manual pengguna --}}
+    @php
+      $sourceLabels = [
+        '' => 'Semua',
+        'system' => 'Bawaan Sistem',
+        'manual' => 'Tambahan Semua OPD',
+        'mine' => $isSuperAdmin ? 'Input Saya' : 'Input OPD Saya',
+      ];
+    @endphp
+    <div class="mt-3 flex flex-wrap items-center gap-1 rounded border border-slate-200 bg-slate-100 p-1 sm:w-fit">
+      @foreach ($sourceCounts->keys() as $value)
+        @php $label = $sourceLabels[$value]; @endphp
+        <button type="button" wire:click="setSource('{{ $value }}')"
+          class="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold transition-all duration-200 {{ $sourceFilter === $value ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:bg-white/50 hover:text-slate-900' }}">
+          {{ $label }}
+          <span class="rounded-full bg-slate-200/70 px-1.5 text-[10px] tabular-nums text-slate-600">{{ $sourceCounts[$value] ?? 0 }}</span>
+        </button>
+      @endforeach
+    </div>
   </div>
 
   {{-- Tabel --}}
   <div class="dash-enter bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
-    wire:loading.class="opacity-60" wire:target="search,scopeFilter,sourceFilter">
+    wire:loading.class="opacity-60" wire:target="search,scopeFilter,sourceFilter,setSource">
     <div class="overflow-x-auto">
       <table class="table-stack w-full text-left whitespace-nowrap border-collapse md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
         <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
@@ -90,8 +93,10 @@
             <th class="py-2.5 px-4">Role Default</th>
             @if ($isSuperAdmin)
               <th class="py-2.5 px-4">Ditambahkan Oleh</th>
+              <th class="py-2.5 px-4 w-24 text-center">Pemangku</th>
+            @else
+              <th class="py-2.5 px-4">Sumber</th>
             @endif
-            <th class="py-2.5 px-4 w-24 text-center">Pemangku</th>
             <th class="py-2.5 px-4 w-28 text-center">Aksi</th>
           </tr>
         </thead>
@@ -114,9 +119,6 @@
               </td>
               <td data-label="Nama Jabatan" class="py-2.5 px-4 font-semibold text-slate-900">
                 {{ $position->name }}
-                @if (! $isSuperAdmin && $canManage)
-                  <x-ui.badge color="cyan" class="ml-1.5">OPD Anda</x-ui.badge>
-                @endif
               </td>
               <td data-label="Level" class="py-2.5 px-4 text-center text-slate-500 font-medium">{{ $position->level }}</td>
               <td data-label="Cakupan" class="py-2.5 px-4">
@@ -134,7 +136,12 @@
               @if ($isSuperAdmin)
                 <td data-label="Ditambahkan Oleh" class="py-2.5 px-4">
                   @if ($position->creator)
-                    <div class="font-semibold text-slate-800">{{ $position->creator->name }}</div>
+                    <div class="font-semibold text-slate-800">
+                      {{ $position->creator->name }}
+                      @if ($position->created_by === auth()->id())
+                        <x-ui.badge color="cyan" class="ml-1">Anda</x-ui.badge>
+                      @endif
+                    </div>
                     <div class="text-[11px] text-slate-500">{{ $position->creator->department?->name ?? '—' }}</div>
                   @elseif ($position->created_by)
                     <span class="italic text-slate-400">Pegawai terhapus</span>
@@ -142,18 +149,28 @@
                     <span class="text-slate-400">Bawaan sistem</span>
                   @endif
                 </td>
+                <td data-label="Pemangku" class="py-2.5 px-4 text-center">
+                  @if($position->users_count > 0)
+                    <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
+                      class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
+                      title="Lihat pegawai dengan jabatan ini">
+                      <i class="fa-solid fa-users text-[10px]"></i> {{ $position->users_count }}
+                    </a>
+                  @else
+                    <span class="text-slate-500 font-medium">0</span>
+                  @endif
+                </td>
+              @else
+                <td data-label="Sumber" class="py-2.5 px-4">
+                  @if (! $position->created_by)
+                    <span class="text-slate-400">Bawaan sistem</span>
+                  @elseif ($canManage)
+                    <x-ui.badge color="cyan">Input OPD Anda</x-ui.badge>
+                  @else
+                    <x-ui.badge color="amber">Tambahan OPD lain</x-ui.badge>
+                  @endif
+                </td>
               @endif
-              <td data-label="Pemangku" class="py-2.5 px-4 text-center">
-                @if($position->users_count > 0)
-                  <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
-                    class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
-                    title="Lihat pegawai dengan jabatan ini">
-                    <i class="fa-solid fa-users text-[10px]"></i> {{ $position->users_count }}
-                  </a>
-                @else
-                  <span class="text-slate-500 font-medium">0</span>
-                @endif
-              </td>
               <td data-label="Aksi" class="py-2.5 px-4">
                 @if ($canManage)
                 <div class="flex items-center justify-center gap-1.5">

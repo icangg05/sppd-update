@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\InteractsWithPhoneVerification;
+use App\Livewire\Concerns\InteractsWithTelegramLink;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
@@ -16,7 +16,7 @@ use Livewire\Component;
 class Profile extends Component
 {
   use InteractsWithToast;
-  use InteractsWithPhoneVerification;
+  use InteractsWithTelegramLink;
 
   // Identitas dasar
   public string $name = '';
@@ -24,8 +24,7 @@ class Profile extends Component
   public string $email = '';
   public string $nip = '';
   public string $nik = '';
-  public string $phone = '';
-  public bool $whatsappNotify = true;
+  public bool $telegramNotify = true;
 
   // Ganti password
   public string $current_password = '';
@@ -41,12 +40,11 @@ class Profile extends Component
     $this->email = $user->email ?? '';
     $this->nip = $user->nip ?? '';
     $this->nik = $user->nik ?? '';
-    $this->phone = $user->phone ?? '';
-    $this->phoneVerified = (bool) $user->phone_verified;
-    $this->whatsappNotify = (bool) $user->whatsapp_notify;
+    $this->telegramNotify = (bool) $user->telegram_notify;
+    $this->fillTelegramState($user->telegram_chat_id, $user->telegram_username);
 
-    // Memulihkan state verifikasi jika halaman di-refresh saat menunggu balasan.
-    $this->restorePhoneVerificationState();
+    // Memulihkan polling jika halaman di-refresh saat menunggu pengguna menekan Start.
+    $this->restoreTelegramLinkState();
   }
 
   protected function rules(): array
@@ -62,7 +60,6 @@ class Profile extends Component
       // berakun di dua instansi berbeda dengan NIP/NIK yang sama.
       'nip' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nip', 'NIP', $user->department_id, $id)],
       'nik' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nik', 'NIK', $user->department_id, $id)],
-      'phone' => 'nullable|string|max:20',
       'current_password' => ['nullable', 'required_with:password', 'current_password'],
       'password' => ['nullable', 'string', 'min:6', 'confirmed'],
     ];
@@ -75,41 +72,43 @@ class Profile extends Component
     'password.min' => 'Password baru minimal 6 karakter.',
   ];
 
-  // ── Hook verifikasi WhatsApp (InteractsWithPhoneVerification) ──
-  protected function verificationUserId(): ?int
+  // ── Hook tautan Telegram (InteractsWithTelegramLink) ──
+  protected function linkUserId(): ?int
   {
     return auth()->id();
   }
 
-  protected function onPhoneVerified(string $phone): void
+  protected function onTelegramLinked(string $chatId, ?string $username): void
   {
     auth()->user()->update([
-      'phone' => $phone,
-      'phone_verified' => true,
+      'telegram_chat_id' => $chatId,
+      'telegram_username' => $username,
+      'telegram_linked_at' => now(),
     ]);
   }
 
-  protected function onPhoneReset(): void
+  protected function onTelegramUnlinked(): void
   {
     auth()->user()->update([
-      'phone' => null,
-      'phone_verified' => false,
+      'telegram_chat_id' => null,
+      'telegram_username' => null,
+      'telegram_linked_at' => null,
     ]);
   }
 
   protected function canSendTestMessage(): bool
   {
-    return $this->whatsappNotify;
+    return $this->telegramNotify;
   }
 
-  /** Saklar notifikasi WhatsApp; disimpan langsung agar tidak perlu tekan Simpan. */
-  public function updatedWhatsappNotify(bool $value): void
+  /** Saklar notifikasi Telegram; disimpan langsung agar tidak perlu tekan Simpan. */
+  public function updatedTelegramNotify(bool $value): void
   {
-    auth()->user()->update(['whatsapp_notify' => $value]);
+    auth()->user()->update(['telegram_notify' => $value]);
 
     $value
-      ? $this->toastSuccess('Notifikasi WhatsApp diaktifkan.')
-      : $this->toastWarning('Notifikasi WhatsApp dinonaktifkan.');
+      ? $this->toastSuccess('Notifikasi Telegram diaktifkan.')
+      : $this->toastWarning('Notifikasi Telegram dinonaktifkan.');
   }
 
   /** Membuat username ringkas & unik dari nama (lihat UsernameGenerator). */
@@ -136,12 +135,6 @@ class Profile extends Component
       throw $e;
     }
 
-    if (! empty($this->phone) && ! $this->phoneVerified) {
-      $this->addError('phone', 'Nomor telepon harus diverifikasi terlebih dahulu.');
-      $this->toastError('Nomor telepon harus diverifikasi terlebih dahulu.');
-      return;
-    }
-
     $user = auth()->user();
 
     $data = [
@@ -151,11 +144,6 @@ class Profile extends Component
       'nip' => $this->nip ?: null,
       'nik' => $this->nik ?: null,
     ];
-
-    // Nomor hanya disimpan bila sudah terverifikasi.
-    if ($this->phoneVerified) {
-      $data['phone'] = $this->phone ?: null;
-    }
 
     if (! empty($this->password)) {
       $data['password'] = Hash::make($this->password);

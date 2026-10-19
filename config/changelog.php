@@ -16,9 +16,28 @@
 
 return [
   // Penanda versi changelog. Saat berubah, lonceng menampilkan titik "belum dibaca".
-  'version' => '2026.10.19.2',
+  'version' => '2026.10.20.2',
 
   'items' => [
+    [
+      'title' => 'Tujuan Luar Negeri: Pilih Negara & Kota dari Daftar',
+      'description' => 'Kota tujuan SPPD luar negeri kini dipilih dari daftar sesuai negaranya, dengan pencarian. Kota yang belum ada bisa diketik manual lewat pilihan "Kota lain". Super Admin mengelola daftarnya di menu Data Negara & Data Kota Luar Negeri.',
+      'icon' => 'fa-solid fa-earth-asia',
+      'color' => 'emerald',
+      'date' => '2026-10-20',
+    ],
+    [
+      'title' => 'Notifikasi Kini Lewat Telegram',
+      'description' => 'Notifikasi pengajuan & persetujuan SPPD pindah dari WhatsApp ke Telegram. Hubungkan akun Telegram Anda sekali di menu Profil agar notifikasi tetap diterima.',
+      'icon' => 'fa-brands fa-telegram',
+      'color' => 'sky',
+      'date' => '2026-10-20',
+      // Sorot sebagai fitur terbaru + tautan ke halaman panduan khusus.
+      'featured' => true,
+      'badge' => 'Terbaru',
+      'guide' => 'guide.telegram',
+      'guide_label' => 'Panduan Telegram',
+    ],
     [
       'title' => 'Admin OPD Bisa Menambah Jabatan Sendiri',
       'description' => 'Tanpa pengajuan lagi: tambah jabatan langsung dari menu Data Jabatan atau form pegawai. Role sistem pegawai kini otomatis mengikuti jabatan yang dipilih.',
@@ -42,7 +61,7 @@ return [
     ],
     [
       'title' => 'Install sebagai Aplikasi (PWA)',
-      'description' => 'Pasang SPPD ke layar utama ponsel atau desktop agar terbuka seperti aplikasi — lebih cepat, tanpa membuka browser dulu.',
+      'description' => 'Pasang SPPD ke layar utama ponsel atau desktop agar terbuka seperti aplikasi. Lebih cepat, tanpa membuka browser dulu.',
       'icon' => 'fa-solid fa-mobile-screen-button',
       'color' => 'cyan',
       'date' => '2026-07-13',
@@ -51,18 +70,6 @@ return [
       'badge' => 'Baru',
       'guide' => 'guide.pwa',
       'guide_label' => 'Panduan Install',
-    ],
-    [
-      'title' => 'Fitur Notifikasi WhatsApp',
-      'description' => 'Verifikasi nomor & notifikasi persetujuan SPPD kini langsung lewat WhatsApp agar tidak terlewat.',
-      'icon' => 'fa-brands fa-whatsapp',
-      'color' => 'emerald',
-      'date' => '2026-06-26',
-      // Sorot sebagai fitur terbaru + tautan ke halaman panduan khusus.
-      'featured' => true,
-      'badge' => 'Terbaru',
-      'guide' => 'guide.whatsapp',
-      'guide_label' => 'Panduan WhatsApp',
     ],
     [
       'title' => 'Antarmuka Lebih Responsive',
@@ -83,13 +90,6 @@ return [
       'description' => 'Alur kerja dipermudah dengan petunjuk yang jelas dan minim langkah membingungkan.',
       'icon' => 'fa-regular fa-face-smile',
       'color' => 'amber',
-      'date' => '2026-06-26',
-    ],
-    [
-      'title' => 'Halaman Profil Saya',
-      'description' => 'Kelola data akun, kontak, dan ganti password Anda sendiri dari menu profil.',
-      'icon' => 'fa-regular fa-user',
-      'color' => 'sky',
       'date' => '2026-06-26',
     ],
     [

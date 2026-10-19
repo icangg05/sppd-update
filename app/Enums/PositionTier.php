@@ -33,12 +33,12 @@ enum PositionTier: string
   public function description(): string
   {
     return match ($this) {
-      self::PIMPINAN => 'Kepala Dinas, Kepala Badan, Inspektur, Direktur RSUD',
-      self::SEKRETARIS => 'Sekretaris Dinas, Sekretaris Badan',
+      self::PIMPINAN => 'Kepala Dinas/Badan, Inspektur, Camat, Lurah, Kepala Puskesmas',
+      self::SEKRETARIS => 'Sekretaris Dinas/Badan, Sekretaris Camat/Lurah',
       self::KABID => 'Pejabat eselon III di bawah Sekretaris',
       self::KASI => 'Pejabat eselon IV',
       self::STAF => 'Analis, pranata, bendahara, pengadministrasi, dll.',
-      self::LAINNYA => 'Tidak yakin — role diatur Super Admin',
+      self::LAINNYA => 'Tidak yakin, role diatur Super Admin',
     };
   }
 

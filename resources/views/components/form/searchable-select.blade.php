@@ -20,12 +20,17 @@
     $key = $name ?? ($model->value() ?? null);
     // Untuk form non-Livewire, pakai nilai awal dari old()/value agar tetap tersubmit.
     $initialValue = $hasWire ? null : old($name, $attributes->get('value'));
-    // Normalisasi options menjadi list of ['value' => ..., 'label' => ...].
+    // Normalisasi options menjadi list of ['value' => ..., 'label' => ..., 'keywords' => ...].
+    // `keywords` (opsional) ikut dicocokkan saat mencari, mis. nama lain negara.
     $normalized = collect($options)->map(function ($opt) {
         if (is_array($opt)) {
-            return ['value' => (string) ($opt['value'] ?? ''), 'label' => (string) ($opt['label'] ?? '')];
+            return [
+                'value' => (string) ($opt['value'] ?? ''),
+                'label' => (string) ($opt['label'] ?? ''),
+                'keywords' => (string) ($opt['keywords'] ?? ''),
+            ];
         }
-        return ['value' => (string) $opt, 'label' => (string) $opt];
+        return ['value' => (string) $opt, 'label' => (string) $opt, 'keywords' => ''];
     })->values()->all();
 @endphp
 
@@ -54,8 +59,14 @@
             },
             get filtered() {
                 if (!this.search.trim()) return this.options;
-                const s = this.search.toLowerCase();
-                return this.options.filter(o => o.label.toLowerCase().includes(s));
+                const s = this.search.trim().toLowerCase();
+                return this.options.filter(o => o.label.toLowerCase().includes(s) || o.keywords.toLowerCase().includes(s));
+            },
+            // Tampilkan kata kunci bila item cocok lewat kata kunci saja (bukan label),
+            // agar jelas mengapa muncul, mis. cari Cina → Tiongkok · China, Cina, ...
+            matchedKeywords(o) {
+                const s = this.search.trim().toLowerCase();
+                return s && o.keywords && !o.label.toLowerCase().includes(s) ? o.keywords : '';
             },
             position() {
                 const r = this.$refs.trigger.getBoundingClientRect();
@@ -179,6 +190,8 @@
                                 ? 'bg-primary-100 text-primary-800'
                                 : (String(opt.value) === String(value ?? '') ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
                             <span x-text="opt.label"></span>
+                            <span x-show="matchedKeywords(opt)" x-text="'· ' + matchedKeywords(opt)"
+                                class="ml-1 text-xs font-normal text-slate-400"></span>
                         </li>
                     </template>
                     <li x-show="filtered.length === 0" class="px-3 py-2 text-xs text-slate-500">

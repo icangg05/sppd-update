@@ -7,8 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\SppdController;
 use App\Http\Controllers\SppdDigitalSignatureController;
+use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\KirimChatWebhookController;
 use App\Jobs\LogQueueHeartbeatJob;
 use App\Livewire\Sppd\SppdCalendar;
 use App\Livewire\Sppd\SppdCreate;
@@ -17,8 +17,10 @@ use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\Sppd\SppdShow;
 use App\Livewire\Budgets\BudgetForm;
 use App\Livewire\Budgets\BudgetIndex;
+use App\Livewire\CountryIndex;
 use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
+use App\Livewire\ForeignCityIndex;
 use App\Livewire\PositionIndex;
 use App\Livewire\ProvinceIndex;
 use App\Livewire\RankIndex;
@@ -65,7 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', \App\Livewire\Profile::class)->name('profile');
 
     // Panduan fitur
-    Route::view('/panduan/whatsapp', 'guides.whatsapp')->name('guide.whatsapp');
+    Route::view('/panduan/telegram', 'guides.telegram')->name('guide.telegram');
     Route::view('/panduan/install', 'guides.pwa')->name('guide.pwa');
 
     // Menu pejabat kepemimpinan (daftar role dari config/menu_access.php)
@@ -165,9 +167,11 @@ Route::middleware('auth')->group(function () {
 
         // Workflows SPPD & Roles/Permissions — hanya super_admin.
         Route::middleware('role:super_admin')->group(function () {
-            // Master Data Wilayah & Pangkat — kelola penuh oleh Super Admin.
+            // Master Data Wilayah (dalam & luar negeri) & Pangkat — kelola penuh oleh Super Admin.
             Route::get('/provinces', ProvinceIndex::class)->name('provinces.index');
             Route::get('/regencies', RegencyIndex::class)->name('regencies.index');
+            Route::get('/countries', CountryIndex::class)->name('countries.index');
+            Route::get('/foreign-cities', ForeignCityIndex::class)->name('foreign-cities.index');
             Route::get('/ranks', RankIndex::class)->name('ranks.index');
 
             // Workflow SPPD — Livewire full-page (index, create, edit).
@@ -259,5 +263,5 @@ Route::middleware('auth')->group(function () {
     })->name('system.health');
 });
 
-// Kirim.Chat Webhook
-Route::post('/webhook/kirimchat', [KirimChatWebhookController::class, 'handle'])->name('webhook.kirimchat');
+// Telegram Bot Webhook
+Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])->name('webhook.telegram');

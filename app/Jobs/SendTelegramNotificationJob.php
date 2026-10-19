@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\KirimChatService;
+use App\Services\TelegramService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class SendWhatsAppNotificationJob implements ShouldQueue
+class SendTelegramNotificationJob implements ShouldQueue
 {
   use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -22,25 +22,25 @@ class SendWhatsAppNotificationJob implements ShouldQueue
   public array $backoff = [10, 60, 300];
 
   public function __construct(
-    public readonly string $phone,
+    public readonly string $chatId,
     public readonly string $message,
   ) {}
 
-  public function handle(KirimChatService $kirimChat): void
+  public function handle(TelegramService $telegram): void
   {
-    if (empty($this->phone)) {
-      Log::warning('SendWhatsAppNotificationJob: no phone number provided, skipping.');
+    if (empty($this->chatId)) {
+      Log::warning('SendTelegramNotificationJob: no chat_id provided, skipping.');
 
       return;
     }
 
-    $kirimChat->send($this->phone, $this->message);
+    $telegram->send($this->chatId, $this->message);
   }
 
   public function failed(Throwable $exception): void
   {
-    Log::error('SendWhatsAppNotificationJob gagal setelah semua percobaan.', [
-      'phone' => $this->phone,
+    Log::error('SendTelegramNotificationJob gagal setelah semua percobaan.', [
+      'chat_id' => $this->chatId,
       'error' => $exception->getMessage(),
     ]);
   }

@@ -7,7 +7,7 @@ use App\Enums\SignatureDocumentType;
 use App\Enums\SignatureStatus;
 use App\Enums\SppdStatus;
 use App\Jobs\SendTteSignRequestJob;
-use App\Jobs\SendWhatsAppNotificationJob;
+use App\Jobs\SendTelegramNotificationJob;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Services\ApproverNotifier;
@@ -403,7 +403,7 @@ class SppdShow extends Component
   {
     try {
       $recipient = $sppd->creator ?? $sppd->user;
-      if ($recipient && $recipient->canReceiveWhatsApp()) {
+      if ($recipient && $recipient->canReceiveTelegram()) {
         $purpose      = $sppd->purpose;
         $detailUrl    = route('sppd.show', $sppd);
         $actorName    = $actor?->name ?? 'Pejabat';
@@ -439,7 +439,7 @@ class SppdShow extends Component
           . "🔗 {$detailUrl}\n\n"
           . 'Terima kasih.';
 
-        SendWhatsAppNotificationJob::dispatch($recipient->phone, $message);
+        SendTelegramNotificationJob::dispatch($recipient->telegram_chat_id, $message);
       }
     } catch (\Exception $e) {
       // Ignore notification errors

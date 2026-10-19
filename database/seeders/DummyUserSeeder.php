@@ -157,7 +157,6 @@ class DummyUserSeeder extends Seeder
         'name'          => 'WAWAN ASTANTO, S.Sos., M.Si',
         'username'      => 'sekretaris_kominfo',
         'email'         => null,
-        'phone'         => '081242182297',
         'nik'           => null,
         'nip'           => '199611302020022001',
         'employee_type' => EmployeeType::PNS,

@@ -159,13 +159,40 @@
 								@foreach ($destinations as $index => $dest)
 									<div class="dest-row grid grid-cols-1 {{ $domain === 'lddp' ? 'md:grid-cols-2' : 'md:grid-cols-3' }} gap-2 p-3 bg-slate-50/80 border border-slate-200 rounded relative items-start">
 										@if ($isLuarNegeri)
-											{{-- Luar negeri: negara dari daftar baku, kota diketik bebas. --}}
-											<x-form.searchable-select wire:model="destinations.{{ $index }}.country"
+											{{-- Luar negeri: negara & kota dari master data; kota yang belum
+											     terdaftar bisa diketik manual lewat pilihan "Kota lain". --}}
+											@php
+												$otherCity = \App\Livewire\Sppd\SppdCreateDetails::OTHER_CITY;
+												$cityOptions = collect($this->getCitiesForCountry($dest['country']))
+													->push(['value' => $otherCity, 'label' => 'Kota lain (ketik manual)…'])
+													->all();
+											@endphp
+											<x-form.searchable-select wire:model.live="destinations.{{ $index }}.country"
 												:options="$countries" placeholder="— Negara —" searchPlaceholder="Cari negara..." required />
 											<div>
-												<input type="text" wire:model="destinations.{{ $index }}.city"
-													class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
-													placeholder="Kota tujuan (misal: Tokyo)" required>
+												@if (($dest['city_choice'] ?? '') === $otherCity)
+													{{-- Isian manual menggantikan dropdown; tombol × kembali ke daftar kota. --}}
+													<div wire:key="city-manual-{{ $index }}" class="relative">
+														<input type="text" wire:model="destinations.{{ $index }}.city"
+															x-init="window.matchMedia('(pointer: fine)').matches && $el.focus()"
+															class="w-full rounded border border-slate-300 bg-white py-2 pl-3 pr-9 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
+															placeholder="Ketik nama kota tujuan" required>
+														<button type="button" wire:click="$set('destinations.{{ $index }}.city_choice', '')"
+															class="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-slate-400 transition hover:text-rose-600"
+															title="Batal ketik manual, pilih dari daftar kota" aria-label="Kembali ke daftar kota">
+															<i class="fa-solid fa-xmark text-sm"></i>
+														</button>
+													</div>
+												@else
+													{{-- wire:key memuat negara agar opsi kota (di-init Alpine sekali saat
+													     mount) ikut diperbarui saat negara berubah. --}}
+													<div wire:key="city-{{ $index }}-{{ $dest['country'] ?: 'none' }}">
+														<x-form.searchable-select wire:model.live="destinations.{{ $index }}.city_choice"
+															:options="$cityOptions" :disabled="blank($dest['country'])"
+															:placeholder="blank($dest['country']) ? '— Pilih negara dulu —' : '— Kota —'"
+															searchPlaceholder="Cari kota..." required />
+													</div>
+												@endif
 												@error("destinations.{$index}.city") <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 											</div>
 										@else

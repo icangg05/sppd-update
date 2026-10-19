@@ -14,8 +14,9 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Modal tambah / edit jabatan — dipakai bersama oleh halaman Data Jabatan dan
- * formulir pegawai. Super Admin mengisi form lengkap (level, cakupan, role
- * default); Admin OPD cukup memilih Tingkat Jabatan dalam bahasa awam.
+ * formulir pegawai. Semua pengguna memilih Tingkat Jabatan (ditebak dari nama)
+ * yang menurunkan role default, cakupan, dan level; Super Admin juga bisa
+ * mengubah level. Nilai otomatis selalu diisi lebih dulu dan tetap bisa diubah.
  *
  * Dibuka lewat event `open-position-form` dan mengirim `position-saved`
  * setelah berhasil disimpan.
@@ -24,33 +25,31 @@ class PositionFormModal extends Component
 {
   use InteractsWithToast;
 
-  // Role kewenangan yang tidak terkait jabatan, jadi tak boleh jadi role default.
-  public const EXCLUDED_ROLES = ['super_admin', 'admin_opd', 'pimpinan_dprd', 'anggota_dprd'];
-
-  // Role tingkat Pemkot yang pemangkunya hanya satu di seluruh sistem.
-  private const SYSTEM_ROLES = ['walikota', 'wakil_walikota', 'sekda', 'asisten'];
-
   public bool $show = false;
   public ?int $editingId = null;
 
   public string $name = '';
-  public int $level = 1000;
-  public string $scope = PositionScope::NONE->value;
-  public string $defaultRole = '';
   public string $tier = PositionTier::STAF->value;
+  public int $level = Position::DEFAULT_LEVEL;
 
-  // Tingkat saat modal edit dibuka — bila tidak diubah, role & cakupan lama dipertahankan.
+  // Saat edit: tingkat, role, dan cakupan tersimpan. Bila tingkat tidak diganti,
+  // role & cakupan lama dipertahankan (mis. role khusus Walikota/Sekwan).
   public ?string $originalTier = null;
+  public ?string $storedRole = null;
+  public ?string $storedScope = null;
 
-  // Tebakan dari nama berhenti setelah pengguna memilih role/tingkat/cakupan sendiri.
-  public bool $roleTouched = false;
+  // Tebakan tingkat dari nama berhenti setelah pengguna memilih tingkat sendiri.
+  public bool $tierTouched = false;
+
+  // Level mengikuti tingkat sampai Super Admin mengisinya sendiri.
+  public bool $levelTouched = false;
 
   #[On('open-position-form')]
   public function open(?int $id = null, string $name = ''): void
   {
     abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
 
-    $this->reset(['editingId', 'name', 'level', 'scope', 'defaultRole', 'tier', 'originalTier', 'roleTouched']);
+    $this->reset(['editingId', 'name', 'tier', 'level', 'originalTier', 'storedRole', 'storedScope', 'tierTouched', 'levelTouched']);
     $this->resetValidation();
 
     if ($id) {
@@ -59,12 +58,12 @@ class PositionFormModal extends Component
 
       $this->editingId    = $position->id;
       $this->name         = $position->name;
-      $this->level        = $position->level;
-      $this->scope        = ($position->uniqueness_scope ?? PositionScope::NONE)->value;
-      $this->defaultRole  = $position->default_role ?? '';
+      $this->level        = (int) $position->level;
       $this->tier         = PositionTier::fromRole($position->default_role)->value;
       $this->originalTier = $this->tier;
-      $this->roleTouched  = true;
+      $this->storedRole   = $position->default_role;
+      $this->storedScope  = ($position->uniqueness_scope ?? PositionScope::NONE)->value;
+      $this->tierTouched  = true;
     } else {
       $this->name = trim($name);
       $this->guessFromName();
@@ -80,44 +79,50 @@ class PositionFormModal extends Component
 
   public function updatedName(): void
   {
-    if (! $this->editingId && ! $this->roleTouched) {
+    if (! $this->editingId && ! $this->tierTouched) {
       $this->guessFromName();
     }
   }
 
   public function updatedTier(): void
   {
-    $this->roleTouched = true;
+    $this->tierTouched = true;
+    $this->applyTierLevel();
   }
 
-  public function updatedDefaultRole(): void
+  public function updatedLevel(): void
   {
-    $this->roleTouched = true;
+    $this->levelTouched = true;
   }
 
-  public function updatedScope(): void
-  {
-    $this->roleTouched = true;
-  }
-
-  /**
-   * Isi tingkat (Admin OPD) atau role default + cakupan (Super Admin) dari nama.
-   */
   private function guessFromName(): void
   {
     if (trim($this->name) === '') {
       return;
     }
 
-    $role = Position::guessDefaultRole($this->name);
+    $this->tier = PositionTier::guessFromName($this->name)->value;
+    $this->applyTierLevel();
+  }
 
-    $this->tier        = PositionTier::fromRole($role)->value;
-    $this->defaultRole = $role ?? '';
-    $this->scope       = match (true) {
-      in_array($role, self::SYSTEM_ROLES, true) => PositionScope::SYSTEM->value,
-      $role === null || $role === 'staf'        => PositionScope::NONE->value,
-      default                                   => PositionScope::DEPARTMENT->value,
-    };
+  private function applyTierLevel(): void
+  {
+    if (! $this->levelTouched) {
+      $this->level = Position::levelForRole($this->currentTier()->role());
+    }
+  }
+
+  private function currentTier(): PositionTier
+  {
+    return PositionTier::tryFrom($this->tier) ?? PositionTier::LAINNYA;
+  }
+
+  /**
+   * Jabatan baru, atau tingkatnya diganti saat edit — role & cakupan ikut tingkat.
+   */
+  private function tierChanged(): bool
+  {
+    return ! $this->editingId || $this->tier !== $this->originalTier;
   }
 
   public function save(): void
@@ -127,20 +132,17 @@ class PositionFormModal extends Component
 
     $isSuperAdmin = $this->isSuperAdmin();
 
-    $rules = ['name' => ['required', 'string', 'max:255']];
+    $rules = [
+      'name' => ['required', 'string', 'max:255'],
+      'tier' => ['required', Rule::enum(PositionTier::class)],
+    ];
     if ($isSuperAdmin) {
-      $rules['level']       = ['required', 'integer', 'min:0', 'max:9999'];
-      $rules['scope']       = ['required', Rule::enum(PositionScope::class)];
-      $rules['defaultRole'] = ['nullable', 'string', Rule::exists('roles', 'name'), Rule::notIn(self::EXCLUDED_ROLES)];
-    } else {
-      $rules['tier'] = ['required', Rule::enum(PositionTier::class)];
+      $rules['level'] = ['required', 'integer', 'min:0', 'max:9999'];
     }
 
     $this->validate($rules, [], [
-      'name'        => 'nama jabatan',
-      'scope'       => 'cakupan keunikan',
-      'defaultRole' => 'role default',
-      'tier'        => 'tingkat jabatan',
+      'name' => 'nama jabatan',
+      'tier' => 'tingkat jabatan',
     ]);
 
     $position = $this->editingId ? Position::with('creator')->findOrFail($this->editingId) : null;
@@ -155,18 +157,20 @@ class PositionFormModal extends Component
       return;
     }
 
+    $tier = $this->currentTier();
     $data = ['name' => SmartTitle::convert(trim($this->name))];
 
-    if ($isSuperAdmin) {
-      $data['level']            = $this->level;
-      $data['uniqueness_scope'] = $this->scope;
-      $data['default_role']     = $this->defaultRole !== '' ? $this->defaultRole : null;
-    } elseif (! $position || $this->tier !== $this->originalTier) {
-      // Admin OPD: role & cakupan diturunkan dari tingkat. Saat edit tanpa
-      // mengganti tingkat, pengaturan yang mungkin sudah disesuaikan Super Admin dipertahankan.
-      $tier = PositionTier::from($this->tier);
+    if ($this->tierChanged()) {
       $data['uniqueness_scope'] = $tier->scope()->value;
       $data['default_role']     = $tier->role();
+    }
+
+    // Super Admin menyimpan level dari form (otomatis dari tingkat, bisa diubah);
+    // Admin OPD selalu memakai level otomatis tingkat.
+    if ($isSuperAdmin) {
+      $data['level'] = $this->level;
+    } elseif ($this->tierChanged()) {
+      $data['level'] = Position::levelForRole($tier->role());
     }
 
     if ($position) {
@@ -187,18 +191,18 @@ class PositionFormModal extends Component
 
   public function render()
   {
-    $roles = $this->show
-      ? Role::whereNotIn('name', self::EXCLUDED_ROLES)->orderBy('label')->get(['name', 'label'])
-      : collect();
-
-    $tier = PositionTier::tryFrom($this->tier) ?? PositionTier::LAINNYA;
+    // Ringkasan role & cakupan yang akan berlaku: nilai tersimpan bila tingkat
+    // tidak diganti saat edit, selain itu turunan dari tingkat terpilih.
+    $tier = $this->currentTier();
+    $roleName = $this->tierChanged() ? $tier->role() : $this->storedRole;
+    $scope = $this->tierChanged()
+      ? $tier->scope()
+      : (PositionScope::tryFrom($this->storedScope ?? '') ?? PositionScope::NONE);
 
     return view('livewire.position-form-modal', [
-      'roles'         => $roles,
-      'scopes'        => PositionScope::cases(),
-      'tiers'         => PositionTier::cases(),
-      'tierRoleLabel' => $tier->role() ? $roles->firstWhere('name', $tier->role())?->label : null,
-      'tierScope'     => $tier->scope(),
+      'tiers'        => PositionTier::cases(),
+      'summaryRole'  => $this->show && $roleName ? (Role::where('name', $roleName)->value('label') ?? $roleName) : null,
+      'summaryScope' => $scope,
     ]);
   }
 }

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
  * (LogQueueHeartbeatJob menulis PROCESSED_KEY ke cache store "database").
  *
  * Dipakai sebagai gerbang sebelum membuat/merevisi SPPD: jika worker mati,
- * notifikasi WhatsApp ke approver tidak akan terkirim, jadi pengajuan ditolak.
+ * notifikasi Telegram ke approver tidak akan terkirim, jadi pengajuan ditolak.
  */
 class QueueHealthService
 {

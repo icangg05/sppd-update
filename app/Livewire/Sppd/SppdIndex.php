@@ -330,11 +330,13 @@ class SppdIndex extends Component
           } elseif ($jabatan === 'staf_setda') {
             $q->role(['kasubid_kasubag', 'staf']);
           } elseif ($jabatan === 'camat') {
-            $q->role(['camat', 'sekcam']);
+            // Camat/Lurah/Kapus memakai role Kepala OPD di zona unitnya (data sudah
+            // dibatasi per zona); role khusus lama tetap dihitung.
+            $q->role(['camat', 'sekcam', 'kepala_opd']);
           } elseif ($jabatan === 'lurah') {
-            $q->role(['lurah']);
+            $q->role(['lurah', 'kepala_opd']);
           } elseif ($jabatan === 'kapus') {
-            $q->role(['kapus']);
+            $q->role(['kapus', 'kepala_opd']);
           } elseif ($jabatan === 'staf') {
             $q->role('staf');
           } elseif ($jabatan === 'anggota_dprd') {

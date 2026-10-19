@@ -1,4 +1,4 @@
-<div x-data="{ showResetModal: false }">
+<div x-data="{ showUnlinkModal: false }">
 	<div class="mx-auto max-w-5xl space-y-6">
 
 		{{-- ── Hero identitas ── --}}
@@ -43,18 +43,16 @@
 						{{ $user->roles->first()?->label ?? 'Tanpa Role' }}
 					</x-ui.badge>
 
-					@if ($phoneVerified)
-						<span
-							class="inline-flex items-center rounded px-2 py-1 text-[11px] font-medium text-green-700 ring-1 ring-inset ring-green-600/20 bg-green-50">
-							<i class="fa-brands fa-whatsapp mr-1.5 text-[11px]"></i>
-							WhatsApp Terverifikasi
-						</span>
+					@if ($telegramLinked)
+						<x-ui.badge color="sky">
+							<i class="fa-brands fa-telegram mr-1.5 text-[11px]"></i>
+							Telegram Terhubung
+						</x-ui.badge>
 					@else
-						<span
-							class="inline-flex items-center rounded px-2 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 bg-amber-50">
-							<i class="fa-brands fa-whatsapp mr-1.5 text-[11px]"></i>
-							Belum Verifikasi
-						</span>
+						<x-ui.badge color="amber">
+							<i class="fa-brands fa-telegram mr-1.5 text-[11px]"></i>
+							Telegram Belum Terhubung
+						</x-ui.badge>
 					@endif
 
 					@if ($user->nip)
@@ -118,101 +116,37 @@
         </div>
 			</div>
 
-			{{-- Hemat scroll: kolom kiri (WhatsApp + Ganti Password) berdampingan dengan Organisasi. --}}
+			{{-- Hemat scroll: kolom kiri (Telegram + Ganti Password) berdampingan dengan Organisasi. --}}
 			<div class="grid gap-6 lg:grid-cols-2 lg:items-start">
 				<div class="space-y-6">
 
-			{{-- ── Kontak / WhatsApp ── --}}
+			{{-- ── Notifikasi Telegram ── --}}
 			<div class="dash-enter rounded border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
 				<div class="mb-5 flex items-center gap-3">
-					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
-						<i class="fa-brands fa-whatsapp"></i>
+					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-sky-50 text-sky-500 ring-1 ring-sky-100">
+						<i class="fa-brands fa-telegram"></i>
 					</div>
 					<div>
-						<h2 class="text-sm font-bold text-slate-800">Nomor WhatsApp</h2>
-						<p class="text-xs text-slate-500">Dipakai untuk notifikasi & verifikasi sistem.</p>
+						<h2 class="text-sm font-bold text-slate-800">Notifikasi Telegram</h2>
+						<p class="text-xs text-slate-500">Notifikasi pengajuan & persetujuan SPPD dikirim lewat Telegram.</p>
 					</div>
 				</div>
 
-				<div class="space-y-1">
-					<label for="phone" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
-						No. Telepon / WhatsApp
-						<span class="ml-1 font-medium normal-case tracking-normal text-slate-400">(opsional)</span>
-					</label>
-					<div class="flex gap-2">
-						<input
-							wire:model="phone"
-							type="tel"
-							id="phone"
-							name="phone"
-							placeholder="Contoh: 08123456789"
-							inputmode="numeric"
-							pattern="[0-9+]*"
-							@if ($phoneVerified) readonly @endif
-							class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('phone') border-red-400 @else border-slate-300 @enderror @if ($phoneVerified) bg-slate-50 cursor-not-allowed @endif" />
+				<div class="space-y-5">
+					@include('livewire.partials.telegram-status', ['testable' => $telegramNotify])
 
-						@if ($phoneVerified)
-							<button type="button" disabled
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 cursor-default">
-								<i class="fa-solid fa-check-circle text-sm"></i> <span class="hidden sm:inline">Terverifikasi</span>
-							</button>
-							@if ($whatsappNotify)
-								<button type="button" wire:click="confirmTestMessage" title="Tes kirim pesan ke nomor ini"
-										class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-primary-500 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-600 hover:text-white active:scale-95">
-									<i class="fa-solid fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Tes Pesan</span>
-								</button>
-							@endif
-							<button type="button" @click="showResetModal = true" title="Ganti nomor WhatsApp"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-amber-500 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white active:scale-95">
-								<i class="fa-solid fa-rotate text-sm"></i> <span class="hidden sm:inline">Ganti</span>
-							</button>
-						@else
-							<button type="button" wire:click="openVerifyModal" wire:loading.attr="disabled"
-								wire:target="openVerifyModal" title="Verifikasi nomor WhatsApp ini"
-								class="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-green-500 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 transition hover:bg-green-600 hover:text-white active:scale-95 disabled:opacity-50">
-								<span wire:loading.remove wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
-									<i class="fa-brands fa-whatsapp text-sm"></i> <span class="hidden sm:inline">Verifikasi</span>
-								</span>
-								<span wire:loading wire:target="openVerifyModal" class="inline-flex items-center gap-1.5">
-									<i class="fa-solid fa-spinner fa-spin text-sm"></i> <span class="hidden sm:inline">Memuat...</span>
-								</span>
-							</button>
-						@endif
-					</div>
-
-					@if ($phoneVerified)
-						<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-green-600">
-							<i class="fa-solid fa-circle-check mt-0.5"></i>
-							<span>Nomor telah diverifikasi dan terkunci. Gunakan tombol <strong>Ganti</strong> jika ingin mengubahnya.</span>
-						</p>
-					@elseif (filled($phone))
-						<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-amber-600">
-							<i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-							<span>Nomor ini belum diverifikasi. Tekan <strong>Verifikasi</strong> dulu agar bisa disimpan.</span>
-						</p>
-					@else
-						<p class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-slate-500">
-							<i class="fa-solid fa-circle-info mt-0.5"></i>
-							<span>Boleh dikosongkan. Isi lalu tekan <strong>Verifikasi</strong> jika ingin menerima notifikasi WhatsApp.</span>
-						</p>
-					@endif
-
-					@error('phone')
-						<p class="mt-0.5 text-xs text-red-500">{{ $message }}</p>
-					@enderror
-
-					{{-- Saklar notifikasi: nomor boleh terverifikasi tapi pesan tidak dikirim. --}}
-					@if ($phoneVerified)
-						<div class="mt-4 rounded border border-slate-200 bg-slate-50 p-3.5">
-							<p class="text-xs font-bold uppercase tracking-wide text-slate-600">Notifikasi WhatsApp</p>
+					{{-- Saklar notifikasi: akun boleh terhubung tapi pesan tidak dikirim. --}}
+					@if ($telegramLinked)
+						<div class="rounded border border-slate-200 bg-slate-50 p-3.5">
+							<p class="text-xs font-bold uppercase tracking-wide text-slate-600">Notifikasi Telegram</p>
 							<p class="mt-1 text-xs text-slate-500">Matikan bila tidak ingin menerima pesan pengajuan/persetujuan.
-								Nomor tetap terverifikasi.</p>
+								Akun tetap terhubung.</p>
 							<div class="mt-2.5 flex flex-wrap gap-2">
 								@foreach ([1 => 'Aktif', 0 => 'Nonaktif'] as $val => $label)
 									<label
 										class="flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-xs font-semibold transition
-											{{ (int) $whatsappNotify === $val ? ($val ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-400 bg-white text-slate-700') : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-100' }}">
-										<input type="radio" wire:model.live="whatsappNotify" value="{{ $val }}"
+											{{ (int) $telegramNotify === $val ? ($val ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-400 bg-white text-slate-700') : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-100' }}">
+										<input type="radio" wire:model.live="telegramNotify" value="{{ $val }}"
 											class="size-3.5 border-slate-300 text-primary-600 focus:ring-primary-500">
 										{{ $label }}
 									</label>
@@ -254,7 +188,7 @@
 					</div>
 					<div>
 						<h2 class="text-sm font-bold text-slate-800">Informasi Organisasi</h2>
-						<p class="text-xs text-slate-500">Dikelola administrator — tidak dapat diubah sendiri.</p>
+						<p class="text-xs text-slate-500">Dikelola administrator dan tidak dapat diubah sendiri.</p>
 					</div>
 				</div>
 
@@ -300,7 +234,7 @@
 			</div>
 		</form>
 
-		@include('livewire.partials.phone-verification')
+		@include('livewire.partials.telegram-link')
 
 	</div>
 </div>

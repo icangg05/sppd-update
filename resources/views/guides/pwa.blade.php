@@ -44,7 +44,7 @@
           </h1>
           <p class="mt-2 max-w-lg text-sm leading-relaxed text-primary-50/90">
             Tambahkan SPPD ke <strong class="font-semibold text-white">layar utama</strong> HP atau laptop.
-            Sekali ketuk langsung terbuka — tanpa mengetik alamat, tampil layar penuh seperti aplikasi biasa.
+            Sekali ketuk langsung terbuka tanpa mengetik alamat, dan tampil layar penuh seperti aplikasi biasa.
           </p>
 
           {{-- Aksi utama --}}
@@ -107,7 +107,7 @@
             'Buka SPPD di browser <strong class="font-semibold text-slate-700">Chrome</strong>.',
             'Ketuk menu <strong class="font-semibold text-slate-700">⋮</strong> (tiga titik) di kanan atas.',
             'Pilih <strong class="font-semibold text-slate-700">Instal aplikasi</strong> / <strong class="font-semibold text-slate-700">Tambahkan ke layar utama</strong>.',
-            'Ketuk <strong class="font-semibold text-slate-700">Instal</strong> — ikon SPPD muncul di layar utama.',
+            'Ketuk <strong class="font-semibold text-slate-700">Instal</strong>, lalu ikon SPPD muncul di layar utama.',
           ],
         ],
         [
@@ -146,7 +146,7 @@
         </span>
         <div>
           <h2 class="text-base font-bold tracking-tight text-slate-800">Cara memasang</h2>
-          <p class="text-xs text-slate-500">Pilih perangkat Anda, lalu ikuti langkahnya — cukup sekali saja.</p>
+          <p class="text-xs text-slate-500">Pilih perangkat Anda, lalu ikuti langkahnya. Cukup sekali saja.</p>
         </div>
       </div>
 
@@ -231,7 +231,7 @@
       <dl class="divide-y divide-slate-100">
         @foreach ([
           ['Tombol "Install Sekarang" tidak muncul?', 'Tombol hanya tersedia di Chrome/Edge (Android & laptop). Di iPhone gunakan Safari lewat <strong class="font-semibold text-slate-700">Bagikan → Tambah ke Layar Utama</strong>. Jika sudah pernah dipasang, tombol memang tidak muncul lagi.'],
-          ['Perlu login ulang setelah dipasang?', 'Tidak. Aplikasi memakai sesi login yang sama seperti di browser — selama belum keluar, langsung masuk dashboard.'],
+          ['Perlu login ulang setelah dipasang?', 'Tidak. Aplikasi memakai sesi login yang sama seperti di browser. Selama belum keluar, Anda langsung masuk ke dashboard.'],
           ['Bisa dipakai tanpa internet?', 'Halaman yang pernah dibuka masih bisa tampil, tapi membuat & menyimpan SPPD tetap butuh koneksi. PWA mempercepat pemuatan, bukan pengganti internet.'],
           ['Cara menghapusnya?', 'Tekan lama ikon SPPD di layar utama, lalu pilih <strong class="font-semibold text-slate-700">Hapus / Uninstall</strong> seperti aplikasi lain. Data akun Anda tidak terpengaruh.'],
         ] as $faq)
