@@ -92,7 +92,7 @@
     <div class="border-b border-slate-100 p-4">
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
-        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
+        <span class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
       </h3>
     </div>
     <div class="divide-y divide-slate-100">
@@ -119,7 +119,7 @@
     (function() {
       function drawCharts() {
       Chart.defaults.font.size = 12;
-      Chart.defaults.font.family = "'Geist', ui-sans-serif, system-ui, sans-serif";
+      Chart.defaults.font.family = "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif";
       Chart.defaults.color = '#64748b';
 
       // Hormati preferensi kurangi-gerak: matikan animasi chart.
@@ -144,7 +144,7 @@
           },
           options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e293b', cornerRadius: 4, padding: 10 } },
+            plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e293b', cornerRadius: 2, padding: 10 } },
             interaction: { mode: 'index', intersect: false },
             scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' }, border: { display: false } } }
           }
@@ -158,7 +158,7 @@
         new Chart(donutCtx, {
           type: 'doughnut',
           data: { labels: filtered.map(s => s.label), datasets: [{ data: filtered.map(s => s.count), backgroundColor: filtered.map(s => s.color), borderWidth: 0, hoverOffset: 4 }] },
-          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 4, padding: 10 } } }
+          options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 2, padding: 10 } } }
         });
       }
       }

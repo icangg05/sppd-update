@@ -20,7 +20,8 @@
 $wireModel = $attributes->whereStartsWith('wire:model')->first();
 $key = $name ?? $wireModel;
 $id = $id ?? $key;
-$resolvedValue = $wireModel ? null : ($value ?? old($name));
+// Tanpa name (mis. x-model Alpine saja) jangan panggil old(null): itu mengembalikan seluruh old input (array).
+$resolvedValue = $wireModel ? null : ($value ?? ($name ? old($name) : null));
 
 // Field disabled otomatis berlatar abu-abu — ubah di satu tempat ini saja.
 $disabledAttr = $attributes->get('disabled');

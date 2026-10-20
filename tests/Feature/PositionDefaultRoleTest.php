@@ -31,7 +31,7 @@ class PositionDefaultRoleTest extends TestCase
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
 
-        // Cerminan workflow produksi: OPD & kewilayahan hanya mengenal Staf,
+        // Fixture alur (bukan salinan produksi): OPD & kewilayahan hanya mengenal Staf,
         // Sekretaris OPD, dan Kepala OPD; Kabid/Kabag hanya di alur Setda.
         SppdWorkflow::create([
             'name' => 'Staf',
@@ -306,7 +306,7 @@ class PositionDefaultRoleTest extends TestCase
         Position::create(['name' => 'Jabatan Input OPD Lain', 'created_by' => $otherAdmin->id]);
 
         $page = Livewire::actingAs($admin)->test(PositionIndex::class)
-            ->assertSee(['Bawaan Sistem', 'Input OPD Saya'])
+            ->assertSee(['Bawaan Sistem', 'Ditambahkan OPD Saya'])
             ->assertDontSee('Tambahan Semua OPD');
 
         $page->call('setSource', 'system')

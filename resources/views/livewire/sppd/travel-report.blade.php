@@ -18,7 +18,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
           <i class="fa-solid fa-pen-to-square text-[9px]"></i> Langkah Laporan Akhir
         </span>
         <h1 class="text-xl font-bold tracking-tight text-slate-800">Laporan Perjalanan Dinas</h1>
@@ -64,13 +64,13 @@
     <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
       <i class="fa-solid fa-list-check text-emerald-600"></i>
       <span>Kelengkapan berkas</span>
-      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500 tabular-nums">{{ $doneCount }}/2</span>
+      <span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500 tabular-nums">{{ $doneCount }}/2</span>
     </div>
     <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-      <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 {{ $hasFile ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
+      <span class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 {{ $hasFile ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
         <i class="fa-solid {{ $hasFile ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }}"></i> Dokumen Laporan
       </span>
-      <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 {{ $hasPhoto ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
+      <span class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 {{ $hasPhoto ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
         <i class="fa-solid {{ $hasPhoto ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }}"></i> Foto Dokumentasi
       </span>
     </div>

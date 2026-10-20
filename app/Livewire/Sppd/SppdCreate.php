@@ -117,12 +117,8 @@ class SppdCreate extends Component
     $this->hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
 
     // 4. Verifikasi Kelengkapan Pejabat
-    $allStepsFound = true;
-    foreach ($this->steps as $step) {
-      if ($step['status'] !== 'found') {
-        $allStepsFound = false;
-      }
-    }
+    // Tahap berstatus "choose" (beberapa kandidat pejabat) dipilih di form detail.
+    $allStepsFound = collect($this->steps)->doesntContain('status', 'not_found');
 
     if (! $allStepsFound) {
       $this->errorMessage = 'Ada pejabat struktural yang belum ditentukan dalam alur ini. Harap lengkapi struktur organisasi di menu Unit Kerja.';

@@ -22,7 +22,7 @@
       <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
         <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
         @if ($pendingApprovals->isNotEmpty())
-          <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
+          <span class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
         @endif
       </h3>
       <a wire:navigate href="{{ route('sppd.index', ['filter' => 'approval']) }}"
@@ -62,7 +62,7 @@
         <div class="border-b border-slate-100 p-4">
           <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
             <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
-            <span class="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">{{ $pendingSignatures->count() }}</span>
+            <span class="inline-flex items-center rounded bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">{{ $pendingSignatures->count() }}</span>
           </h3>
         </div>
         <div class="flex max-h-44 flex-col divide-y divide-slate-100 overflow-y-auto">

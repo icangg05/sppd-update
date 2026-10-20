@@ -488,7 +488,17 @@ class UserForm extends Component
     if ($this->isEdit) {
       $this->user->update($data);
       $this->user->syncRoles([$this->role]);
+
+      // Pimpinan unit mengikuti penempatan: pindah ke unit lain melepas posisi pimpinan di unit lama.
+      $released = Department::where('head_id', $this->user->id)
+        ->where('id', '!=', $this->user->department_id)
+        ->get();
+      $released->each->update(['head_id' => null]);
+
       $this->toastSuccess("Pegawai {$this->user->name} berhasil diperbarui.");
+      if ($released->isNotEmpty()) {
+        $this->toastInfo('Posisi pimpinan ' . $released->pluck('name')->join(', ') . ' dikosongkan karena pegawai pindah unit.');
+      }
       return;
     } else {
       $data['is_active'] = true;
@@ -503,33 +513,31 @@ class UserForm extends Component
     }
   }
 
-  private function getHierarchicalDepartments()
+  /**
+   * Pohon unit kerja untuk pemilih berjenjang (x-form.tree-select).
+   * Satu query lalu dirakit di memori — bukan satu query per simpul.
+   */
+  private function getDepartmentTree(): array
   {
     $user = auth()->user();
 
-    if ($user->hasRole('super_admin')) {
-      $roots = Department::whereNull('parent_id')->orderBy('name')->get();
-    } else {
-      $dept  = $user->department;
-      $roots = $dept ? Department::where('id', $dept->id)->get() : collect();
-    }
+    $all      = Department::treeOrder()->get(['id', 'parent_id', 'name', 'type']);
+    $byParent = $all->groupBy(fn($d) => $d->parent_id ?? 0);
 
-    $list = [];
-    foreach ($roots as $root) {
-      $this->flattenDepartment($root, 0, $list);
-    }
+    $roots = $user->hasRole('super_admin')
+      ? $byParent->get(0, collect())
+      : $all->where('id', $user->department_id)->values();
 
-    return $list;
-  }
+    $build = function ($dept) use (&$build, $byParent) {
+      return [
+        'value'    => $dept->id,
+        'label'    => $dept->name,
+        'meta'     => $dept->type?->label(),
+        'children' => $byParent->get($dept->id, collect())->map($build)->values()->all(),
+      ];
+    };
 
-  private function flattenDepartment($dept, $level, &$list)
-  {
-    $dept->display_name = str_repeat('— ', $level) . $dept->name;
-    $list[]             = $dept;
-
-    foreach ($dept->children()->orderBy('name')->get() as $child) {
-      $this->flattenDepartment($child, $level + 1, $list);
-    }
+    return $roots->map($build)->values()->all();
   }
 
   public function render()
@@ -567,7 +575,9 @@ class UserForm extends Component
       : null;
 
     return view('livewire.user-form', [
-      'departments' => $this->getHierarchicalDepartments(),
+      'departmentTree' => $this->getDepartmentTree(),
+      // Unit yang dipimpin pegawai ini (diatur di halaman struktur unit kerja).
+      'headOfUnits' => $this->isEdit ? Department::where('head_id', $this->user->id)->pluck('name') : collect(),
       'ranks' => Rank::orderBy('group')->get(),
       'positions' => $positions,
       'positionsHasMore' => $positionsHasMore,

@@ -10,7 +10,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-violet-700 ring-1 ring-inset ring-violet-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-violet-700 ring-1 ring-inset ring-violet-600/15">
           <i class="fa-solid fa-user-shield text-[9px]"></i>
           Hak Akses
           <span class="ml-1 tabular-nums text-violet-600/70">· {{ $roles->total() }}</span>
@@ -96,7 +96,7 @@
               <td data-label="Pengguna" class="py-2.5 px-4 text-center">
                 @if ($role->users_count > 0)
                   <a href="{{ route('master.users.index', array_filter(['role' => $role->name, 'type' => in_array($role->name, ['anggota_dprd', 'pimpinan_dprd']) ? 'dprd' : ''])) }}" wire:navigate
-                    class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-600/20 transition hover:bg-violet-100"
+                    class="inline-flex items-center gap-1 rounded bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-600/20 transition hover:bg-violet-100"
                     title="Lihat pegawai dengan role ini">
                     <i class="fa-solid fa-users text-[10px]"></i> {{ $role->users_count }}
                   </a>

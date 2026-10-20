@@ -7,14 +7,9 @@
 	<meta name="robots" content="noindex, nofollow">
 	<title>Detail SPPD {{ $sppd->document_number ? '- ' . $sppd->document_number : '' }} | {{ config('app.name') }}</title>
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500,600,700" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 	@vite(['resources/css/app.css'])
-	<style>
-		body {
-			font-family: 'Poppins', sans-serif;
-		}
-	</style>
 </head>
 
 <body class="bg-slate-100 text-slate-900">
@@ -42,7 +37,7 @@
 
 			<div class="relative flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="min-w-0 leading-tight">
-					<span class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					<span class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 						<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
 					</span>
 					<h1 class="text-2xl font-bold tracking-tight text-slate-800">Detail Surat Perjalanan Dinas</h1>

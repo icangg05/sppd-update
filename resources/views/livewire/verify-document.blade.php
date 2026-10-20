@@ -9,7 +9,7 @@
 
     <div class="relative min-w-0 leading-tight">
       <span
-        class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+        class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
         <i class="fa-solid fa-certificate text-[9px]"></i>
         Keaslian Dokumen
       </span>

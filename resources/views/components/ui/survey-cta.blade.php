@@ -45,7 +45,7 @@
 					</span>
 					<p class="text-sm font-semibold text-slate-600">Memuat survei…</p>
 				</div>
-				<iframe x-ref="frame" data-src="{{ config('app.survey_url') }}" title="Survei Kepuasan Layanan"
+				<iframe x-ref="frame" data-src="{{ app(\App\Services\AppSettings::class)->get('survey_url') }}" title="Survei Kepuasan Layanan"
 					@load="if ($refs.frame.src) loading = false" class="h-full w-full border-0"></iframe>
 			</div>
 

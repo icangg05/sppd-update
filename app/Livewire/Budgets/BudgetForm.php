@@ -144,7 +144,7 @@ class BudgetForm extends Component
   private function getHierarchicalDepartments(): array
   {
     if ($this->isSuperAdmin) {
-      $roots = Department::whereNull('parent_id')->orderBy('name')->get();
+      $roots = Department::whereNull('parent_id')->treeOrder()->get();
     } else {
       $dept  = $this->currentUser()->department;
       $roots = $dept ? Department::where('id', $dept->id)->get() : collect();
@@ -163,7 +163,7 @@ class BudgetForm extends Component
     $dept->display_name = str_repeat('— ', $level) . $dept->name;
     $list[]             = $dept;
 
-    foreach ($dept->children()->orderBy('name')->get() as $child) {
+    foreach ($dept->children()->treeOrder()->get() as $child) {
       $this->flattenDepartment($child, $level + 1, $list);
     }
   }

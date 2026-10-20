@@ -29,39 +29,20 @@
 		</div>
 	@endif
 
-	{{-- Banner penguncian dengan hitung mundur yang terlihat --}}
+	{{-- Alert akun dikunci sementara: hilang sendiri saat hitung mundur selesai --}}
 	<div x-show="remaining > 0" x-cloak
-		class="mt-3 flex items-center gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="status">
-		<svg class="h-5 w-5 shrink-0 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-			stroke-width="2" stroke="currentColor">
-			<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-		</svg>
-		<p class="font-medium text-amber-800">
-			Terlalu banyak percobaan gagal. Coba lagi dalam
-			<span class="font-mono text-base font-bold text-amber-900" x-text="remaining"></span> detik.
-			@if ($attemptsBeforeBlock > 0)
-				<span class="mt-1 block text-xs font-semibold text-rose-700">
-					Jika password salah {{ $attemptsBeforeBlock }} kali lagi, akun akan diblokir dan harus dibuka oleh Super Admin.
-				</span>
-			@endif
-		</p>
-	</div>
-
-	{{-- Di luar hitung mundur: ingatkan sisa percobaan sebelum akun diblokir
-	     (tidak pernah tampil untuk super_admin karena akunnya tidak bisa diblokir). --}}
-	@if ($attemptsBeforeBlock > 0)
-		<div x-show="remaining <= 0" x-cloak
-			class="mt-3 flex items-center gap-3 rounded border border-rose-200 bg-rose-50 p-3.5 text-sm shadow-sm" role="status">
-			<i class="fa-solid fa-triangle-exclamation shrink-0 text-base text-rose-600"></i>
-			<p class="font-medium text-rose-800">
-				@if ($attemptsBeforeBlock === 1)
-					Kesempatan terakhir: jika password salah lagi, akun akan diblokir dan Anda harus menghubungi Super Admin.
-				@else
-					Sisa {{ $attemptsBeforeBlock }} kali percobaan. Jika password salah {{ $attemptsBeforeBlock }} kali lagi, akun akan diblokir dan Anda harus menghubungi Super Admin.
-				@endif
+		class="mt-3 flex items-start gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="alert">
+		<i class="fa-solid fa-clock mt-0.5 shrink-0 text-base text-amber-600"></i>
+		<div class="leading-snug">
+			<p class="font-bold text-amber-800">Akun Dikunci Sementara</p>
+			<p class="mt-0.5 text-amber-700">
+				Terlalu banyak percobaan gagal.
+				Silakan tunggu <span class="font-mono font-bold text-amber-900" x-text="remaining"></span> detik.
 			</p>
 		</div>
-	@endif
+	</div>
+
+	{{-- Pesan login lainnya (salah password, field kosong, akun nonaktif) lewat toast. --}}
 
 	{{-- Autofill browser mengisi DOM tanpa memicu event, sehingga state Livewire tetap kosong
 	     dan login gagal. Nilai hasil autofill dipancing sekali saat load agar ikut ter-sync.
@@ -113,9 +94,9 @@
 			<span class="relative inline-flex shrink-0">
 				<input wire:model="remember" type="checkbox" class="peer sr-only">
 				<span
-					class="h-5 w-9 rounded-full bg-sky-100/20 ring-1 ring-inset ring-sky-100/30 transition-colors peer-checked:bg-sky-300/80 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"></span>
+					class="h-5 w-9 rounded bg-sky-100/20 ring-1 ring-inset ring-sky-100/30 transition-colors peer-checked:bg-sky-300/80 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"></span>
 				<span
-					class="absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
+					class="absolute left-0.5 top-0.5 size-4 rounded bg-white shadow transition-transform peer-checked:translate-x-4"></span>
 			</span>
 			Ingat saya
 		</label>

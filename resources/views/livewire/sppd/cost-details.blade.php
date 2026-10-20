@@ -24,7 +24,7 @@
         <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div class="min-w-0 leading-tight">
                 <span
-                    class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+                    class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
                     <i class="fa-solid fa-calculator text-[9px]"></i> Langkah Rincian Biaya
                 </span>
                 <h1 class="text-xl font-bold tracking-tight text-slate-800">Rincian Biaya Perjalanan</h1>
@@ -144,12 +144,12 @@
                             <div class="flex items-center flex-wrap gap-2">
                                 @if ($person['label'] === 'Pelaksana')
                                     <span
-                                        class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                                         <i class="fa-solid fa-user-check text-[8px]"></i> Pelaksana
                                     </span>
                                 @else
                                     <span
-                                        class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                        class="inline-flex items-center gap-1 rounded bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
                                         <i class="fa-solid fa-user text-[8px]"></i> Pengikut
                                     </span>
                                 @endif

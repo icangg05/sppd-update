@@ -29,7 +29,7 @@
         <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
           Laporan Perlu Dilengkapi
           @if ($needReport->isNotEmpty())
-            <span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700">{{ $needReport->count() }}</span>
+            <span class="inline-flex items-center rounded bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700">{{ $needReport->count() }}</span>
           @endif
         </h3>
         <p class="mt-0.5 text-xs text-slate-500">SPPD selesai yang laporannya belum dibuat</p>

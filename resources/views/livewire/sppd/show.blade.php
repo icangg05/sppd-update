@@ -18,7 +18,7 @@
 		<div class="relative flex flex-col justify-between gap-4 px-5 py-4 md:flex-row md:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
 				</span>
 				<h1 class="text-2xl font-bold tracking-tight text-balance text-slate-800">Detail Surat Perjalanan Dinas</h1>

@@ -410,7 +410,7 @@ class DepartmentForm extends Component
     $allowedIds = null;
 
     if ($user->hasRole('super_admin')) {
-      $roots = Department::whereNull('parent_id')->orderBy('name')->get();
+      $roots = Department::whereNull('parent_id')->treeOrder()->get();
     } else {
       $roots = $user->department_id
         ? Department::where('id', $user->department_id)->get()
@@ -440,7 +440,7 @@ class DepartmentForm extends Component
     $dept->display_name = str_repeat('— ', $level) . $dept->name;
     $list[] = $dept;
 
-    foreach ($dept->children()->orderBy('name')->get() as $child) {
+    foreach ($dept->children()->treeOrder()->get() as $child) {
       $this->flattenDepartment($child, $level + 1, $list, $excludeIds, $allowedIds);
     }
   }

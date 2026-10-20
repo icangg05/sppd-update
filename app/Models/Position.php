@@ -123,7 +123,7 @@ class Position extends Model
   /**
    * Role yang berlaku bagi pemangku jabatan ini di unit kerja tertentu.
    * Role default hanya dipakai bila dikenal workflow aktif untuk jenis unit
-   * tersebut (mis. Kabid/Kabag hanya ada di alur Setda & DPRD); bila tidak,
+   * tersebut (mis. Kabid/Irban/Kabag tidak dikenal alur Kecamatan, Kelurahan, dan Puskesmas); bila tidak,
    * pegawai memakai Staf agar tetap bisa mengajukan SPPD.
    */
   public function roleForDepartment(?Department $department): ?string

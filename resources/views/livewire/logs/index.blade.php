@@ -12,7 +12,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] ring-1 ring-inset {{ $isTte ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/15' : 'bg-primary-50 text-primary-700 ring-primary-600/15' }}">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] ring-1 ring-inset {{ $isTte ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/15' : 'bg-primary-50 text-primary-700 ring-primary-600/15' }}">
           <i class="fa-solid {{ $isTte ? 'fa-certificate' : 'fa-clock-rotate-left' }} text-[9px]"></i>
           {{ $isTte ? 'Riwayat TTE' : 'Jejak Aktivitas' }}
           <span class="ml-1 tabular-nums {{ $isTte ? 'text-emerald-600/70' : 'text-primary-600/70' }}">· {{ $totalLogs }}</span>

@@ -19,7 +19,7 @@
       <div class="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div class="flex flex-col items-start gap-1.5">
           <span
-            class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700 ring-1 ring-inset ring-primary-600/15">
+            class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700 ring-1 ring-inset ring-primary-600/15">
             <i class="fa-solid fa-user-shield text-[10px]"></i>
             {{ auth()->user()->roles->first()?->label ?? 'Pengguna' }}
           </span>

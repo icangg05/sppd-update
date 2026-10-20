@@ -44,9 +44,11 @@
 									<div class="relative flex space-x-3">
 										<div>
 											<span
-												class="flex size-8 items-center justify-center rounded-full ring-8 ring-white {{ $step['status'] === 'found' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600' }}">
+												class="flex size-8 items-center justify-center rounded-full ring-8 ring-white {{ $step['status'] === 'found' ? 'bg-emerald-100 text-emerald-600' : ($step['status'] === 'choose' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600') }}">
 												@if ($step['status'] === 'found')
 													<i class="fa-solid fa-check text-xs"></i>
+												@elseif ($step['status'] === 'choose')
+													<i class="fa-solid fa-user-check text-xs"></i>
 												@else
 													<i class="fa-solid fa-xmark text-xs"></i>
 												@endif
@@ -59,7 +61,7 @@
 												</p>
 												<p class="text-xs text-slate-500 mt-0.5">
 													Nama: <span
-														class="{{ $step['status'] === 'found' ? 'font-medium text-slate-700' : 'font-bold text-rose-600' }}">{{ $step['approver_name'] }}</span>
+														class="{{ $step['status'] === 'found' ? 'font-medium text-slate-700' : ($step['status'] === 'choose' ? 'font-medium text-amber-700' : 'font-bold text-rose-600') }}">{{ $step['approver_name'] }}</span>
 												</p>
 											</div>
 											<div class="whitespace-nowrap text-right text-[10px]">
@@ -67,6 +69,11 @@
 													<span
 														class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
 														Aktif
+													</span>
+												@elseif ($step['status'] === 'choose')
+													<span
+														class="inline-flex items-center rounded bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+														Dipilih saat pengajuan
 													</span>
 												@else
 													<span
@@ -132,14 +139,14 @@
 			<div class="min-w-0 leading-tight">
 				@if ($isApprovalMode)
 					<span
-						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-700 ring-1 ring-inset ring-amber-600/15">
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-700 ring-1 ring-inset ring-amber-600/15">
 						<i class="fa-solid fa-clipboard-check text-[9px]"></i> Menunggu Tindakan
 					</span>
 					<h1 class="text-xl font-bold tracking-tight text-slate-800">Persetujuan</h1>
 					<p class="mt-1 text-xs text-slate-500">Daftar SPPD yang menunggu persetujuan Anda</p>
 				@else
 					<span
-						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 						<i class="fa-solid fa-filter text-[9px]"></i> {{ $activeFilterLabel }}
 					</span>
 					<h1 class="text-xl font-bold tracking-tight text-slate-800">Daftar SPPD</h1>

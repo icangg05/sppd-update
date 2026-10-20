@@ -37,10 +37,24 @@
 }
 
 @theme {
-  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  /* Serif institusional untuk masthead/judul; Geist Mono untuk angka (rupiah). */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  /* Serif institusional untuk masthead/judul; IBM Plex Mono untuk angka (rupiah). */
   --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
+  /* ─── Radius: sudut nyaris siku di seluruh skala ───
+     `--radius` dipakai util `rounded` polos (dan rounded-t/l/r/b); skala
+     bernama ikut ditipiskan agar `rounded-lg`/`rounded-xl` dkk tidak
+     memunculkan kelengkungan lagi. Ubah di sini untuk menyetel semuanya. */
+  --radius: 2px;
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
 
   /* ─── Warna primary = BIRU LOGO SPPD (satu sumber kebenaran) ───
      Diturunkan dari warna logo: inti #1A76BA (cerulean) & highlight #3E9AD9
@@ -70,8 +84,9 @@
 
 /* ─────────────────────────────────────────────────────────────────
    SKALA DESAIN (disepakati — terapkan konsisten via util Tailwind):
-   • Radius  : semua elemen (kontrol, kartu, panel, modal, dropdown) = rounded
-               pill status & avatar                                  = rounded-full
+   • Radius  : semua elemen (kontrol, kartu, panel, modal, dropdown, pill,
+               progress bar) = rounded (2px, lihat --radius)
+               hanya lingkaran sejati (avatar, titik status, ikon bulat) = rounded-full
    • Shadow  : kartu = `border border-slate-200` + `shadow-sm`
    • Warna   : elemen interaktif selalu pakai `primary-*` (bukan `cyan-*`)
    ───────────────────────────────────────────────────────────────── */
@@ -212,7 +227,7 @@
 ::-webkit-scrollbar-thumb {
   background: rgb(183, 183, 183);
   /* sweet-spot medium gray */
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -229,13 +244,13 @@
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #f1f5f9;
   /* slate-100 */
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #b8c2cc;
   /* sweet-spot medium gray */
-  border-radius: 10px;
+  border-radius: var(--radius);
   transition: background 0.15s ease-in-out;
 }
 
@@ -262,7 +277,7 @@
 #sidebar-nav::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.3);
   /* slate-400 transparan */
-  border-radius: 9999px;
+  border-radius: var(--radius);
   transition: background 0.15s ease-in-out;
 }
 
@@ -277,7 +292,7 @@
   padding: 0.125rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 500;
-  border-radius: 9999px;
+  border-radius: var(--radius);
 }
 
 .badge-draft {
@@ -361,7 +376,7 @@
 /* ───── Table (varian .data-table — dipakai 4 view) ───── */
 .table-container {
   background: var(--color-surface-card);
-  border-radius: 0.25rem;
+  border-radius: var(--radius);
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   overflow: hidden;

@@ -24,6 +24,7 @@ class Department extends Model
     'letterhead_second',
     'type',
     'level',
+    'sort_order',
     'can_view_children_data',
   ];
 
@@ -32,6 +33,7 @@ class Department extends Model
     return [
       'type' => DepartmentType::class,
       'level' => 'integer',
+      'sort_order' => 'integer',
       'can_view_children_data' => 'boolean',
     ];
   }
@@ -55,6 +57,15 @@ class Department extends Model
       'deleted' => "{$label} dihapus",
       default   => "{$label} {$event}",
     };
+  }
+
+  /**
+   * Urutan tampilan pohon struktur: sort_order (diatur lewat seret-lepas di
+   * halaman unit kerja), lalu nama sebagai pemecah seri.
+   */
+  public function scopeTreeOrder($query)
+  {
+    return $query->orderBy('sort_order')->orderBy('name');
   }
 
   // ──────────────────────────────────────────────

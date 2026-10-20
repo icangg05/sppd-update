@@ -10,7 +10,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
           <i class="fa-solid fa-chart-simple text-[9px]"></i>
           Statistik Kewenangan
           <span class="ml-1 tabular-nums text-primary-600/70">· {{ $stats['total'] }}</span>
@@ -84,8 +84,8 @@
                 <span class="text-slate-500">({{ round($d['count'] / $totalDist * 100) }}%)</span>
               </span>
             </div>
-            <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-              <div class="{{ $d['color'] }} h-full rounded-full" style="width: {{ round($d['count'] / $totalDist * 100) }}%;"></div>
+            <div class="h-2.5 w-full overflow-hidden rounded bg-slate-100">
+              <div class="{{ $d['color'] }} h-full rounded" style="width: {{ round($d['count'] / $totalDist * 100) }}%;"></div>
             </div>
           </div>
         @endforeach
@@ -106,8 +106,8 @@
             <span class="line-clamp-1 font-medium text-slate-600">{{ $unit->unit ?? '-' }}</span>
             <span class="shrink-0 font-semibold text-slate-800">{{ $unit->jumlah }} SPPD</span>
           </div>
-          <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div class="h-full rounded-full bg-primary-500" style="width: {{ round($unit->jumlah / $maxUnit * 100) }}%;"></div>
+          <div class="h-2.5 w-full overflow-hidden rounded bg-slate-100">
+            <div class="h-full rounded bg-primary-500" style="width: {{ round($unit->jumlah / $maxUnit * 100) }}%;"></div>
           </div>
         </div>
       @empty

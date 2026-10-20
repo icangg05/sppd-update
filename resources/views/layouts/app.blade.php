@@ -16,7 +16,7 @@
 	<meta name="mobile-web-app-capable" content="yes">
 
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|geist-mono:400,500,600" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500,600,700" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -69,7 +69,7 @@
 					<span class="hidden text-slate-400 sm:inline">Diskominfo Kota Kendari</span>
 					<span class="hidden text-slate-300 sm:inline">&bull;</span>
 					<span
-						class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-500">v{{ config('app.sppd_version') }}</span>
+						class="hidden sm:inline-flex items-center rounded bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-500">v{{ config('app.sppd_version') }}</span>
 				</div>
 			</div>
 		</footer>

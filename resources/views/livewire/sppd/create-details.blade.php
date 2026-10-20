@@ -10,7 +10,7 @@
 		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-list-ol text-[9px]"></i> Langkah 2 dari 2
 				</span>
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
@@ -54,40 +54,78 @@
 				<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-3">
 					<i class="fa-solid fa-diagram-project text-slate-500"></i> Pratinjau Alur Verifikasi / Persetujuan
 				</h4>
-				{{-- Alur Langkah — timeline horizontal ringkas (vertikal di mobile) --}}
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+				{{-- Alur Langkah — timeline horizontal ringkas (vertikal di mobile).
+				     4 tahap atau lebih dipecah 2 per baris agar nama pejabat tidak terpotong. --}}
+				@php $twoPerRow = count($steps) >= 4; @endphp
+				<div class="{{ $twoPerRow ? 'grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-4' : 'flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0' }}">
 					@foreach ($steps as $step)
 						@php
-							$isFound = ($step['status'] ?? 'found') === 'found';
-							$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : 'bg-red-600 ring-red-100';
-							$roleClass = $isFound ? 'text-emerald-700' : 'text-red-600';
-							$nameClass = $isFound ? 'text-slate-800' : 'text-red-700 italic';
+							// Tahap dengan beberapa kandidat terhitung lengkap setelah pejabatnya dipilih.
+							$isChoose = ($step['status'] ?? 'found') === 'choose';
+							$isPicked = $isChoose && isset($stepApprovers[$step['index']]) && $stepApprovers[$step['index']] !== '';
+							$isFound = ($step['status'] ?? 'found') === 'found' || $isPicked;
+							$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : ($isChoose ? 'bg-amber-500 ring-amber-100' : 'bg-red-600 ring-red-100');
+							$roleClass = $isFound ? 'text-emerald-700' : ($isChoose ? 'text-amber-700' : 'text-red-600');
+							$nameClass = $isFound ? 'text-slate-800' : ($isChoose ? 'text-amber-700 italic' : 'text-red-700 italic');
+							// Mode 2 per baris: panah desktop hanya di antara pasangan dalam satu baris.
+							$desktopConnector = ! $loop->last && (! $twoPerRow || $loop->odd);
 						@endphp
 
-						<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
-							style="animation-delay: {{ $loop->index * 90 }}ms">
-							<span class="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ring-4 {{ $nodeClass }}">
-								{{ $loop->iteration }}
-								@if ($isFound)
-									<i class="fa-solid fa-check absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-white text-[7px] text-emerald-600 ring-1 ring-emerald-200"></i>
-								@endif
-							</span>
-							<span class="min-w-0 leading-tight">
-								<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
-								<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
-							</span>
-						</div>
-
-						@if (! $loop->last)
-							{{-- Konektor alur: vertikal di mobile, horizontal + chevron di desktop --}}
-							<div class="flex shrink-0 items-center sm:px-1.5" aria-hidden="true">
-								<span class="ml-3.5 h-4 w-0.5 rounded-full bg-slate-200 sm:hidden"></span>
-								<span class="hidden h-0.5 w-6 rounded-full bg-slate-200 sm:block"></span>
-								<i class="fa-solid fa-chevron-right hidden text-[10px] text-slate-300 sm:-ml-1 sm:block"></i>
+						<div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-0 {{ $twoPerRow ? '' : 'flex-1' }}">
+							<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
+								style="animation-delay: {{ $loop->index * 90 }}ms">
+								<span class="relative flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ring-4 {{ $nodeClass }}">
+									{{ $loop->iteration }}
+									@if ($isFound)
+										<i class="fa-solid fa-check absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-white text-[7px] text-emerald-600 ring-1 ring-emerald-200"></i>
+									@endif
+								</span>
+								<span class="min-w-0 leading-tight">
+									<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
+									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+								</span>
 							</div>
-						@endif
+
+							@if (! $loop->last)
+								{{-- Konektor alur: vertikal di mobile, horizontal + chevron di desktop --}}
+								<div class="flex shrink-0 items-center sm:px-1.5 {{ $desktopConnector ? '' : 'sm:hidden' }}" aria-hidden="true">
+									<span class="ml-3.5 h-4 w-0.5 rounded bg-slate-200 sm:hidden"></span>
+									@if ($desktopConnector)
+										<span class="hidden h-0.5 w-6 rounded bg-slate-200 sm:block"></span>
+										<i class="fa-solid fa-chevron-right hidden text-[10px] text-slate-300 sm:-ml-1 sm:block"></i>
+									@endif
+								</div>
+							@endif
+						</div>
 					@endforeach
 				</div>
+
+				{{-- Pejabat yang tidak bisa dipastikan dari struktur unit kerja (mis. beberapa
+				     Kabid tercatat langsung di OPD induk) dipilih oleh pembuat SPPD. --}}
+				@php $chooseSteps = collect($steps)->where('status', 'choose'); @endphp
+				@if ($chooseSteps->isNotEmpty())
+					<div class="mt-4 border-t border-slate-100 pt-3">
+						<p class="mb-3 text-xs leading-relaxed text-slate-500">
+							<i class="fa-solid fa-circle-info mr-1 text-amber-500"></i>Ada lebih dari satu pejabat yang bisa menjadi atasan pelaksana. Pilih pejabat yang membawahi <strong class="font-semibold text-slate-700">{{ $pelaksana->name }}</strong>.
+						</p>
+						<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							@foreach ($chooseSteps as $position => $step)
+								@php
+									$options = collect($step['candidates'])
+										->map(fn ($c) => ['value' => (string) $c['id'], 'label' => $c['name'] . ($c['unit'] ? ' — ' . $c['unit'] : '')])
+										->all();
+									if ($step['optional']) {
+										$options[] = ['value' => \App\Services\SppdWorkflowService::SKIP, 'label' => 'Tidak ada — langsung ke tahap berikutnya'];
+									}
+								@endphp
+								<x-form.searchable-select wire:model.live="stepApprovers.{{ $step['index'] }}" :options="$options"
+									:label="'Tahap ' . ($position + 1) . ' · ' . $step['role_label']" :placeholder="'— Pilih ' . $step['role_label'] . ' —'"
+									searchPlaceholder="Cari nama pejabat..." required
+									:hint="$step['optional'] ? 'Pilih “Tidak ada” bila pelaksana tidak berada di bawah ' . $step['role_label'] . ' (mis. staf Sekretariat).' : null" />
+							@endforeach
+						</div>
+					</div>
+				@endif
 			</div>
 		</div>
 
@@ -206,8 +244,9 @@
 													->values();
 											@endphp
 											<div class="{{ $domain === 'lddp' ? 'hidden' : '' }}">
+												{{-- LDDP: provinsi terisi otomatis & disembunyikan, jadi tidak ikut validasi native. --}}
 												<x-form.searchable-select wire:model.live="destinations.{{ $index }}.province_id"
-													:options="$provinceOptions" placeholder="— Provinsi —" searchPlaceholder="Cari provinsi..." required />
+													:options="$provinceOptions" placeholder="— Provinsi —" searchPlaceholder="Cari provinsi..." :required="$domain !== 'lddp'" />
 											</div>
 											{{-- wire:key memuat province_id agar komponen di-render ulang saat
 											     provinsi berubah, sehingga opsi kabupaten (yang di-init Alpine
@@ -316,8 +355,8 @@
 								<span>Realisasi {{ $selectedBudget->realization_percentage }}%</span>
 								<span>Rp {{ number_format($selectedBudget->realization, 0, ',', '.') }}</span>
 							</div>
-							<div class="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
+							<div class="h-2 w-full rounded bg-slate-200 overflow-hidden">
+								<div class="h-full rounded {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
 									style="width: {{ min($selectedBudget->realization_percentage, 100) }}%"></div>
 							</div>
 						</div>
@@ -481,8 +520,8 @@
 								<span>Realisasi {{ $selectedBudget->realization_percentage }}%</span>
 								<span>Rp {{ number_format($selectedBudget->realization, 0, ',', '.') }}</span>
 							</div>
-							<div class="h-1.5 sm:h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-								<div class="h-full rounded-full {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
+							<div class="h-1.5 sm:h-2 w-full rounded bg-slate-200 overflow-hidden">
+								<div class="h-full rounded {{ $selectedBudget->realization_percentage >= 100 ? 'bg-rose-500' : 'bg-primary-500' }}"
 									style="width: {{ min($selectedBudget->realization_percentage, 100) }}%"></div>
 							</div>
 						</div>

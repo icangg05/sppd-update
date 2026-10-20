@@ -213,24 +213,20 @@ class Login extends Component
     $this->toastError("Username atau password salah. Sisa {$remaining} kali percobaan sebelum akun dikunci sementara.");
   }
 
+  /** Penguncian ditampilkan lewat alert di halaman login (bukan toast), lengkap dengan hitung mundur. */
   protected function lockout(bool $canBlock): void
   {
     $this->startLockout(self::LOCKOUT_SECONDS);
 
-    $message = 'Anda telah ' . self::MAX_ATTEMPTS . ' kali salah memasukkan password. Silakan tunggu 1 menit.';
     if ($canBlock) {
       $this->attemptsBeforeBlock = self::MAX_ATTEMPTS;
-      $message .= ' Jika salah ' . self::MAX_ATTEMPTS . ' kali lagi, akun akan diblokir dan Anda harus menghubungi Super Admin.';
     }
-
-    $this->toastError($message, 'Akun Dikunci Sementara');
   }
 
   protected function showStillLocked(int $seconds, int $attemptsBeforeBlock): void
   {
     $this->attemptsBeforeBlock = max(0, $attemptsBeforeBlock);
     $this->startLockout($seconds);
-    $this->toastError("Akun dikunci sementara. Coba lagi dalam {$this->lockoutSeconds} detik.");
   }
 
   protected function startLockout(int $seconds): void
@@ -238,14 +234,11 @@ class Login extends Component
     $this->lockoutSeconds = max(1, $seconds);
   }
 
+  /** Akun diblokir ditampilkan lewat alert di halaman login (bukan toast). */
   protected function showBlocked(): void
   {
     $this->blocked = true;
     $this->lockoutSeconds = 0;
-    $this->toastError(
-      'Akun Anda diblokir karena berulang kali salah memasukkan password. Harap hubungi Super Admin.',
-      'Akun Diblokir',
-    );
   }
 
   public function render()

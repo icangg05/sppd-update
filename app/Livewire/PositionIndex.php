@@ -25,13 +25,13 @@ class PositionIndex extends Component
   public string $scopeFilter = '';
 
   // Tab sumber jabatan: '' semua, system (bawaan), manual (tambahan semua OPD,
-  // khusus Super Admin), mine (input saya / OPD saya).
+  // khusus Super Admin), mine (input saya / ditambahkan OPD saya).
   #[Url(keep: true)]
   public string $sourceFilter = '';
 
   /**
    * Tab sumber yang tersedia. Admin OPD tidak melihat "Tambahan Semua OPD"
-   * agar tidak tertukar dengan "Input OPD Saya".
+   * agar tidak tertukar dengan "Ditambahkan OPD Saya".
    */
   private function availableSources(): array
   {

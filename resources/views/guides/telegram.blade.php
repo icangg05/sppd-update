@@ -22,7 +22,7 @@
       <div class="relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center">
         <div class="min-w-0 flex-1">
           <span
-            class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-white/20">
+            class="inline-flex items-center gap-1.5 rounded bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-white/20">
             <i class="fa-solid fa-bolt text-[10px]"></i> Terintegrasi
           </span>
           <h1 class="mt-3 text-2xl font-bold tracking-tight text-balance sm:text-3xl">

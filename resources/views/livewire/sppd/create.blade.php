@@ -10,7 +10,7 @@
 		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-list-ol text-[9px]"></i> Langkah 1 dari 2
 				</span>
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Buat SPPD Baru</h1>
@@ -107,6 +107,10 @@
 						@scroll.window.capture="if (open) position()"
 						@resize.window="if (open) position()"
 						class="relative">
+						{{-- Proxy validasi native (dropdown kustom tidak punya input); backend tetap memvalidasi user_id. --}}
+						<input type="text" tabindex="-1" aria-hidden="true" inputmode="none" autocomplete="off" required
+							value="{{ $user_id }}"
+							class="pointer-events-none absolute inset-x-0 bottom-0 h-px w-full opacity-0">
 						<button type="button" x-ref="trigger" @click="toggle()"
 							class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
 							<span class="truncate text-left {{ $selectedUserLabel ? 'text-slate-800' : 'text-slate-500' }}">
@@ -203,9 +207,14 @@
 						@forelse ($steps as $index => $step)
 							@php
 								$isFound = $step['status'] === 'found';
-								$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : 'bg-red-600 ring-red-100';
-								$roleClass = $isFound ? 'text-emerald-700' : 'text-red-600';
-								$nameClass = $isFound ? 'text-slate-800' : 'text-red-700 italic';
+								// Beberapa kandidat pejabat: dipilih di form detail, bukan kesalahan.
+								$isChoose = $step['status'] === 'choose';
+								$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : ($isChoose ? 'bg-amber-500 ring-amber-100' : 'bg-red-600 ring-red-100');
+								$roleClass = $isFound ? 'text-emerald-700' : ($isChoose ? 'text-amber-700' : 'text-red-600');
+								$nameClass = $isFound ? 'text-slate-800' : ($isChoose ? 'text-amber-700 italic' : 'text-red-700 italic');
+								$approverName = $isChoose
+									? 'Dipilih di tahap berikutnya (' . count($step['candidates'] ?? []) . ' kandidat)'
+									: $step['approver_name'];
 							@endphp
 
 							<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
@@ -218,15 +227,15 @@
 								</span>
 								<span class="min-w-0 leading-tight">
 									<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
-									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $approverName }}">{{ $approverName }}</span>
 								</span>
 							</div>
 
 							@if (! $loop->last)
 								{{-- Konektor alur: vertikal di mobile, horizontal + chevron di desktop --}}
 								<div class="flex shrink-0 items-center sm:px-1.5" aria-hidden="true">
-									<span class="ml-3.5 h-4 w-0.5 rounded-full bg-slate-200 sm:hidden"></span>
-									<span class="hidden h-0.5 w-6 rounded-full bg-slate-200 sm:block"></span>
+									<span class="ml-3.5 h-4 w-0.5 rounded bg-slate-200 sm:hidden"></span>
+									<span class="hidden h-0.5 w-6 rounded bg-slate-200 sm:block"></span>
 									<i class="fa-solid fa-chevron-right hidden text-[10px] text-slate-300 sm:-ml-1 sm:block"></i>
 								</div>
 							@endif
@@ -253,7 +262,7 @@
 										{{-- Rantai node: pelaksana → simpul putus → tak diketahui --}}
 										<div class="relative flex items-center gap-1.5" aria-hidden="true">
 											<span class="flex size-6 items-center justify-center rounded-full bg-slate-200 text-[10px] text-slate-400"><i class="fa-solid fa-user"></i></span>
-											<span class="h-0.5 w-5 rounded-full bg-slate-300"></span>
+											<span class="h-0.5 w-5 rounded bg-slate-300"></span>
 											<span class="flex size-8 items-center justify-center rounded-full ring-4 animate-pulse {{ $c['node'] }}"><i class="fa-solid {{ $c['icon'] }} text-sm"></i></span>
 											<span class="w-5 border-t-2 border-dashed border-slate-300"></span>
 											<span class="flex size-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-300"><i class="fa-solid fa-question"></i></span>

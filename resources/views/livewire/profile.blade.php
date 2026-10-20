@@ -9,7 +9,7 @@
 					style="background-image: radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0); background-size: 18px 18px;">
 				</div>
 				<span
-					class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white/90 backdrop-blur-sm ring-1 ring-white/25">
+					class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white/90 backdrop-blur-sm ring-1 ring-white/25">
 					<i class="fa-regular fa-id-badge text-[10px]"></i>
 					Profil Saya
 				</span>

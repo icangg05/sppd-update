@@ -23,34 +23,34 @@ colors:
   warning: "#f59e0b"
 typography:
   page-title:
-    fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "normal"
   title:
-    fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "normal"
   body:
-    fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "normal"
   label:
-    fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "0.05em"
 rounded:
-  control: "0.5rem"
-  card: "0.75rem"
-  modal: "1rem"
-  pill: "9999px"
+  control: "2px"
+  card: "2px"
+  modal: "2px"
+  pill: "2px"
 spacing:
   xs: "0.5rem"
   sm: "0.75rem"
@@ -112,7 +112,7 @@ Sistem ini **menolak** kesan aplikasi pemerintah jadul (tabel abu polos tanpa hi
 **Key Characteristics:**
 - Kerangka slate netral + satu suara aksen biru logo yang hemat (≤10% per layar)
 - Kartu flat: batas tipis + bayangan halus, bukan elevasi tebal
-- Poppins tunggal di semua peran; hierarki lewat bobot & ukuran, bukan pergantian font
+- IBM Plex Sans tunggal di semua peran (IBM Plex Mono khusus angka); hierarki lewat bobot & ukuran, bukan pergantian font
 - Status selalu terbaca sekilas lewat pill semantik yang terstandardisasi
 - Motion hanya untuk umpan balik & keadaan; tak ada koreografi
 
@@ -149,10 +149,10 @@ Palet netral-dingin (slate) sebagai kerangka, dengan satu keluarga biru logo seb
 
 ## 3. Typography
 
-**Body & Display Font:** Poppins (fallback: ui-sans-serif, system-ui, sans-serif)
-**Label/Mono Font:** — (tidak ada; label memakai Poppins bobot tebal + tracking)
+**Body & Display Font:** IBM Plex Sans (fallback: ui-sans-serif, system-ui, sans-serif)
+**Label/Mono Font:** IBM Plex Mono khusus angka (rupiah, kode rekening, versi); label memakai IBM Plex Sans bobot tebal + tracking
 
-**Character:** Satu keluarga geometris-humanis yang bersih dan ramah untuk semua peran — judul, tombol, label, tabel, isi. Tidak ada pasangan font display/body; hierarki dibangun murni dari bobot (400/500/600/700) dan ukuran pada skala rem tetap. Poppins memberi kesan modern dan mudah didekati tanpa terasa main-main — pas untuk alat pemerintahan yang ingin terlihat kontemporer tapi tetap sah.
+**Character:** Satu keluarga grotesk-humanis yang tegas dan teknis untuk semua peran — judul, tombol, label, tabel, isi. Tidak ada pasangan font display/body; hierarki dibangun murni dari bobot (400/500/600/700) dan ukuran pada skala rem tetap. IBM Plex Sans memberi kesan rapi dan institusional tanpa terasa kaku — pas untuk alat pemerintahan yang ingin terlihat kontemporer tapi tetap sah. IBM Plex Mono adalah pasangan satu-keluarganya untuk angka, sehingga nominal rupiah tetap senada dengan teks di sekitarnya. Bobot dimuat 400–700 (sans & mono); `font-extrabold`/`font-black` jatuh ke 700.
 
 ### Hierarchy
 - **Page Title** (700, 1.5rem/24px, line-height 1.2, warna Tinta): Judul halaman di `.page-title`. Satu per layar.
@@ -162,7 +162,7 @@ Palet netral-dingin (slate) sebagai kerangka, dengan satu keluarga biru logo seb
 - **Micro** (400–500, 0.6875rem/11px, warna Redup): Deskripsi modal, hint, catatan kaki. Selalu sekunder, tak pernah untuk aksi.
 
 ### Named Rules
-**The One Family Rule.** Poppins mengerjakan semuanya. Font display terlarang di label, tombol, dan data. Butuh penekanan? Naikkan bobot atau ukuran — jangan ganti keluarga font. Skala tetap dalam rem (bukan `clamp` cair) karena UI produk dilihat pada DPI konsisten.
+**The One Family Rule.** IBM Plex Sans mengerjakan semuanya (IBM Plex Mono hanya untuk angka). Font display terlarang di label, tombol, dan data. Butuh penekanan? Naikkan bobot atau ukuran — jangan ganti keluarga font. Skala tetap dalam rem (bukan `clamp` cair) karena UI produk dilihat pada DPI konsisten.
 
 ## 4. Elevation
 
@@ -179,7 +179,7 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 ## 5. Components
 
 ### Buttons
-- **Shape:** Sudut lembut (`rounded-lg`, 0.5rem) di semua ukuran; bayangan mikro (`shadow-2xs`) sebagai pijakan halus.
+- **Shape:** Sudut nyaris siku (`rounded`, 2px) di semua ukuran; bayangan mikro (`shadow-2xs`) sebagai pijakan halus.
 - **Primary:** Latar Biru Aksi (`#1e80c6`), teks putih, padding `0.5rem 1rem` (ukuran md). Untuk aksi utama tunggal per konteks.
 - **Hover / Focus:** Hover menggelapkan ke Biru Tekan (`#337AB7`) via `transition-colors`; fokus keyboard memunculkan cincin `ring-2 ring-primary-500` dengan offset. Saat aksi Livewire berjalan, spinner otomatis muncul dan tombol dinonaktifkan.
 - **Secondary:** Batas slate + latar putih + teks Tinta Kedua; untuk aksi sekunder.
@@ -188,19 +188,19 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 - **Ukuran:** sm (`px-3 py-1.5 text-xs`), md (`px-4 py-2 text-sm`), lg (`px-5 py-2.5 text-sm`).
 
 ### Badges (pill status)
-- **Style:** Pill penuh (`rounded-full`), padding `0.125rem 0.625rem`, teks 0.75rem bobot 500. Latar tint lembut + teks pekat sewarna, bukan warna penuh.
+- **Style:** Label bersudut tipis (`rounded`, 2px — bukan pill membulat), padding `0.125rem 0.625rem`, teks 0.75rem bobot 500. Latar tint lembut + teks pekat sewarna, bukan warna penuh.
 - **State semantik:** Tiap status punya pasangan tetap — *draft* (slate), *in_progress* (biru lembut), *approved/verified* (emerald), *rejected* (red), *completed* (violet), *pending* (amber), *revision* (orange), *signed* (teal), *returned* (rose). Peta ini adalah kosakata status tunggal; jangan buat warna status baru ad-hoc.
 - **Mode token warna:** Varian dengan `ring-1 ring-inset` untuk badge non-status (label kategori).
 
 ### Cards / Containers
-- **Corner Style:** `rounded-xl` (0.75rem) untuk kartu & panel; `rounded-2xl` (1rem) untuk modal.
+- **Corner Style:** `rounded` (2px) untuk kartu, panel, dan modal.
 - **Background:** Putih (`#ffffff`) di atas kanvas slate-50.
 - **Shadow Strategy:** `border border-slate-200` + `shadow-sm` saat diam (lihat Elevation). Tanpa elevasi tebal.
 - **Internal Padding:** 1rem (`p-4`) standar; header/footer panel `px-4 py-3`.
 - **Aturan:** Kartu adalah wadah struktural, bukan default malas. Kartu bersarang di dalam kartu **selalu salah**.
 
 ### Inputs / Fields
-- **Style:** Latar putih, batas `slate-300`, `rounded-lg`, padding `0.5rem 0.75rem`, teks 0.875rem, placeholder `slate-400`, bayangan mikro `shadow-2xs`.
+- **Style:** Latar putih, batas `slate-300`, `rounded` (2px), padding `0.5rem 0.75rem`, teks 0.875rem, placeholder `slate-400`, bayangan mikro `shadow-2xs`.
 - **Label:** Di atas field — 0.75rem, bold, UPPERCASE, tracking, warna Redup; wajib `*` merah untuk field wajib.
 - **Focus:** Batas bergeser ke `primary-500` + cincin `ring-2 ring-primary-500/30` — glow biru lembut yang menandai fokus tanpa berisik.
 - **Disabled:** Latar `slate-100`, teks `slate-500`, kursor `not-allowed` — otomatis dari satu tempat (mis. field telepon terkunci setelah verifikasi berhasil).
@@ -213,7 +213,7 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 - **Section label:** 0.75rem bold UPPERCASE tracking `text-slate-500` sebagai pemisah grup menu.
 
 ### Modal
-- **Style:** Kartu putih `rounded-2xl` + `shadow-2xl` + batas tipis, di atas backdrop `bg-slate-900/60 backdrop-blur-xs`. Header/isi/footer terbagi garis `slate-100`.
+- **Style:** Kartu putih `rounded` (2px) + `shadow-2xl` + batas tipis, di atas backdrop `bg-slate-900/60 backdrop-blur-xs`. Header/isi/footer terbagi garis `slate-100`.
 - **Behavior:** Transisi masuk 300ms (naik + skala 95→100), keluar 200ms. Modal non-closeable **menggoyang** kartu (`animate-modal-shake`) saat diklik di luar — isyarat "tutup lewat tombol", bukan sekadar mengabaikan. Scroll body terkunci selama modal terbuka. Modal adalah pilihan terakhir; utamakan alur inline/progresif.
 
 ### Toast
@@ -225,7 +225,7 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 - **Do** pakai util `primary-*` untuk setiap elemen interaktif (tombol utama, nav aktif, fokus, status) — **jangan pernah** literal warna. Satu sumber kebenaran di `app.css`.
 - **Do** batasi biru logo pada ≤10% permukaan tiap layar (The One Voice Rule). Selebihnya kerangka slate netral.
 - **Do** jaga teks tubuh pada Tinta Kedua (`#334155`) dan label/pembantu tidak lebih terang dari Redup (`#64748b`); kontras minimal 4.5:1.
-- **Do** pakai skala radius yang disepakati: kontrol `rounded-lg`, kartu/panel/dropdown `rounded-xl`, modal `rounded-2xl`, pill & avatar `rounded-full`.
+- **Do** pakai radius tipis yang disepakati: `rounded` (2px, token `--radius`) untuk semua kontrol, kartu, panel, dropdown, modal, pill, dan progress bar. `rounded-full` hanya untuk lingkaran sejati (avatar, titik status, ikon bulat).
 - **Do** beri tiap SPPD/verifikasi/realisasi status pill semantik dari peta yang ada; buat umpan balik aksi (terutama TTE) selalu tegas dan terlihat lewat toast.
 - **Do** pakai satu kosakata komponen (`x-ui.button`, `x-ui.badge`, `x-ui.modal`, `x-form.*`) identik di semua layar. Setiap "Simpan" harus terlihat sama.
 - **Do** tampung kepadatan pada tabel saat data memang butuh, tapi sisakan napas pada header & formulir.
@@ -237,5 +237,5 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 - **Don't** biarkan komponen **tidak konsisten** antar halaman — tombol/badge/modal bergaya beda adalah cacat, salah satunya keliru.
 - **Don't** pakai border-left/right >1px sebagai stripe warna pada kartu/alert; pakai batas penuh, tint latar, atau ikon.
 - **Don't** pakai bayangan gelap mengambang pada kartu diam (The Flat-By-Default Rule) atau glassmorphism dekoratif; blur hanya sah di backdrop modal.
-- **Don't** ganti keluarga font untuk penekanan; naikkan bobot/ukuran Poppins.
+- **Don't** ganti keluarga font untuk penekanan; naikkan bobot/ukuran IBM Plex Sans.
 - **Don't** jadikan modal pilihan pertama; habiskan dulu alternatif inline/progresif.

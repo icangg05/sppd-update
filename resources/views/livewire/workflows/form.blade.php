@@ -10,7 +10,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
           <i class="fa-solid fa-diagram-project text-[9px]"></i>
           {{ $isEdit ? 'Perbarui Alur' : 'Alur Baru' }}
         </span>
@@ -51,40 +51,49 @@
               class="text-xs py-1.5 focus:border-primary-500 focus:ring-primary-500" />
           </div>
 
-          {{-- Filter Tipe Instansi (multi-checkbox) --}}
+          {{-- Filter Tipe Instansi (multi-checkbox, wajib dicentang eksplisit) --}}
           <div class="space-y-1.5">
-            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Tipe Instansi (Opsional)</label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Tipe Instansi <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('department_type') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($departmentTypes as $type)
-                <x-form.checkbox wire:model="department_type" :value="$type->value" :label="$type->label()"
+                <x-form.checkbox wire:model="department_type" :value="$type->value" :label="$type->label()" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu tipe instansi. Kosongkan jika berlaku untuk semua OPD.</p>
+            @error('department_type')
+              <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
+            @enderror
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Centang setiap tipe instansi yang memakai alur ini. Tipe yang tidak dicentang tidak memakai alur ini.</p>
           </div>
 
-          {{-- Filter Peran Pemohon (multi-checkbox dengan label) --}}
+          {{-- Filter Peran Pemohon (multi-checkbox, wajib dicentang eksplisit) --}}
           <div class="space-y-1.5">
-            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Peran Pemohon (Opsional)</label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Peran Pemohon <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('applicant_role') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($roles as $role)
-                <x-form.checkbox wire:model="applicant_role" :value="$role->name" :label="$role->label ?? $role->name"
+                <x-form.checkbox wire:model="applicant_role" :value="$role->name" :label="$role->label ?? $role->name" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu peran pemohon. Kosongkan jika berlaku untuk semua tingkat peran.</p>
+            @error('applicant_role')
+              <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
+            @enderror
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Centang setiap peran pemohon yang memakai alur ini. Peran yang tidak dicentang tidak memakai alur ini.</p>
           </div>
 
-          {{-- Pilihan Ruang Lingkup Wilayah Tujuan --}}
+          {{-- Pilihan Ruang Lingkup Wilayah Tujuan (wajib dicentang eksplisit) --}}
           <div class="space-y-1.5">
-            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Cakupan Wilayah Tujuan (Opsional)</label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Cakupan Wilayah Tujuan <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('destination') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($domains as $domain)
-                <x-form.checkbox wire:model="destination" :value="$domain->value" :label="$domain->label()"
+                <x-form.checkbox wire:model="destination" :value="$domain->value" :label="$domain->label()" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
-            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Dapat memilih lebih dari satu cakupan wilayah. Jika dikosongkan, sistem menganggap sah untuk semua destinasi.</p>
+            @error('destination')
+              <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
+            @enderror
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Centang setiap wilayah tujuan yang memakai alur ini. Wilayah yang tidak dicentang tidak memakai alur ini.</p>
           </div>
 
           {{-- Status Keaktifan Aturan --}}
@@ -103,7 +112,8 @@
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
             <i class="fa-solid fa-diagram-next text-primary-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
           </h3>
-          <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan.</p>
+          <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan. Tingkat persetujuan terendah adalah Kabid / Irban / Kabag.</p>
+          <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i><strong class="font-bold text-slate-600">Boleh dilewati</strong>: tahap dilewati bila pelaksana tidak berada di bawah pejabat ini (mis. staf Sekretariat tanpa Kabid). Bila ada beberapa pejabat, pembuat SPPD memilih atasan pelaksana.</p>
         </div>
 
         <x-ui.button type="button" wire:click="addStep" variant="secondary"
@@ -120,7 +130,7 @@
         @enderror
 
         @php
-          $roleOptions = collect($roles)
+          $roleOptions = collect($approverRoles)
             ->map(fn ($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
             ->all();
         @endphp
@@ -145,7 +155,7 @@
 
                 <div class="flex-1">
                   <x-form.searchable-select wire:model="steps.{{ $i }}.role" :options="$roleOptions"
-                    placeholder="— Pilih Role Approver —" searchPlaceholder="Cari role..."
+                    placeholder="— Pilih Pejabat Penyetuju —" searchPlaceholder="Cari role..."
                     class="px-2.5 py-1.5 text-xs" />
                 </div>
               </div>
@@ -162,6 +172,13 @@
                     <input type="checkbox" wire:model.live="steps.{{ $i }}.signs_sppd"
                       class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
                     <span>TTD SPPD</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer select-none hover:text-primary-600 transition-colors"
+                    title="Dilewati bila pelaksana tidak berada di bawah pejabat ini; tidak dapat menandatangani SPT/SPPD">
+                    <input type="checkbox" wire:model.live="steps.{{ $i }}.optional"
+                      class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
+                    <span>Boleh dilewati</span>
                   </label>
                 </div>
 

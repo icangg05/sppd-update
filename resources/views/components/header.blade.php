@@ -15,7 +15,7 @@
 
 			@if (auth()->user()?->hasRole('super_admin'))
 				<span
-					class="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-900 shadow-sm">
+					class="inline-flex items-center gap-1.5 rounded bg-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-900 shadow-sm">
 					<i class="fa-solid fa-shield-halved text-[10px]"></i>
 					Super Admin
 				</span>
@@ -25,7 +25,7 @@
 		<div class="flex items-center gap-3 sm:gap-5">
 			{{-- Notifikasi Push PWA --}}
 			<button id="push-notification-btn"
-				class="relative hidden rounded-full p-1.5 text-primary-200 transition-all hover:bg-primary-600/30 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
+				class="relative hidden rounded p-1.5 text-primary-200 transition-all hover:bg-primary-600/30 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
 				title="Aktifkan Notifikasi Web">
 				<i id="push-notification-icon" class="fa-regular fa-bell text-lg"></i>
 				<span id="push-notification-badge"
@@ -72,6 +72,14 @@
 								class="fa-regular fa-user mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-primary-600"></i>
 							Profil Saya
 						</a>
+						@if (auth()->user()?->hasRole('super_admin'))
+							<a href="{{ route('master.settings.index') }}" wire:navigate
+								class="group flex items-center rounded px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+								<i
+									class="fa-solid fa-gear mr-3 w-4 text-center text-slate-500 transition-colors group-hover:text-primary-600"></i>
+								Pengaturan
+							</a>
+						@endif
 					</div>
 
 					<hr class="my-1.5 border-slate-100">

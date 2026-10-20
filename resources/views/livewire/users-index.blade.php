@@ -11,7 +11,7 @@
 		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-user-shield text-[9px]"></i>
 					{{ $isDprd ? 'Keanggotaan DPRD' : 'Manajemen Kepegawaian' }}
 					<span class="ml-1 tabular-nums text-primary-600/70">· {{ $users->total() }}</span>
@@ -92,7 +92,7 @@
 		@if ($activePosition || $activeRank || $activeRole)
 			<div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
 				@if ($activePosition)
-					<span class="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 font-semibold text-primary-700 ring-1 ring-primary-600/20">
+					<span class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-3 py-1 font-semibold text-primary-700 ring-1 ring-primary-600/20">
 						<i class="fa-solid fa-id-badge text-[10px]"></i>
 						Jabatan: {{ $activePosition->name }}
 						<button type="button" wire:click="$set('position_id', '')" class="ml-1 text-primary-500 hover:text-primary-800" title="Hapus filter">
@@ -101,7 +101,7 @@
 					</span>
 				@endif
 				@if ($activeRank)
-					<span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-700 ring-1 ring-indigo-600/20">
+					<span class="inline-flex items-center gap-1.5 rounded bg-indigo-50 px-3 py-1 font-semibold text-indigo-700 ring-1 ring-indigo-600/20">
 						<i class="fa-solid fa-ranking-star text-[10px]"></i>
 						Pangkat: {{ $activeRank->name }}{{ $activeRank->group ? ' (' . $activeRank->group . ')' : '' }}
 						<button type="button" wire:click="$set('rank_id', '')" class="ml-1 text-indigo-500 hover:text-indigo-800" title="Hapus filter">
@@ -110,7 +110,7 @@
 					</span>
 				@endif
 				@if ($activeRole)
-					<span class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-600/20">
+					<span class="inline-flex items-center gap-1.5 rounded bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-600/20">
 						<i class="fa-solid fa-shield-halved text-[10px]"></i>
 						Role: {{ $activeRole->label ?? $activeRole->name }}
 						<button type="button" wire:click="$set('role', '')" class="ml-1 text-violet-500 hover:text-violet-800" title="Hapus filter">
@@ -238,18 +238,18 @@
 							<td data-label="Status" class="py-3 px-4 text-center">
 								@if ($user->is_active)
 									<span
-										class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+										class="inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
 										<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Aktif
 									</span>
 								@else
 									<span
-										class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
+										class="inline-flex items-center gap-1.5 rounded bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
 										<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Nonaktif
 									</span>
 								@endif
 								@if ($user->isLoginBlocked())
 									<span title="Diblokir sejak {{ $user->login_blocked_at->translatedFormat('d F Y H:i') }} karena berulang kali salah password"
-										class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+										class="mt-1 inline-flex items-center gap-1.5 rounded bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
 										<i class="fa-solid fa-user-lock text-[9px]"></i> Diblokir
 									</span>
 								@endif
@@ -259,8 +259,7 @@
 								<div class="flex items-center justify-end gap-1">
 									{{-- Buka blokir login (khusus Super Admin) --}}
 									@if ($user->isLoginBlocked() && auth()->user()->hasRole('super_admin'))
-										<button type="button" wire:click="unblockLogin({{ $user->id }})"
-											wire:confirm="Buka blokir login untuk {{ $user->name }}?"
+										<button type="button" wire:click="confirmUnblock({{ $user->id }})"
 											title="Buka Blokir Login"
 											class="rounded p-1.5 text-xs font-medium text-rose-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
 											<i class="fa-solid fa-unlock"></i>
@@ -339,4 +338,25 @@
 			</div>
 		@endif
 	</div>
+
+	{{-- Modal Konfirmasi Buka Blokir Login (khusus Super Admin) --}}
+	<x-ui.modal show="$wire.showUnblockModal" :closeable="false" title="Buka Blokir Login"
+		description="Pegawai dapat login kembali setelah blokir dibuka" icon="fa-solid fa-unlock text-emerald-600">
+		<div class="space-y-4">
+			<p class="text-sm text-slate-600">
+				Buka blokir login untuk
+				<span class="font-bold text-slate-800">{{ $unblockingName ?? 'pegawai ini' }}</span>?
+				Hitungan percobaan password yang salah juga akan direset.
+			</p>
+
+			<div class="flex items-center justify-end gap-2 pt-1">
+				<x-ui.button type="button" variant="secondary" wire:click="closeUnblockModal">Batal</x-ui.button>
+				<x-ui.button type="button" variant="success" wire:click="unblockLogin({{ $unblockingId ?? 0 }})"
+					wire:target="unblockLogin">
+					<x-slot:icon><i class="fa-solid fa-unlock text-xs"></i></x-slot:icon>
+					Buka Blokir
+				</x-ui.button>
+			</div>
+		</div>
+	</x-ui.modal>
 </div>

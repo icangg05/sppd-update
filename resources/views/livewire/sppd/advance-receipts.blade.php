@@ -22,7 +22,7 @@
         <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div class="min-w-0 leading-tight">
                 <span
-                    class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+                    class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-emerald-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.15em] text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
                     <i class="fa-solid fa-receipt text-[10px]"></i> Panjar &amp; Rampung
                     <span class="ml-1 tabular-nums text-emerald-600/70">· {{ $people->count() }}</span>
                 </span>
@@ -121,9 +121,9 @@
                         <td data-label="Pegawai" class="py-3 px-4">
                             <div class="flex items-center gap-2">
                                 @if ($person['label'] === 'Pelaksana')
-                                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Pelaksana</span>
+                                    <span class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Pelaksana</span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">Pengikut</span>
+                                    <span class="inline-flex items-center rounded bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">Pengikut</span>
                                 @endif
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>

@@ -147,6 +147,18 @@
             <input type="hidden" @if ($name) name="{{ $name }}" @endif x-bind:value="value">
         @endunless
 
+        {{-- Proxy validasi native: input hidden tidak ikut constraint validation, jadi
+             `required` dipasang di input tak terlihat yang mencerminkan nilai terpilih.
+             Browser menahan submit & menampilkan pesan di bawah tombol. Tanpa `name`
+             agar tidak ikut terkirim; validasi backend tetap berlaku. --}}
+        @if ($required)
+            <input type="text" tabindex="-1" aria-hidden="true" inputmode="none" autocomplete="off" required
+                @if ($disabled) disabled @endif
+                x-bind:value="value ?? ''"
+                x-effect="$el.setCustomValidity(String(value ?? '') === '' ? 'Silakan pilih salah satu opsi.' : '')"
+                class="pointer-events-none absolute inset-x-0 bottom-0 h-px w-full opacity-0">
+        @endif
+
         <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
             @class([
                 'flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',

@@ -38,7 +38,7 @@
     <i class="fa-regular fa-bell"></i>
     {{-- Badge merah per-user: muncul saat ada pembaruan baru utk user ini, hilang setelah dibuka --}}
     <span x-show="unread" x-cloak
-      class="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-primary-700 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
+      class="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded border-2 border-primary-700 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
       x-text="count"></span>
   </button>
 
@@ -67,7 +67,7 @@
         <p class="text-[11px] text-primary-100">{{ $count }} pembaruan terbaru</p>
       </div>
       <div class="flex items-center gap-2">
-        <span class="hidden rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide sm:inline">
+        <span class="hidden rounded bg-white/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide sm:inline">
           v{{ config('app.sppd_version', $version) }}
         </span>
         {{-- Tombol tutup (mobile) --}}
@@ -97,7 +97,7 @@
                 <p class="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-800">
                   {{ $item['title'] }}
                   @if (!empty($item['badge']))
-                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white {{ $fc['badge'] }}">
+                    <span class="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold text-white {{ $fc['badge'] }}">
                       <i class="fa-solid fa-star text-[8px]"></i> {{ $item['badge'] }}
                     </span>
                   @endif

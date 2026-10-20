@@ -496,12 +496,8 @@ class SppdIndex extends Component
       return;
     }
 
-    $allStepsFound = true;
-    foreach ($steps as $step) {
-      if ($step['status'] !== 'found') {
-        $allStepsFound = false;
-      }
-    }
+    // Tahap berstatus "choose" (beberapa kandidat pejabat) dipilih di form detail.
+    $allStepsFound = collect($steps)->doesntContain('status', 'not_found');
 
     if (! $allStepsFound) {
       $this->simulatedSteps = $steps;

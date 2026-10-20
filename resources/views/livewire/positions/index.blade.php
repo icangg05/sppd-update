@@ -10,7 +10,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
           <i class="fa-solid fa-database text-[9px]"></i>
           Master Jabatan
           <span class="ml-1 tabular-nums text-primary-600/70">· {{ $positions->total() }}</span>
@@ -64,7 +64,7 @@
         '' => 'Semua',
         'system' => 'Bawaan Sistem',
         'manual' => 'Tambahan Semua OPD',
-        'mine' => $isSuperAdmin ? 'Input Saya' : 'Input OPD Saya',
+        'mine' => $isSuperAdmin ? 'Input Saya' : 'Ditambahkan OPD Saya',
       ];
     @endphp
     <div class="mt-3 flex flex-wrap items-center gap-1 rounded border border-slate-200 bg-slate-100 p-1 sm:w-fit">
@@ -73,7 +73,7 @@
         <button type="button" wire:click="setSource('{{ $value }}')"
           class="inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold transition-all duration-200 {{ $sourceFilter === $value ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-600 hover:bg-white/50 hover:text-slate-900' }}">
           {{ $label }}
-          <span class="rounded-full bg-slate-200/70 px-1.5 text-[10px] tabular-nums text-slate-600">{{ $sourceCounts[$value] ?? 0 }}</span>
+          <span class="rounded bg-slate-200/70 px-1.5 text-[10px] tabular-nums text-slate-600">{{ $sourceCounts[$value] ?? 0 }}</span>
         </button>
       @endforeach
     </div>
@@ -152,7 +152,7 @@
                 <td data-label="Pemangku" class="py-2.5 px-4 text-center">
                   @if($position->users_count > 0)
                     <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
-                      class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
+                      class="inline-flex items-center gap-1 rounded bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
                       title="Lihat pegawai dengan jabatan ini">
                       <i class="fa-solid fa-users text-[10px]"></i> {{ $position->users_count }}
                     </a>

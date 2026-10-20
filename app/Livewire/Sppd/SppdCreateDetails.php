@@ -10,6 +10,7 @@ use App\Models\Country;
 use App\Models\ForeignCity;
 use App\Models\Province;
 use App\Models\Regency;
+use App\Models\SppdApproval;
 use App\Models\SppdCategory;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
@@ -62,6 +63,12 @@ class SppdCreateDetails extends Component
 
   // Destinations
   public array $destinations = [];
+
+  /**
+   * Pejabat pilihan per indeks tahap workflow, untuk tahap yang kandidatnya
+   * lebih dari satu (id user, atau SppdWorkflowService::SKIP pada tahap opsional).
+   */
+  public array $stepApprovers = [];
 
   /** Nilai pilihan kota luar negeri "Kota lain (ketik manual)". */
   public const OTHER_CITY = '__other__';
@@ -139,6 +146,13 @@ class SppdCreateDetails extends Component
       }
 
       $this->destinations = [$this->emptyDestination()];
+
+      // Siapkan slot pilihan pejabat (wire:model di-entangle, jadi key harus sudah ada).
+      foreach (app(SppdWorkflowService::class)->simulateApprovals($user, $this->domain) as $step) {
+        if ($step['status'] === 'choose') {
+          $this->stepApprovers[$step['index']] = '';
+        }
+      }
     }
 
     // Security check in mount
@@ -307,7 +321,45 @@ class SppdCreateDetails extends Component
       throw $e;
     }
 
+    if (! $this->validateStepApprovers()) {
+      $this->toastError('Pilih pejabat pada alur persetujuan terlebih dahulu.', 'Gagal Mengajukan');
+      return;
+    }
+
     $this->showConfirmModal = true;
+  }
+
+  /**
+   * Tahap yang kandidat pejabatnya lebih dari satu wajib dipilih (pengajuan baru
+   * saja — pada perbaikan, susunan pejabat sudah tetap sejak pengajuan awal).
+   */
+  protected function validateStepApprovers(): bool
+  {
+    if ($this->sppd_id) {
+      return true;
+    }
+
+    $pelaksana = User::with('department')->findOrFail($this->user_id);
+    $valid = true;
+
+    foreach (app(SppdWorkflowService::class)->simulateApprovals($pelaksana, $this->domain) as $step) {
+      if ($step['status'] !== 'choose') {
+        continue;
+      }
+
+      $choice = (string) ($this->stepApprovers[$step['index']] ?? '');
+      $allowed = array_map('strval', array_column($step['candidates'], 'id'));
+      if ($step['optional']) {
+        $allowed[] = SppdWorkflowService::SKIP;
+      }
+
+      if (! in_array($choice, $allowed, true)) {
+        $this->addError('stepApprovers.' . $step['index'], 'Pilih ' . $step['role_label'] . ' untuk tahap ini.');
+        $valid = false;
+      }
+    }
+
+    return $valid;
   }
 
   public function closeConfirmModal(): void
@@ -483,7 +535,7 @@ class SppdCreateDetails extends Component
 
           // Generate approvals
           $workflowService = app(SppdWorkflowService::class);
-          $success = $workflowService->generateApprovals($sppd);
+          $success = $workflowService->generateApprovals($sppd, $this->stepApprovers);
 
           if (! $success) {
             throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut.');
@@ -533,6 +585,48 @@ class SppdCreateDetails extends Component
       $this->toastError($e->getMessage());
       $this->showConfirmModal = false;
     }
+  }
+
+  /**
+   * Pratinjau alur: susunan pejabat yang sudah tetap untuk SPPD yang diperbaiki,
+   * atau simulasi untuk pengajuan baru beserta pejabat yang sudah dipilih.
+   */
+  protected function workflowSteps(User $pelaksana): array
+  {
+    if ($this->sppd_id) {
+      return SppdApproval::with('approver')
+        ->where('sppd_request_id', $this->sppd_id)
+        ->orderBy('step_order')
+        ->get()
+        ->map(fn (SppdApproval $approval) => [
+          'index'         => $approval->step_order,
+          'role_label'    => $approval->role_label,
+          'approver_name' => $approval->approver?->name ?? '-',
+          'status'        => 'found',
+          'optional'      => false,
+          'candidates'    => [],
+        ])
+        ->all();
+    }
+
+    $steps = app(SppdWorkflowService::class)->simulateApprovals($pelaksana, $this->domain);
+
+    foreach ($steps as &$step) {
+      if ($step['status'] !== 'choose') {
+        continue;
+      }
+
+      $choice = (string) ($this->stepApprovers[$step['index']] ?? '');
+      $chosen = collect($step['candidates'])->firstWhere('id', (int) $choice);
+      $step['approver_name'] = match (true) {
+        $chosen !== null                           => $chosen['name'],
+        $choice === SppdWorkflowService::SKIP      => 'Tidak ada — dilewati',
+        default                                    => 'Belum dipilih',
+      };
+    }
+    unset($step);
+
+    return $steps;
   }
 
   /** Simpan baris tujuan sesuai domain perjalanan. */
@@ -681,9 +775,7 @@ class SppdCreateDetails extends Component
       ->unique()
       ->toArray();
 
-    // Workflow simulation
-    $workflowService = app(SppdWorkflowService::class);
-    $steps = $workflowService->simulateApprovals($pelaksana, $this->domain);
+    $steps = $this->workflowSteps($pelaksana);
 
     $isInspektorat = str_contains(strtolower($pelaksana->department?->name ?? ''), 'inspektorat');
 

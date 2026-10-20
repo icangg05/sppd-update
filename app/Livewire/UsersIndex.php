@@ -100,6 +100,29 @@ class UsersIndex extends Component
     $this->toastSuccess("Pegawai {$user->name} berhasil {$status}.");
   }
 
+  // Konfirmasi buka blokir login
+  public bool $showUnblockModal = false;
+  public ?int $unblockingId = null;
+  public ?string $unblockingName = null;
+
+  public function confirmUnblock(int $id): void
+  {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+
+    $user = User::findOrFail($id);
+
+    $this->unblockingId     = $user->id;
+    $this->unblockingName   = $user->name;
+    $this->showUnblockModal = true;
+  }
+
+  public function closeUnblockModal(): void
+  {
+    $this->showUnblockModal = false;
+    $this->unblockingId     = null;
+    $this->unblockingName   = null;
+  }
+
   /** Buka blokir login pegawai yang terblokir karena berulang kali salah password. */
   public function unblockLogin(int $id): void
   {
@@ -112,6 +135,7 @@ class UsersIndex extends Component
       ->performedOn($user)
       ->log("Blokir login akun {$user->username} dibuka");
 
+    $this->closeUnblockModal();
     $this->toastSuccess("Blokir login {$user->name} berhasil dibuka.");
   }
 
@@ -138,7 +162,7 @@ class UsersIndex extends Component
     $allowedIds = null;
 
     if ($user->hasRole('super_admin')) {
-      $roots = Department::whereNull('parent_id')->orderBy('name')->get();
+      $roots = Department::whereNull('parent_id')->treeOrder()->get();
     } else {
       // Admin OPD hanya melihat departemennya + turunan dalam zona datanya
       $dept       = $user->department;
@@ -163,7 +187,7 @@ class UsersIndex extends Component
     $dept->display_name = str_repeat('— ', $level) . $dept->name;
     $list[]             = $dept;
 
-    foreach ($dept->children()->orderBy('name')->get() as $child) {
+    foreach ($dept->children()->treeOrder()->get() as $child) {
       $this->flattenDepartment($child, $level + 1, $list, $allowedIds);
     }
   }

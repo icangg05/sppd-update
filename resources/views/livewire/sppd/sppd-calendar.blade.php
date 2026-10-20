@@ -9,7 +9,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
           <i class="fa-solid fa-calendar-check text-[9px]"></i> Monitoring Agenda
         </span>
         <h1 class="text-xl font-bold tracking-tight text-slate-800">Kalender Perjalanan Dinas</h1>
@@ -194,7 +194,7 @@
       padding: 0.4rem 0.75rem !important;
       font-size: 0.8125rem !important;
       font-weight: 600 !important;
-      border-radius: 0.25rem !important;
+      border-radius: var(--radius) !important;
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
       text-transform: capitalize !important;
     }
@@ -208,7 +208,7 @@
     }
 
     .fc .fc-button-group > .fc-button {
-      border-radius: 0.25rem !important;
+      border-radius: var(--radius) !important;
       margin-left: 2px !important;
       margin-right: 2px !important;
     }
@@ -243,7 +243,7 @@
     .fc .fc-event {
       border: none !important;
       padding: 3px 6px !important;
-      border-radius: 4px !important;
+      border-radius: var(--radius) !important;
       font-size: 0.75rem !important;
       font-weight: 600 !important;
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;

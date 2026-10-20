@@ -11,7 +11,7 @@
 			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 				<div class="min-w-0 leading-tight">
 					<span
-						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 						<i class="fa-solid {{ $isEdit ? 'fa-pen-nib' : 'fa-user-plus' }} text-[9px]"></i>
 						{{ $isEdit ? 'Perbarui Data' : 'Registrasi Pegawai' }}
 					</span>
@@ -200,15 +200,17 @@
 
 				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
 					<div class="space-y-1 sm:col-span-2">
-						@php
-							$departmentOptions = collect($departments)
-								->map(fn($d) => ['value' => $d->id, 'label' => $d->display_name])
-								->all();
-						@endphp
-						<x-form.searchable-select wire:model.live="department_id" name="department_id"
-							label="Instansi / Unit Kerja (OPD)" required :options="$departmentOptions"
-							placeholder="— Pilih Instansi / Unit Kerja —" searchPlaceholder="Cari instansi / unit kerja ..."
-							hint="Pilih unit kerja tempat pegawai benar-benar ditempatkan. Daftar ditampilkan berjenjang (indentasi) sesuai struktur OPD induk → bidang/seksi; pilih unit yang paling spesifik." />
+						<x-form.tree-select wire:model.live="department_id" name="department_id"
+							label="Instansi / Unit Kerja (OPD)" required :nodes="$departmentTree"
+							searchPlaceholder="Cari instansi / unit kerja ..." emptyText="Belum ada unit kerja dipilih."
+							hint="Klik unit kerja tempat pegawai benar-benar ditempatkan. Tekan ▸ untuk membuka sub-unit di bawahnya; pilih unit yang paling spesifik." />
+						@if ($headOfUnits->isNotEmpty())
+							<p class="text-xs text-slate-500 mt-1">
+								<i class="fa-solid fa-user-tie text-primary-500 mr-1"></i>Tercatat sebagai pimpinan
+								<span class="font-semibold text-slate-700">{{ $headOfUnits->join(', ') }}</span>.
+								Memindahkan pegawai ke unit lain akan mengosongkan posisi pimpinan tersebut.
+							</p>
+						@endif
 						<p class="text-xs text-slate-500 mt-1">
 							<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
 							<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"

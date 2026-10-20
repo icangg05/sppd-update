@@ -16,7 +16,7 @@
 			<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 				<div class="min-w-0 leading-tight">
 					<span
-						class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+						class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 						<i class="fa-solid fa-print text-[10px]"></i> Cetak &amp; Status TTE
 					</span>
 					<h1 class="text-xl font-bold tracking-tight text-slate-800">Kelola SPPD</h1>
@@ -37,7 +37,7 @@
 				<div class="space-y-3">
 					<div class="flex items-center justify-between mb-2">
 						<p class="text-xs font-bold uppercase text-slate-500">Daftar Pelaksana & Pengikut</p>
-						<span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+						<span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
 							{{ 1 + $sppd->followers->count() }} Orang
 						</span>
 					</div>

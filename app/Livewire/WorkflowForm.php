@@ -6,6 +6,8 @@ use App\Enums\DepartmentType;
 use App\Enums\SppdDomain;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdWorkflow;
+use App\Services\SppdWorkflowService;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -25,7 +27,7 @@ class WorkflowForm extends Component
   public array $destination = [];
   public bool $is_active = true;
 
-  /** @var array<int, array{role:string, signs_spt:bool, signs_sppd:bool}> */
+  /** @var array<int, array{role:string, signs_spt:bool, signs_sppd:bool, optional:bool}> */
   public array $steps = [];
 
   public function mount(?SppdWorkflow $workflow = null): void
@@ -50,7 +52,7 @@ class WorkflowForm extends Component
 
   private function emptyStep(): array
   {
-    return ['role' => '', 'signs_spt' => false, 'signs_sppd' => false];
+    return ['role' => '', 'signs_spt' => false, 'signs_sppd' => false, 'optional' => false];
   }
 
   /**
@@ -64,10 +66,11 @@ class WorkflowForm extends Component
           'role'       => $step['role'] ?? '',
           'signs_spt'  => (bool) ($step['signs_spt'] ?? false),
           'signs_sppd' => (bool) ($step['signs_sppd'] ?? false),
+          'optional'   => (bool) ($step['optional'] ?? false),
         ];
       }
 
-      return ['role' => (string) $step, 'signs_spt' => false, 'signs_sppd' => false];
+      return ['role' => (string) $step, 'signs_spt' => false, 'signs_sppd' => false, 'optional' => false];
     })->values()->all();
   }
 
@@ -121,11 +124,24 @@ class WorkflowForm extends Component
     abort_unless(auth()->user()->hasRole('super_admin'), 403);
 
     try {
+      // Cakupan wajib dicentang eksplisit: tidak ada makna "kosong = berlaku untuk semua".
       $this->validate([
-        'name'         => ['required', 'string', 'max:255'],
-        'steps'        => ['required', 'array', 'min:1'],
-        'steps.*.role' => ['required', 'string'],
-      ], [], [
+        'name'              => ['required', 'string', 'max:255'],
+        'department_type'   => ['required', 'array', 'min:1'],
+        'department_type.*' => [Rule::enum(DepartmentType::class)],
+        'applicant_role'    => ['required', 'array', 'min:1'],
+        'applicant_role.*'  => [Rule::exists('roles', 'name')],
+        'destination'       => ['required', 'array', 'min:1'],
+        'destination.*'     => [Rule::enum(SppdDomain::class)],
+        'steps'             => ['required', 'array', 'min:1'],
+        // Tingkat persetujuan terendah Kabid/Irban/Kabag: Staf & Kasubag tidak menyetujui.
+        'steps.*.role'      => ['required', 'string', Rule::in(SppdWorkflowService::APPROVER_ROLES)],
+      ], [
+        'department_type.required' => 'Centang minimal satu tipe instansi.',
+        'applicant_role.required'  => 'Centang minimal satu peran pemohon.',
+        'destination.required'     => 'Centang minimal satu wilayah tujuan.',
+        'steps.*.role.in'          => 'Role ini tidak dapat menjadi tahap persetujuan.',
+      ], [
         'steps.*.role' => 'role tahapan',
       ]);
     } catch (ValidationException $e) {
@@ -145,6 +161,12 @@ class WorkflowForm extends Component
       return;
     }
 
+    // Tahap yang bisa dilewati tidak boleh memegang tanda tangan: SPT/SPPD bisa tanpa penanda tangan.
+    if (collect($this->steps)->contains(fn ($s) => ! empty($s['optional']) && (! empty($s['signs_spt']) || ! empty($s['signs_sppd'])))) {
+      $this->toastError('Tahap yang boleh dilewati tidak dapat menandatangani SPT atau SPPD.');
+      return;
+    }
+
     $data = [
       'name'            => trim($this->name),
       'department_type' => array_values($this->department_type),
@@ -155,6 +177,7 @@ class WorkflowForm extends Component
         'role'       => $s['role'],
         'signs_spt'  => (bool) $s['signs_spt'],
         'signs_sppd' => (bool) $s['signs_sppd'],
+        'optional'   => (bool) ($s['optional'] ?? false),
       ], array_values($this->steps)),
     ];
 
@@ -177,6 +200,7 @@ class WorkflowForm extends Component
       'departmentTypes' => DepartmentType::cases(),
       'domains'         => SppdDomain::cases(),
       'roles'           => Role::orderBy('name')->get(),
+      'approverRoles'   => Role::whereIn('name', SppdWorkflowService::APPROVER_ROLES)->orderBy('name')->get(),
     ])->title($this->isEdit ? 'Edit Workflow SPPD' : 'Tambah Workflow SPPD');
   }
 }

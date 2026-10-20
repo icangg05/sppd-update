@@ -13,14 +13,14 @@
 	<meta name="theme-color" content="#0c4a6e">
 	<meta name="mobile-web-app-capable" content="yes">
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=geist:400,500,600,700,800|geist-mono:400,500,600" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500,600,700" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 	@livewireStyles
 </head>
 
-<body class="font-sans text-slate-900" style="font-family: 'Geist', sans-serif;">
+<body class="font-sans text-slate-900">
 
 	{{-- Notifikasi Toast global (mis. setelah logout) --}}
 	<x-ui.toast />
@@ -45,7 +45,7 @@
 			class="max-w-6xl grid w-full overflow-hidden rounded border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
 			<div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9">
 				<div
-					class="dash-enter mx-auto inline-flex w-fit items-center gap-2 rounded-full border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
+					class="dash-enter mx-auto inline-flex w-fit items-center gap-2 rounded border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
 					<span class="inline-block h-2 w-2 rounded-full bg-sky-200"></span>
 					E-SPPD Kota Kendari
 				</div>

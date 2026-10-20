@@ -1,8 +1,8 @@
 @props(['show', 'title', 'description' => null, 'icon' => null, 'maxWidth' => 'max-w-md', 'closeable' => true])
 
 @php
-	// Klik di luar card: tutup bila closeable; bila tidak, goyangkan card sebagai
-	// isyarat bahwa modal harus ditutup lewat tombol.
+	// Klik di luar card / Esc: tutup bila closeable; bila tidak, goyangkan card
+	// sebagai isyarat bahwa modal harus ditutup lewat tombol.
 	$outsideClick = $closeable ? ($show . ' = false') : 'shake = false; $nextTick(() => shake = true)';
 @endphp
 {{-- display:contents → root bukan flex/grid item, jadi tak menambah `gap` di
@@ -15,8 +15,14 @@
 			window.__modalOpenCount = Math.max(0, (window.__modalOpenCount || 0) + (open ? 1 : -1));
 			document.body.style.overflow = window.__modalOpenCount > 0 ? 'hidden' : '';
 		};
+		// Fokus ke elemen [data-autofocus] saat modal dibuka — hanya perangkat ber-mouse;
+		// di HP/tablet (pointer kasar) keyboard virtual tidak dimunculkan otomatis.
+		const autofocus = () => {
+			if (!window.matchMedia('(pointer: fine)').matches) return;
+			setTimeout(() => $refs.panel?.querySelector('[data-autofocus]')?.focus({ preventScroll: true }), 50);
+		};
 		if ({{ $show }}) lock(true);
-		$watch('{{ $show }}', (open) => lock(open));
+		$watch('{{ $show }}', (open) => { lock(open); if (open) autofocus(); });
 	">
 	{{-- Teleport ke body agar z-index modal bersaing global, tidak terjebak di
 	     stacking context <main> (sidebar/header/card punya konteks sendiri). --}}
@@ -38,7 +44,7 @@
 			<div class="fixed inset-0 z-60 flex items-center justify-center p-4 pointer-events-none"
 				@click.self="{{ $outsideClick }}">
 
-				<div x-show="{{ $show }}"
+				<div x-show="{{ $show }}" x-ref="panel"
 					x-transition:enter="transition ease-out duration-300"
 					x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
 					x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -48,7 +54,7 @@
 					:class="shake && 'animate-modal-shake'"
 					@animationend="shake = false"
 					class="w-full {{ $maxWidth }} rounded border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
-					@keydown.escape.window="if ({{ $show }}) { {{ $show }} = false }">
+					@keydown.escape.window="if ({{ $show }}) { {{ $outsideClick }} }">
 
 					{{-- Header --}}
 					<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -69,7 +75,7 @@
 						</div>
 						<button type="button" @click="{{ $closeable ? $show . ' = false' : '' }}"
 							@if(!$closeable) style="display:none" @endif
-							class="rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+							class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					</div>

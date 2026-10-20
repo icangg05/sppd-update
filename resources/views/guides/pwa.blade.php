@@ -35,7 +35,7 @@
       <div class="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-10">
         {{-- Kiri: pesan --}}
         <div class="min-w-0">
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-white/25">
+          <span class="inline-flex items-center gap-1.5 rounded bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-white/25">
             <i class="fa-solid fa-download text-[10px]"></i> Progressive Web App
           </span>
 
@@ -67,7 +67,7 @@
 
         {{-- Kanan: mockup HP (ukuran tetap, tidak bisa melebar/overflow) --}}
         <div class="mx-auto w-44 shrink-0 select-none" aria-hidden="true">
-          <div class="rounded-[2rem] border-[6px] border-white/20 bg-primary-950/30 p-2 shadow-2xl shadow-primary-950/40">
+          <div class="rounded border-[6px] border-white/20 bg-primary-950/30 p-2 shadow-2xl shadow-primary-950/40">
             <div class="overflow-hidden rounded-3xl bg-linear-to-b from-primary-50 to-white">
               {{-- Status bar --}}
               <div class="flex items-center justify-between px-3.5 pt-2.5 text-[9px] font-medium text-slate-400">
@@ -165,7 +165,7 @@
                 <h3 class="truncate text-sm font-bold text-slate-800">{{ $p['label'] }}</h3>
                 <p class="truncate text-[11px] text-slate-500">{{ $p['hint'] }}</p>
               </div>
-              <span class="ml-auto shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-400 ring-1 ring-slate-200">
+              <span class="ml-auto shrink-0 rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-400 ring-1 ring-slate-200">
                 {{ count($p['steps']) }} langkah
               </span>
             </div>

@@ -10,7 +10,7 @@
     <div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div class="min-w-0 leading-tight">
         <span
-          class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+          class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
           <i class="fa-solid fa-diagram-project text-[9px]"></i>
           Alur Persetujuan
           <span class="ml-1 tabular-nums text-primary-600/70">· {{ $workflows->total() }}</span>
@@ -129,12 +129,17 @@
                       $roleName = is_array($step) ? $step['role'] ?? '' : $step;
                       $signsSpt = is_array($step) ? (bool) ($step['signs_spt'] ?? false) : false;
                       $signsSppd = is_array($step) ? (bool) ($step['signs_sppd'] ?? false) : false;
+                      $optional = is_array($step) && ! empty($step['optional']);
                       $roleLabel = $roleLabels[$roleName] ?? ucwords(str_replace('_', ' ', $roleName));
                     @endphp
                     <div
-                      class="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm">
+                      class="inline-flex items-center gap-1.5 rounded border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm {{ $optional ? 'border-dashed border-slate-300' : 'border-slate-200' }}"
+                      @if ($optional) title="Boleh dilewati bila pelaksana tidak berada di bawah pejabat ini" @endif>
                       <span class="text-primary-600 font-black">{{ $idx + 1 }}.</span>
                       <span>{{ $roleLabel }}</span>
+                      @if ($optional)
+                        <span class="text-[9px] font-semibold italic text-slate-500">opsional</span>
+                      @endif
                       @if ($signsSpt || $signsSppd)
                         <div class="flex items-center gap-0.5 ml-1 select-none">
                           @if ($signsSpt)

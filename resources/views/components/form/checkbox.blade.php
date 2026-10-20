@@ -6,6 +6,8 @@
     'id' => null,
     'required' => false,
     'hint' => null,
+    // false untuk checkbox dalam grup: error ditampilkan sekali oleh grupnya.
+    'showError' => true,
     'class' => '',
     'wrapperClass' => '',
 ])
@@ -37,7 +39,7 @@ $id = $id ?? ($name && str_contains($name, '[')
         <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
     @endif
 
-    @if ($key)
+    @if ($key && $showError)
         @error($key)
             <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
         @enderror

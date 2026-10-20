@@ -10,7 +10,7 @@
 		<div class="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
 			<div class="min-w-0 leading-tight">
 				<span
-					class="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
+					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-coins text-[9px]"></i>
 					Dokumen Anggaran
 					<span class="ml-1 tabular-nums text-primary-600/70">· {{ $budgets->total() }}</span>
