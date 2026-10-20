@@ -11,13 +11,27 @@
           <legend class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
             Tingkat Jabatan <span class="text-rose-500">*</span>
           </legend>
-          <div class="grid gap-2 sm:grid-cols-2">
-            @foreach ($tiers as $t)
-              <x-form.radio wire:model.live="tier" name="tier" id="position-form-tier-{{ $t->value }}"
-                value="{{ $t->value }}" :label="$t->label()" :description="$t->description()" :error="false"
-                labelClass="h-full w-full" />
-            @endforeach
-          </div>
+          @if ($fixedTier)
+            {{-- Dari wizard pejabat alur: tingkat mengikuti tahap yang sedang diisi. --}}
+            <div class="flex items-start gap-2.5 rounded border border-primary-200 bg-primary-50 px-3 py-2">
+              <i class="fa-solid fa-lock mt-0.5 text-xs text-primary-700"></i>
+              <div class="min-w-0 text-sm leading-tight">
+                <p class="font-semibold text-primary-900">{{ $fixedTier['label'] }}</p>
+                @if ($fixedTier['description'])
+                  <p class="mt-0.5 text-xs text-primary-800">{{ $fixedTier['description'] }}</p>
+                @endif
+                <p class="mt-1 text-xs text-primary-800">Mengikuti tahap alur persetujuan yang sedang dilengkapi.</p>
+              </div>
+            </div>
+          @else
+            <div class="grid gap-2 sm:grid-cols-2">
+              @foreach ($tiers as $t)
+                <x-form.radio wire:model.live="tier" name="tier" id="position-form-tier-{{ $t->value }}"
+                  value="{{ $t->value }}" :label="$t->label()" :description="$t->description()" :error="false"
+                  labelClass="h-full w-full" />
+              @endforeach
+            </div>
+          @endif
           @error('tier')
             <p class="text-xs font-semibold text-red-600">{{ $message }}</p>
           @enderror
@@ -28,8 +42,10 @@
             <span class="text-slate-400">·</span>
             Cakupan: <span class="font-semibold text-slate-800">{{ $summaryScope->label() }}</span>
           </div>
-          <p class="text-xs text-slate-500">Tingkat ditebak otomatis dari nama jabatan, ubah bila kurang tepat. Role
-            akhir pegawai menyesuaikan alur SPPD di unit kerjanya, misalnya Kabid di Dinas tetap Staf.</p>
+          @unless ($fixedTier)
+            <p class="text-xs text-slate-500">Tingkat ditebak otomatis dari nama jabatan, ubah bila kurang tepat. Role
+              akhir pegawai menyesuaikan alur SPPD di unit kerjanya, misalnya Kabid di Dinas tetap Staf.</p>
+          @endunless
         </fieldset>
 
         @if ($this->isSuperAdmin())

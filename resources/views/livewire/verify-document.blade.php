@@ -154,7 +154,7 @@
           <div class="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-center sm:justify-between">
             <dt class="font-medium text-slate-500">Tanggal</dt>
             <dd class="text-slate-700">
-              {{ $sppd->start_date?->translatedFormat('d M Y') }} &ndash; {{ $sppd->end_date?->translatedFormat('d M Y') }}
+              {{ $sppd->start_date?->translatedFormat('d M Y') }} s/d {{ $sppd->end_date?->translatedFormat('d M Y') }}
             </dd>
           </div>
         </dl>

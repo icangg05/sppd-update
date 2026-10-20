@@ -86,7 +86,8 @@
    SKALA DESAIN (disepakati — terapkan konsisten via util Tailwind):
    • Radius  : semua elemen (kontrol, kartu, panel, modal, dropdown, pill,
                progress bar) = rounded (2px, lihat --radius)
-               hanya lingkaran sejati (avatar, titik status, ikon bulat) = rounded-full
+               hanya lingkaran sejati (avatar, titik status, ikon bulat) dan
+               toggle switch (track pil + knob) = rounded-full
    • Shadow  : kartu = `border border-slate-200` + `shadow-sm`
    • Warna   : elemen interaktif selalu pakai `primary-*` (bukan `cyan-*`)
    ───────────────────────────────────────────────────────────────── */

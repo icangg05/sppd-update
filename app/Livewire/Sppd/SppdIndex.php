@@ -482,7 +482,7 @@ class SppdIndex extends Component
     // 2. Cek Kop Surat
     $hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
     if (! $hasHeader) {
-      $this->failLanjutan('Unit kerja ' . e($user->department?->name ?? 'Tanpa Unit Kerja') . ' belum mengunggah <strong class="font-semibold text-slate-800">Kop Surat</strong> Resmi. Harap hubungi <strong class="font-semibold text-slate-800">Admin OPD</strong> Anda untuk melengkapi data dokumen.');
+      $this->failLanjutan('Unit kerja ' . e($user->department?->name ?? 'Tanpa Unit Kerja') . ' belum mengunggah <strong class="font-semibold">Kop Surat</strong> Resmi. Harap hubungi <strong class="font-semibold">Admin OPD</strong> Anda untuk melengkapi data dokumen.');
       return;
     }
 
@@ -492,7 +492,7 @@ class SppdIndex extends Component
 
     if (empty($steps)) {
       $roleLabel = $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role');
-      $this->failLanjutan('Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin) untuk role: <strong class="font-semibold text-slate-800">' . e($roleLabel) . '</strong>.');
+      $this->failLanjutan('Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin) untuk role: <strong class="font-semibold">' . e($roleLabel) . '</strong>.');
       return;
     }
 

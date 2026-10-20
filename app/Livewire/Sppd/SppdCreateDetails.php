@@ -620,7 +620,7 @@ class SppdCreateDetails extends Component
       $chosen = collect($step['candidates'])->firstWhere('id', (int) $choice);
       $step['approver_name'] = match (true) {
         $chosen !== null                           => $chosen['name'],
-        $choice === SppdWorkflowService::SKIP      => 'Tidak ada — dilewati',
+        $choice === SppdWorkflowService::SKIP      => 'Tidak ada, tahap dilewati',
         default                                    => 'Belum dipilih',
       };
     }

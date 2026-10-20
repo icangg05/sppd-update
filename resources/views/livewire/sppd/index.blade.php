@@ -1,28 +1,21 @@
 <div class="flex flex-col gap-4 p-1">
 
 	@if ($errorMessage)
-		<div
-			class="flex items-start gap-3 overflow-hidden rounded-lg border border-red-200 bg-linear-to-br from-red-50 via-white to-white p-3.5 shadow-2xs transition-all duration-300">
-			<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50">
-				<i class="fa-solid fa-triangle-exclamation text-sm"></i>
-			</span>
-			<div class="min-w-0 flex-1 leading-tight">
-				<p class="text-[11px] font-bold uppercase tracking-wide text-red-700">Peringatan Validasi</p>
-				<p class="mt-0.5 text-xs leading-relaxed text-slate-600">
-					{!! $errorMessage !!}
-					@if (!empty($simulatedSteps))
-						<button type="button" wire:click="$set('showWorkflowModal', true)"
-							class="font-bold text-red-700 hover:text-red-950 underline cursor-pointer ml-1">
-							Cek Detail Alur Pejabat
-						</button>
-					@endif
-				</p>
-			</div>
-			<button type="button" wire:click="$set('errorMessage', null)"
-				class="shrink-0 cursor-pointer text-slate-400 hover:text-red-600">
-				<i class="fa-solid fa-xmark text-sm"></i>
-			</button>
-		</div>
+		<x-ui.alert title="SPPD lanjutan belum dapat dibuat">
+			{!! $errorMessage !!}
+			@if (!empty($simulatedSteps))
+				<button type="button" wire:click="$set('showWorkflowModal', true)"
+					class="ml-1 cursor-pointer font-semibold text-red-800 underline underline-offset-2 hover:text-red-950">
+					Cek Detail Alur Pejabat
+				</button>
+			@endif
+			<x-slot:actions>
+				<button type="button" wire:click="$set('errorMessage', null)" aria-label="Tutup peringatan"
+					class="cursor-pointer rounded p-1 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700">
+					<i class="fa-solid fa-xmark text-sm"></i>
+				</button>
+			</x-slot:actions>
+		</x-ui.alert>
 	@endif
 
 	{{-- Modal Detail Alur Pejabat --}}

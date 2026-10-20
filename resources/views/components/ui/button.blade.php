@@ -20,6 +20,8 @@ $variantClasses = [
 ];
 
 $sizeClasses = [
+    // xs: aksi kecil yang menempel pada konten (mis. tombol Lengkapi di node alur).
+    'xs' => 'px-2 py-1 text-[11px]',
     'sm' => 'px-3 py-1.5 text-xs',
     'md' => 'px-4 py-2 text-sm',
     'lg' => 'px-5 py-2.5 text-sm',
@@ -27,13 +29,14 @@ $sizeClasses = [
 
 $variantClass = $variantClasses[$variant] ?? $variantClasses['primary'];
 $sizeClass = $sizeClasses[$size] ?? $sizeClasses['md'];
+$gapClass = $size === 'xs' ? 'gap-1' : 'gap-2';
 
 // Spinner otomatis saat aksi Livewire berjalan. Jika atribut wire:target ada,
 // spinner hanya muncul untuk aksi itu; jika tidak, untuk aksi apa pun di komponen.
 $wireTarget = $attributes->whereStartsWith('wire:target')->first();
 
 $resolvedClass = trim(
-    'group relative inline-flex items-center justify-center gap-2 rounded font-medium shadow-2xs transition-colors '
+    'group relative inline-flex items-center justify-center ' . $gapClass . ' rounded font-medium shadow-2xs transition-colors '
     . 'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 '
     . 'disabled:cursor-not-allowed disabled:opacity-60 '
     . $sizeClass . ' ' . $variantClass . ' ' . $class
@@ -67,7 +70,7 @@ $resolvedClass = trim(
                 wire:loading.remove
                 @if ($wireTarget) wire:target="{{ $wireTarget }}" @endif
             @endif
-            class="inline-flex items-center gap-2"
+            class="inline-flex items-center {{ $gapClass }}"
         >
             @isset($icon) {{ $icon }} @endisset
             <span>{{ $slot }}</span>

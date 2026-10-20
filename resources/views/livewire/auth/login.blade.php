@@ -89,14 +89,15 @@
 			</div>
 		</div>
 
-		{{-- Ingat saya: toggle switch bertema kaca (komponen checkbox default bertema terang, tak cocok di sini) --}}
+		{{-- Ingat saya: toggle switch bertema kaca (komponen checkbox default bertema terang, tak cocok di sini).
+		     Sengaja membulat (track pil + knob lingkaran), pengecualian dari radius 2px — lihat DESIGN.md. --}}
 		<label class="flex w-fit cursor-pointer items-center gap-3 text-xs font-medium text-sky-50/90 select-none">
 			<span class="relative inline-flex shrink-0">
 				<input wire:model="remember" type="checkbox" class="peer sr-only">
 				<span
-					class="h-5 w-9 rounded bg-sky-100/20 ring-1 ring-inset ring-sky-100/30 transition-colors peer-checked:bg-sky-300/80 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"></span>
+					class="h-5 w-9 rounded-full bg-sky-100/20 ring-1 ring-inset ring-sky-100/30 transition-colors peer-checked:bg-sky-300/80 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"></span>
 				<span
-					class="absolute left-0.5 top-0.5 size-4 rounded bg-white shadow transition-transform peer-checked:translate-x-4"></span>
+					class="absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></span>
 			</span>
 			Ingat saya
 		</label>

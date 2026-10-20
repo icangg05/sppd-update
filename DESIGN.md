@@ -225,7 +225,7 @@ Sistem ini **flat secara default**. Kedalaman disampaikan lewat batas tipis dan 
 - **Do** pakai util `primary-*` untuk setiap elemen interaktif (tombol utama, nav aktif, fokus, status) — **jangan pernah** literal warna. Satu sumber kebenaran di `app.css`.
 - **Do** batasi biru logo pada ≤10% permukaan tiap layar (The One Voice Rule). Selebihnya kerangka slate netral.
 - **Do** jaga teks tubuh pada Tinta Kedua (`#334155`) dan label/pembantu tidak lebih terang dari Redup (`#64748b`); kontras minimal 4.5:1.
-- **Do** pakai radius tipis yang disepakati: `rounded` (2px, token `--radius`) untuk semua kontrol, kartu, panel, dropdown, modal, pill, dan progress bar. `rounded-full` hanya untuk lingkaran sejati (avatar, titik status, ikon bulat).
+- **Do** pakai radius tipis yang disepakati: `rounded` (2px, token `--radius`) untuk semua kontrol, kartu, panel, dropdown, modal, pill, dan progress bar. `rounded-full` hanya untuk lingkaran sejati (avatar, titik status, ikon bulat) dan toggle switch (track pil + knob bulat, mis. "Ingat saya" di login).
 - **Do** beri tiap SPPD/verifikasi/realisasi status pill semantik dari peta yang ada; buat umpan balik aksi (terutama TTE) selalu tegas dan terlihat lewat toast.
 - **Do** pakai satu kosakata komponen (`x-ui.button`, `x-ui.badge`, `x-ui.modal`, `x-form.*`) identik di semua layar. Setiap "Simpan" harus terlihat sama.
 - **Do** tampung kepadatan pada tabel saat data memang butuh, tapi sisakan napas pada header & formulir.

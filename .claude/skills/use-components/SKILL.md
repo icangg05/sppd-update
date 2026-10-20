@@ -31,7 +31,10 @@ Tombol / link. Render `<a wire:navigate>` jika ada `href`, selain itu `<button>`
     Reset, Batal, Kembali, dan aksi sekunder lain**. Kalau menemukan `<button>` mentah
     dengan `border-slate-300 bg-white text-slate-700`, itu = `variant="secondary"`.
 - `type`: default `button` (mis. `submit`, `reset`)
-- `href`: bila diisi → jadi link navigasi
+- `href`: bila diisi → jadi link navigasi. URL yang punya query string lebih dari satu
+  parameter (`?a=1&b=2`) **wajib** lewat binding `:href="route(...)"`, bukan
+  `href="{{ route(...) }}"`: bentuk kedua di-escape dua kali (`&amp;amp;`) sehingga
+  parameter setelah `&` hilang.
 - slot `icon` opsional untuk ikon di kiri teks
 - `wire:click`, `@click`, dll. diteruskan otomatis lewat atribut.
 - **State disabled**: jangan bikin dua `<button>` (satu enabled, satu `disabled`) via
@@ -65,6 +68,25 @@ Label status. Dua mode:
 <x-ui.badge bg="bg-emerald-100" text="text-emerald-700">Disetujui</x-ui.badge>
 ```
 JANGAN: `<span class="badge-{{ $status }} ...">` atau `<span class="badge bg-... text-...">`
+
+### `<x-ui.alert>` — `resources/views/components/ui/alert.blade.php`
+Kotak peringatan / info di dalam halaman. Tint solid + ikon + teks pekat sewarna
+(tanpa gradien, tanpa stripe kiri). Props: `variant` (`danger` default, `warning`,
+`info`, `success`), `title` (opsional, kalimat yang menjelaskan masalahnya — bukan
+"PERINGATAN"), `icon` (kelas `fa-*`, default per varian). Slot `actions` opsional
+di kanan (mis. tombol tutup).
+- `danger` = memblokir (alur belum ada, data wajib kurang); `warning` = sementara
+  (pegawai sedang bertugas, menunggu proses).
+- Teks tebal di dalamnya cukup `<strong class="font-semibold">` — jangan beri warna
+  abu (`text-slate-*`), biar mewarisi warna alert.
+
+```blade
+<x-ui.alert title="Pejabat alur belum lengkap">
+  Lengkapi lewat tombol pada tahap yang masih kosong.
+</x-ui.alert>
+<x-ui.alert variant="warning" icon="fa-user-clock" title="Pegawai sedang bertugas">...</x-ui.alert>
+```
+JANGAN: `<div class="... bg-linear-to-br from-red-50 via-white to-white ...">` untuk alert.
 
 ### `<x-ui.modal>` — `resources/views/components/ui/modal.blade.php`
 Modal Alpine.js. Props: `show` (ekspresi Alpine), `title`, `description`, `icon`

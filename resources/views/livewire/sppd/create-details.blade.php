@@ -16,7 +16,7 @@
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
 				<p class="mt-1 text-xs text-slate-500">Isi detail & lengkapi data pengajuan.</p>
 			</div>
-			<x-ui.button href="{{ route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain]) }}" wire:navigate variant="secondary">
+			<x-ui.button :href="route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain])" wire:navigate variant="secondary">
 				<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
 				Kembali ke Tahap 1
 			</x-ui.button>
@@ -81,8 +81,8 @@
 									@endif
 								</span>
 								<span class="min-w-0 leading-tight">
-									<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
-									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+									<span class="line-clamp-2 text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
+									<span class="line-clamp-2 text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
 								</span>
 							</div>
 
@@ -112,10 +112,10 @@
 							@foreach ($chooseSteps as $position => $step)
 								@php
 									$options = collect($step['candidates'])
-										->map(fn ($c) => ['value' => (string) $c['id'], 'label' => $c['name'] . ($c['unit'] ? ' — ' . $c['unit'] : '')])
+										->map(fn ($c) => ['value' => (string) $c['id'], 'label' => $c['name'] . ($c['unit'] ? ' (' . $c['unit'] . ')' : '')])
 										->all();
 									if ($step['optional']) {
-										$options[] = ['value' => \App\Services\SppdWorkflowService::SKIP, 'label' => 'Tidak ada — langsung ke tahap berikutnya'];
+										$options[] = ['value' => \App\Services\SppdWorkflowService::SKIP, 'label' => 'Tidak ada, langsung ke tahap berikutnya'];
 									}
 								@endphp
 								<x-form.searchable-select wire:model.live="stepApprovers.{{ $step['index'] }}" :options="$options"

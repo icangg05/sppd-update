@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\DepartmentType;
 use App\Models\Department;
+use App\Models\Position;
 use App\Models\SppdRequest;
 use App\Models\SppdWorkflow;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 
@@ -32,7 +35,7 @@ class SppdWorkflowService
   ];
 
   /** Role tingkat kota: dicari di seluruh sistem bila tidak ada di hierarki pemohon. */
-  private const CITY_WIDE_ROLES = ['sekda', 'walikota', 'wakil_walikota'];
+  public const CITY_WIDE_ROLES = ['sekda', 'walikota', 'wakil_walikota'];
 
   /**
    * Workflow aktif yang berlaku bagi pelaksana dan domain perjalanan.
@@ -268,6 +271,241 @@ class SppdWorkflowService
     return $this->resolution($optional ? 'skipped' : 'not_found');
   }
 
+  /** Unit teratas instansi pelaksana (OPD, Setda, Kecamatan, Kelurahan, Puskesmas, ...). */
+  public function instansiOf(User $pelaksana): ?Department
+  {
+    return $this->instansiRoot($pelaksana->department);
+  }
+
+  /**
+   * Instansi asal calon pejabat suatu tahap: pejabat tingkat kota (Sekda, Wali Kota)
+   * berasal dari Sekretariat Daerah; selain itu dari instansi pelaksana.
+   */
+  public function officialPoolRoot(string $role, User $pelaksana): ?Department
+  {
+    if (in_array($role, self::CITY_WIDE_ROLES, true)) {
+      return Department::where('type', DepartmentType::SETDA)->whereNull('parent_id')->orderBy('id')->first();
+    }
+
+    return $this->instansiRoot($pelaksana->department);
+  }
+
+  /**
+   * Pegawai di instansi pelaksana yang dapat ditetapkan sebagai pejabat untuk
+   * tahap yang belum terisi. Pegawai yang jabatannya sesuai tampil lebih dulu.
+   *
+   * @return array<int, array{id:int, name:string, nip:?string, position:?string, unit:?string, fits:bool}>
+   */
+  public function officialCandidates(string $role, User $pelaksana, string $search = '', int $limit = 8): array
+  {
+    $term = trim($search);
+
+    return ($this->candidateQuery($role, $pelaksana)?->with(['position', 'department'])
+      ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('nip', 'like', "%{$term}%")))
+      ->orderByRaw('exists (select 1 from positions where positions.id = users.position_id and positions.default_role = ?) desc', [$role])
+      ->orderBy('name')
+      ->limit($limit)
+      ->get() ?? collect())
+      ->map(fn (User $u) => $this->candidateRow($u, $role))
+      ->all();
+  }
+
+  /** Satu calon pejabat (lihat officialCandidates), atau null bila bukan calon yang sah. */
+  public function officialCandidate(string $role, User $pelaksana, int $candidateId): ?array
+  {
+    $user = $this->candidateQuery($role, $pelaksana)?->with(['position', 'department'])->find($candidateId);
+
+    return $user ? $this->candidateRow($user, $role) : null;
+  }
+
+  /**
+   * Jabatan yang memberi role tahap di unit kerja calon. Jabatan yang namanya
+   * cocok dengan nama instansi (mis. "Kepala Dinas Sosial" untuk Dinas Sosial)
+   * diurutkan lebih dulu sebagai saran. Saat mengganti pejabat ($outgoingId),
+   * jabatan pejabat lama boleh dipilih (dialihkan) dan menjadi saran utama.
+   *
+   * @return array<int, array{id:int, name:string, holder:?string, handover:?string, suggested:bool}>
+   */
+  public function officialPositions(string $role, User $pelaksana, int $candidateId, ?int $outgoingId = null): array
+  {
+    $candidate = $this->candidateQuery($role, $pelaksana)?->with('department')->find($candidateId);
+    if (! $candidate) {
+      return [];
+    }
+    $outgoing = $outgoingId ? User::find($outgoingId) : null;
+
+    $instansiWords = collect(preg_split('/\s+/', mb_strtolower($this->officialPoolRoot($role, $pelaksana)?->name ?? '')))
+      ->filter(fn (string $w) => mb_strlen($w) > 3);
+    $roles = $this->getRoleSynonyms($role);
+
+    $rows = Position::whereIn('default_role', $roles)->orderBy('name')->get()
+      ->filter(fn (Position $p) => in_array($p->roleForDepartment($candidate->department), $roles, true))
+      ->map(function (Position $p) use ($candidate, $outgoing, $instansiWords) {
+        $holder = $p->conflictingHolder($candidate->department_id, $candidate->id);
+        $handover = $outgoing && ($p->id === $outgoing->position_id || $holder?->id === $outgoing->id);
+
+        return [
+          'id'       => $p->id,
+          'name'     => $p->name,
+          'holder'   => $handover ? null : $holder?->name,
+          'handover' => $handover ? $outgoing->name : null,
+          'score'    => $instansiWords->filter(fn (string $w) => str_contains(mb_strtolower($p->name), $w))->count(),
+        ];
+      })
+      ->sortBy([['score', 'desc'], ['name', 'asc']])
+      ->values();
+
+    $best = $rows->first(fn (array $r) => $r['handover'] !== null)
+      ?? $rows->first(fn (array $r) => $r['score'] > 0 && ! $r['holder']);
+
+    return $rows->map(fn (array $r) => [
+      'id'        => $r['id'],
+      'name'      => $r['name'],
+      'holder'    => $r['holder'],
+      'handover'  => $r['handover'],
+      'suggested' => $best !== null && $r['id'] === $best['id'],
+    ])->all();
+  }
+
+  /** Pejabat yang kini mengisi tahap $role pada alur pelaksana, atau null bila bukan dia. */
+  public function currentOfficial(string $role, User $pelaksana, ?string $destination, int $userId): ?User
+  {
+    $step = collect($this->simulateApprovals($pelaksana, $destination))
+      ->where('status', 'found')->where('role', $role)->firstWhere('approver_id', $userId);
+
+    return $step ? User::with(['position', 'department', 'roles'])->find($userId) : null;
+  }
+
+  /**
+   * Tetapkan pegawai sebagai pejabat untuk tahap yang belum terisi pada alur
+   * pelaksana, agar pengajuan berikutnya tidak perlu diatur ulang. Bila
+   * jabatannya belum sesuai, sertakan $positionId: jabatan pegawai ikut diubah
+   * sehingga role mengikuti jabatan (sama seperti form Pegawai).
+   *
+   * Dengan $replaceId, pegawai menggantikan pejabat yang kini mengisi tahap itu:
+   * pejabat lama kembali menjadi Staf dan melepas jabatan yang memberi role-nya.
+   *
+   * @throws \RuntimeException Pesan siap tampil bila penetapan tidak diizinkan.
+   */
+  public function appointOfficial(User $actor, User $pelaksana, ?string $destination, string $role, int $candidateId, ?int $positionId = null, ?int $replaceId = null): User
+  {
+    $label = $this->roleLabel($role);
+
+    $outgoing = null;
+    if ($replaceId) {
+      $outgoing = $this->currentOfficial($role, $pelaksana, $destination, $replaceId);
+      if (! $outgoing) {
+        throw new \RuntimeException("Pejabat {$label} sudah berubah. Muat ulang halaman lalu coba lagi.");
+      }
+    } else {
+      $missing = collect($this->simulateApprovals($pelaksana, $destination))->where('status', 'not_found')->pluck('role');
+      if (! $missing->contains($role)) {
+        throw new \RuntimeException("Tahap {$label} sudah memiliki pejabat.");
+      }
+    }
+
+    $candidate = $this->candidateQuery($role, $pelaksana)?->with(['position', 'department', 'roles'])->find($candidateId);
+    if (! $candidate) {
+      throw new \RuntimeException('Pegawai tidak berada di instansi pelaksana atau sudah memegang jabatan lain.');
+    }
+
+    $position = null;
+    if ($positionId) {
+      $position = collect($this->officialPositions($role, $pelaksana, $candidateId, $outgoing?->id))->firstWhere('id', $positionId);
+      if (! $position) {
+        throw new \RuntimeException("Jabatan tersebut bukan jabatan {$label}.");
+      }
+      if ($position['holder']) {
+        throw new \RuntimeException("Jabatan {$position['name']} sudah dijabat oleh {$position['holder']}.");
+      }
+    } elseif (! $actor->hasRole('super_admin') && ! $this->fitsPosition($candidate, $role)) {
+      // Sama seperti form Pegawai: hanya Super Admin yang bebas memberi role;
+      // Admin OPD menetapkan lewat jabatan yang sesuai.
+      throw new \RuntimeException("Pilih jabatan {$label} untuk {$candidate->name} terlebih dahulu.");
+    }
+
+    // Pengganti mewarisi role pejabat lama (mis. Camat untuk tahap Kepala OPD).
+    $newRole = $outgoing?->roles->pluck('name')->first(fn (string $r) => in_array($r, $this->getRoleSynonyms($role), true)) ?? $role;
+
+    $holder = User::roleConflictHolder($newRole, $candidate->department_id, $candidate->id);
+    if ($holder && $holder->id !== $outgoing?->id) {
+      throw new \RuntimeException("Role {$label} sudah dipegang oleh {$holder->name}.");
+    }
+
+    return DB::transaction(function () use ($actor, $candidate, $position, $role, $newRole, $label, $outgoing) {
+      if ($outgoing) {
+        $this->releaseOfficial($actor, $outgoing, $role, $label, $candidate, $position['id'] ?? null);
+      }
+
+      if ($position) {
+        $candidate->update(['position_id' => $position['id']]);
+      }
+
+      $oldRole = $candidate->roles->pluck('name')->implode(', ');
+      $candidate->syncRoles([$newRole]);
+
+      activity()
+        ->performedOn($candidate)
+        ->causedBy($actor)
+        ->event('updated')
+        ->withChanges(['old' => ['role' => $oldRole], 'attributes' => ['role' => $newRole]])
+        ->log($outgoing
+          ? "Pegawai {$candidate->name} ditetapkan sebagai {$label} menggantikan {$outgoing->name} dari pengajuan SPPD"
+          : "Pegawai {$candidate->name} ditetapkan sebagai {$label} dari pengajuan SPPD");
+
+      return $candidate;
+    });
+  }
+
+  /** Role pejabat lama setelah diganti: Pimpinan DPRD kembali menjadi Anggota DPRD, selain itu Staf. */
+  public function releasedRole(string $role): string
+  {
+    return $role === 'pimpinan_dprd' ? 'anggota_dprd' : 'staf';
+  }
+
+  /** Jabatan pejabat lama yang ikut dilepas saat diganti (jabatan yang memberi role-nya), atau null. */
+  public function releasedPosition(User $outgoing, string $role, ?int $handoverPositionId = null): ?string
+  {
+    if (! $outgoing->position_id) {
+      return null;
+    }
+
+    return $this->fitsPosition($outgoing, $role) || $outgoing->position_id === $handoverPositionId
+      ? $outgoing->position?->name
+      : null;
+  }
+
+  private function releaseOfficial(User $actor, User $outgoing, string $role, string $label, User $successor, ?int $handoverPositionId): void
+  {
+    $released = $this->releasedPosition($outgoing, $role, $handoverPositionId);
+    if ($released !== null) {
+      $outgoing->update(['position_id' => null]);
+    }
+
+    $oldRole = $outgoing->roles->pluck('name')->implode(', ');
+    $outgoing->syncRoles([$this->releasedRole($role)]);
+
+    activity()
+      ->performedOn($outgoing)
+      ->causedBy($actor)
+      ->event('updated')
+      ->withChanges(['old' => ['role' => $oldRole], 'attributes' => ['role' => $this->releasedRole($role)]])
+      ->log("Pegawai {$outgoing->name} tidak lagi menjabat {$label}, digantikan {$successor->name} dari pengajuan SPPD");
+  }
+
+  /** @return array{id:int, name:string, nip:?string, position:?string, unit:?string, fits:bool} */
+  private function candidateRow(User $user, string $role): array
+  {
+    return [
+      'id'       => $user->id,
+      'name'     => $user->name,
+      'nip'      => $user->nip,
+      'position' => $user->position?->name,
+      'unit'     => $user->department?->name,
+      'fits'     => $this->fitsPosition($user, $role),
+    ];
+  }
+
   /**
    * Apakah role berperan di workflow aktif untuk jenis unit kerja tertentu —
    * sebagai pemohon maupun penyetuju. Dipakai untuk menurunkan role default
@@ -372,6 +610,30 @@ class SppdWorkflowService
     $message .= "Harap hubungi Admin untuk melengkapi data Pejabat di bidang Anda terlebih dahulu agar alur pengajuan tidak terputus.";
 
     throw new \Exception($message);
+  }
+
+  /**
+   * Pegawai aktif di instansi asal (lihat officialPoolRoot) yang boleh diangkat ke
+   * role tahap: pemegang Staf (Pimpinan DPRD dipilih dari Anggota DPRD).
+   */
+  private function candidateQuery(string $role, User $pelaksana): ?\Illuminate\Database\Eloquent\Builder
+  {
+    $root = $this->officialPoolRoot($role, $pelaksana);
+    if (! $root) {
+      return null;
+    }
+
+    $fromRoles = $role === 'pimpinan_dprd' ? ['anggota_dprd'] : ['staf'];
+
+    return User::whereIn('department_id', $this->zoneIds($root))
+      ->where('is_active', true)
+      ->whereHas('roles', fn ($q) => $q->whereIn('name', $fromRoles));
+  }
+
+  /** Jabatan pegawai di unit kerjanya memang memberi role ini (Position::roleForDepartment). */
+  private function fitsPosition(User $user, string $role): bool
+  {
+    return in_array($user->position?->roleForDepartment($user->department), $this->getRoleSynonyms($role), true);
   }
 
   /** Role yang hanya boleh dipegang satu orang per unit/sistem (config role_uniqueness). */

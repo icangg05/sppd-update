@@ -61,7 +61,7 @@
 				<div class="flex items-center gap-2">
 					<img src="{{ asset('img/logo-sppd.png') }}" alt="Logo SPPD Kota Kendari" class="size-4 opacity-80">
           <div>
-            <span>&copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }} &mdash; Sistem Perjalanan Dinas Elektronik.</span>
+            <span>Hak cipta &copy; {{ date('Y') }} {{ config('app.name', 'SPPD') }}.</span>
             <span class="inline sm:hidden">v{{ config('app.sppd_version') }}</span>
           </div>
 				</div>

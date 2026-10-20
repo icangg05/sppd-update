@@ -224,7 +224,7 @@
 						<div class="space-y-1">
 							@php
 								$rankOptions = collect($ranks)
-									->map(fn($r) => ['value' => $r->id, 'label' => $r->group . ' — ' . $r->name])
+									->map(fn($r) => ['value' => $r->id, 'label' => $r->name . ' (' . $r->group . ')'])
 									->prepend(['value' => '', 'label' => '— Tidak dipilih —'])
 									->all();
 							@endphp

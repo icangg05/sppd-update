@@ -38,8 +38,8 @@
     <i class="fa-regular fa-bell"></i>
     {{-- Badge merah per-user: muncul saat ada pembaruan baru utk user ini, hilang setelah dibuka --}}
     <span x-show="unread" x-cloak
-      class="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded border-2 border-primary-700 bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
-      x-text="count"></span>
+      class="absolute -right-1.5 -top-1.5 inline-flex size-5 items-center justify-center rounded-full border-2 border-primary-700 bg-rose-500 text-[9px] font-bold leading-none tabular-nums text-white"
+      x-text="count > 99 ? '99+' : count"></span>
   </button>
 
   {{-- Backdrop (mobile fullscreen) --}}

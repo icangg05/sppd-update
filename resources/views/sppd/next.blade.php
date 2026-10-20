@@ -18,7 +18,7 @@
           <i class="fa-regular fa-user text-[9px]"></i> {{ $sppd->user->name }}
         </span>
         <h1 class="text-xl font-bold tracking-tight text-slate-800">Portal Dokumen</h1>
-        <p class="mt-1 text-sm text-slate-500">Kelola dokumen administrasi perjalanan dinas &mdash; sebelum & sesudah
+        <p class="mt-1 text-sm text-slate-500">Kelola dokumen administrasi perjalanan dinas sebelum dan sesudah
           pelaksanaan.</p>
       </div>
       @php $backToShow = request('from') === 'show'; @endphp

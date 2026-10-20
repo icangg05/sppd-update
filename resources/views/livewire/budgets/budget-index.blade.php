@@ -17,7 +17,7 @@
 				</span>
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Daftar Anggaran (DPA)</h1>
 				<p class="mt-1 text-xs text-slate-500">
-					Dokumen Pelaksanaan Anggaran — Tahun Anggaran {{ $year !== '' ? $year : 'Semua' }}
+					Dokumen Pelaksanaan Anggaran {{ $year !== '' ? 'tahun anggaran ' . $year : 'untuk semua tahun anggaran' }}
 				</p>
 			</div>
 

@@ -718,12 +718,12 @@
       </ul>
 
       @if ($headHasMore)
-        <p class="text-[11px] text-slate-500">Menampilkan 25 pegawai pertama — ketik nama atau NIP untuk mencari yang lain.</p>
+        <p class="text-[11px] text-slate-500">Menampilkan 25 pegawai pertama. Ketik nama atau NIP untuk mencari yang lain.</p>
       @endif
 
       <p class="flex gap-2 text-[11px] text-slate-500">
         <i class="fa-solid fa-circle-info mt-0.5 text-slate-400"></i>
-        <span>Pegawai yang dipilih ditempatkan di unit ini — unit kerja di data pegawainya ikut berubah. Penyetuju SPPD tetap ditentukan dari role pegawai.</span>
+        <span>Pegawai yang dipilih dipindahkan ke unit ini, sehingga unit kerja di data pegawainya ikut berubah. Penyetuju SPPD tetap ditentukan dari role pegawai.</span>
       </p>
     </div>
   </x-ui.modal>

@@ -72,7 +72,7 @@
             <div class="rounded border border-slate-200 bg-slate-50 p-3 text-[12px]">
               <p class="mb-1.5 font-semibold text-slate-700">
                 Tanda tangan #{{ $i + 1 }}
-                @if ($signerName) — {{ $signerName }} @endif
+                @if ($signerName) oleh {{ $signerName }} @endif
               </p>
               <dl class="space-y-1">
                 @if ($issuer)

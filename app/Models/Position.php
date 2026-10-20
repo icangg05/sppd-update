@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DepartmentType;
 use App\Enums\PositionScope;
+use App\Enums\PositionTier;
 use App\Services\SppdWorkflowService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,16 @@ class Position extends Model
   public static function levelForRole(?string $role): int
   {
     return self::ROLE_LEVELS[$role] ?? self::DEFAULT_LEVEL;
+  }
+
+  /** Cakupan keunikan jabatan untuk role tertentu (config role_uniqueness, lalu tingkat jabatannya). */
+  public static function scopeForRole(string $role): PositionScope
+  {
+    return match (true) {
+      in_array($role, config('role_uniqueness.system', []), true)     => PositionScope::SYSTEM,
+      in_array($role, config('role_uniqueness.department', []), true) => PositionScope::DEPARTMENT,
+      default                                                         => PositionTier::fromRole($role)->scope(),
+    };
   }
 
   public function getActivitylogOptions(): LogOptions

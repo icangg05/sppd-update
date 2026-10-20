@@ -100,7 +100,7 @@ class PptkSelector extends Component
         ->get(['id', 'name', 'nip'])
         ->map(fn ($u) => [
           'value' => (string) $u->id,
-          'label' => $u->name . ($u->nip ? ' — NIP. ' . $u->nip : ''),
+          'label' => $u->name . ($u->nip ? ' (NIP. ' . $u->nip . ')' : ''),
         ])
         ->all();
     }

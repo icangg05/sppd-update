@@ -7,13 +7,22 @@
 @endphp
 {{-- display:contents → root bukan flex/grid item, jadi tak menambah `gap` di
      container induk (mis. flex flex-col gap-4). Konten visual tetap di-teleport. --}}
-<div class="contents" x-data="{ shake: false }"
+<div class="contents" x-data="{
+		shake: false,
+		uid: Math.random().toString(36).slice(2),
+		isTop() { return (window.__modalStack || []).at(-1) === this.uid; },
+		destroy() { window.__modalStack = (window.__modalStack || []).filter((id) => id !== this.uid); },
+	}"
 	{{-- Kunci scroll body selama modal terbuka. Pakai counter global agar aman
-	     bila ada beberapa modal: body baru bisa discroll lagi setelah semua tutup. --}}
+	     bila ada beberapa modal: body baru bisa discroll lagi setelah semua tutup.
+	     Tumpukan modal terbuka dicatat agar Esc hanya menutup modal paling atas
+	     (mis. form Tambah Jabatan di atas wizard pejabat). --}}
 	x-init="
 		const lock = (open) => {
 			window.__modalOpenCount = Math.max(0, (window.__modalOpenCount || 0) + (open ? 1 : -1));
 			document.body.style.overflow = window.__modalOpenCount > 0 ? 'hidden' : '';
+			window.__modalStack = (window.__modalStack || []).filter((id) => id !== uid);
+			if (open) window.__modalStack.push(uid);
 		};
 		// Fokus ke elemen [data-autofocus] saat modal dibuka — hanya perangkat ber-mouse;
 		// di HP/tablet (pointer kasar) keyboard virtual tidak dimunculkan otomatis.
@@ -54,7 +63,7 @@
 					:class="shake && 'animate-modal-shake'"
 					@animationend="shake = false"
 					class="w-full {{ $maxWidth }} rounded border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
-					@keydown.escape.window="if ({{ $show }}) { {{ $outsideClick }} }">
+					@keydown.escape.window="if ({{ $show }} && isTop()) { {{ $outsideClick }} }">
 
 					{{-- Header --}}
 					<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">

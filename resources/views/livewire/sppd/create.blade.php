@@ -153,6 +153,11 @@
 												: ({{ $user_id == $u->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
 											@php $prefix = $u->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $u->nip; @endphp
 											{{ trim(($prefix ? $prefix . ' - ' : '') . $u->name) }}
+											@if ($origin = $userOrigins[$u->id] ?? null)
+												<span class="block truncate text-[11px] font-normal text-slate-500">
+													<span class="font-semibold text-slate-600">{{ $origin['instansi'] }}</span>@if ($origin['unit']) › {{ $origin['unit'] }}@endif
+												</span>
+											@endif
 										</button>
 									</li>
 								@empty
@@ -171,6 +176,17 @@
 					@error('user_id')
 						<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
 					@enderror
+					@if ($pelaksanaOrigin)
+						<p class="mt-1.5 flex items-start gap-1.5 text-xs text-slate-500">
+							<i class="fa-solid fa-building mt-0.5 text-[10px] text-slate-400"></i>
+							<span>
+								Instansi: <strong class="font-semibold text-slate-700">{{ $pelaksanaOrigin['instansi'] }}</strong>
+								@if ($pelaksanaOrigin['unit'])
+									› {{ $pelaksanaOrigin['unit'] }}
+								@endif
+							</span>
+						</p>
+					@endif
 				</div>
 
 				<x-form.searchable-select wire:model.live="domain" name="domain" label="Domain Perjalanan" required
@@ -180,7 +196,7 @@
 			{{-- Container Pratinjau Alur Alur Dokumen --}}
 			@if ($user_id)
 				<div id="workflow-preview" class="border-t border-slate-100 bg-slate-50/50 p-5 animate-fadeIn">
-					<div class="flex items-center justify-between mb-4">
+					<div class="mb-4 flex items-center justify-between gap-3">
 						<h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
 							<i class="fa-solid fa-diagram-project text-slate-500"></i>
 							Pratinjau Alur Persetujuan Dokumen
@@ -226,8 +242,32 @@
 									@endif
 								</span>
 								<span class="min-w-0 leading-tight">
-									<span class="block truncate text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
-									<span class="block truncate text-sm font-semibold {{ $nameClass }}" title="{{ $approverName }}">{{ $approverName }}</span>
+									{{-- Teks panjang turun ke baris kedua (maks. 2 baris), bukan terpotong. --}}
+									<span class="flex items-center gap-1.5">
+										<span class="line-clamp-2 text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
+										{{-- Pejabat terisi tapi keliru/berganti: ganti lewat wizard yang sama dengan Lengkapi. --}}
+										@if ($isFound && ($replaceable[$step['role']] ?? false))
+											<button type="button" wire:click="replaceOfficial('{{ $step['role'] }}')"
+												title="Ganti {{ $step['role_label'] }}" aria-label="Ganti pejabat {{ $step['role_label'] }}"
+												class="inline-flex size-4.5 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600">
+												<i class="fa-solid fa-pen-to-square text-[9px]"></i>
+											</button>
+										@endif
+									</span>
+									<span class="line-clamp-2 text-sm font-semibold {{ $nameClass }}" title="{{ $approverName }}">{{ $approverName }}</span>
+									{{-- Pejabat kosong dilengkapi per tahap; Sekda/Wali Kota hanya oleh Admin Setda / Super Admin. --}}
+									@if ($step['status'] === 'not_found')
+										@if ($completable[$step['role']] ?? false)
+											<x-ui.button variant="warning" size="xs" wire:click="openOfficial('{{ $step['role'] }}')" class="mt-1">
+												<x-slot:icon><i class="fa-solid fa-user-plus text-[9px]"></i></x-slot:icon>
+												Lengkapi
+											</x-ui.button>
+										@else
+											<span class="mt-1 block text-[11px] text-slate-500">
+												Diatur {{ in_array($step['role'], \App\Services\SppdWorkflowService::CITY_WIDE_ROLES, true) ? 'Admin Sekretariat Daerah' : 'Admin instansi pelaksana' }} / Super Admin
+											</span>
+										@endif
+									@endif
 								</span>
 							</div>
 
@@ -245,43 +285,20 @@
 									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
-								@php
-						$isBusy = $errorMessageName !== '';
-						// Pegawai masih punya SPPD aktif (sementara) → kuning.
-						// Alur/konfigurasi belum dibuat (blocking) → merah.
-						$c = $isBusy
-							? ['border' => 'border-amber-300', 'from' => 'from-amber-50/70', 'wm' => 'text-amber-500/10', 'node' => 'bg-amber-100 text-amber-600 ring-amber-50', 'icon' => 'fa-user-clock', 'title' => 'text-slate-700']
-							: ['border' => 'border-red-300', 'from' => 'from-red-50/70', 'wm' => 'text-red-500/10', 'node' => 'bg-red-100 text-red-600 ring-red-50', 'icon' => 'fa-link-slash', 'title' => 'text-red-700'];
-					@endphp
-								{{-- Empty state kompak: rantai persetujuan putus (berornamen + animasi) --}}
-								<div class="w-full">
-									<div class="relative flex flex-col items-center gap-2.5 overflow-hidden rounded-lg border border-dashed {{ $c['border'] }} bg-linear-to-br {{ $c['from'] }} via-white to-white px-4 py-4">
-										{{-- Ornamen watermark --}}
-										<i class="fa-solid fa-diagram-project pointer-events-none absolute -bottom-3 -right-2 text-6xl {{ $c['wm'] }}" aria-hidden="true"></i>
-
-										{{-- Rantai node: pelaksana → simpul putus → tak diketahui --}}
-										<div class="relative flex items-center gap-1.5" aria-hidden="true">
-											<span class="flex size-6 items-center justify-center rounded-full bg-slate-200 text-[10px] text-slate-400"><i class="fa-solid fa-user"></i></span>
-											<span class="h-0.5 w-5 rounded bg-slate-300"></span>
-											<span class="flex size-8 items-center justify-center rounded-full ring-4 animate-pulse {{ $c['node'] }}"><i class="fa-solid {{ $c['icon'] }} text-sm"></i></span>
-											<span class="w-5 border-t-2 border-dashed border-slate-300"></span>
-											<span class="flex size-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-[10px] text-slate-300"><i class="fa-solid fa-question"></i></span>
-										</div>
-
-										<div class="relative text-center">
-											<p class="text-sm font-bold {{ $c['title'] }}">{{ $isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia' }}</p>
-											<p class="mt-0.5 text-xs leading-relaxed text-slate-500">
-												@if ($isBusy)
-													Pegawai <strong class="font-semibold text-slate-700">{{ $errorMessageName }}</strong> {{ $errorMessage }}
-												@elseif ($errorMessageRole !== '')
-													{{ $errorMessage }} <span class="whitespace-nowrap">(Role: <strong class="font-semibold text-slate-700">{{ $errorMessageRole }}</strong>)</span>
-												@else
-													{!! $errorMessage !!}
-												@endif
-											</p>
-										</div>
-									</div>
-								</div>
+								{{-- Belum ada langkah yang bisa ditampilkan: pegawai sedang bertugas (sementara → amber)
+								     atau alur belum dibuat (memblokir → merah). --}}
+								@php $isBusy = $errorMessageName !== ''; @endphp
+								<x-ui.alert class="w-full" :variant="$isBusy ? 'warning' : 'danger'"
+									:icon="$isBusy ? 'fa-user-clock' : 'fa-link-slash'"
+									:title="$isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia'">
+									@if ($isBusy)
+										Pegawai <strong class="font-semibold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
+									@elseif ($errorMessageRole !== '')
+										{{ $errorMessage }} <span class="whitespace-nowrap">(Role: <strong class="font-semibold">{{ $errorMessageRole }}</strong>)</span>
+									@else
+										{!! $errorMessage !!}
+									@endif
+								</x-ui.alert>
 							@endif
 						@endforelse
 					</div>
@@ -289,23 +306,22 @@
 					{{-- Pesan Kesalahan / Validasi Alur Instansi — hanya bila ada langkah yang
 					     tampil (kasus tanpa langkah pesannya sudah menyatu di kartu empty-state). --}}
 					@if ($errorMessage !== '' && count($steps) > 0)
-						<div id="workflow-error-msg" class="mt-4.5 flex items-start gap-3 overflow-hidden rounded-lg border border-red-200 bg-linear-to-br from-red-50 via-white to-white p-3.5 shadow-2xs">
-							<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50">
-								<i class="fa-solid fa-triangle-exclamation text-sm"></i>
-							</span>
-							<div class="min-w-0 leading-tight">
-								<p class="text-[11px] font-bold uppercase tracking-wide text-red-700">Peringatan Validasi</p>
-								<p class="mt-0.5 text-xs leading-relaxed text-slate-600">
-									@if ($errorMessageName !== '')
-										Pegawai <strong class="font-semibold text-slate-800">{{ $errorMessageName }}</strong> {{ $errorMessage }}
-									@elseif ($errorMessageRole !== '')
-										{{ $errorMessage }} <span class="whitespace-nowrap">(Role Pelaksana: <strong class="font-semibold text-slate-800">{{ $errorMessageRole }}</strong>)</span>
-									@else
-										{!! $errorMessage !!}
-									@endif
-								</p>
-							</div>
-						</div>
+						@php
+							$alertTitle = match (true) {
+								$errorMessageName !== '' => 'Pegawai sedang bertugas',
+								collect($steps)->contains('status', 'not_found') => 'Pejabat alur belum lengkap',
+								default => 'Data dokumen belum lengkap',
+							};
+						@endphp
+						<x-ui.alert id="workflow-error-msg" class="mt-4.5" :variant="$errorMessageName !== '' ? 'warning' : 'danger'" :title="$alertTitle">
+							@if ($errorMessageName !== '')
+								Pegawai <strong class="font-semibold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
+							@elseif ($errorMessageRole !== '')
+								{{ $errorMessage }} <span class="whitespace-nowrap">(Role Pelaksana: <strong class="font-semibold">{{ $errorMessageRole }}</strong>)</span>
+							@else
+								{!! $errorMessage !!}
+							@endif
+						</x-ui.alert>
 					@endif
 
 					{{-- Tombol Lanjutkan --}}
@@ -320,4 +336,211 @@
 
 		</div>
 	</form>
+
+	{{-- Wizard Lengkapi / Ganti Pejabat — dibuka per tahap lewat tombol Lengkapi (tahap kosong)
+	     atau ikon edit (tahap terisi) di node alur:
+	     1 pilih pegawai → 2 pilih/tambah jabatan (bila jabatannya belum sesuai) → 3 konfirmasi.
+	     Jabatan & role tersimpan permanen, jadi berlaku juga untuk pengajuan berikutnya. --}}
+	@php $outgoing = $official['outgoing'] ?? null; @endphp
+	<x-ui.modal show="$wire.showOfficialModal" :title="($outgoing ? 'Ganti ' : 'Lengkapi ') . ($official['label'] ?? 'Pejabat')"
+		:description="$official ? 'Langkah ' . $official['step'] . ' dari 3' : null"
+		:icon="$outgoing ? 'fa-solid fa-user-pen text-amber-600' : 'fa-solid fa-user-plus text-amber-600'" maxWidth="max-w-2xl">
+		@if ($selectedUser && $official)
+			@php
+				$wizardSteps = [1 => $outgoing ? 'Pilih pengganti' : 'Pilih pegawai', 2 => 'Jabatan', 3 => 'Konfirmasi'];
+				$currentStep = $official['step'];
+				$candidate = $official['candidate'];
+			@endphp
+			<div class="space-y-4">
+				{{-- Penanda langkah --}}
+				<ol class="flex items-center gap-2 text-[11px] font-semibold">
+					@foreach ($wizardSteps as $n => $stepLabel)
+						@php
+							$done = $currentStep > $n;
+							$active = $currentStep === $n;
+						@endphp
+						<li class="flex items-center gap-1.5 {{ $active ? 'text-primary-700' : ($done ? 'text-emerald-700' : 'text-slate-400') }}">
+							<span class="flex size-5 items-center justify-center rounded-full text-[10px] font-bold {{ $active ? 'bg-primary-600 text-white' : ($done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500') }}">
+								@if ($done)<i class="fa-solid fa-check text-[9px]"></i>@else{{ $n }}@endif
+							</span>
+							{{ $stepLabel }}
+						</li>
+						@if (! $loop->last)
+							<li class="h-px w-6 bg-slate-200" aria-hidden="true"></li>
+						@endif
+					@endforeach
+				</ol>
+
+				@if ($pelaksanaOrigin)
+					<p class="text-xs text-slate-500">
+						<i class="fa-solid fa-building mr-1 text-[10px] text-slate-400"></i>Instansi: <strong class="font-semibold text-slate-700">{{ $pelaksanaOrigin['instansi'] }}</strong>
+						@if ($pelaksanaOrigin['unit']) › {{ $pelaksanaOrigin['unit'] }} @endif
+					</p>
+				@endif
+
+				@if ($currentStep === 1)
+					{{-- Langkah 1: pilih pegawai --}}
+					<p class="text-sm text-slate-600">
+						@if ($outgoing)
+							Siapa yang menggantikan <strong class="font-semibold text-slate-800">{{ $outgoing['name'] }}</strong>
+							sebagai <strong class="font-semibold text-slate-800">{{ $official['label'] }}</strong>?
+						@else
+							Siapa yang menjabat <strong class="font-semibold text-slate-800">{{ $official['label'] }}</strong>?
+						@endif
+						@if ($official['cityWide'])
+							<span class="block text-xs text-slate-500">Calon dari pegawai Sekretariat Daerah.</span>
+						@endif
+					</p>
+
+					<x-form.input wire:model.live.debounce.300ms="officialSearch" icon="fa-solid fa-magnifying-glass"
+						loadingTarget="officialSearch" placeholder="Cari nama / NIP pegawai..." data-autofocus />
+
+					<ul class="max-h-[45vh] divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200">
+						@forelse ($official['candidates'] as $row)
+							<li wire:key="official-candidate-{{ $row['id'] }}" class="flex items-center gap-3 px-3 py-2">
+								<div class="min-w-0 flex-1 leading-tight">
+									<p class="truncate text-sm font-semibold text-slate-800">
+										{{ $row['name'] }}
+										@if ($row['id'] === $selectedUser->id)
+											<x-ui.badge bg="bg-primary-50" text="text-primary-700" class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold">Pelaksana</x-ui.badge>
+										@endif
+									</p>
+									<p class="truncate text-[11px] text-slate-500">
+										{{ $row['nip'] ?: 'Tanpa NIP' }} · {{ $row['position'] ?? 'Jabatan belum diisi' }}
+									</p>
+								</div>
+								@if ($row['fits'])
+									<x-ui.badge bg="bg-emerald-50" text="text-emerald-700" class="shrink-0 px-1.5 py-0.5 text-[10px]">Jabatan sesuai</x-ui.badge>
+								@endif
+								<x-ui.button variant="secondary" class="shrink-0 px-2.5 py-1 text-xs"
+									wire:click="pickOfficialCandidate({{ $row['id'] }})" wire:loading.attr="disabled" wire:target="pickOfficialCandidate">
+									Pilih
+								</x-ui.button>
+							</li>
+						@empty
+							<li class="px-3 py-3 text-xs italic text-slate-500">
+								{{ trim($officialSearch) !== '' ? 'Pegawai tidak ditemukan. Coba kata kunci lain.' : 'Belum ada pegawai Staf di instansi ini.' }}
+							</li>
+						@endforelse
+					</ul>
+
+					<p class="text-xs text-slate-500">
+						Pegawainya belum terdaftar?
+						<a href="{{ route('master.users.create') }}" target="_blank" rel="noopener" class="font-semibold text-primary-700 underline-offset-2 hover:underline">Tambah pegawai</a>
+						di tab baru, lalu cari lagi di sini.
+					</p>
+				@elseif ($currentStep === 2)
+					{{-- Langkah 2: jabatan pegawai belum sesuai → pilih atau tambah jabatan --}}
+					<p class="text-sm text-slate-600">
+						Jabatan <strong class="font-semibold text-slate-800">{{ $candidate['name'] }}</strong>
+						({{ $candidate['position'] ?? 'belum diisi' }}) belum sesuai. Pilih jabatan {{ $official['label'] }}:
+					</p>
+
+					<ul class="max-h-[35vh] divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200">
+						@forelse ($official['positions'] as $pos)
+							@php $selected = $pos['id'] === $officialPositionId; @endphp
+							<li wire:key="official-position-{{ $pos['id'] }}"
+								class="flex items-center gap-3 px-3 py-2 {{ $selected ? 'bg-primary-50' : '' }}">
+								<div class="min-w-0 flex-1 leading-tight">
+									<p class="truncate text-sm font-semibold {{ $pos['holder'] ? 'text-slate-400' : 'text-slate-800' }}">
+										{{ $pos['name'] }}
+										@if ($pos['suggested'])
+											<x-ui.badge bg="bg-amber-50" text="text-amber-700" class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold">Disarankan</x-ui.badge>
+										@endif
+									</p>
+									@if ($pos['holder'])
+										<p class="truncate text-[11px] text-slate-400">Sudah dijabat {{ $pos['holder'] }}</p>
+									@elseif ($pos['handover'])
+										<p class="truncate text-[11px] text-slate-500">Jabatan {{ $pos['handover'] }} saat ini, dialihkan ke pengganti</p>
+									@endif
+								</div>
+								<x-ui.button :variant="$selected ? 'primary' : 'secondary'" class="shrink-0 px-2.5 py-1 text-xs"
+									wire:click="chooseOfficialPosition({{ $pos['id'] }})" :disabled="(bool) $pos['holder']">
+									@if ($selected)<i class="fa-solid fa-check text-[10px]"></i> Dipilih @else Pilih @endif
+								</x-ui.button>
+							</li>
+						@empty
+							<li class="px-3 py-3 text-xs italic text-slate-500">Belum ada jabatan {{ $official['label'] }}. Tambahkan di bawah.</li>
+						@endforelse
+					</ul>
+
+					{{-- Jabatan belum ada di daftar: isi lengkap lewat form Tambah Jabatan (sama dengan
+					     halaman Data Jabatan); tingkatnya dikunci ke tahap ini, lalu langsung terpilih. --}}
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<p class="text-xs text-slate-500">Jabatannya belum ada di daftar?</p>
+						<x-ui.button variant="secondary" x-on:click="$dispatch('open-position-form', { role: '{{ $official['role'] }}' })">
+							<x-slot:icon><i class="fa-solid fa-plus text-xs"></i></x-slot:icon>
+							Tambah jabatan baru
+						</x-ui.button>
+					</div>
+				@else
+					{{-- Langkah 3: konfirmasi --}}
+					<dl class="divide-y divide-slate-100 rounded border border-slate-200 text-sm">
+						<div class="flex gap-3 px-3 py-2">
+							<dt class="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $outgoing ? 'Pengganti' : 'Pegawai' }}</dt>
+							<dd class="min-w-0 font-semibold text-slate-800">{{ $candidate['name'] }} <span class="font-normal text-slate-500">· {{ $candidate['nip'] ?: 'Tanpa NIP' }}</span></dd>
+						</div>
+						<div class="flex gap-3 px-3 py-2">
+							<dt class="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Jabatan</dt>
+							<dd class="min-w-0 text-slate-800">
+								@if ($official['position'])
+									<span class="text-slate-400 line-through">{{ $candidate['position'] ?? 'Belum diisi' }}</span>
+									<i class="fa-solid fa-arrow-right mx-1 text-[10px] text-slate-400"></i>
+									<strong class="font-semibold">{{ $official['position']['name'] }}</strong>
+								@else
+									{{ $candidate['position'] }} <span class="text-slate-500">(tetap)</span>
+								@endif
+							</dd>
+						</div>
+						<div class="flex gap-3 px-3 py-2">
+							<dt class="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Peran</dt>
+							<dd class="min-w-0 font-semibold text-slate-800">{{ $official['label'] }}</dd>
+						</div>
+						@if ($outgoing)
+							<div class="flex gap-3 px-3 py-2">
+								<dt class="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Pejabat lama</dt>
+								<dd class="min-w-0 text-slate-800">
+									<strong class="font-semibold">{{ $outgoing['name'] }}</strong> menjadi {{ $outgoing['newRole'] }}.
+									@if ($outgoing['released'])
+										<span class="block text-xs text-slate-500">Jabatan {{ $outgoing['released'] }} dilepas. Atur jabatan barunya lewat Data Pegawai.</span>
+									@endif
+								</dd>
+							</div>
+						@endif
+					</dl>
+					@if ($outgoing && $outgoing['pending'] > 0)
+						<x-ui.alert variant="warning" icon="fa-hourglass-half">
+							{{ $outgoing['name'] }} masih memiliki <strong class="font-semibold">{{ $outgoing['pending'] }} persetujuan SPPD</strong> yang menunggu. Persetujuan itu tetap pada {{ $outgoing['name'] }}.
+						</x-ui.alert>
+					@endif
+					<p class="text-xs text-slate-500">{{ $official['cityWide'] ? 'Berlaku untuk seluruh pengajuan SPPD.' : 'Berlaku juga untuk pengajuan berikutnya dari instansi ini.' }}</p>
+				@endif
+			</div>
+		@endif
+
+		<x-slot name="footer" class="flex items-center justify-between gap-2">
+			@if (($official['step'] ?? 1) > 1)
+				<x-ui.button variant="secondary" wire:click="officialBack">
+					<x-slot:icon><i class="fa-solid fa-arrow-left text-xs"></i></x-slot:icon>
+					Kembali
+				</x-ui.button>
+			@else
+				<x-ui.button variant="secondary" wire:click="$set('showOfficialModal', false)">Tutup</x-ui.button>
+			@endif
+
+			@if (($official['step'] ?? 1) === 2)
+				<x-ui.button variant="primary" wire:click="officialNext" :disabled="! $officialPositionId">
+					Lanjut <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+				</x-ui.button>
+			@elseif (($official['step'] ?? 1) === 3)
+				<x-ui.button variant="primary" wire:click="confirmOfficial" wire:loading.attr="disabled" wire:target="confirmOfficial">
+					<x-slot:icon><i class="fa-solid fa-check text-xs"></i></x-slot:icon>
+					{{ $outgoing ? 'Ganti Pejabat' : 'Tetapkan' }}
+				</x-ui.button>
+			@endif
+		</x-slot>
+	</x-ui.modal>
+
+	{{-- Form Tambah Jabatan bersama (Data Jabatan & form Pegawai), dibuka dari langkah 2 wizard. --}}
+	<livewire:position-form-modal />
 </div>

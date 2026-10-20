@@ -190,7 +190,7 @@
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Golongan / Pangkat</label>
 							<p class="text-sm font-semibold text-slate-800">
 								<i
-									class="fa-solid fa-award mr-1.5 text-slate-500"></i>{{ $user->rank ? $user->rank->group . ' — ' . $user->rank->name : '-' }}
+									class="fa-solid fa-award mr-1.5 text-slate-500"></i>{{ $user->rank ? $user->rank->name . ' (' . $user->rank->group . ')' : '-' }}
 							</p>
 						</div>
 

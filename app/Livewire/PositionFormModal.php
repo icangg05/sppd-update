@@ -8,6 +8,7 @@ use App\Helpers\SmartTitle;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Position;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
@@ -19,7 +20,9 @@ use Spatie\Permission\Models\Role;
  * mengubah level. Nilai otomatis selalu diisi lebih dulu dan tetap bisa diubah.
  *
  * Dibuka lewat event `open-position-form` dan mengirim `position-saved`
- * setelah berhasil disimpan.
+ * setelah berhasil disimpan. Dari wizard Lengkapi/Ganti Pejabat, event membawa
+ * `role` tahap: tingkat jabatan dikunci ke role itu agar jabatan barunya sah
+ * untuk tahap tersebut (termasuk role khusus seperti Sekda/Walikota).
  */
 class PositionFormModal extends Component
 {
@@ -44,13 +47,28 @@ class PositionFormModal extends Component
   // Level mengikuti tingkat sampai Super Admin mengisinya sendiri.
   public bool $levelTouched = false;
 
+  // Role tahap alur yang menjadi role default jabatan baru (tingkat tidak bisa diganti).
+  #[Locked]
+  public ?string $fixedRole = null;
+
   #[On('open-position-form')]
-  public function open(?int $id = null, string $name = ''): void
+  public function open(?int $id = null, string $name = '', ?string $role = null): void
   {
     abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
 
-    $this->reset(['editingId', 'name', 'tier', 'level', 'originalTier', 'storedRole', 'storedScope', 'tierTouched', 'levelTouched']);
+    $this->reset(['editingId', 'name', 'tier', 'level', 'originalTier', 'storedRole', 'storedScope', 'tierTouched', 'levelTouched', 'fixedRole']);
     $this->resetValidation();
+
+    if (! $id && $role && Role::where('name', $role)->exists()) {
+      $this->fixedRole   = $role;
+      $this->name        = trim($name);
+      $this->tier        = PositionTier::fromRole($role)->value;
+      $this->tierTouched = true;
+      $this->level       = Position::levelForRole($role);
+      $this->show        = true;
+
+      return;
+    }
 
     if ($id) {
       $position = Position::with('creator')->findOrFail($id);
@@ -86,6 +104,12 @@ class PositionFormModal extends Component
 
   public function updatedTier(): void
   {
+    if ($this->fixedRole) {
+      $this->tier = PositionTier::fromRole($this->fixedRole)->value;
+
+      return;
+    }
+
     $this->tierTouched = true;
     $this->applyTierLevel();
   }
@@ -160,7 +184,10 @@ class PositionFormModal extends Component
     $tier = $this->currentTier();
     $data = ['name' => SmartTitle::convert(trim($this->name))];
 
-    if ($this->tierChanged()) {
+    if ($this->fixedRole) {
+      $data['uniqueness_scope'] = Position::scopeForRole($this->fixedRole)->value;
+      $data['default_role']     = $this->fixedRole;
+    } elseif ($this->tierChanged()) {
       $data['uniqueness_scope'] = $tier->scope()->value;
       $data['default_role']     = $tier->role();
     }
@@ -170,7 +197,7 @@ class PositionFormModal extends Component
     if ($isSuperAdmin) {
       $data['level'] = $this->level;
     } elseif ($this->tierChanged()) {
-      $data['level'] = Position::levelForRole($tier->role());
+      $data['level'] = Position::levelForRole($this->fixedRole ?? $tier->role());
     }
 
     if ($position) {
@@ -194,15 +221,25 @@ class PositionFormModal extends Component
     // Ringkasan role & cakupan yang akan berlaku: nilai tersimpan bila tingkat
     // tidak diganti saat edit, selain itu turunan dari tingkat terpilih.
     $tier = $this->currentTier();
-    $roleName = $this->tierChanged() ? $tier->role() : $this->storedRole;
-    $scope = $this->tierChanged()
-      ? $tier->scope()
-      : (PositionScope::tryFrom($this->storedScope ?? '') ?? PositionScope::NONE);
+    $roleName = $this->fixedRole ?? ($this->tierChanged() ? $tier->role() : $this->storedRole);
+    $scope = match (true) {
+      $this->fixedRole !== null => Position::scopeForRole($this->fixedRole),
+      $this->tierChanged()      => $tier->scope(),
+      default                   => PositionScope::tryFrom($this->storedScope ?? '') ?? PositionScope::NONE,
+    };
+    $summaryRole = $this->show && $roleName ? (Role::where('name', $roleName)->value('label') ?? $roleName) : null;
+
+    // Tingkat terkunci: pakai label tingkat bila role-nya punya tingkat (mis. Pimpinan OPD),
+    // selain itu label role-nya (mis. Sekda).
+    $fixedTier = $this->fixedRole ? PositionTier::fromRole($this->fixedRole) : null;
 
     return view('livewire.position-form-modal', [
       'tiers'        => PositionTier::cases(),
-      'summaryRole'  => $this->show && $roleName ? (Role::where('name', $roleName)->value('label') ?? $roleName) : null,
+      'summaryRole'  => $summaryRole,
       'summaryScope' => $scope,
+      'fixedTier'    => $fixedTier && $fixedTier->role() === $this->fixedRole
+        ? ['label' => $fixedTier->label(), 'description' => $fixedTier->description()]
+        : ($this->fixedRole ? ['label' => $summaryRole, 'description' => null] : null),
     ]);
   }
 }

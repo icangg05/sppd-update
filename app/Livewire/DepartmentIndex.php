@@ -226,7 +226,7 @@ class DepartmentIndex extends Component
 
     $this->refreshTree();
     $this->toastSuccess($moved
-      ? 'Struktur unit kerja disimpan — ' . count($moved) . ' unit dipindahkan.'
+      ? 'Struktur unit kerja disimpan, ' . count($moved) . ' unit dipindahkan.'
       : 'Urutan unit kerja disimpan.');
 
     return true;
