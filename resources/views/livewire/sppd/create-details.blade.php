@@ -16,12 +16,34 @@
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
 				<p class="mt-1 text-xs text-slate-500">Isi detail & lengkapi data pengajuan.</p>
 			</div>
-			<x-ui.button :href="route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain])" wire:navigate variant="secondary">
-				<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
-				Kembali ke Tahap 1
-			</x-ui.button>
+			{{-- Edit Perbaikan kembali ke Daftar SPPD (asal tombolnya); pengajuan baru ke Tahap 1. --}}
+			@if ($sppd_id)
+				<x-ui.button :href="route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters()))" wire:navigate variant="secondary">
+					<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+					Kembali ke Daftar SPPD
+				</x-ui.button>
+			@else
+				<x-ui.button :href="route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain])" wire:navigate variant="secondary">
+					<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+					Kembali ke Tahap 1
+				</x-ui.button>
+			@endif
 		</div>
 	</div>
+
+	{{-- Edit Perbaikan: catatan revisi dari pejabat sebagai acuan perbaikan. --}}
+	@if ($editingSppd?->revision_note)
+		@php $revisionStep = $editingSppd->approvals->firstWhere('approver_id', $editingSppd->reviser_id); @endphp
+		<x-ui.alert variant="warning" icon="fa-pen-to-square" title="Catatan revisi" class="dash-enter">
+			<p class="whitespace-pre-line">{{ $editingSppd->revision_note }}</p>
+			<p class="mt-1 text-xs">
+				@if ($editingSppd->reviser)
+					Dari <strong class="font-semibold">{{ $editingSppd->reviser->name }}</strong>{{ $revisionStep ? ' (' . $revisionStep->role_label . ')' : '' }}.
+				@endif
+				Perbaiki data di bawah sesuai catatan, lalu ajukan kembali.
+			</p>
+		</x-ui.alert>
+	@endif
 
 
 
@@ -414,7 +436,7 @@
 													class="fa-solid fa-route"></i> Sedang dalam perjalanan dinas</span>
 										@elseif ($isPending)
 											<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
-													class="fa-solid fa-hourglass-half"></i> Dalam proses persetujuan</span>
+													class="fa-solid fa-hourglass-half"></i> Dalam proses pengajuan</span>
 										@endif
 									</div>
 								</label>

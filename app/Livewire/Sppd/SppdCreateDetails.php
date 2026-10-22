@@ -367,8 +367,6 @@ class SppdCreateDetails extends Component
             $attachmentPath = app(ImageCompressor::class)->storeWithOriginalName($this->attachment, DocumentFolder::path('dokumen-pendukung'));
           }
 
-          $reviserId = $sppd->reviser_id;
-
           // Ringkasan relasi (tujuan & pengikut) untuk dicatat ke log aktivitas,
           // karena perubahannya tidak terekam otomatis (tabel terpisah, di-recreate).
           $summarizeRelations = function (SppdRequest $s): array {
@@ -405,6 +403,9 @@ class SppdCreateDetails extends Component
             'revision_note' => null,
             'reviser_id' => null,
           ]);
+
+          // Data dokumen berubah: TTE lama tidak berlaku (pengaman bila belum direset saat revisi).
+          $sppd->resetDigitalSignatures();
 
           $sppd->destinations()->delete();
           $sppd->followers()->delete();
@@ -455,8 +456,6 @@ class SppdCreateDetails extends Component
                 ->log('SPPD ' . ($sppd->document_number ?: '#' . $sppd->id) . ' diperbarui');
             }
           }
-
-          $sppd->temp_reviser_id = $reviserId;
         } else {
           $attachmentPath = null;
           if ($this->attachment) {
@@ -511,20 +510,12 @@ class SppdCreateDetails extends Component
       // Dispatch notification
       if (isset($sppd)) {
         if ($this->sppd_id) {
-          $reviserId = $sppd->temp_reviser_id;
-          $approval = null;
-          if ($reviserId) {
-            $approval = $sppd->approvals()
-              ->where('approver_id', $reviserId)
-              ->where('status', ApprovalStatus::PENDING)
-              ->first();
-          }
-          if (! $approval) {
-            $approval = $sppd->approvals()
-              ->where('status', ApprovalStatus::PENDING)
-              ->orderBy('step_order', 'asc')
-              ->first();
-          }
+          // Tahap pertama yang masih menunggu = yang sekarang giliran: pejabat yang meminta
+          // revisi, atau tahap penanda tangan sebelumnya bila TTE-nya direset.
+          $approval = $sppd->approvals()
+            ->where('status', ApprovalStatus::PENDING)
+            ->orderBy('step_order', 'asc')
+            ->first();
 
           if ($approval) {
             $this->notifyApproverRevision($sppd, $approval);
@@ -726,6 +717,9 @@ class SppdCreateDetails extends Component
 
     $isInspektorat = (bool) $pelaksana->department?->usesManualNumbering();
 
+    // Edit Perbaikan: catatan revisi ditampilkan di atas form.
+    $editingSppd = $this->sppd_id ? SppdRequest::with(['reviser', 'approvals'])->find($this->sppd_id) : null;
+
     return view('livewire.sppd.create-details', compact(
       'pelaksana',
       'budgets',
@@ -737,7 +731,8 @@ class SppdCreateDetails extends Component
       'selectedFollowerUsers',
       'travelingFollowerIds',
       'pendingFollowerIds',
-      'isInspektorat'
+      'isInspektorat',
+      'editingSppd'
     ))->title('Detail Perjalanan Dinas');
   }
 }

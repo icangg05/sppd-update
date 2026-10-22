@@ -187,12 +187,8 @@
       </x-ui.button>
 
       <x-ui.button type="submit" variant="primary" wire:target="save" wire:loading.attr="disabled">
-        <span wire:loading.remove wire:target="save">
-          <i class="fa-solid fa-floppy-disk text-xs"></i> {{ $isEdit ? 'Perbarui Data DPA' : 'Simpan Data DPA' }}
-        </span>
-        <span wire:loading wire:target="save">
-          <i class="fa-solid fa-spinner fa-spin text-xs"></i> Menyimpan...
-        </span>
+        <x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
+        {{ $isEdit ? 'Perbarui Data DPA' : 'Simpan Data DPA' }}
       </x-ui.button>
     </div>
 

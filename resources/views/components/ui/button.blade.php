@@ -56,12 +56,13 @@ $resolvedClass = trim(
         wire:loading.attr="disabled"
         {{ $attributes->merge(['class' => $resolvedClass]) }}
     >
-        {{-- Spinner saat loading (Livewire) --}}
+        {{-- Spinner saat loading (Livewire): ditumpuk di atas label yang dibuat
+             invisible (bukan dihapus), jadi ukuran tombol tidak berubah. --}}
         @if ($loading || $wireTarget)
             <span
                 wire:loading.flex
                 @if ($wireTarget) wire:target="{{ $wireTarget }}" @endif
-                class="hidden items-center"
+                class="absolute inset-0 hidden items-center justify-center"
             >
                 <i class="fa-solid fa-circle-notch fa-spin"></i>
             </span>
@@ -69,7 +70,7 @@ $resolvedClass = trim(
 
         <span
             @if ($loading || $wireTarget)
-                wire:loading.remove
+                wire:loading.class="invisible"
                 @if ($wireTarget) wire:target="{{ $wireTarget }}" @endif
             @endif
             class="inline-flex items-center {{ $gapClass }}"

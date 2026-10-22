@@ -226,10 +226,8 @@
 					<i class="fa-solid fa-arrow-left text-xs"></i> Kembali
 				</x-ui.button>
 				<x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">
-					<span wire:loading.remove wire:target="save"><i class="fa-solid fa-floppy-disk text-xs"></i> Simpan
-						Perubahan</span>
-					<span wire:loading wire:target="save"><i class="fa-solid fa-spinner fa-spin text-xs"></i>
-						Menyimpan...</span>
+					<x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
+					Simpan Perubahan
 				</x-ui.button>
 			</div>
 		</form>

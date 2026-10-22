@@ -5,7 +5,7 @@
 	    'draft' => ['bg' => 'bg-amber-50 border-amber-200', 'text' => 'text-amber-700', 'label' => 'Masuk'],
 	    'in_progress' => $sppd->revision_note
 	        ? ['bg' => 'bg-orange-50 border-orange-200', 'text' => 'text-orange-700', 'label' => 'Revisi']
-	        : ['bg' => 'bg-blue-50 border-blue-200', 'text' => 'text-blue-700', 'label' => 'Proses'],
+	        : ['bg' => 'bg-blue-50 border-blue-200', 'text' => 'text-blue-700', 'label' => 'Dalam Proses Pengajuan'],
 	    'approved', 'completed', 'verified', 'signed' => ['bg' => 'bg-emerald-50 border-emerald-200', 'text' => 'text-emerald-700', 'label' => 'Selesai'],
 	    'rejected' => ['bg' => 'bg-red-50 border-red-200', 'text' => 'text-red-700', 'label' => 'Ditolak'],
 	    'pending', 'revision' => ['bg' => 'bg-orange-50 border-orange-200', 'text' => 'text-orange-700', 'label' => 'Revisi'],
@@ -39,7 +39,26 @@
 		</div>
 	@endif
 @else
-	<span class="inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wide {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
-		{{ \App\Helpers\SmartTitle::convert($statusBadge['label']) }}
-	</span>
+	@php
+		// Alasan revisi / penolakan ditampilkan ringkas di bawah badge (teks lengkap di tooltip).
+		$reason = match ($sppd->status->value) {
+		    'in_progress' => $sppd->revision_note,
+		    'rejected' => $sppd->rejection_note,
+		    default => null,
+		};
+	@endphp
+	@if ($reason)
+		<div class="flex flex-col gap-1 {{ $stackClass ?? 'w-[180px]' }}">
+			<span class="inline-block rounded border px-1.5 py-0.5 text-center text-[9px] font-bold tracking-wide {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
+				{{ \App\Helpers\SmartTitle::convert($statusBadge['label']) }}
+			</span>
+			<p class="line-clamp-2 whitespace-normal text-[10px] leading-snug text-slate-500" title="{{ $reason }}">
+				<i class="fa-solid fa-quote-left mr-0.5 text-[8px] text-slate-300"></i> {{ $reason }}
+			</p>
+		</div>
+	@else
+		<span class="inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-wide {{ $statusBadge['bg'] }} {{ $statusBadge['text'] }}">
+			{{ \App\Helpers\SmartTitle::convert($statusBadge['label']) }}
+		</span>
+	@endif
 @endif

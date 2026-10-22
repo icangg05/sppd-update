@@ -151,6 +151,23 @@ class SetujuBayarSettings extends Component
     ];
   }
 
+  /** Bendahara Pengeluaran yang tercetak di kuitansi: unit kerja pelaksana, lalu induknya (sama seperti cetak kuitansi). */
+  private function bendahara(SppdRequest $sppd): ?User
+  {
+    $department = $sppd->user?->department;
+    foreach (array_filter([$department?->id, $department?->parent_id]) as $departmentId) {
+      $bendahara = User::whereHas('position', fn ($q) => $q->where('name', 'Bendahara Pengeluaran'))
+        ->where('department_id', $departmentId)
+        ->where('is_active', true)
+        ->first();
+      if ($bendahara) {
+        return $bendahara;
+      }
+    }
+
+    return null;
+  }
+
   public function render()
   {
     $sppd = $this->sppd();
@@ -169,7 +186,9 @@ class SetujuBayarSettings extends Component
     $preview = null;
     $people = null;
     $selectedLabel = null;
+    $bendahara = null;
     if ($this->opened && $instansi) {
+      $bendahara = $this->bendahara($sppd);
       $kepala = $instansi->defaultSetujuBayarUser()?->load('position');
       $chosen = $this->signerId ? User::with('position')->find($this->signerId) : null;
       $preview = $this->signature($chosen ?? $kepala, $this->label);
@@ -187,6 +206,7 @@ class SetujuBayarSettings extends Component
       'people'    => $people,
       'selectedLabel' => $selectedLabel,
       'pptk'      => $sppd->pptk,
+      'bendahara' => $bendahara,
       'date'      => now()->translatedFormat('d F Y'),
     ]);
   }

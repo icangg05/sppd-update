@@ -53,6 +53,8 @@
 			<div class="fixed inset-0 z-60 flex items-center justify-center p-4 pointer-events-none"
 				@click.self="{{ $outsideClick }}">
 
+				{{-- Tinggi maks. setinggi layar (dikurangi padding p-4), mis. saat browser di-zoom: header &
+				     footer tetap terlihat, konten di tengah yang di-scroll. --}}
 				<div x-show="{{ $show }}" x-ref="panel"
 					x-transition:enter="transition ease-out duration-300"
 					x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -62,11 +64,11 @@
 					x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
 					:class="shake && 'animate-modal-shake'"
 					@animationend="shake = false"
-					class="w-full {{ $maxWidth }} rounded border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
+					class="flex max-h-[calc(100dvh-2rem)] w-full {{ $maxWidth }} flex-col rounded border border-slate-200 bg-white shadow-2xl overflow-hidden pointer-events-auto"
 					@keydown.escape.window="if ({{ $show }} && isTop()) { {{ $outsideClick }} }">
 
 					{{-- Header --}}
-					<div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+					<div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
 						<div class="flex items-center gap-2">
 							@if ($icon)
 								@if (str_starts_with($icon, 'fa-'))
@@ -90,13 +92,13 @@
 					</div>
 
 					{{-- Content --}}
-					<div class="p-4">
+					<div class="min-h-0 overflow-y-auto p-4">
 						{{ $slot }}
 					</div>
 
 					{{-- Footer --}}
 					@if (isset($footer))
-						<div {{ $footer->attributes->merge(['class' => 'border-t border-slate-100 px-4 py-3']) }}>
+						<div {{ $footer->attributes->merge(['class' => 'shrink-0 border-t border-slate-100 px-4 py-3']) }}>
 							{{ $footer }}
 						</div>
 					@endif

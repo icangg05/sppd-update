@@ -10,9 +10,9 @@ use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdApproval;
 use App\Models\SppdRequest;
 use App\Models\User;
-use App\Services\SppdWorkflowService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
@@ -26,8 +26,6 @@ class SppdIndex extends Component
   use InteractsWithToast;
 
   public ?string $errorMessage = null;
-  public array $simulatedSteps = [];
-  public bool $showWorkflowModal = false;
 
   // Konfirmasi hapus SPPD: tombol hapus baru aktif setelah hitung mundur DELETE_WAIT detik.
   public const DELETE_WAIT = 10;
@@ -58,6 +56,14 @@ class SppdIndex extends Component
 
   #[Url(keep: true)]
   public string $filter = '';
+
+  /** '' | 'sudah' | 'belum' — sama dengan badge Realisasi di kolom Status. */
+  #[Url(keep: true)]
+  public string $realisasi = '';
+
+  /** '' | 'sudah' | 'belum' — sama dengan badge Upload Laporan di kolom Status. */
+  #[Url(keep: true)]
+  public string $laporan = '';
 
   private const SESSION_KEY = 'sppd.index.filters';
 
@@ -120,9 +126,13 @@ class SppdIndex extends Component
     return self::jabatanTabsFor($this->rootDepartmentType());
   }
 
+  /**
+   * Filter yang diingat lintas halaman: hanya Jabatan & Tahun (kartu judul). Filter di bar
+   * (pencarian, status, domain, realisasi, laporan) kembali kosong setiap pindah halaman.
+   */
   public static function savedFilters(): array
   {
-    return session(self::SESSION_KEY, []);
+    return Arr::only(session(self::SESSION_KEY, []), ['jabatan', 'year']);
   }
 
   public function isApprovalMode(): bool
@@ -140,18 +150,6 @@ class SppdIndex extends Component
 
     if ($this->jabatan === '' && ! empty($saved['jabatan'])) {
       $this->jabatan = $saved['jabatan'];
-    }
-
-    if ($this->status === '' && ! empty($saved['status'])) {
-      $this->status = $saved['status'];
-    }
-
-    if ($this->domain === '' && ! empty($saved['domain'])) {
-      $this->domain = $saved['domain'];
-    }
-
-    if ($this->search === '' && ! empty($saved['search'])) {
-      $this->search = $saved['search'];
     }
 
     if ($this->year === '' && ! empty($saved['year'])) {
@@ -172,9 +170,6 @@ class SppdIndex extends Component
 
     session([self::SESSION_KEY => [
       'jabatan' => $this->jabatan,
-      'status'  => $this->status,
-      'domain'  => $this->domain,
-      'search'  => $this->search,
       'year'    => $this->year,
     ]]);
   }
@@ -191,14 +186,14 @@ class SppdIndex extends Component
     $this->search = '';
     $this->year = '';
     $this->errorMessage = null;
-    $this->simulatedSteps = [];
-    $this->showWorkflowModal = false;
 
     if (! $this->isApprovalMode()) {
       $this->status = '';
       $this->domain = '';
       $this->jabatan = '';
       $this->filter = '';
+      $this->realisasi = '';
+      $this->laporan = '';
       session()->forget(self::SESSION_KEY);
     }
 
@@ -207,19 +202,16 @@ class SppdIndex extends Component
 
   public function updatedSearch(): void
   {
-    $this->persistFilters();
     $this->resetPage();
   }
 
   public function updatedStatus(): void
   {
-    $this->persistFilters();
     $this->resetPage();
   }
 
   public function updatedDomain(): void
   {
-    $this->persistFilters();
     $this->resetPage();
   }
 
@@ -233,6 +225,59 @@ class SppdIndex extends Component
   {
     $this->persistFilters();
     $this->resetPage();
+  }
+
+  public function updatedRealisasi(): void
+  {
+    $this->resetPage();
+  }
+
+  public function updatedLaporan(): void
+  {
+    $this->resetPage();
+  }
+
+  /** Sudah realisasi = pengeluaran riil dan rincian biaya sama-sama terisi. */
+  private function whereRealized(Builder $query): Builder
+  {
+    return $query->whereHas('actualExpenses')->whereHas('costDetails');
+  }
+
+  /** Sudah upload laporan = tanggal, file laporan, dan foto dokumentasi lengkap. */
+  private function whereReported(Builder $query): Builder
+  {
+    return $query->whereHas('report', fn ($r) => $r->whereNotNull('report_date')
+      ->whereNotNull('report_file')
+      ->whereNotNull('documentation_file'));
+  }
+
+  /**
+   * Selesai = disetujui, perjalanan sudah lewat, sudah realisasi & upload laporan (syarat yang
+   * sama dengan tombol SPPD Lanjutan). Status `completed` sendiri tidak pernah diisi alur.
+   */
+  private function whereFinished(Builder $query): Builder
+  {
+    $query->whereIn('status', [SppdStatus::APPROVED, SppdStatus::COMPLETED])
+      ->whereDate('end_date', '<', today());
+
+    return $this->whereReported($this->whereRealized($query));
+  }
+
+  /**
+   * Filter Status mengikuti badge di kolom Status (partials/status-cell), satu SPPD satu status:
+   * Revisi = masih proses dengan catatan revisi; Disetujui tidak mencakup yang sudah Selesai.
+   */
+  private function applyStatusFilter(Builder $query, string $status): void
+  {
+    $hasRevision = fn ($q) => $q->whereNotNull('revision_note')->where('revision_note', '<>', '');
+
+    match ($status) {
+      'in_progress' => $query->where('status', SppdStatus::IN_PROGRESS)->whereNot($hasRevision),
+      'revision'    => $query->where('status', SppdStatus::IN_PROGRESS)->where($hasRevision),
+      'approved'    => $query->where('status', SppdStatus::APPROVED)->whereNot(fn ($q) => $this->whereFinished($q)),
+      'completed'   => $this->whereFinished($query),
+      default       => $query->where('status', $status),
+    };
   }
 
   /**
@@ -336,11 +381,30 @@ class SppdIndex extends Component
       }
 
       if ($this->status !== '') {
-        $query->where('status', $this->status);
+        $this->applyStatusFilter($query, $this->status);
       }
 
       if ($this->domain !== '') {
         $query->where('domain', $this->domain);
+      }
+
+      // Realisasi & laporan hanya berlaku untuk perjalanan yang sudah disetujui dan sudah
+      // lewat — sama dengan kapan badge-nya tampil di kolom Status (partials/status-cell).
+      if ($this->realisasi !== '' || $this->laporan !== '') {
+        $query->whereIn('status', [SppdStatus::APPROVED, SppdStatus::COMPLETED])
+          ->whereDate('end_date', '<', today());
+      }
+
+      if ($this->realisasi === 'sudah') {
+        $this->whereRealized($query);
+      } elseif ($this->realisasi === 'belum') {
+        $query->whereNot(fn ($q) => $this->whereRealized($q));
+      }
+
+      if ($this->laporan === 'sudah') {
+        $this->whereReported($query);
+      } elseif ($this->laporan === 'belum') {
+        $query->whereNot(fn ($q) => $this->whereReported($q));
       }
 
       if ($this->jabatan !== '') {
@@ -404,8 +468,8 @@ class SppdIndex extends Component
       });
     }
 
-    $sppds = $query->latest()->paginate(15)->onEachSide(1);
-    $statuses = SppdStatus::cases();
+    // Urut tanggal perjalanan terbaru (kolom Tanggal); tanggal sama → pengajuan terbaru dulu.
+    $sppds = $query->orderByDesc('start_date')->latest()->paginate(15)->onEachSide(1);
     $domains = SppdDomain::cases();
     $title = $isApprovalMode ? 'Persetujuan' : 'Daftar SPPD';
 
@@ -420,13 +484,15 @@ class SppdIndex extends Component
       ->values()
       ->all();
 
-    $statusOptions = collect([['value' => '', 'label' => 'Semua Status']])
-      ->concat(collect($statuses)->map(fn($st) => [
-        'value' => $st->value,
-        'label' => \App\Helpers\SmartTitle::convert($st->label()),
-      ]))
-      ->values()
-      ->all();
+    // Urut tahapan; label sama dengan badge di kolom Status (lihat applyStatusFilter).
+    $statusOptions = [
+      ['value' => '', 'label' => 'Semua Status'],
+      ['value' => 'in_progress', 'label' => 'Dalam Proses Pengajuan'],
+      ['value' => 'revision', 'label' => 'Revisi'],
+      ['value' => 'approved', 'label' => 'Disetujui'],
+      ['value' => 'completed', 'label' => 'Selesai'],
+      ['value' => 'rejected', 'label' => 'Ditolak'],
+    ];
 
     // Tahun diambil dari data yang ada agar tidak menawarkan tahun kosong.
     $yearOptions = collect([['value' => '', 'label' => 'Semua Tahun']])
@@ -448,9 +514,20 @@ class SppdIndex extends Component
       ->values()
       ->all();
 
+    $realisasiOptions = [
+      ['value' => '', 'label' => 'Semua Realisasi'],
+      ['value' => 'sudah', 'label' => 'Sudah Realisasi'],
+      ['value' => 'belum', 'label' => 'Belum Realisasi'],
+    ];
+
+    $laporanOptions = [
+      ['value' => '', 'label' => 'Semua Laporan'],
+      ['value' => 'sudah', 'label' => 'Sudah Upload Laporan'],
+      ['value' => 'belum', 'label' => 'Belum Upload Laporan'],
+    ];
+
     return view('livewire.sppd.index', compact(
       'sppds',
-      'statuses',
       'domains',
       'isApprovalMode',
       'activeFilterLabel',
@@ -461,6 +538,8 @@ class SppdIndex extends Component
       'statusOptions',
       'domainOptions',
       'yearOptions',
+      'realisasiOptions',
+      'laporanOptions',
     ))->title($title);
   }
 
@@ -471,15 +550,18 @@ class SppdIndex extends Component
     $this->toastError('Tidak dapat melanjutkan. Periksa pesan kesalahan di atas.');
   }
 
+  /**
+   * SPPD Lanjutan: buka Tahap 1 Buat SPPD dengan pelaksana yang sama agar domain perjalanan
+   * dipilih dulu (domain SPPD sebelumnya terpilih sebagai bawaan). Cek perjalanan aktif, alur,
+   * pejabat, dan kop surat dijalankan di sana sesuai domain yang dipilih.
+   */
   public function startSppdLanjutan(int $sppdId): void
   {
     abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
 
     $this->errorMessage = null;
-    $this->simulatedSteps = [];
-    $this->showWorkflowModal = false;
 
-    $sppd = SppdRequest::with('user.department')->find($sppdId);
+    $sppd = SppdRequest::with('user')->find($sppdId);
     if (! $sppd) {
       $this->failLanjutan('Data SPPD tidak ditemukan.');
       return;
@@ -491,53 +573,9 @@ class SppdIndex extends Component
       return;
     }
 
-    // 1. Cek perjalanan aktif (lainnya)
-    $activeSppd = SppdRequest::where('user_id', $user->id)
-      ->where('id', '!=', $sppd->id) // Abaikan SPPD saat ini
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
-      ->first();
-
-    if ($activeSppd) {
-      $this->failLanjutan('Pegawai ' . e($user->name) . ' masih memiliki SPPD lain yang ' . ($activeSppd->status === SppdStatus::IN_PROGRESS
-        ? 'sedang dalam proses persetujuan.'
-        : 'sedang dalam periode perjalanan.'));
-      return;
-    }
-
-    // 2. Cek Kop Surat
-    $hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
-    if (! $hasHeader) {
-      $this->failLanjutan('Unit kerja ' . e($user->department?->name ?? 'Tanpa Unit Kerja') . ' belum mengunggah <strong class="font-semibold">Kop Surat</strong> Resmi. Harap hubungi <strong class="font-semibold">Admin OPD</strong> Anda untuk melengkapi data dokumen.');
-      return;
-    }
-
-    // 3. Simulasi Workflow / Pengecekan Workflow & Pejabat
-    $workflowService = app(SppdWorkflowService::class);
-    $steps = $workflowService->simulateApprovals($user, $sppd->domain->value);
-
-    if (empty($steps)) {
-      $roleLabel = $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role');
-      $this->failLanjutan('Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin) untuk role: <strong class="font-semibold">' . e($roleLabel) . '</strong>.');
-      return;
-    }
-
-    // Setiap tahap wajib punya pejabat pasti; tahap "choose" dipilih di halaman Buat SPPD.
-    if (! SppdWorkflowService::isComplete($steps)) {
-      $this->simulatedSteps = $steps;
-      $this->failLanjutan('Ada pejabat alur yang belum ditentukan atau belum dipilih. Lengkapi atau pilih pejabatnya di halaman Buat SPPD.');
-      return;
-    }
-
-    // Jika lolos semua validasi, redirect ke create details
     $this->redirect(
-      route('sppd.create.details', [
-        'user_id' => $user->id,
+      route('sppd.create', [
+        'user_id' => $user->getRouteKey(),
         'domain' => $sppd->domain->value,
       ]),
       navigate: true

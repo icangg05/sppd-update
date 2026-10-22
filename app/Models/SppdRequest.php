@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\SignatureStatus;
 use App\Helpers\SmartTitle;
 use App\Enums\SppdDomain;
@@ -269,6 +270,27 @@ class SppdRequest extends Model
     public function digitalSignatures(): HasMany
     {
         return $this->hasMany(SppdDigitalSignature::class);
+    }
+
+    /**
+     * Reset TTE saat SPPD direvisi: dokumennya akan berubah, jadi tanda tangan lama (beserta
+     * file bertanda tangannya, juga yang gagal) tidak berlaku lagi. Tahap penanda tangan yang
+     * sudah menyetujui dikembalikan ke menunggu agar menandatangani ulang hasil perbaikan.
+     */
+    public function resetDigitalSignatures(): void
+    {
+        $disk = Storage::disk(config('tte.storage.disk'));
+        foreach ($this->digitalSignatures()->get() as $signature) {
+            if ($signature->signed_file_path && $disk->exists($signature->signed_file_path)) {
+                $disk->delete($signature->signed_file_path);
+            }
+        }
+        $this->digitalSignatures()->delete();
+
+        $this->approvals()
+            ->where('status', ApprovalStatus::APPROVED)
+            ->where(fn ($q) => $q->where('signs_spt', true)->orWhere('signs_sppd', true))
+            ->update(['status' => ApprovalStatus::PENDING, 'acted_at' => null, 'notes' => null]);
     }
 
     public function signatureFor(string $documentType): ?SppdDigitalSignature

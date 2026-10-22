@@ -5,7 +5,7 @@
   $doneCount = ($hasFile ? 1 : 0) + ($hasPhoto ? 1 : 0);
 @endphp
 
-<div class="p-1 space-y-4">
+<div class="p-1 space-y-6">
 
   {{-- Header (title card ala halaman index) --}}
   <div
@@ -31,24 +31,46 @@
     </div>
   </div>
 
-  {{-- Ringkasan pelaksana & maksud --}}
-  <div class="dash-enter grid grid-cols-1 gap-3 sm:grid-cols-2">
-    <div class="relative overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
-      <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500/70" aria-hidden="true"></span>
+  {{-- Ringkasan cepat (selaras laman Rincian Biaya). Maksud perjalanan memakai
+       2 kolom karena teksnya bisa panjang. --}}
+  <div class="dash-enter grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="relative flex items-center overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
+      <span class="absolute inset-y-0 left-0 w-1 bg-primary-500/70" aria-hidden="true"></span>
       <div class="flex items-center gap-3">
-        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
           <i class="fa-solid fa-user-tie"></i>
         </div>
         <div class="min-w-0">
           <p class="text-xs text-slate-500">Pelaksana</p>
-          <p class="truncate font-bold text-slate-800">{{ $sppd->user->name }}</p>
+          <p class="font-bold leading-snug text-slate-800">{{ $sppd->user->name }}</p>
         </div>
       </div>
     </div>
-    <div class="relative overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
-      <span class="absolute inset-y-0 left-0 w-1 bg-primary-500/70" aria-hidden="true"></span>
-      <div class="flex items-start gap-3">
-        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+    <div class="relative flex items-center overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
+      <span class="absolute inset-y-0 left-0 w-1 bg-amber-500/70" aria-hidden="true"></span>
+      <div class="flex items-center gap-3">
+        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="min-w-0">
+          <p class="text-xs text-slate-500">Kelengkapan Berkas</p>
+          <p class="text-lg font-bold text-slate-800">{{ $doneCount }} <span
+              class="text-sm font-medium text-slate-400">/ 2</span></p>
+          <div class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] font-semibold">
+            <span class="{{ $hasFile ? 'text-emerald-700' : 'text-slate-400' }}">
+              <i class="fa-solid {{ $hasFile ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }} mr-0.5"></i> Dokumen
+            </span>
+            <span class="{{ $hasPhoto ? 'text-emerald-700' : 'text-slate-400' }}">
+              <i class="fa-solid {{ $hasPhoto ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }} mr-0.5"></i> Foto
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="relative flex items-center overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
+      <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500/70" aria-hidden="true"></span>
+      <div class="flex items-center gap-3">
+        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
           <i class="fa-solid fa-bullseye"></i>
         </div>
         <div class="min-w-0">
@@ -56,23 +78,6 @@
           <p class="text-sm font-medium leading-relaxed text-slate-700">{{ $sppd->purpose }}</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  {{-- Indikator kelengkapan (bantu pengguna awam) --}}
-  <div class="dash-enter flex flex-col gap-3 rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-      <i class="fa-solid fa-list-check text-emerald-600"></i>
-      <span>Kelengkapan berkas</span>
-      <span class="rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500 tabular-nums">{{ $doneCount }}/2</span>
-    </div>
-    <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-      <span class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 {{ $hasFile ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
-        <i class="fa-solid {{ $hasFile ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }}"></i> Dokumen Laporan
-      </span>
-      <span class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 {{ $hasPhoto ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' : 'bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-300' }}">
-        <i class="fa-solid {{ $hasPhoto ? 'fa-circle-check text-emerald-500' : 'fa-circle text-slate-300' }}"></i> Foto Dokumentasi
-      </span>
     </div>
   </div>
 
@@ -166,7 +171,7 @@
           <p class="hidden text-xs text-slate-500 sm:block">
             <i class="fa-solid fa-circle-info mr-1 text-slate-400"></i> Pastikan berkas benar sebelum menyimpan.
           </p>
-          <x-ui.button type="submit" variant="success" class="font-bold hover:scale-[1.02] active:scale-[0.98]"
+          <x-ui.button type="submit" variant="success" class="font-bold"
             wire:target="save,reportFile,documentationFile" wire:loading.attr="disabled">
             <x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
             {{ $sppd->report ? 'Perbarui Laporan' : 'Simpan Laporan' }}

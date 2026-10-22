@@ -2,10 +2,11 @@
     use Illuminate\Support\Js;
     use Vinkla\Hashids\Facades\Hashids;
     $grandTotal = $sppd->actualExpenses->sum('amount');
+    $filledCount = $people->filter(fn ($p) => $sppd->actualExpenses->where('user_id', $p['id'])->count() > 0)->count();
     $canManage = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
 @endphp
 
-<div class="space-y-4 p-1" x-data="{
+<div class="space-y-6 p-1" x-data="{
     printDate: '{{ date('Y-m-d') }}',
     rupiah(v) { const n = String(v ?? '').replace(/\D/g, ''); return n === '' ? '' : n.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); },
     digits(v) { return String(v ?? '').replace(/\D/g, ''); },
@@ -41,37 +42,71 @@
 
     {{-- Alert hanya selama PPTK belum diatur (tombol cetak masih terkunci). PPTK diatur di Portal Dokumen. --}}
     @unless ($hasPptk)
-        <div class="flex items-start gap-3 rounded border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 shadow-2xs">
-            <i class="fa-solid fa-lock mt-0.5 text-amber-600"></i>
-            <p><strong>PPTK</strong> wajib diatur sebelum tombol cetak Laporan Pengeluaran Riil dapat digunakan.
-                <a href="{{ route('sppd.next', $sppd) }}" wire:navigate class="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">Atur di Portal Dokumen</a></p>
+        <div class="dash-enter flex items-start gap-4 rounded border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-amber-900">Cetak Belum Bisa Dilakukan</h4>
+                <p class="mt-1 text-xs font-medium text-amber-800">Lengkapi hal berikut agar tombol cetak aktif:</p>
+                <ul class="mt-2 space-y-1 text-xs text-amber-800">
+                    <li><i class="fa-solid fa-circle-xmark mr-1.5 text-amber-500"></i> PPTK belum diatur.
+                        <a href="{{ route('sppd.next', $sppd) }}" wire:navigate class="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">Atur di Portal Dokumen</a></li>
+                </ul>
+            </div>
         </div>
     @endunless
 
-    {{-- Toolbar: ringkasan, tanggal cetak & input massal --}}
-    <div class="dash-enter flex flex-col gap-4 rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <i class="fa-solid fa-people-group text-emerald-600"></i>
-                <span>{{ $people->count() }} pegawai</span>
+    {{-- Ringkasan cepat (selaras laman Rincian Biaya) --}}
+    <div class="dash-enter grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="relative overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
+            <span class="absolute inset-y-0 left-0 w-1 bg-primary-500/70" aria-hidden="true"></span>
+            <div class="flex items-center gap-3">
+                <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                    <i class="fa-solid fa-people-group"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Total Personel</p>
+                    <p class="text-lg font-bold text-slate-800">{{ $people->count() }} <span
+                            class="text-sm font-medium text-slate-400">orang</span></p>
+                </div>
             </div>
-
-            <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
-
-            <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <i class="fa-solid fa-coins text-emerald-600"></i>
-                <span class="text-slate-500">Total riil:</span>
-                <span class="font-mono tabular-nums text-emerald-700">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+        </div>
+        <div class="relative overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
+            <span class="absolute inset-y-0 left-0 w-1 bg-amber-500/70" aria-hidden="true"></span>
+            <div class="flex items-center gap-3">
+                <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Sudah Diisi Pengeluaran</p>
+                    <p class="text-lg font-bold text-slate-800">{{ $filledCount }} <span
+                            class="text-sm font-medium text-slate-400">/ {{ $people->count() }}</span></p>
+                </div>
             </div>
-
-            <div class="hidden h-4 w-px bg-slate-200 sm:block"></div>
-
-            <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <i class="fa-solid fa-calendar-day text-emerald-600"></i>
-                <label for="printDate" class="text-slate-500">Tanggal cetak:</label>
-                <input id="printDate" type="date" x-model="printDate"
-                    class="rounded border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-2xs outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30" />
+        </div>
+        <div class="relative overflow-hidden rounded border border-slate-200 bg-white p-4 shadow-sm">
+            <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500/70" aria-hidden="true"></span>
+            <div class="flex items-center gap-3">
+                <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Total Keseluruhan</p>
+                    <p class="text-lg font-bold text-emerald-700 font-mono">Rp
+                        {{ number_format($grandTotal, 0, ',', '.') }}</p>
+                </div>
             </div>
+        </div>
+    </div>
+
+    {{-- Toolbar: tanggal cetak & input massal --}}
+    <div class="dash-enter flex flex-col justify-between gap-4 rounded border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <i class="fa-solid fa-calendar-day text-primary-600"></i>
+            <label for="printDate" class="text-slate-500">Tanggal Cetak:</label>
+            <input id="printDate" type="date" x-model="printDate"
+                class="rounded border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm focus:border-primary-500 focus:ring-primary-500" />
         </div>
 
         @if ($canManage)
@@ -83,7 +118,7 @@
     </div>
 
     {{-- Tabel pengeluaran per pegawai --}}
-    <div class="dash-enter overflow-x-auto rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
+    <div class="dash-enter overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
         <table class="table-stack w-full border-collapse text-left text-sm">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -101,13 +136,19 @@
                         $total = $expenses->sum('amount');
                     @endphp
                     <tr class="transition-colors hover:bg-slate-50">
-                        <td class="stack-hide px-4 py-3 text-center font-semibold text-slate-400 tabular-nums">{{ $index + 1 }}</td>
+                        <td class="stack-hide px-4 py-3 text-center font-semibold text-slate-500 tabular-nums">{{ $index + 1 }}.</td>
                         <td data-label="Pegawai" class="stack-block px-4 py-3">
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-col items-start gap-1.5">
                                 @if ($person['label'] === 'Pelaksana')
-                                    <span class="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Pelaksana</span>
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        <i class="fa-solid fa-user-check text-[8px]"></i> Pelaksana
+                                    </span>
                                 @else
-                                    <span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-inset ring-slate-400/20">Pengikut</span>
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                        <i class="fa-solid fa-user text-[8px]"></i> Pengikut
+                                    </span>
                                 @endif
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>
@@ -115,19 +156,19 @@
                         <td data-label="Pengeluaran Riil" class="stack-block px-4 py-3">
                             <div class="max-w-xl space-y-1.5">
                                 @forelse ($expenses as $exp)
-                                    <div class="group flex items-center justify-between gap-2 rounded border border-sky-200 bg-sky-50 px-2.5 py-1.5 transition-colors hover:bg-sky-100">
-                                        <div class="flex items-center gap-2">
+                                    <div class="group flex items-center justify-between gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 transition-all hover:border-primary-200 hover:bg-white">
+                                        <div class="flex flex-col">
                                             <span class="font-medium text-slate-700">{{ $exp->description }}</span>
-                                            <span class="font-mono text-xs tabular-nums text-slate-600 font-semibold">| Rp {{ number_format($exp->amount, 0, ',', '.') }}</span>
+                                            <span class="mt-1 font-mono text-xs font-bold tabular-nums text-slate-700">Rp {{ number_format($exp->amount, 0, ',', '.') }}</span>
                                         </div>
                                         @if ($canManage)
-                                            <div class="flex items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                                            <div class="flex shrink-0 items-center gap-1">
                                                 <button type="button" wire:click="openEdit({{ $exp->id }})"
-                                                    class="cursor-pointer rounded p-0.5 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-800" title="Edit">
+                                                    class="cursor-pointer rounded p-1 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-800" title="Edit">
                                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                                 </button>
-                                                <button type="button" wire:click="delete({{ $exp->id }})" wire:confirm="Hapus pengeluaran ini?"
-                                                    class="cursor-pointer rounded p-0.5 text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-800" title="Hapus">
+                                                <button type="button" wire:click="confirmDelete({{ $exp->id }})"
+                                                    class="cursor-pointer rounded p-1 text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-800" title="Hapus">
                                                     <i class="fa-solid fa-trash text-xs"></i>
                                                 </button>
                                             </div>
@@ -282,6 +323,24 @@
                     Terapkan &amp; simpan
                 </x-ui.button>
             </div>
+        </div>
+    </x-ui.modal>
+
+    {{-- Modal Konfirmasi Hapus (hanya bisa ditutup lewat tombol) --}}
+    <x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus pengeluaran riil?"
+        description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600">
+        <p class="text-sm text-slate-600">
+            Pengeluaran <span class="font-bold text-slate-800">{{ $deletingLabel ?: 'ini' }}</span> akan dihapus
+            permanen.
+        </p>
+        <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <x-ui.button type="button" variant="ghost" x-on:click="$wire.showDeleteModal = false"
+                wire:click="closeDeleteModal">Batal</x-ui.button>
+            <x-ui.button type="button" variant="danger" wire:click="delete" wire:target="delete"
+                wire:loading.attr="disabled">
+                <x-slot name="icon"><i class="fa-solid fa-trash text-xs"></i></x-slot>
+                Ya, hapus
+            </x-ui.button>
         </div>
     </x-ui.modal>
 </div>

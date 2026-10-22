@@ -3,12 +3,6 @@
 	@if ($errorMessage)
 		<x-ui.alert title="SPPD lanjutan belum dapat dibuat">
 			{!! $errorMessage !!}
-			@if (!empty($simulatedSteps))
-				<button type="button" wire:click="$set('showWorkflowModal', true)"
-					class="ml-1 cursor-pointer font-semibold text-red-800 underline underline-offset-2 hover:text-red-950">
-					Cek Detail Alur Pejabat
-				</button>
-			@endif
 			<x-slot:actions>
 				<button type="button" wire:click="$set('errorMessage', null)" aria-label="Tutup peringatan"
 					class="cursor-pointer rounded p-1 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700">
@@ -17,81 +11,6 @@
 			</x-slot:actions>
 		</x-ui.alert>
 	@endif
-
-	{{-- Modal Detail Alur Pejabat --}}
-	<x-ui.modal show="$wire.showWorkflowModal" :closeable="true" title="Detail Alur Pejabat Penandatangan"
-		icon="fa-solid fa-route text-primary-600">
-		@if (!empty($simulatedSteps))
-			<div class="space-y-4">
-				<p class="text-xs text-slate-500">Berikut adalah daftar alur persetujuan pejabat struktural untuk perjalanan dinas
-					ini. Pastikan semua pejabat sudah ditentukan di unit kerja terkait.</p>
-
-				<div class="flow-root my-2 px-1">
-					<ul role="list" class="-mb-8">
-						@foreach ($simulatedSteps as $idx => $step)
-							<li>
-								<div class="relative pb-8">
-									@if ($idx !== count($simulatedSteps) - 1)
-										<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true"></span>
-									@endif
-									<div class="relative flex space-x-3">
-										<div>
-											<span
-												class="flex size-8 items-center justify-center rounded-full ring-8 ring-white {{ $step['status'] === 'found' ? 'bg-emerald-100 text-emerald-600' : ($step['status'] === 'choose' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600') }}">
-												@if ($step['status'] === 'found')
-													<i class="fa-solid fa-check text-xs"></i>
-												@elseif ($step['status'] === 'choose')
-													<i class="fa-solid fa-user-check text-xs"></i>
-												@else
-													<i class="fa-solid fa-xmark text-xs"></i>
-												@endif
-											</span>
-										</div>
-										<div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-											<div>
-												<p class="text-xs font-bold text-slate-800">
-													{{ $step['role_label'] }}
-												</p>
-												<p class="text-xs text-slate-500 mt-0.5">
-													Nama: <span
-														class="{{ $step['status'] === 'found' ? 'font-medium text-slate-700' : ($step['status'] === 'choose' ? 'font-medium text-amber-700' : 'font-bold text-rose-600') }}">{{ $step['approver_name'] }}</span>
-												</p>
-											</div>
-											<div class="whitespace-nowrap text-right text-[10px]">
-												@if ($step['status'] === 'found')
-													<span
-														class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-														Aktif
-													</span>
-												@elseif ($step['status'] === 'choose')
-													<span
-														class="inline-flex items-center rounded bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-														Belum dipilih
-													</span>
-												@else
-													<span
-														class="inline-flex items-center rounded bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
-														Belum Diatur
-													</span>
-												@endif
-											</div>
-										</div>
-									</div>
-								</div>
-							</li>
-						@endforeach
-					</ul>
-				</div>
-			</div>
-		@endif
-
-		<x-slot name="footer">
-			<button type="button" wire:click="$set('showWorkflowModal', false)"
-				class="w-full rounded border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 cursor-pointer">
-				Tutup
-			</button>
-		</x-slot>
-	</x-ui.modal>
 
 	{{-- Modal Konfirmasi Hapus SPPD: tombol Hapus baru aktif setelah hitung mundur
 	     (juga dijaga di server). Hanya bisa ditutup lewat tombol. --}}
@@ -221,34 +140,25 @@
 
 	</div>
 
-	{{-- Bar Filter --}}
+	{{-- Bar Filter: baris 1 pencarian (+ tahun di mode persetujuan) & Reset; baris 2 filter data. --}}
 	<div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
+		@php
+			$hasActiveFilters = $isApprovalMode
+				? $search !== '' || $year !== ''
+				: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $year !== '' || $filter !== ''
+					|| $realisasi !== '' || $laporan !== '';
+		@endphp
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<x-form.input name="search" wire:model.live.debounce.300ms="search"
 				icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1"
 				placeholder="Cari pelaksana, maksud, atau nomor surat..." />
-			@if (!$isApprovalMode)
-				<div class="w-full sm:w-44">
-					<x-form.searchable-select wire:model.live="status" name="status" :options="$statusOptions"
-						placeholder="Semua Status" searchPlaceholder="Cari status..." />
-				</div>
-				<div class="w-full sm:w-44">
-					<x-form.searchable-select wire:model.live="domain" name="domain" :options="$domainOptions"
-						placeholder="Semua Domain" searchPlaceholder="Cari domain..." />
-				</div>
-			@else
+			@if ($isApprovalMode)
 				{{-- Mode persetujuan tak punya baris tombol jabatan, jadi filter tahun ikut di bar ini. --}}
 				<div class="w-full sm:w-40">
 					<x-form.searchable-select wire:model.live="year" name="year" :options="$yearOptions"
 						placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." />
 				</div>
 			@endif
-
-			@php
-				$hasActiveFilters = $isApprovalMode
-					? $search !== '' || $year !== ''
-					: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $year !== '' || $filter !== '';
-			@endphp
 			<div class="flex items-center gap-2 shrink-0">
 				<x-ui.button type="button" variant="secondary" wire:click="resetFilters" :disabled="!$hasActiveFilters">
 					<x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
@@ -256,6 +166,20 @@
 				</x-ui.button>
 			</div>
 		</div>
+
+		@if (!$isApprovalMode)
+			{{-- Realisasi & Laporan hanya mencakup perjalanan disetujui yang sudah lewat (sesuai badge di kolom Status). --}}
+			<div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+				<x-form.searchable-select wire:model.live="status" name="status" :options="$statusOptions"
+					placeholder="Semua Status" searchPlaceholder="Cari status..." />
+				<x-form.searchable-select wire:model.live="domain" name="domain" :options="$domainOptions"
+					placeholder="Semua Domain" searchPlaceholder="Cari domain..." />
+				<x-form.searchable-select wire:model.live="realisasi" name="realisasi" :options="$realisasiOptions"
+					placeholder="Semua Realisasi" searchPlaceholder="Cari realisasi..." />
+				<x-form.searchable-select wire:model.live="laporan" name="laporan" :options="$laporanOptions"
+					placeholder="Semua Laporan" searchPlaceholder="Cari laporan..." />
+			</div>
+		@endif
 	</div>
 
 
@@ -301,7 +225,7 @@
 						</td>
 
 						<td class="max-w-xs">
-							<p class="truncate font-medium text-slate-700" title="{{ $sppd->purpose }}">
+							<p class="line-clamp-2 font-medium leading-snug text-slate-700" title="{{ $sppd->purpose }}">
 								{{ $sppd->purpose }}
 							</p>
 

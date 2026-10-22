@@ -97,6 +97,29 @@
 		</div>
 	</div>
 
+	{{-- Alasan revisi / penolakan dari pejabat penyetuju, ditonjolkan di atas konten. --}}
+	@if ($sppd->status->value === 'in_progress' && $sppd->revision_note)
+		@php $revisionStep = $sppd->approvals->firstWhere('approver_id', $sppd->reviser_id); @endphp
+		<x-ui.alert variant="warning" icon="fa-pen-to-square" title="Pengajuan perlu diperbaiki" class="dash-enter">
+			<p class="whitespace-pre-line">{{ $sppd->revision_note }}</p>
+			@if ($sppd->reviser)
+				<p class="mt-1 text-xs">
+					Catatan revisi dari <strong class="font-semibold">{{ $sppd->reviser->name }}</strong>{{ $revisionStep ? ' (' . $revisionStep->role_label . ')' : '' }}.
+				</p>
+			@endif
+		</x-ui.alert>
+	@elseif ($sppd->status->value === 'rejected')
+		@php $rejectedStep = $sppd->approvals->first(fn ($ap) => $ap->status->value === 'rejected'); @endphp
+		<x-ui.alert variant="danger" icon="fa-circle-xmark" title="Pengajuan ditolak" class="dash-enter">
+			<p class="whitespace-pre-line">{{ $sppd->rejection_note ?: ($rejectedStep?->notes ?: 'Tidak ada alasan yang dicatat.') }}</p>
+			@if ($rejectedStep)
+				<p class="mt-1 text-xs">
+					Ditolak oleh <strong class="font-semibold">{{ $rejectedStep->approver->name }}</strong> ({{ $rejectedStep->role_label }}){{ $rejectedStep->acted_at ? ' pada ' . $rejectedStep->acted_at->translatedFormat('d M Y H:i') . ' WITA' : '' }}.
+				</p>
+			@endif
+		</x-ui.alert>
+	@endif
+
 	{{-- Konten Utama Grid --}}
 	<div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
 

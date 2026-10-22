@@ -259,8 +259,8 @@
       </x-ui.button>
 
       <x-ui.button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
-        <span wire:loading.remove wire:target="save"><i class="fa-solid fa-floppy-disk text-xs"></i> {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}</span>
-        <span wire:loading wire:target="save"><i class="fa-solid fa-spinner fa-spin text-xs"></i> Menyimpan...</span>
+        <x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
+        {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}
       </x-ui.button>
     </div>
   </form>

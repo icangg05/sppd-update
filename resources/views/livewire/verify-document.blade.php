@@ -44,8 +44,8 @@
       <div class="mt-3 flex items-center gap-2">
         <x-ui.button type="submit" variant="primary" class="px-4 py-2 text-sm font-semibold"
           wire:loading.attr="disabled" wire:target="file,verifyUpload">
-          <span wire:loading.remove wire:target="verifyUpload"><i class="fa-solid fa-shield-halved text-[11px]"></i> Verifikasi ke BSrE</span>
-          <span wire:loading wire:target="verifyUpload"><i class="fa-solid fa-spinner fa-spin text-[11px]"></i> Memverifikasi…</span>
+          <x-slot name="icon"><i class="fa-solid fa-shield-halved text-[11px]"></i></x-slot>
+          Verifikasi ke BSrE
         </x-ui.button>
 
         @if ($checked)
@@ -204,8 +204,8 @@
               </div>
               <x-ui.button type="button" wire:click="verifyWithBsre" variant="primary"
                 class="shrink-0 px-3 py-2 text-xs font-semibold" wire:loading.attr="disabled" wire:target="verifyWithBsre">
-                <span wire:loading.remove wire:target="verifyWithBsre"><i class="fa-solid fa-shield-halved text-[11px]"></i> Verifikasi ke BSrE</span>
-                <span wire:loading wire:target="verifyWithBsre"><i class="fa-solid fa-spinner fa-spin text-[11px]"></i> Memverifikasi…</span>
+                <x-slot name="icon"><i class="fa-solid fa-shield-halved text-[11px]"></i></x-slot>
+                Verifikasi ke BSrE
               </x-ui.button>
             </div>
 

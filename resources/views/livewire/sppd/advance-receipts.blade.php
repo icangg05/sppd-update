@@ -80,19 +80,15 @@
     </div>
 
     {{-- Pengaturan Tanggal Cetak & Panjar Massal --}}
-    <div class="dash-enter flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded border border-l-2 border-slate-200 border-l-emerald-400 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                <i class="fa-solid fa-calendar-day text-emerald-600 text-sm"></i>
-                <span>Pilih Tanggal Cetak Kuitansi:</span>
-            </div>
-            <div class="w-full sm:w-48">
-                <input type="date" x-model="printDate"
-                    class="w-full rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-2xs outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30" />
-            </div>
+    <div class="dash-enter flex flex-col justify-between gap-4 rounded border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <i class="fa-solid fa-calendar-day text-primary-600"></i>
+            <label for="printDate" class="text-slate-500">Tanggal Cetak:</label>
+            <input id="printDate" type="date" x-model="printDate"
+                class="rounded border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm focus:border-primary-500 focus:ring-primary-500" />
         </div>
         @if ($canManage)
-            <x-ui.button type="button" variant="primary" wire:click="$set('showBulkModal', true)" class="w-full sm:w-auto">
+            <x-ui.button type="button" variant="primary" size="sm" wire:click="$set('showBulkModal', true)" class="w-full sm:w-auto">
                 <x-slot:icon><i class="fa-solid fa-layer-group text-xs"></i></x-slot:icon>
                 Input Panjar Massal
             </x-ui.button>
@@ -100,7 +96,7 @@
     </div>
 
     {{-- Daftar Personel --}}
-    <div class="dash-enter overflow-x-auto rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
+    <div class="dash-enter overflow-x-auto rounded border border-slate-200 bg-white shadow-sm">
         <table class="table-stack w-full text-left border-collapse">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -128,7 +124,7 @@
                                 <span class="font-bold text-slate-800 uppercase">{{ $person['name'] }}</span>
                             </div>
                         </td>
-                        <td data-label="Nominal Panjar" class="py-3 px-4">
+                        <td data-label="Nominal Panjar" class="stack-block py-3 px-4">
                             <div class="flex flex-col gap-1">
                                 <div class="relative max-w-45" x-data="{ v: @entangle('amounts.'.$person['id']) }">
                                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-slate-400">Rp</span>
@@ -139,18 +135,18 @@
                                         placeholder="Nominal panjar">
                                 </div>
                                 @if ($hasPanjar)
-                                    <span class="pl-1 font-mono text-xs tabular-nums text-slate-500">No: {{ $receipt->receipt_number }}</span>
+                                    <span class="whitespace-nowrap pl-1 font-mono text-xs tabular-nums text-slate-500">No: {{ $receipt->receipt_number }}</span>
                                 @endif
                             </div>
                         </td>
-                        <td data-label="Aksi Cetak" class="py-3 px-4 text-right">
-                            <div class="flex flex-wrap items-center justify-end gap-1.5">
+                        <td data-label="Aksi Cetak" class="stack-block py-3 px-4 text-right">
+                            <div class="flex flex-nowrap items-center justify-end gap-1.5">
                                 {{-- Cetak Panjar --}}
                                 @if ($hasPanjar && $hasBendahara)
                                     <a :href="'{{ route('sppd.stream.kuitansi-panjar', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' + '&date=' + printDate"
                                         target="_blank"
-                                        class="text-nowrap inline-flex items-center gap-1 rounded bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-amber-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
-                                        <i class="fa-solid fa-print"></i> Cetak Panjar
+                                        class="inline-flex items-center gap-1 whitespace-nowrap rounded bg-amber-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-amber-700 hover:scale-[1.03] active:scale-[0.97]">
+                                        <i class="fa-solid fa-print text-[10px]"></i> Cetak Panjar
                                     </a>
                                 @endif
 
@@ -158,13 +154,13 @@
                                 @if ($canPrint)
                                     <a :href="'{{ route('sppd.stream.kuitansi-rampung', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' + '&date=' + printDate"
                                         target="_blank"
-                                        class="text-nowrap inline-flex items-center gap-1 rounded bg-primary-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-primary-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50">
-                                        <i class="fa-solid fa-file-invoice"></i> Cetak Rampung
+                                        class="inline-flex items-center gap-1 whitespace-nowrap rounded bg-primary-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-primary-700 hover:scale-[1.03] active:scale-[0.97]">
+                                        <i class="fa-solid fa-file-invoice text-[10px]"></i> Cetak Rampung
                                     </a>
                                 @else
                                     <button type="button" disabled title="Lengkapi pengeluaran riil, rincian biaya, dan bendahara aktif terlebih dahulu"
-                                        class="text-nowrap inline-flex items-center gap-1 rounded bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-400 cursor-not-allowed border border-slate-200">
-                                        <i class="fa-solid fa-lock"></i> Cetak Rampung
+                                        class="inline-flex cursor-not-allowed items-center gap-1 whitespace-nowrap rounded border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-400">
+                                        <i class="fa-solid fa-lock text-[10px]"></i> Cetak Rampung
                                     </button>
                                 @endif
                             </div>
@@ -183,12 +179,8 @@
             </span>
             <x-ui.button type="button" variant="success" class="w-full sm:w-auto" wire:click="saveAll"
                 wire:target="saveAll" wire:loading.attr="disabled">
-                <x-slot:icon>
-                    <i class="fa-solid fa-floppy-disk text-xs" wire:loading.remove wire:target="saveAll"></i>
-                    <i class="fa-solid fa-circle-notch fa-spin text-xs" wire:loading wire:target="saveAll"></i>
-                </x-slot:icon>
-                <span wire:loading.remove wire:target="saveAll">Simpan Semua Panjar</span>
-                <span wire:loading wire:target="saveAll">Menyimpan…</span>
+                <x-slot:icon><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot:icon>
+                Simpan Semua Panjar
             </x-ui.button>
         </div>
     @endif

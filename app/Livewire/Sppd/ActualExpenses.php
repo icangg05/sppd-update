@@ -23,6 +23,10 @@ class ActualExpenses extends Component
   public bool $showAddModal = false;
   public bool $showEditModal = false;
   public bool $showBulkModal = false;
+  public bool $showDeleteModal = false;
+
+  public ?int $deletingId = null;
+  public string $deletingLabel = '';
 
   public string $addUserId = '';
   public string $addUserName = '';
@@ -140,10 +144,27 @@ class ActualExpenses extends Component
     $this->toastSuccess('Pengeluaran riil berhasil diperbarui.');
   }
 
-  public function delete(int $expenseId): void
+  public function confirmDelete(int $expenseId): void
   {
     $this->guard();
-    $this->sppd->actualExpenses()->findOrFail($expenseId)->delete();
+    $expense = $this->sppd->actualExpenses()->findOrFail($expenseId);
+    $this->deletingId = $expense->id;
+    $this->deletingLabel = $expense->description;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId = null;
+    $this->deletingLabel = '';
+  }
+
+  public function delete(): void
+  {
+    $this->guard();
+    $this->sppd->actualExpenses()->findOrFail($this->deletingId)->delete();
+    $this->closeDeleteModal();
     $this->toastSuccess('Pengeluaran riil berhasil dihapus.');
   }
 

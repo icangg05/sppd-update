@@ -34,7 +34,8 @@
 				<div class="flex w-full max-w-md flex-col items-center text-center" @click.self="close()">
 
 					{{-- Segel tanda tangan: cincin tergambar, cakram muncul, centang tergambar,
-					     lalu gelombang & percikan menyebar dari tengah. --}}
+					     lalu gelombang & percikan menyebar dari tengah. Setelah itu hanya segel yang
+					     tetap bergerak: cincin tulisan berputar pelan & gelombang berdenyut berulang. --}}
 					<div class="relative size-44 sm:size-52" aria-hidden="true">
 						<span class="tte-ripple absolute inset-[18%] rounded-full border-2 border-emerald-300/70" style="--delay: 0.95s"></span>
 						<span class="tte-ripple absolute inset-[18%] rounded-full border-2 border-emerald-300/50" style="--delay: 1.35s"></span>
@@ -48,11 +49,13 @@
 							<defs>
 								<path id="tte-seal-arc" d="M80,80 m-67,0 a67,67 0 1,1 134,0 a67,67 0 1,1 -134,0" />
 							</defs>
-							{{-- Tulisan melingkar segel. --}}
-							<text class="tte-fade fill-emerald-100/80 font-mono text-[8.5px] font-semibold uppercase" style="--delay: 1.05s">
-								<textPath href="#tte-seal-arc" textLength="415" lengthAdjust="spacing">Tanda Tangan Elektronik · Pemerintah Kota Kendari ·</textPath>
-							</text>
-							<circle cx="80" cy="80" r="57" fill="none" class="tte-fade stroke-white/25" stroke-width="1" stroke-dasharray="2 4" style="--delay: 0.6s" />
+							{{-- Tulisan melingkar segel + lingkar titik-titik, berputar terus. --}}
+							<g class="tte-spin">
+								<text class="tte-fade fill-emerald-100/80 font-mono text-[8.5px] font-semibold uppercase" style="--delay: 1.05s">
+									<textPath href="#tte-seal-arc" textLength="415" lengthAdjust="spacing">Tanda Tangan Elektronik · Pemerintah Kota Kendari ·</textPath>
+								</text>
+								<circle cx="80" cy="80" r="57" fill="none" class="tte-fade stroke-white/25" stroke-width="1" stroke-dasharray="2 4" style="--delay: 0.6s" />
+							</g>
 							{{-- Alas gelap di bawah cincin agar segel tegas di atas latar yang buram. --}}
 							<circle cx="80" cy="80" r="54" class="tte-fade fill-slate-950/60" style="--delay: 0.1s" />
 							<circle cx="80" cy="80" r="51" fill="none" pathLength="1" transform="rotate(-90 80 80)"

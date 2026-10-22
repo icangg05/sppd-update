@@ -249,6 +249,9 @@ class SppdShow extends Component
       'reviser_id'    => Auth::id(),
     ]);
 
+    // Dokumen akan diperbaiki: TTE yang sudah ada tidak berlaku lagi.
+    $sppd->resetDigitalSignatures();
+
     $this->notifyApplicant($sppd, 'revision', $this->revisionNotes, Auth::user());
 
     $this->revisionNotes     = '';

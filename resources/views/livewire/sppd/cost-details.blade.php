@@ -114,7 +114,7 @@
                 class="rounded border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 focus:border-primary-500 focus:ring-primary-500 shadow-sm" />
         </div>
         @if ($canManage)
-            <x-ui.button type="button" wire:click="openBulk" variant="primary" class="w-full justify-center sm:w-auto">
+            <x-ui.button type="button" variant="primary" size="sm" wire:click="openBulk" class="w-full sm:w-auto">
                 <x-slot name="icon"><i class="fa-solid fa-layer-group text-xs"></i></x-slot>
                 Input Biaya Sekaligus
             </x-ui.button>
@@ -142,7 +142,7 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="stack-hide py-3 px-4 text-center font-semibold text-slate-500">{{ $index + 1 }}.</td>
                         <td data-label="Pegawai" class="stack-block py-3 px-4">
-                            <div class="flex items-center flex-wrap gap-2">
+                            <div class="flex flex-col items-start gap-1.5">
                                 @if ($person['label'] === 'Pelaksana')
                                     <span
                                         class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
@@ -176,21 +176,20 @@
                                                         {{ number_format($cost->total, 0, ',', '.') }}</span></span>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                                        <div class="flex shrink-0 items-center gap-1">
                                             @if ($cost->receipt_photo)
                                                 <a href="{{ asset('storage/' . $cost->receipt_photo) }}" target="_blank"
-                                                    class="text-emerald-600 p-1 cursor-pointer" title="Lihat Bukti/Nota">
+                                                    class="rounded p-1 text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer" title="Lihat Bukti/Nota">
                                                     <i class="fa-solid fa-image text-xs"></i>
                                                 </a>
                                             @endif
                                             @if ($canManage)
                                                 <button type="button" wire:click="openEdit({{ $cost->id }})"
-                                                    class="text-amber-600 hover:text-amber-800 p-1 cursor-pointer" title="Edit">
+                                                    class="rounded p-1 text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-800 cursor-pointer" title="Edit">
                                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                                 </button>
-                                                <button type="button" wire:click="delete({{ $cost->id }})"
-                                                    wire:confirm="Hapus biaya ini?"
-                                                    class="text-rose-600 hover:text-rose-800 p-1 cursor-pointer" title="Hapus">
+                                                <button type="button" wire:click="confirmDelete({{ $cost->id }})"
+                                                    class="rounded p-1 text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-800 cursor-pointer" title="Hapus">
                                                     <i class="fa-solid fa-trash text-xs"></i>
                                                 </button>
                                             @endif
@@ -384,6 +383,24 @@
                     Terapkan &amp; Simpan
                 </x-ui.button>
             </div>
+        </div>
+    </x-ui.modal>
+
+    {{-- Modal Konfirmasi Hapus (hanya bisa ditutup lewat tombol) --}}
+    <x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus Rincian Biaya?"
+        description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600">
+        <p class="text-sm text-slate-600">
+            Rincian biaya <span class="font-bold text-slate-800">{{ $deletingLabel ?: 'ini' }}</span> beserta
+            lampiran bukti/notanya akan dihapus permanen.
+        </p>
+        <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <x-ui.button type="button" variant="ghost" x-on:click="$wire.showDeleteModal = false"
+                wire:click="closeDeleteModal">Batal</x-ui.button>
+            <x-ui.button type="button" variant="danger" wire:click="delete" wire:target="delete"
+                wire:loading.attr="disabled">
+                <x-slot name="icon"><i class="fa-solid fa-trash text-xs"></i></x-slot>
+                Ya, Hapus
+            </x-ui.button>
         </div>
     </x-ui.modal>
 </div>

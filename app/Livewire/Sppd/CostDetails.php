@@ -31,6 +31,11 @@ class CostDetails extends Component
   public bool $showAddModal = false;
   public bool $showEditModal = false;
   public bool $showBulkModal = false;
+  public bool $showDeleteModal = false;
+
+  // Hapus (konfirmasi)
+  public ?int $deletingId = null;
+  public string $deletingLabel = '';
 
   // Tambah (per pegawai)
   public string $addUserId = '';
@@ -198,14 +203,31 @@ class CostDetails extends Component
     $this->toastSuccess('Rincian biaya berhasil diperbarui.');
   }
 
-  public function delete(int $costId): void
+  public function confirmDelete(int $costId): void
   {
     $this->guard();
     $cost = $this->sppd->costDetails()->findOrFail($costId);
+    $this->deletingId = $cost->id;
+    $this->deletingLabel = $cost->description;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId = null;
+    $this->deletingLabel = '';
+  }
+
+  public function delete(): void
+  {
+    $this->guard();
+    $cost = $this->sppd->costDetails()->findOrFail($this->deletingId);
     if ($cost->receipt_photo) {
       Storage::disk('public')->delete($cost->receipt_photo);
     }
     $cost->delete();
+    $this->closeDeleteModal();
     $this->toastSuccess('Rincian biaya berhasil dihapus.');
   }
 

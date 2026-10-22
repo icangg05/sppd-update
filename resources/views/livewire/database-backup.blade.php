@@ -68,8 +68,8 @@
       @else
         {{-- Cek worker dulu di server (requestBackup); modal baru dibuka bila worker sehat. --}}
         <x-ui.button type="button" class="shrink-0" wire:click="requestBackup" wire:loading.attr="disabled" wire:target="requestBackup">
-          <span wire:loading.remove wire:target="requestBackup"><i class="fa-solid fa-database text-xs"></i> Buat Backup Sekarang</span>
-          <span wire:loading wire:target="requestBackup"><i class="fa-solid fa-spinner fa-spin text-xs"></i> Memeriksa worker...</span>
+          <x-slot name="icon"><i class="fa-solid fa-database text-xs"></i></x-slot>
+          Buat Backup Sekarang
         </x-ui.button>
       @endif
     </div>
