@@ -96,6 +96,31 @@
             <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Centang setiap wilayah tujuan yang memakai alur ini. Wilayah yang tidak dicentang tidak memakai alur ini.</p>
           </div>
 
+          {{-- Atasan langsung pemohon: dipilih eksplisit, termasuk "tidak dibedakan". --}}
+          <div class="space-y-1.5">
+            <p class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Atasan Langsung Pemohon <span class="text-rose-500">*</span></p>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <x-form.radio wire:model.live="supervisor_mode" name="supervisor_mode" id="supervisor-mode-any" value="any"
+                label="Tidak dibedakan" description="Alur berlaku apa pun jabatan atasan langsung pemohon." :error="false"
+                labelClass="h-full w-full" />
+              <x-form.radio wire:model.live="supervisor_mode" name="supervisor_mode" id="supervisor-mode-specific" value="specific"
+                label="Hanya untuk atasan tertentu" description="Mis. staf beratasan Kabid memakai alur yang dimulai dari Kabid." :error="false"
+                labelClass="h-full w-full" />
+            </div>
+            @if ($supervisor_mode === 'specific')
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('supervisor_role') border-rose-300 @else border-slate-200 @enderror">
+                @foreach ($approverRoles as $role)
+                  <x-form.checkbox wire:model="supervisor_role" :value="$role->name" :label="$role->label ?? $role->name" :show-error="false"
+                    wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
+                @endforeach
+              </div>
+              @error('supervisor_role')
+                <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
+              @enderror
+            @endif
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Atasan langsung diatur per pegawai, lewat Data Pegawai atau saat membuat SPPD. Pemohon yang atasannya belum pasti tidak bisa membuat SPPD sampai atasannya diatur.</p>
+          </div>
+
           {{-- Status Keaktifan Aturan --}}
           <div class="pt-1">
             <x-form.checkbox wire:model="is_active" label="Aktifkan Aturan Perubahan Workflow Langsung"
@@ -113,7 +138,7 @@
             <i class="fa-solid fa-diagram-next text-primary-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
           </h3>
           <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan. Tingkat persetujuan terendah adalah Kabid / Irban / Kabag.</p>
-          <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i><strong class="font-bold text-slate-600">Boleh dilewati</strong>: tahap dilewati bila pelaksana tidak berada di bawah pejabat ini (mis. staf Sekretariat tanpa Kabid). Bila ada beberapa pejabat, pembuat SPPD memilih atasan pelaksana.</p>
+          <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Setiap tahap wajib dijalankan. Pemohon yang tahapnya belum punya pejabat tidak bisa membuat SPPD sampai pejabatnya dilengkapi.</p>
         </div>
 
         <x-ui.button type="button" wire:click="addStep" variant="secondary"
@@ -172,13 +197,6 @@
                     <input type="checkbox" wire:model.live="steps.{{ $i }}.signs_sppd"
                       class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
                     <span>TTD SPPD</span>
-                  </label>
-
-                  <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer select-none hover:text-primary-600 transition-colors"
-                    title="Dilewati bila pelaksana tidak berada di bawah pejabat ini; tidak dapat menandatangani SPT/SPPD">
-                    <input type="checkbox" wire:model.live="steps.{{ $i }}.optional"
-                      class="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4 transition-colors">
-                    <span>Boleh dilewati</span>
                   </label>
                 </div>
 

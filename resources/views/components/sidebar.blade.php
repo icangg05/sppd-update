@@ -249,7 +249,7 @@
 					<span>DPA</span>
 				</a>
 
-				<a href="{{ route('master.departments.index') }}" wire:navigate.hover
+				<a href="{{ auth()->user()->department_id ? route('master.departments.show', auth()->user()->department_id) : route('master.departments.index') }}" wire:navigate.hover
 					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.departments.*') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-building fa-fw"></i></span>
 					<span>Unit Kerja</span>

@@ -187,6 +187,7 @@ class LogIndex extends Component
       'budget_id'     => [\App\Models\Budget::class, 'activity'],
       'rank_id'       => [\App\Models\Rank::class, 'name'],
       'position_id'   => [\App\Models\Position::class, 'name'],
+      'atasan_id'     => [\App\Models\User::class, 'name'],
     ];
 
     // Kumpulkan id per model dari kedua sisi diff (old & attributes).

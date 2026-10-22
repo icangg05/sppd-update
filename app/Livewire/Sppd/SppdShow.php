@@ -12,8 +12,10 @@ use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Services\ApproverNotifier;
 use App\Services\QueueHealthService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -350,7 +352,7 @@ class SppdShow extends Component
       $this->approveNotes     = '';
       $this->showApproveModal = false;
       $this->refreshApprovalBadge();
-      $this->toastSuccess('Seluruh dokumen telah berhasil ditandatangani.');
+      $this->celebrateTte($sppd, $existingSignatures->values());
       return;
     }
 
@@ -372,6 +374,25 @@ class SppdShow extends Component
     $this->approveNotes     = '';
     $this->showApproveModal = false;
     $this->toastSuccess('Persetujuan SPPD sedang diproses. Tanda tangan elektronik (TTE) yang belum ditandatangani sedang diproses di background.');
+  }
+
+  /**
+   * Animasi TTE selesai (layar penuh) berisi dokumen yang baru ditandatangani
+   * penanda tangan ini, dan apakah SPPD kini disetujui penuh.
+   */
+  protected function celebrateTte(SppdRequest $sppd, Collection $signatures): void
+  {
+    $names = $sppd->followers->mapWithKeys(fn ($f) => [$f->user_id => $f->user?->name])->put($sppd->user_id, $sppd->user?->name);
+
+    $this->dispatch('tte-completed',
+      docs: $signatures->sortBy(fn ($sig) => $sig->document_type === 'spt' ? 0 : 1)
+        ->map(fn ($sig) => $sig->document_type === 'spt'
+          ? ['label' => 'Surat Perintah Tugas (SPT)', 'name' => null]
+          : ['label' => 'SPPD', 'name' => $names->get((int) Str::after($sig->document_type, 'sppd_'))])
+        ->values()->all(),
+      final: $sppd->status === SppdStatus::APPROVED,
+      time: now()->translatedFormat('d M Y H:i') . ' WITA',
+    );
   }
 
   protected function refreshApprovalBadge(): void
@@ -635,6 +656,10 @@ class SppdShow extends Component
 
     if ($this->wasTteProcessing && ! $isProcessing) {
       $this->refreshApprovalBadge();
+      // Seluruh dokumen penanda tangan ini berhasil: tampilkan animasi TTE selesai.
+      if ($mySignatures->every(fn ($sig) => $sig->status === SignatureStatus::SIGNED)) {
+        $this->celebrateTte($sppd, $mySignatures->values());
+      }
     }
 
     $this->wasTteProcessing = $isProcessing;

@@ -35,6 +35,7 @@ class User extends Authenticatable
     'department_id',
     'rank_id',
     'position_id',
+    'atasan_id',
     'dprd_jabatan',
     'partai',
     'photo',
@@ -93,7 +94,7 @@ class User extends Authenticatable
     return LogOptions::defaults()
       ->logOnly([
         'name', 'username', 'email', 'nip', 'nik',
-        'employee_type', 'department_id', 'rank_id', 'position_id',
+        'employee_type', 'department_id', 'rank_id', 'position_id', 'atasan_id',
         'dprd_jabatan', 'partai', 'is_active',
       ])
       ->logOnlyDirty()
@@ -117,6 +118,18 @@ class User extends Authenticatable
   public function position(): BelongsTo
   {
     return $this->belongsTo(Position::class);
+  }
+
+  /** Atasan langsung: rantainya menentukan pejabat tahap persetujuan SPPD. */
+  public function atasan(): BelongsTo
+  {
+    return $this->belongsTo(self::class, 'atasan_id');
+  }
+
+  /** Pegawai yang atasan langsungnya pegawai ini. */
+  public function bawahan(): HasMany
+  {
+    return $this->hasMany(self::class, 'atasan_id');
   }
 
   public function sppdRequests(): HasMany

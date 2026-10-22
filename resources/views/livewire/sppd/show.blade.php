@@ -22,10 +22,13 @@
 					<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
 				</span>
 				<h1 class="text-2xl font-bold tracking-tight text-balance text-slate-800">Detail Surat Perjalanan Dinas</h1>
-				<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
-					<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
-					{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
-				</p>
+				{{-- Nomor dokumen hanya dipakai Inspektorat (diinput di form SPPD). --}}
+				@if ($sppd->showsDocumentNumber())
+					<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
+						<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
+						{{ $sppd->document_number ?: 'Belum memiliki nomor dokumen' }}
+					</p>
+				@endif
 				<p class="mt-1 text-sm text-slate-500">Rincian lengkap perjalanan dinas, alur persetujuan, dan status tanda tangan elektronik.</p>
 			</div>
 
@@ -379,7 +382,7 @@
 										@endif
 										@if ($ap->acted_at)
 											<p class="mt-1.5 text-[10px] font-mono text-slate-500">
-												<i class="fa-regular fa-clock mr-0.5"></i> {{ $ap->acted_at->translatedFormat('d M Y H:i') }}
+												<i class="fa-regular fa-clock mr-0.5"></i> {{ $ap->acted_at->translatedFormat('d M Y H:i') }} WITA
 											</p>
 										@endif
 									</div>
@@ -770,5 +773,8 @@
 			</button>
 		</x-slot:footer>
 	</x-ui.modal>
+
+	{{-- Animasi layar penuh saat seluruh dokumen penanda tangan ini selesai di-TTE. --}}
+	@include('livewire.sppd.partials.tte-complete')
 
 </div>

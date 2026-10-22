@@ -10,6 +10,11 @@
     'class' => '',
     'labelClass' => '',
     'wrapperClass' => '',
+    // Mode backend: nama method Livewire (#[Renderless]) yang menerima kata kunci dan
+    // mengembalikan ['options' => [...], 'more' => bool]. Opsi tidak dikirim sekaligus.
+    'searchMethod' => null,
+    // Label nilai terpilih saat ini (mode backend: opsinya belum tentu ada di hasil cari).
+    'selectedLabel' => null,
 ])
 
 @php
@@ -51,14 +56,21 @@
             coords: { top: 0, left: 0, width: 0 },
             value: @if ($hasWire) @entangle($model) @else @js((string) $initialValue) @endif,
             options: @js($normalized),
+            remote: @js($searchMethod),
+            selectedText: @js((string) $selectedLabel),
+            loading: false,
+            more: false,
+            request: 0,
             get selected() {
                 return this.options.find(o => String(o.value) === String(this.value ?? ''));
             },
             get selectedLabel() {
-                return this.selected ? this.selected.label : '';
+                if (this.selected) return this.selected.label;
+                // Mode backend: nilai terpilih bisa di luar hasil pencarian terakhir.
+                return this.remote && String(this.value ?? '') !== '' ? this.selectedText : '';
             },
             get filtered() {
-                if (!this.search.trim()) return this.options;
+                if (this.remote || !this.search.trim()) return this.options;
                 const s = this.search.trim().toLowerCase();
                 return this.options.filter(o => o.label.toLowerCase().includes(s) || o.keywords.toLowerCase().includes(s));
             },
@@ -81,11 +93,28 @@
                     : r.bottom + margin;
                 this.coords = { top, left: r.left, width: r.width };
             },
+            // Mode backend: ambil opsi dari server; respons yang sudah usang diabaikan.
+            async fetchOptions() {
+                if (!this.remote) return;
+                const ticket = ++this.request;
+                this.loading = true;
+                try {
+                    const res = await this.$wire[this.remote](this.search);
+                    if (ticket !== this.request) return;
+                    this.options = (res && res.options) || [];
+                    this.more = !!(res && res.more);
+                } finally {
+                    if (ticket === this.request) this.loading = false;
+                }
+                this.resetHighlight();
+                this.$nextTick(() => this.position());
+            },
             toggle() {
                 if ({{ $disabled ? 'true' : 'false' }}) return;
                 this.open = !this.open;
                 if (this.open) {
                     this.search = '';
+                    this.fetchOptions();
                     this.resetHighlight();
                     this.$nextTick(() => {
                         this.position();
@@ -132,6 +161,12 @@
                 this.open = false;
             },
             choose(val) {
+                const item = this.options.find(o => String(o.value) === String(val));
+                if (item) {
+                    this.selectedText = item.label;
+                    // Kabari induk opsi lengkap yang dipilih (mis. pratinjau di klien).
+                    this.$refs.trigger.dispatchEvent(new CustomEvent('option-chosen', { detail: { ...item }, bubbles: true }));
+                }
                 this.value = val;
                 this.open = false;
                 this.search = '';
@@ -186,6 +221,7 @@
                         <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
                         <input x-ref="search" x-model="search" type="text"
                             @input="resetHighlight(); $nextTick(() => position())"
+                            @input.debounce.300ms="fetchOptions()"
                             @keydown.arrow-down.prevent="move(1)"
                             @keydown.arrow-up.prevent="move(-1)"
                             @keydown.enter.prevent="pick()"
@@ -206,10 +242,17 @@
                                 class="ml-1 text-xs font-normal text-slate-400"></span>
                         </li>
                     </template>
-                    <li x-show="filtered.length === 0" class="px-3 py-2 text-xs text-slate-500">
+                    <li x-show="filtered.length === 0 && ! loading" class="px-3 py-2 text-xs text-slate-500">
                         Tidak ada hasil.
                     </li>
+                    <li x-show="loading && filtered.length === 0" class="px-3 py-2 text-xs text-slate-500">
+                        <i class="fa-solid fa-circle-notch fa-spin mr-1.5 text-primary-600"></i>Mencari...
+                    </li>
                 </ul>
+                {{-- Mode backend: hasil dibatasi, minta pengguna mempersempit kata kunci. --}}
+                <p x-show="more" class="border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-500">
+                    Menampilkan hasil teratas. Ketik nama atau NIP untuk mempersempit.
+                </p>
             </div>
         </template>
     </div>

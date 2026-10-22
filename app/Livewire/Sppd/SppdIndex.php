@@ -14,6 +14,7 @@ use App\Services\SppdWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -28,10 +29,17 @@ class SppdIndex extends Component
   public array $simulatedSteps = [];
   public bool $showWorkflowModal = false;
 
-  // Konfirmasi hapus SPPD
+  // Konfirmasi hapus SPPD: tombol hapus baru aktif setelah hitung mundur DELETE_WAIT detik.
+  public const DELETE_WAIT = 10;
   public bool $showDeleteModal = false;
+  #[Locked]
   public ?int $deleteId = null;
   public ?string $deleteLabel = null;
+  /** Status SPPD yang akan dihapus (untuk peringatan di modal). */
+  public ?string $deleteStatus = null;
+  /** Waktu modal dibuka (ms), agar hitung mundur juga dijaga di server. */
+  #[Locked]
+  public ?int $deleteRequestedAt = null;
 
   #[Url(keep: true)]
   public string $search = '';
@@ -227,56 +235,79 @@ class SppdIndex extends Component
     $this->resetPage();
   }
 
+  /**
+   * SPPD boleh dihapus (apa pun statusnya): Super Admin semua, Admin OPD hanya
+   * SPPD pegawai dalam lingkup unit kerjanya.
+   */
+  private function canDelete(SppdRequest $sppd): bool
+  {
+    $user = Auth::user();
+    if ($user->hasRole('super_admin')) {
+      return true;
+    }
+    if (! $user->hasRole('admin_opd')) {
+      return false;
+    }
+
+    $allowedIds = $user->department ? $user->department->getScopedRelatedIds() : collect([$user->department_id]);
+
+    return $allowedIds->contains($sppd->user?->department_id);
+  }
+
   /** Buka modal konfirmasi sebelum menghapus SPPD. */
   public function confirmDelete(int $id): void
   {
     $sppd = SppdRequest::with('user')->find($id);
 
-    if (! $sppd) {
+    if (! $sppd || ! $this->canDelete($sppd)) {
       return;
     }
 
     $this->deleteId = $id;
     $this->deleteLabel = $sppd->user?->name;
+    $this->deleteStatus = $sppd->status->value;
+    $this->deleteRequestedAt = now()->getTimestampMs();
     $this->showDeleteModal = true;
   }
 
+  /**
+   * Tutup modal hapus. Nama & status SPPD sengaja dibiarkan agar isi modal tidak
+   * berubah selama animasi tutup; keduanya diisi ulang saat confirmDelete berikutnya.
+   */
   public function closeDeleteModal(): void
   {
     $this->showDeleteModal = false;
     $this->deleteId = null;
-    $this->deleteLabel = null;
+    $this->deleteRequestedAt = null;
   }
 
   public function deleteSppd(): void
   {
     $id = $this->deleteId;
-    $this->closeDeleteModal();
+    $requestedAt = $this->deleteRequestedAt;
 
     if (! $id) {
+      $this->closeDeleteModal();
       return;
     }
 
-    $sppd = SppdRequest::findOrFail($id);
-    $user = Auth::user();
-
-    // Super admin dapat menghapus SPPD apa pun secara permanen (apa pun statusnya).
-    if ($user->hasRole('super_admin')) {
-      $sppd->delete();
-      $this->toastSuccess('Pengajuan SPPD berhasil dihapus.');
-
+    // Hitung mundur di modal juga dijaga di server (toleransi setengah detik).
+    if (! $requestedAt || now()->getTimestampMs() - $requestedAt < (self::DELETE_WAIT * 1000 - 500)) {
+      $this->toastError('Tunggu hitung mundur selesai sebelum menghapus.');
       return;
     }
 
-    // Admin OPD hanya boleh membatalkan pengajuan yang masih berjalan.
-    if ($sppd->status->value === 'in_progress' && $user->hasRole('admin_opd')) {
-      $sppd->delete();
-      $this->toastSuccess('Pengajuan SPPD berhasil dibatalkan dan dihapus.');
+    $this->closeDeleteModal();
 
+    $sppd = SppdRequest::with('user')->findOrFail($id);
+    if (! $this->canDelete($sppd)) {
+      $this->toastError('Anda tidak memiliki hak untuk menghapus SPPD ini.');
       return;
     }
 
-    $this->toastError('Anda tidak memiliki hak untuk membatalkan pengajuan ini atau status SPPD tidak dalam proses.');
+    $wasInProgress = $sppd->status === SppdStatus::IN_PROGRESS;
+    $sppd->delete();
+    $this->toastSuccess($wasInProgress ? 'Pengajuan SPPD berhasil dibatalkan dan dihapus.' : 'SPPD berhasil dihapus.');
   }
 
   public function render()
@@ -496,12 +527,10 @@ class SppdIndex extends Component
       return;
     }
 
-    // Tahap berstatus "choose" (beberapa kandidat pejabat) dipilih di form detail.
-    $allStepsFound = collect($steps)->doesntContain('status', 'not_found');
-
-    if (! $allStepsFound) {
+    // Setiap tahap wajib punya pejabat pasti; tahap "choose" dipilih di halaman Buat SPPD.
+    if (! SppdWorkflowService::isComplete($steps)) {
       $this->simulatedSteps = $steps;
-      $this->failLanjutan('Ada pejabat struktural yang belum ditentukan dalam alur ini. Harap lengkapi struktur organisasi di menu Unit Kerja.');
+      $this->failLanjutan('Ada pejabat alur yang belum ditentukan atau belum dipilih. Lengkapi atau pilih pejabatnya di halaman Buat SPPD.');
       return;
     }
 

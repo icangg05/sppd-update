@@ -1,44 +1,52 @@
-<div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-	{{-- Aksen kiri: hijau bila PPTK sudah diatur, ambar bila belum. --}}
-	<div class="flex flex-col gap-4 border-l-2 {{ $sppd->pptk_id ? 'border-emerald-500' : 'border-amber-400' }} p-5 md:flex-row md:items-end md:justify-between">
-		<div class="min-w-0">
-			<p class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-				<i class="fa-solid fa-user-tie text-emerald-600"></i>
-				Pejabat Pelaksana Teknis Kegiatan (PPTK)
-			</p>
-
-			@if ($sppd->pptk_id && $sppd->pptk)
-				<p class="mt-1.5 truncate text-base font-bold text-slate-900">{{ $sppd->pptk->name }}</p>
-				<p class="text-xs font-medium text-slate-500">
-					{{ $sppd->pptk->nip ? 'NIP. ' . $sppd->pptk->nip : 'NIP tidak tersedia' }}
+<div>
+	{{-- Ringkasan PPTK SPPD ini; diubah lewat modal. --}}
+	<div class="dash-enter flex h-full flex-col gap-3 rounded border bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center {{ $sppd->pptk ? 'border-slate-200' : 'border-amber-300' }}">
+		<div class="flex min-w-0 flex-1 items-center gap-3">
+			<span class="flex size-9 shrink-0 items-center justify-center rounded ring-1 {{ $sppd->pptk ? 'bg-primary-50 text-primary-600 ring-primary-100' : 'bg-amber-50 text-amber-600 ring-amber-200' }}">
+				<i class="fa-solid fa-user-tie"></i>
+			</span>
+			<div class="min-w-0 leading-tight">
+				<p class="text-sm font-bold text-slate-800">PPTK</p>
+				<p class="mt-0.5 truncate text-xs text-slate-500">
+					@if ($sppd->pptk)
+						<span class="font-semibold text-slate-700">{{ $sppd->pptk->name }}</span>
+						@if ($sppd->pptk->nip)
+							· NIP. {{ $sppd->pptk->nip }}
+						@endif
+					@else
+						<span class="text-amber-700">Belum diatur. Wajib sebelum mencetak pengeluaran riil &amp; rincian biaya.</span>
+					@endif
 				</p>
-			@else
-				<p class="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-amber-600">
-					<i class="fa-solid fa-triangle-exclamation"></i> Belum diatur
-				</p>
-				<p class="text-xs font-medium text-slate-500">Pilih PPTK terlebih dahulu untuk membuka tombol cetak.</p>
-			@endif
-		</div>
-
-		@if ($this->canManage())
-			<div class="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch md:w-auto">
-				<x-form.searchable-select
-					wire:model="pptk_id"
-					:options="$options"
-					placeholder="— Pilih PPTK —"
-					searchPlaceholder="Cari nama / NIP..."
-					wrapperClass="w-full sm:w-72" />
-
-				<x-ui.button
-					variant="primary"
-					size="sm"
-					wire:click="updatePptk"
-					wire:target="updatePptk"
-					class="shrink-0">
-					<x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
-					Simpan
-				</x-ui.button>
 			</div>
+		</div>
+		@if ($this->canManage())
+			<x-ui.button variant="secondary" size="sm" wire:click="open" class="shrink-0 self-start sm:self-auto">
+				<x-slot:icon><i class="fa-solid fa-pen-to-square text-xs"></i></x-slot:icon>
+				Atur
+			</x-ui.button>
 		@endif
 	</div>
+
+	<x-ui.modal show="$wire.showModal" title="Pejabat Pelaksana Teknis Kegiatan (PPTK)" description="Khusus SPPD ini"
+		icon="fa-solid fa-user-tie text-primary-600" maxWidth="max-w-lg">
+		{{-- Opsi pegawai dicari di server saat dropdown dibuka (searchMethod). Dibuat ulang
+		     tiap modal dibuka agar label pilihan yang batal disimpan tidak tersisa. --}}
+		<div class="space-y-4" wire:key="pptk-form-{{ $opened }}">
+			<p class="text-sm leading-relaxed text-slate-600">
+				PPTK menandatangani kolom <strong class="text-slate-800">Menyetujui</strong> pada Laporan Pengeluaran Riil dan
+				<strong class="text-slate-800">Mengetahui/Menyetujui</strong> pada Rincian Biaya. Wajib diatur sebelum kedua dokumen itu bisa dicetak.
+			</p>
+			<x-form.searchable-select wire:model="pptk_id" label="Pegawai PPTK" searchMethod="searchPptk" :selectedLabel="$selectedLabel"
+				placeholder="— Pilih PPTK —" searchPlaceholder="Cari nama / NIP..." />
+		</div>
+
+		<x-slot name="footer" class="flex items-center justify-end gap-2">
+			{{-- Ditutup di klien (tanpa render ulang) agar isi tidak hilang saat animasi tutup. --}}
+			<x-ui.button variant="secondary" @click="$wire.showModal = false">Batal</x-ui.button>
+			<x-ui.button variant="primary" wire:click="updatePptk" wire:loading.attr="disabled" wire:target="updatePptk">
+				<x-slot:icon><i class="fa-solid fa-check text-xs"></i></x-slot:icon>
+				Simpan
+			</x-ui.button>
+		</x-slot>
+	</x-ui.modal>
 </div>

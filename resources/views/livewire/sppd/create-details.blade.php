@@ -60,10 +60,9 @@
 				<div class="{{ $twoPerRow ? 'grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-4' : 'flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0' }}">
 					@foreach ($steps as $step)
 						@php
-							// Tahap dengan beberapa kandidat terhitung lengkap setelah pejabatnya dipilih.
+							// Alur di sini selalu lengkap (dijaga mount); warna lain hanya pengaman tampilan.
 							$isChoose = ($step['status'] ?? 'found') === 'choose';
-							$isPicked = $isChoose && isset($stepApprovers[$step['index']]) && $stepApprovers[$step['index']] !== '';
-							$isFound = ($step['status'] ?? 'found') === 'found' || $isPicked;
+							$isFound = ($step['status'] ?? 'found') === 'found';
 							$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : ($isChoose ? 'bg-amber-500 ring-amber-100' : 'bg-red-600 ring-red-100');
 							$roleClass = $isFound ? 'text-emerald-700' : ($isChoose ? 'text-amber-700' : 'text-red-600');
 							$nameClass = $isFound ? 'text-slate-800' : ($isChoose ? 'text-amber-700 italic' : 'text-red-700 italic');
@@ -100,32 +99,6 @@
 					@endforeach
 				</div>
 
-				{{-- Pejabat yang tidak bisa dipastikan dari struktur unit kerja (mis. beberapa
-				     Kabid tercatat langsung di OPD induk) dipilih oleh pembuat SPPD. --}}
-				@php $chooseSteps = collect($steps)->where('status', 'choose'); @endphp
-				@if ($chooseSteps->isNotEmpty())
-					<div class="mt-4 border-t border-slate-100 pt-3">
-						<p class="mb-3 text-xs leading-relaxed text-slate-500">
-							<i class="fa-solid fa-circle-info mr-1 text-amber-500"></i>Ada lebih dari satu pejabat yang bisa menjadi atasan pelaksana. Pilih pejabat yang membawahi <strong class="font-semibold text-slate-700">{{ $pelaksana->name }}</strong>.
-						</p>
-						<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-							@foreach ($chooseSteps as $position => $step)
-								@php
-									$options = collect($step['candidates'])
-										->map(fn ($c) => ['value' => (string) $c['id'], 'label' => $c['name'] . ($c['unit'] ? ' (' . $c['unit'] . ')' : '')])
-										->all();
-									if ($step['optional']) {
-										$options[] = ['value' => \App\Services\SppdWorkflowService::SKIP, 'label' => 'Tidak ada, langsung ke tahap berikutnya'];
-									}
-								@endphp
-								<x-form.searchable-select wire:model.live="stepApprovers.{{ $step['index'] }}" :options="$options"
-									:label="'Tahap ' . ($position + 1) . ' · ' . $step['role_label']" :placeholder="'— Pilih ' . $step['role_label'] . ' —'"
-									searchPlaceholder="Cari nama pejabat..." required
-									:hint="$step['optional'] ? 'Pilih “Tidak ada” bila pelaksana tidak berada di bawah ' . $step['role_label'] . ' (mis. staf Sekretariat).' : null" />
-							@endforeach
-						</div>
-					</div>
-				@endif
 			</div>
 		</div>
 
@@ -468,7 +441,7 @@
 			<div class="rounded border border-slate-200 bg-white shadow-sm overflow-hidden">
 				<div class="border-b border-slate-100 bg-slate-50/75 px-5 py-3">
 					<h3 class="text-xs font-bold tracking-wider text-slate-600 uppercase flex items-center gap-1.5">
-						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-calendar-check text-[11px]"></i></span> Penomoran & Penanggalan Dokumen Resmi
+						<span class="flex size-6 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600"><i class="fa-solid fa-calendar-check text-[11px]"></i></span> {{ $isInspektorat ? 'Penomoran & Penanggalan Dokumen Resmi' : 'Penanggalan Dokumen Resmi' }}
 					</h3>
 				</div>
 				<div class="p-5 space-y-4">

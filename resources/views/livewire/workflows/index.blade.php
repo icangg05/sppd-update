@@ -101,6 +101,21 @@
                       Semua
                     @endif
                   </span>
+                  <span class="block text-slate-500">
+                    <i class="fa-solid fa-user-tie text-slate-500 mr-1 text-[10px]"></i>Atasan langsung:
+                    @if (! empty($w->supervisor_role))
+                      <div class="flex flex-wrap gap-1 mt-0.5 ml-4">
+                        @foreach ($w->supervisor_role as $role)
+                          <span
+                            class="inline-flex items-center rounded bg-amber-50 px-1 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200">
+                            {{ $roleLabels[$role] ?? $role }}
+                          </span>
+                        @endforeach
+                      </div>
+                    @else
+                      Tidak dibedakan
+                    @endif
+                  </span>
                 </div>
               </td>
 
@@ -129,17 +144,12 @@
                       $roleName = is_array($step) ? $step['role'] ?? '' : $step;
                       $signsSpt = is_array($step) ? (bool) ($step['signs_spt'] ?? false) : false;
                       $signsSppd = is_array($step) ? (bool) ($step['signs_sppd'] ?? false) : false;
-                      $optional = is_array($step) && ! empty($step['optional']);
                       $roleLabel = $roleLabels[$roleName] ?? ucwords(str_replace('_', ' ', $roleName));
                     @endphp
                     <div
-                      class="inline-flex items-center gap-1.5 rounded border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm {{ $optional ? 'border-dashed border-slate-300' : 'border-slate-200' }}"
-                      @if ($optional) title="Boleh dilewati bila pelaksana tidak berada di bawah pejabat ini" @endif>
+                      class="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm">
                       <span class="text-primary-600 font-black">{{ $idx + 1 }}.</span>
                       <span>{{ $roleLabel }}</span>
-                      @if ($optional)
-                        <span class="text-[9px] font-semibold italic text-slate-500">opsional</span>
-                      @endif
                       @if ($signsSpt || $signsSppd)
                         <div class="flex items-center gap-0.5 ml-1 select-none">
                           @if ($signsSpt)

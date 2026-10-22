@@ -223,14 +223,16 @@
 						@forelse ($steps as $index => $step)
 							@php
 								$isFound = $step['status'] === 'found';
-								// Beberapa kandidat pejabat: dipilih di form detail, bukan kesalahan.
+								// Beberapa kandidat pejabat: dipilih di sini, lalu disimpan sebagai atasan.
 								$isChoose = $step['status'] === 'choose';
 								$nodeClass = $isFound ? 'bg-emerald-600 ring-emerald-100' : ($isChoose ? 'bg-amber-500 ring-amber-100' : 'bg-red-600 ring-red-100');
 								$roleClass = $isFound ? 'text-emerald-700' : ($isChoose ? 'text-amber-700' : 'text-red-600');
 								$nameClass = $isFound ? 'text-slate-800' : ($isChoose ? 'text-amber-700 italic' : 'text-red-700 italic');
 								$approverName = $isChoose
-									? 'Dipilih di tahap berikutnya (' . count($step['candidates'] ?? []) . ' kandidat)'
+									? 'Belum dipilih (' . count($step['candidates'] ?? []) . ' kandidat)'
 									: $step['approver_name'];
+								// Ikon edit: Kabid/Asisten dipilih ulang (chooseStep), role tunggal diganti pejabatnya.
+								$editAction = $isFound ? ($editActions[$step['role']] ?? null) : null;
 							@endphp
 
 							<div class="flow-node flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-white/70 px-2.5 py-2 ring-1 ring-slate-200/70 sm:bg-transparent sm:px-0 sm:py-0 sm:ring-0"
@@ -243,18 +245,34 @@
 								</span>
 								<span class="min-w-0 leading-tight">
 									{{-- Teks panjang turun ke baris kedua (maks. 2 baris), bukan terpotong. --}}
-									<span class="flex items-center gap-1.5">
+									{{-- Baris jabatan + ikon ganti rata bawah agar label tetap dekat ke nama; sedikit jarak supaya tombol tidak menempel. --}}
+									<span class="flex items-end gap-2 {{ $editAction ? 'mb-0.5' : '' }}">
 										<span class="line-clamp-2 text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
-										{{-- Pejabat terisi tapi keliru/berganti: ganti lewat wizard yang sama dengan Lengkapi. --}}
-										@if ($isFound && ($replaceable[$step['role']] ?? false))
-											<button type="button" wire:click="replaceOfficial('{{ $step['role'] }}')"
-												title="Ganti {{ $step['role_label'] }}" aria-label="Ganti pejabat {{ $step['role_label'] }}"
-												class="inline-flex size-4.5 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600">
-												<i class="fa-solid fa-pen-to-square text-[9px]"></i>
+										{{-- Pejabat terisi tapi keliru/berganti: pilih ulang atau ganti lewat wizard Lengkapi. --}}
+										@if ($editAction)
+											@php $editTitle = ($editAction === 'chooseStep' ? 'Pilih ' : 'Ganti ') . $step['role_label']; @endphp
+											<button type="button" wire:click="{{ $editAction }}('{{ $step['role'] }}')"
+												title="{{ $editTitle }}" aria-label="{{ $editTitle }}"
+												{{-- Gaya ikon edit yang sama dengan tabel Data Jabatan. --}}
+												class="inline-flex size-6 shrink-0 items-center justify-center rounded border border-amber-300 bg-amber-50 text-amber-700 shadow-xs transition-colors hover:border-amber-400 hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-amber-500">
+												<i class="fa-solid fa-pen-to-square text-[11px]"></i>
 											</button>
 										@endif
 									</span>
 									<span class="line-clamp-2 text-sm font-semibold {{ $nameClass }}" title="{{ $approverName }}">{{ $approverName }}</span>
+									{{-- Beberapa kandidat: dipilih per tahap, berurutan dari tahap pertama. --}}
+									@if ($isChoose)
+										@if ($canManagePelaksana && $step['subordinate_id'])
+											<x-ui.button variant="warning" size="xs" wire:click="chooseStep('{{ $step['role'] }}')" class="mt-1">
+												<x-slot:icon><i class="fa-solid fa-hand-pointer text-[9px]"></i></x-slot:icon>
+												Pilih
+											</x-ui.button>
+										@else
+											<span class="mt-1 block text-[11px] text-slate-500">
+												{{ $canManagePelaksana ? 'Pilih tahap sebelumnya dulu' : 'Diatur Admin instansi pelaksana / Super Admin' }}
+											</span>
+										@endif
+									@endif
 									{{-- Pejabat kosong dilengkapi per tahap; Sekda/Wali Kota hanya oleh Admin Setda / Super Admin. --}}
 									@if ($step['status'] === 'not_found')
 										@if ($completable[$step['role']] ?? false)
@@ -310,6 +328,7 @@
 							$alertTitle = match (true) {
 								$errorMessageName !== '' => 'Pegawai sedang bertugas',
 								collect($steps)->contains('status', 'not_found') => 'Pejabat alur belum lengkap',
+								collect($steps)->contains('status', 'choose') => 'Pejabat alur belum dipilih',
 								default => 'Data dokumen belum lengkap',
 							};
 						@endphp
@@ -538,6 +557,80 @@
 					{{ $outgoing ? 'Ganti Pejabat' : 'Tetapkan' }}
 				</x-ui.button>
 			@endif
+		</x-slot>
+	</x-ui.modal>
+
+	{{-- Modal Pilih Pejabat tahap — pilihan disimpan sebagai atasan langsung bawahan tahap itu
+	     (pelaksana, atau pejabat tahap sebelumnya), jadi pengajuan berikutnya tidak perlu memilih lagi. --}}
+	<x-ui.modal show="$wire.showSupervisorModal" :title="$supervisorModal['title'] ?? 'Pilih pejabat'"
+		icon="fa-solid fa-user-tie text-amber-600" maxWidth="max-w-2xl">
+		@if ($supervisorModal)
+			<div class="space-y-4">
+				<div class="space-y-1">
+					<p class="text-sm text-slate-600">{{ $supervisorModal['intro'] }}</p>
+					@if ($supervisorModal['hint'])
+						<p class="text-xs text-slate-500">{{ $supervisorModal['hint'] }}</p>
+					@endif
+				</div>
+
+				<x-form.input wire:model.live.debounce.300ms="supervisorSearch" icon="fa-solid fa-magnifying-glass"
+					loadingTarget="supervisorSearch" placeholder="Cari nama / NIP pejabat..." data-autofocus />
+
+				<ul class="max-h-[45vh] divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200">
+					@forelse ($supervisorModal['candidates'] as $row)
+						@php $selected = $row['id'] === $supervisorChoiceId; @endphp
+						{{-- Calon tahap atasan bisa berasal dari beberapa jabatan: dikelompokkan per jabatan. --}}
+						@if ($supervisorModal['hint'] && ($loop->first || $row['role_label'] !== $supervisorModal['candidates'][$loop->index - 1]['role_label']))
+							<li wire:key="supervisor-group-{{ $loop->index }}" class="sticky top-0 bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ $row['role_label'] }}</li>
+						@endif
+						<li wire:key="supervisor-candidate-{{ $row['id'] }}" class="flex items-center gap-3 px-3 py-2 {{ $selected ? 'bg-primary-50' : '' }}">
+							<div class="min-w-0 flex-1 leading-tight">
+								<p class="truncate text-sm font-semibold text-slate-800">
+									{{ $row['name'] }}
+									@if ($row['id'] === $supervisorModal['suggestedId'])
+										<x-ui.badge bg="bg-amber-50" text="text-amber-700" class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold">Dipakai rekan satu unit</x-ui.badge>
+									@endif
+								</p>
+								<p class="truncate text-[11px] text-slate-500">
+									{{-- Nama jabatan lebih jelas dari role (role sudah tampil di judul/kelompok); role bila jabatan kosong. --}}
+									{{ collect([($row['position'] ?? null) ?: ($row['role_label'] ?? null), $row['unit'] ?? null])->filter()->implode(' · ') }}
+								</p>
+							</div>
+							<x-ui.button :variant="$selected ? 'primary' : 'secondary'" class="shrink-0 px-2.5 py-1 text-xs"
+								wire:click="pickSupervisor({{ $row['id'] }})">
+								@if ($selected)<i class="fa-solid fa-check text-[10px]"></i> Dipilih @else Pilih @endif
+							</x-ui.button>
+						</li>
+					@empty
+						<li class="px-3 py-3 text-xs italic text-slate-500">
+							{{ trim($supervisorSearch) !== '' ? 'Pejabat tidak ditemukan. Coba kata kunci lain.' : 'Belum ada pejabat di atas pegawai ini di instansinya.' }}
+						</li>
+					@endforelse
+				</ul>
+
+				@if ($supervisorModal['colleagues'] > 0)
+					<x-form.checkbox wire:model="supervisorApplyColleagues"
+						:label="'Terapkan juga ke ' . $supervisorModal['colleagues'] . ' rekan di ' . $supervisorModal['unit'] . ' yang belum punya atasan langsung'"
+						wrapper-class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer" />
+				@endif
+
+				@if ($supervisorModal['replace'])
+					<p class="text-xs text-slate-500">
+						Pejabatnya sendiri berganti?
+						<button type="button" wire:click="replaceOfficial('{{ $supervisorModal['replace']['role'] }}')"
+							class="font-semibold text-primary-700 underline-offset-2 hover:underline">Ganti pejabat {{ $supervisorModal['replace']['name'] }}</button>
+					</p>
+				@endif
+			</div>
+		@endif
+
+		<x-slot name="footer" class="flex items-center justify-between gap-2">
+			<x-ui.button variant="secondary" wire:click="$set('showSupervisorModal', false)">Batal</x-ui.button>
+			<x-ui.button variant="primary" wire:click="saveSupervisor" :disabled="! $supervisorChoiceId"
+				wire:loading.attr="disabled" wire:target="saveSupervisor">
+				<x-slot:icon><i class="fa-solid fa-check text-xs"></i></x-slot:icon>
+				Simpan
+			</x-ui.button>
 		</x-slot>
 	</x-ui.modal>
 

@@ -3,7 +3,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Pengeluaran Riil - {{ config('app.name') }}</title>
+	<title>Pengeluaran Riil | {{ config('app.name') }}</title>
 	<style>
 		@page {
 			margin: 1.5cm 2.3cm;

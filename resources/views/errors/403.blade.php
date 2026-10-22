@@ -1,5 +1,5 @@
 @extends('errors.layout')
-@section('title', '403 - Akses Ditolak')
+@section('title', '403 | Akses Ditolak')
 
 @section('content')
     <div class="mb-6 text-rose-500">

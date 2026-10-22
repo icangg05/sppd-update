@@ -3,30 +3,53 @@
 namespace App\Livewire\Sppd;
 
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Livewire\Concerns\SearchesEmployees;
 use App\Models\SppdRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 /**
- * Pemilih PPTK pada halaman Laporan Pengeluaran Riil dengan pencarian
- * server-side. Kandidat dibatasi pada pegawai aktif di OPD induk pelaksana
- * (root department + seluruh sub-unitnya). Hanya admin OPD & super admin yang
- * boleh mengubah PPTK.
+ * PPTK SPPD di Portal Dokumen: ringkasan + modal pengaturan. Kandidat dibatasi
+ * pada pegawai aktif di OPD induk pelaksana (root department + seluruh sub-unitnya).
+ * Hanya admin OPD & super admin yang boleh mengubah PPTK.
  */
 class PptkSelector extends Component
 {
   use InteractsWithToast;
+  use SearchesEmployees;
 
   public SppdRequest $sppd;
   public ?int $pptk_id = null;
+  public bool $showModal = false;
+  /** Bertambah tiap modal dibuka: isi modal dibuat ulang (wire:key) agar pilihan yang batal disimpan tidak tersisa. */
+  #[Locked]
+  public int $opened = 0;
 
   public function mount(SppdRequest $sppd): void
   {
     $this->sppd = $sppd;
-    // Select sengaja dibiarkan kosong (placeholder) walau PPTK sudah diatur —
-    // nama PPTK aktif ditampilkan terpisah di kartu; field ini untuk mengganti.
-    $this->pptk_id = null;
+  }
+
+  /** Pencarian kandidat PPTK di server (lihat x-form.searchable-select searchMethod). */
+  #[Renderless]
+  public function searchPptk(string $term = ''): array
+  {
+    abort_unless($this->canManage(), 403, 'Aksi ini tidak diizinkan.');
+
+    return $this->employeeOptions($this->candidateQuery(), $term);
+  }
+
+  /** Buka modal dengan PPTK aktif terpilih. */
+  public function open(): void
+  {
+    abort_unless($this->canManage(), 403, 'Aksi ini tidak diizinkan.');
+
+    $this->pptk_id = $this->sppd->pptk_id;
+    $this->opened++;
+    $this->showModal = true;
   }
 
   /** Hanya admin OPD & super admin yang boleh mengubah PPTK. */
@@ -78,33 +101,17 @@ class PptkSelector extends Component
     $this->sppd->update(['pptk_id' => $this->pptk_id]);
     $this->sppd->refresh()->load('pptk');
 
-    // Kosongkan kembali select; nama PPTK aktif tampil di kartu.
-    $this->pptk_id = null;
-
-    // Beri tahu halaman induk agar tombol cetak per pegawai langsung aktif
-    // tanpa reload (dari kondisi PPTK kosong → terisi).
-    $this->dispatch('pptk-saved', hasPptk: true);
-
+    $this->showModal = false;
     $this->toastSuccess('PPTK berhasil diperbarui.');
   }
 
   public function render()
   {
-    // Opsi diserahkan ke komponen searchable-select (filter di sisi klien).
-    // Lingkup kandidat tetap dibatasi OPD induk pelaksana & difilter di server.
-    $options = [];
+    // Kandidat dicari di server lewat searchPptk; di sini cukup label PPTK terpilih.
+    $selected = $this->pptk_id ? User::find($this->pptk_id) : null;
 
-    if ($this->canManage()) {
-      $options = $this->candidateQuery()
-        ->orderBy('name')
-        ->get(['id', 'name', 'nip'])
-        ->map(fn ($u) => [
-          'value' => (string) $u->id,
-          'label' => $u->name . ($u->nip ? ' (NIP. ' . $u->nip . ')' : ''),
-        ])
-        ->all();
-    }
-
-    return view('livewire.sppd.pptk-selector', compact('options'));
+    return view('livewire.sppd.pptk-selector', [
+      'selectedLabel' => $selected ? static::employeeLabel($selected) : null,
+    ]);
   }
 }

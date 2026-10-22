@@ -165,7 +165,7 @@
                   @if (! $position->created_by)
                     <span class="text-slate-400">Bawaan sistem</span>
                   @elseif ($canManage)
-                    <x-ui.badge color="cyan">Input OPD Anda</x-ui.badge>
+                    <x-ui.badge color="cyan">Ditambahkan OPD Anda</x-ui.badge>
                   @else
                     <x-ui.badge color="amber">Tambahan OPD lain</x-ui.badge>
                   @endif

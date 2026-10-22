@@ -25,7 +25,8 @@ pakai komponen di bawah ini supaya gaya konsisten dan styling terpusat di satu t
 
 ### `<x-ui.button>` — `resources/views/components/ui/button.blade.php`
 Tombol / link. Render `<a wire:navigate>` jika ada `href`, selain itu `<button>`.
-- `variant`: `primary` (default), `secondary`, `success`, `warning`, `danger`, `ghost`, `dark`, `violet`
+- `variant`: `primary` (default), `secondary`, `success`, `warning`, `danger`, `ghost`, `danger-ghost`, `dark`, `violet`
+  - `danger-ghost` = teks merah tanpa latar, untuk aksi hapus/reset sekunder (mis. "Hapus pengaturan" di footer modal).
   - `dark` = tombol slate-800 (dipakai untuk tombol Filter/Cari di filter bar).
   - `secondary` = tombol netral berbingkai (border slate + bg putih) — **ini untuk tombol
     Reset, Batal, Kembali, dan aksi sekunder lain**. Kalau menemukan `<button>` mentah

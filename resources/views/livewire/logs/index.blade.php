@@ -88,7 +88,7 @@
               'is_active' => 'Aktif',
               // Pegawai (User)
               'nip' => 'NIP', 'nik' => 'NIK', 'phone' => 'Telepon', 'rank_id' => 'Pangkat',
-              'position_id' => 'Jabatan', 'dprd_jabatan' => 'Jabatan DPRD', 'partai' => 'Partai',
+              'position_id' => 'Jabatan', 'atasan_id' => 'Atasan Langsung', 'dprd_jabatan' => 'Jabatan DPRD', 'partai' => 'Partai',
               // Unit Kerja (Department)
               'code' => 'Kode', 'parent_id' => 'Induk', 'head_id' => 'Kepala',
               'type' => 'Jenis', 'level' => 'Tingkat',

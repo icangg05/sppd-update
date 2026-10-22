@@ -39,21 +39,14 @@
         </div>
     </header>
 
-    {{-- Alert status: mengikuti hasPptk (terkunci → siap cetak). --}}
-    @if ($hasPptk)
-        <div class="flex items-start gap-3 rounded border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 shadow-2xs">
-            <i class="fa-solid fa-circle-check mt-0.5 text-emerald-600"></i>
-            <p>PPTK sudah diatur. Tombol cetak per pegawai sekarang aktif.</p>
-        </div>
-    @else
+    {{-- Alert hanya selama PPTK belum diatur (tombol cetak masih terkunci). PPTK diatur di Portal Dokumen. --}}
+    @unless ($hasPptk)
         <div class="flex items-start gap-3 rounded border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 shadow-2xs">
             <i class="fa-solid fa-lock mt-0.5 text-amber-600"></i>
-            <p><strong>PPTK</strong> wajib dipilih dan disimpan sebelum tombol cetak Laporan Pengeluaran Riil dapat digunakan.</p>
+            <p><strong>PPTK</strong> wajib diatur sebelum tombol cetak Laporan Pengeluaran Riil dapat digunakan.
+                <a href="{{ route('sppd.next', $sppd) }}" wire:navigate class="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">Atur di Portal Dokumen</a></p>
         </div>
-    @endif
-
-    {{-- Pemilih PPTK (komponen Livewire tersendiri). --}}
-    <livewire:sppd.pptk-selector :sppd="$sppd" :key="'pptk-' . $sppd->id" />
+    @endunless
 
     {{-- Toolbar: ringkasan, tanggal cetak & input massal --}}
     <div class="dash-enter flex flex-col gap-4 rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">

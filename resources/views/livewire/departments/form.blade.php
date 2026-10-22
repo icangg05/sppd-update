@@ -1,7 +1,8 @@
 <div class="mx-auto max-w-4xl space-y-4 p-1">
 
   @php
-    $backUrl = route('master.departments.index');
+    // Admin OPD tidak membuka daftar struktur: kembali ke profil unit yang diedit.
+    $backUrl = $isSuperAdmin ? route('master.departments.index') : route('master.departments.show', $department->id);
   @endphp
 
   {{-- Header Halaman (title card) --}}
@@ -29,7 +30,7 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        @if ($isEdit)
+        @if ($isEdit && $isSuperAdmin)
           <x-ui.button href="{{ route('master.departments.show', $department->id) }}" variant="primary" class="shrink-0">
             <x-slot name="icon"><i class="fa-solid fa-eye text-xs"></i></x-slot>
             Lihat Detail
@@ -43,7 +44,8 @@
     </div>
   </div>
 
-  {{-- Panduan Menyusun Struktur --}}
+  {{-- Panduan Menyusun Struktur — susunan unit hanya diatur Super Admin. --}}
+  @if ($isSuperAdmin)
   <div class="dash-enter flex items-start gap-3 rounded border border-primary-200 bg-primary-100/50 p-4 text-xs leading-relaxed text-slate-600">
     <div class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 ring-1 ring-primary-200">
       <i class="fa-solid fa-sitemap text-xs"></i>
@@ -51,16 +53,13 @@
     <div>
       <p class="mb-1 font-bold text-primary-700">Panduan menyusun struktur</p>
       <ul class="list-disc space-y-0.5 pl-4">
-        <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat hanya diatur di tingkat ini.</li>
-        <li><strong>Sub-unit</strong> (Sekretariat/Bidang/Seksi/Subbagian): pilih induk yang langsung membawahi. Tipe, kode, & kop surat otomatis mengikuti induk.</li>
-        <li>Contoh jenjang: <span class="font-mono">Dinas → Sekretariat/Bidang → Subbagian/Seksi</span>.</li>
-        <li>Tetapkan Kepala/Pimpinan penanggung jawab tiap unit.</li>
-        @if ($parentLocked)
-          <li class="text-amber-600">Instansi induk & tipe hanya dapat diubah oleh Super Admin.</li>
-        @endif
+        <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat diatur di tingkat ini.</li>
+        <li><strong>Sub-unit</strong> hanya untuk unit yang punya pejabat, kop surat, anggaran, atau admin sendiri: Kelurahan di bawah Kecamatan, Puskesmas di bawah Dinas Kesehatan, serta Asisten → Bagian → Subbagian di Sekretariat Daerah.</li>
+        <li>Bidang/Seksi di Dinas tidak perlu dibuat: pegawainya cukup di instansi induk, dan Kabid sebagai penyetuju dipilih lewat atasan langsung.</li>
       </ul>
     </div>
   </div>
+  @endif
 
   <form wire:submit="save" class="space-y-4">
 
@@ -85,7 +84,7 @@
             placeholder="Misal: Bidang Tata Usaha" required :disabled="$parentLocked" />
           @if ($parentLocked)
             <p class="text-[10px] text-slate-500 font-medium mt-0.5">
-              <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Nama instansi Anda hanya dapat diubah oleh Super Admin.
+              <i class="fa-solid fa-lock text-slate-500 mr-1"></i>Nama unit kerja hanya dapat diubah oleh Super Admin.
             </p>
           @endif
         </div>
@@ -179,181 +178,7 @@
       </div>{{-- /grid Identitas & Struktur --}}
     </section>
 
-    {{-- ── Kelompok 2: Penandatangan "Setuju Bayar" (dokumen cetak) — hanya di root zona data ── --}}
-    @if ($isScopeRoot)
-      <section class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
-        <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
-          <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
-            <i class="fa-solid fa-signature"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-slate-800">Penandatangan "Setuju Bayar"</h3>
-            <p class="text-xs text-slate-500">Dipakai pada kuitansi, pengeluaran riil, dan rincian biaya perjalanan dinas.</p>
-          </div>
-        </header>
-        <div class="space-y-3 p-5 sm:p-6">
-            <p class="text-[11px] leading-relaxed text-slate-500">
-              Nama dan label di bawah dipakai pada kolom tanda tangan Setuju Bayar di
-              <strong>kuitansi, pengeluaran riil, dan rincian biaya perjalanan dinas</strong>.
-              Kosongkan keduanya untuk memakai Kepala OPD dengan label bawaan (Pengguna Anggaran / nama jabatan).
-            </p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-              {{-- Pegawai penandatangan: dropdown pencarian server-side (pola sama dgn Pimpinan) --}}
-              <div class="space-y-0.5">
-                <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
-                  Pegawai Penandatangan
-                </label>
-                <div x-data="{
-                    open: false,
-                    dropUp: false,
-                    highlighted: 0,
-                    coords: { top: 0, left: 0, width: 0 },
-                    position() {
-                      const r = this.$refs.trigger.getBoundingClientRect();
-                      const margin = 4;
-                      const panelH = this.$refs.panel?.offsetHeight || 320;
-                      const spaceBelow = window.innerHeight - r.bottom;
-                      const spaceAbove = r.top;
-                      this.dropUp = spaceBelow < panelH + margin && spaceAbove > spaceBelow;
-                      this.coords = {
-                        top: this.dropUp ? Math.max(margin, r.top - panelH - margin) : r.bottom + margin,
-                        left: r.left,
-                        width: r.width,
-                      };
-                    },
-                    items() {
-                      return this.$refs.list ? Array.from(this.$refs.list.querySelectorAll('[data-opt]')) : [];
-                    },
-                    move(dir) {
-                      const len = this.items().length;
-                      if (!len) return;
-                      let n = this.highlighted + dir;
-                      if (n < 0) n = len - 1;
-                      if (n >= len) n = 0;
-                      this.highlighted = n;
-                      this.$nextTick(() => this.items()[this.highlighted]?.scrollIntoView({ block: 'nearest' }));
-                    },
-                    pick() {
-                      (this.items()[this.highlighted] || this.items()[0])?.click();
-                    },
-                    canAutoFocus() {
-                      return window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-                    },
-                    toggle() {
-                      this.open = !this.open;
-                      if (this.open) {
-                        this.highlighted = 0;
-                        this.$nextTick(() => { this.position(); if (this.canAutoFocus()) this.$refs.searchSb?.focus(); });
-                      }
-                    },
-                    onOutside(e) {
-                      if (!this.open) return;
-                      if (this.$refs.trigger.contains(e.target)) return;
-                      if (this.$refs.panel?.contains(e.target)) return;
-                      this.open = false;
-                    },
-                  }"
-                  @keydown.escape.window="open = false"
-                  @click.window="onOutside($event)"
-                  @scroll.window.capture="if (open) position()"
-                  @resize.window="if (open) position()"
-                  class="relative">
-                  @php
-                    $selectedSbLabel = $selectedSetujuBayar
-                      ? trim(($selectedSetujuBayar->nip ? $selectedSetujuBayar->nip . ' - ' : '') . $selectedSetujuBayar->name)
-                      : null;
-                  @endphp
-                  <button type="button" x-ref="trigger" @click="toggle()" :aria-expanded="open"
-                    class="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm shadow-2xs transition focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500">
-                    <span class="truncate text-left {{ $selectedSbLabel ? 'text-slate-800' : 'text-slate-500' }}">
-                      {{ $selectedSbLabel ?? '— Bawaan: Kepala OPD —' }}
-                    </span>
-                    <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
-                      :class="open && 'rotate-180'"></i>
-                  </button>
-
-                  <div x-ref="panel" x-show="open" x-cloak
-                    x-transition:enter="transition ease-out duration-100"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-75"
-                    x-transition:leave-start="opacity-100 scale-100"
-                    x-transition:leave-end="opacity-0 scale-95"
-                    :style="`position: fixed; top: ${coords.top}px; left: ${coords.left}px; width: ${coords.width}px; z-index: 9999; transform-origin: ${dropUp ? 'bottom' : 'top'};`"
-                    class="overflow-hidden rounded border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5">
-                    <div class="border-b border-slate-100 p-2">
-                      <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[11px] text-slate-500" style="display:flex;"></i>
-                        <input x-ref="searchSb" type="text" wire:model.live.debounce.300ms="searchSetujuBayar"
-                          @input="highlighted = 0"
-                          @keydown.arrow-down.prevent="move(1)"
-                          @keydown.arrow-up.prevent="move(-1)"
-                          @keydown.enter.prevent="pick()"
-                          @keydown.tab.prevent="move($event.shiftKey ? -1 : 1)"
-                          placeholder="Cari nama / NIP pegawai..."
-                          class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500">
-                      </div>
-                    </div>
-                    <ul x-ref="list" class="max-h-56 overflow-auto py-1">
-                      <li wire:key="sb-opt-none">
-                        <button type="button" data-opt wire:click="clearSetujuBayar"
-                          @click="open = false" @mouseenter="highlighted = 0"
-                          class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
-                          :class="highlighted === 0
-                            ? 'bg-primary-100 text-primary-800'
-                            : ({{ empty($setuju_bayar_user_id) ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-500 italic hover:bg-primary-50')">
-                          — Bawaan: Kepala OPD —
-                        </button>
-                      </li>
-                      @foreach ($sbCandidates as $c)
-                        <li wire:key="sb-opt-{{ $c->id }}">
-                          <button type="button" data-opt wire:click="selectSetujuBayar({{ $c->id }})"
-                            @click="open = false" @mouseenter="highlighted = {{ $loop->index + 1 }}"
-                            class="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors"
-                            :class="highlighted === {{ $loop->index + 1 }}
-                              ? 'bg-primary-100 text-primary-800'
-                              : ({{ $setuju_bayar_user_id == $c->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
-                            {{ trim(($c->nip ? $c->nip . ' - ' : '') . $c->name) }}
-                          </button>
-                        </li>
-                      @endforeach
-                      @if ($sbCandidates->isEmpty())
-                        <li class="px-3 py-2 text-xs text-slate-500">
-                          {{ trim($searchSetujuBayar) !== '' ? 'Pegawai tidak ditemukan.' : 'Belum ada pegawai pada lingkup instansi ini.' }}
-                        </li>
-                      @endif
-                      @if ($sbHasMore)
-                        <li class="border-t border-slate-100 px-3 py-2 text-[11px] italic text-slate-500">
-                          Menampilkan 25 hasil teratas. Persempit pencarian untuk melihat yang lain.
-                        </li>
-                      @endif
-                    </ul>
-                  </div>
-                </div>
-                <p class="text-[10px] text-slate-500 font-medium mt-0.5">
-                  <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Memuat pegawai aktif di instansi ini beserta unit di bawahnya.
-                </p>
-                @error('setuju_bayar_user_id')
-                  <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-                @enderror
-              </div>
-
-              {{-- Label jabatan yang tercetak di bawah tulisan "Setuju Bayar" --}}
-              <div class="space-y-0.5">
-                <x-form.input wire:model="setuju_bayar_label" name="setuju_bayar_label"
-                  label="Label Jabatan Penandatangan" maxlength="150"
-                  placeholder="Bawaan: Pengguna Anggaran" />
-                <p class="text-[10px] text-slate-500 font-medium mt-0.5">
-                  <i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Misal: Kuasa Pengguna Anggaran. Kosongkan untuk memakai label bawaan dokumen.
-                </p>
-              </div>
-            </div>{{-- /grid setuju bayar --}}
-        </div>{{-- /body setuju bayar --}}
-      </section>
-    @endif
-
-    {{-- ── Kelompok 3: Kop Surat ── --}}
+    {{-- ── Kelompok 2: Kop Surat ── --}}
     <section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
       <header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
         <div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">

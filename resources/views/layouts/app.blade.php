@@ -7,7 +7,7 @@
 	<meta name="robots" content="noindex, nofollow">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
 
-	<title>@yield('title', 'Dashboard') - {{ config('app.name', 'SPPD') }}</title>
+	<title>@yield('title', 'Dashboard') | {{ config('app.name', 'SPPD') }}</title>
 
 	<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 	<link rel="apple-touch-icon" href="{{ asset('img/logo-sppd.png') }}">

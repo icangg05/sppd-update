@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Selanjutnya - Portal Dokumen')
+@section('title', 'Selanjutnya | Portal Dokumen')
 
 @section('content')
 <div class="p-1 space-y-6">
@@ -30,6 +30,13 @@
   </div>
 
   <div class="max-w-6xl space-y-8">
+
+    {{-- Penandatangan dokumen keuangan, masing-masing diatur lewat modal: PPTK (per SPPD)
+         dan Setuju Bayar (per instansi: kuitansi, pengeluaran riil, rincian biaya). --}}
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <livewire:sppd.pptk-selector :sppd="$sppd" :key="'pptk-' . $sppd->id" />
+      <livewire:sppd.setuju-bayar-settings :sppd="$sppd" />
+    </div>
 
     {{-- Bagian Dokumen Sebelum --}}
     <section class="dash-enter">

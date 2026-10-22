@@ -66,7 +66,7 @@
 												@elseif ($step['status'] === 'choose')
 													<span
 														class="inline-flex items-center rounded bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-														Dipilih saat pengajuan
+														Belum dipilih
 													</span>
 												@else
 													<span
@@ -93,33 +93,63 @@
 		</x-slot>
 	</x-ui.modal>
 
-	{{-- Modal Konfirmasi Hapus SPPD --}}
-	<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus SPPD?"
-		description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-rose-600">
-		<p class="text-sm text-slate-600">
-			@if (auth()->user()->hasRole('super_admin'))
-				Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dihapus secara permanen</strong> beserta seluruh datanya. Lanjutkan?
-			@else
-				Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dibatalkan dan dihapus permanen</strong>. Lanjutkan?
-			@endif
-		</p>
+	{{-- Modal Konfirmasi Hapus SPPD: tombol Hapus baru aktif setelah hitung mundur
+	     (juga dijaga di server). Hanya bisa ditutup lewat tombol. --}}
+	<div class="contents" x-data="{
+			wait: {{ $this::DELETE_WAIT }},
+			left: {{ $this::DELETE_WAIT }},
+			timer: null,
+			start() {
+				clearInterval(this.timer);
+				this.left = this.wait;
+				this.timer = setInterval(() => { if (--this.left <= 0) clearInterval(this.timer); }, 1000);
+			},
+		}" x-init="$watch('$wire.showDeleteModal', (open) => open ? start() : clearInterval(timer))">
+		<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus SPPD?"
+			description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-rose-600">
+			<div class="space-y-3 text-sm text-slate-600">
+				@if ($deleteStatus === 'in_progress')
+					<p>Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> masih dalam proses persetujuan dan akan <strong>dibatalkan serta dihapus permanen</strong>.</p>
+				@else
+					<p>SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dihapus permanen</strong> beserta seluruh datanya.</p>
+				@endif
 
-		<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
-			<button type="button" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
-				class="flex-1 rounded border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
-				Batal
-			</button>
-			<button type="button" wire:click="deleteSppd" wire:loading.attr="disabled" wire:target="deleteSppd"
-				class="flex-1 inline-flex items-center justify-center gap-2 rounded bg-rose-600 py-2.5 text-xs font-bold text-white shadow transition hover:bg-rose-700 disabled:opacity-50">
-				<span wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
-					<i class="fa-solid fa-trash"></i> Ya, Hapus
-				</span>
-				<span wire:loading wire:target="deleteSppd" class="inline-flex items-center gap-2">
-					<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...
-				</span>
-			</button>
-		</x-slot>
-	</x-ui.modal>
+				@if (in_array($deleteStatus, ['approved', 'completed'], true))
+					<div class="flex gap-2.5 rounded border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-800">
+						<i class="fa-solid fa-file-circle-xmark mt-0.5 text-rose-500"></i>
+						<p>SPPD ini sudah disetujui. Dokumen SPT/SPPD bertanda tangan elektronik, laporan, dan rincian biayanya ikut terhapus. Dokumen yang sudah dicetak tidak bisa diverifikasi lagi lewat QR, dan anggaran yang terpakai kembali tersedia.</p>
+					</div>
+				@endif
+			</div>
+
+			<x-slot name="footer" class="space-y-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+				{{-- Sisa waktu tunggu sebelum tombol Hapus aktif. --}}
+				<div class="h-1 overflow-hidden rounded-full bg-rose-100" aria-hidden="true">
+					<div class="h-full rounded-full bg-rose-500 transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
+						:style="`width: ${(left / wait) * 100}%`"></div>
+				</div>
+				<div class="flex items-center gap-3">
+					<x-ui.button variant="secondary" @click="$wire.showDeleteModal = false" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
+						class="flex-1 justify-center">
+						Batal
+					</x-ui.button>
+					<x-ui.button variant="danger" wire:click="deleteSppd" ::disabled="left > 0" wire:loading.attr="disabled" wire:target="deleteSppd"
+						class="flex-1 justify-center">
+						<span x-show="left > 0" class="inline-flex items-center gap-2" aria-live="polite">
+							<i class="fa-solid fa-hourglass-half"></i>
+							<span>Hapus dalam <span class="font-mono" x-text="left"></span> detik</span>
+						</span>
+						<span x-show="left <= 0" wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
+							<i class="fa-solid fa-trash"></i> Ya, Hapus
+						</span>
+						<span wire:loading wire:target="deleteSppd" class="inline-flex items-center gap-2">
+							<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...
+						</span>
+					</x-ui.button>
+				</div>
+			</x-slot>
+		</x-ui.modal>
+	</div>
 
 	{{-- Header Halaman --}}
 	<div
@@ -243,7 +273,7 @@
 					<th>Tanggal</th>
 					<th class="w-28">Domain</th>
 					<th class="w-28">Status</th>
-					<th class="w-40 text-right">Aksi</th>
+					<th class="w-44 text-right">Aksi</th>
 				</tr>
 			</thead>
 
@@ -277,10 +307,13 @@
 
 							<p class="mt-0.5 truncate text-xs text-slate-500">
 								{{ $sppd->category?->name }}
-								·
-								<span class="font-mono text-slate-500">
-									{{ $sppd->document_number ?? 'Belum bernomor' }}
-								</span>
+								{{-- Nomor dokumen hanya dipakai Inspektorat. --}}
+								@if ($sppd->showsDocumentNumber())
+									·
+									<span class="font-mono text-slate-500">
+										{{ $sppd->document_number ?: 'Belum bernomor' }}
+									</span>
+								@endif
 							</p>
 						</td>
 
@@ -357,7 +390,7 @@
 					<div>
 						<p class="line-clamp-2 text-sm font-medium leading-snug text-slate-700" title="{{ $sppd->purpose }}">{{ $sppd->purpose }}</p>
 						<p class="mt-1 truncate text-xs text-slate-500">
-							{{ $sppd->category?->name }} · <span class="font-mono">{{ $sppd->document_number ?? 'Belum bernomor' }}</span>
+							{{ $sppd->category?->name }}@if ($sppd->showsDocumentNumber()) · <span class="font-mono">{{ $sppd->document_number ?: 'Belum bernomor' }}</span>@endif
 						</p>
 					</div>
 
@@ -379,7 +412,7 @@
 
 					{{-- Aksi --}}
 					<div class="border-t border-slate-100 pt-2.5">
-						@include('livewire.sppd.partials.row-actions', ['sppd' => $sppd, 'isApprovalMode' => $isApprovalMode, 'wrapperClass' => 'grid grid-cols-2 gap-2'])
+						@include('livewire.sppd.partials.row-actions', ['sppd' => $sppd, 'isApprovalMode' => $isApprovalMode, 'wrapperClass' => 'flex flex-col gap-2'])
 					</div>
 				</div>
 			</div>

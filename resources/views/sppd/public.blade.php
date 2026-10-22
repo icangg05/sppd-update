@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta content="width=device-width, initial-scale=1" name="viewport">
 	<meta name="robots" content="noindex, nofollow">
-	<title>Detail SPPD {{ $sppd->document_number ? '- ' . $sppd->document_number : '' }} | {{ config('app.name') }}</title>
+	<title>Detail SPPD {{ $sppd->document_number ? '| ' . $sppd->document_number : '' }} | {{ config('app.name') }}</title>
 	<link rel="preconnect" href="https://fonts.bunny.net">
 	<link href="https://fonts.bunny.net/css?family=ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500,600,700" rel="stylesheet" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -41,10 +41,13 @@
 						<i class="fa-solid fa-file-lines text-[10px]"></i> {{ $sppd->category?->name ?? 'Perjalanan Dinas' }}
 					</span>
 					<h1 class="text-2xl font-bold tracking-tight text-slate-800">Detail Surat Perjalanan Dinas</h1>
-					<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
-						<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
-						{{ $sppd->document_number ?? 'Belum memiliki nomor dokumen' }}
-					</p>
+					{{-- Nomor dokumen hanya dipakai Inspektorat (diinput di form SPPD). --}}
+					@if ($sppd->showsDocumentNumber())
+						<p class="mt-1 flex items-center gap-1.5 font-mono text-sm text-slate-500">
+							<i class="fa-solid fa-hashtag text-xs text-primary-500"></i>
+							{{ $sppd->document_number ?: 'Belum memiliki nomor dokumen' }}
+						</p>
+					@endif
 					<p class="mt-1 text-sm text-slate-500">Informasi resmi perjalanan dinas yang dapat dilihat oleh publik (read-only).</p>
 				</div>
 				<x-ui.badge :status="$sppd->status->value" class="inline-block w-fit shrink-0 rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide">

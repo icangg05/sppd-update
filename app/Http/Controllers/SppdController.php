@@ -588,7 +588,6 @@ class SppdController extends Controller
   {
     $this->authorizeSppdAccess($sppd);
     $sppd->load([
-      'user.department.head',
       'user.department.parent',
       'user.rank',
       'user.position',
@@ -689,7 +688,6 @@ class SppdController extends Controller
   {
     $this->authorizeSppdAccess($sppd);
     $sppd->load([
-      'user.department.head',
       'user.department.parent',
       'user.rank',
       'user.position',
@@ -784,7 +782,6 @@ class SppdController extends Controller
     $this->authorizeSppdAccess($sppd);
     $sppd->load([
       'user.department.parent',
-      'user.department.head',
       'user.rank',
       'user.position',
       'pptk.rank',

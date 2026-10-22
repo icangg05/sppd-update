@@ -1,6 +1,7 @@
 <div class="contents">
 	@if ($count > 0)
-		<span class="inline-flex items-center justify-center rounded bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white min-w-[18px]">
+		{{-- Bulat penuh untuk satu digit; melebar jadi kapsul untuk 10+ / 99+. --}}
+		<span class="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
 			{{ $count > 99 ? '99+' : $count }}
 		</span>
 	@endif

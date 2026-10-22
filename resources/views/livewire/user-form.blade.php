@@ -204,20 +204,16 @@
 							label="Instansi / Unit Kerja (OPD)" required :nodes="$departmentTree"
 							searchPlaceholder="Cari instansi / unit kerja ..." emptyText="Belum ada unit kerja dipilih."
 							hint="Klik unit kerja tempat pegawai benar-benar ditempatkan. Tekan ▸ untuk membuka sub-unit di bawahnya; pilih unit yang paling spesifik." />
-						@if ($headOfUnits->isNotEmpty())
+						{{-- Unit kerja baru hanya ditambahkan Super Admin. --}}
+						@if (auth()->user()->hasRole('super_admin'))
 							<p class="text-xs text-slate-500 mt-1">
-								<i class="fa-solid fa-user-tie text-primary-500 mr-1"></i>Tercatat sebagai pimpinan
-								<span class="font-semibold text-slate-700">{{ $headOfUnits->join(', ') }}</span>.
-								Memindahkan pegawai ke unit lain akan mengosongkan posisi pimpinan tersebut.
+								<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
+								<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
+									class="font-semibold text-primary-600 underline-offset-2 hover:underline">
+									Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+								</a>
 							</p>
 						@endif
-						<p class="text-xs text-slate-500 mt-1">
-							<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
-							<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
-								class="font-semibold text-primary-600 underline-offset-2 hover:underline">
-								Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-							</a>
-						</p>
 					</div>
 
 					@unless ($this->isDprdContext())
@@ -438,6 +434,18 @@
 							satu pegawai aktif sesuai lingkupnya.
 						</p>
 					</div>
+
+					{{-- Atasan langsung: menentukan alur persetujuan & pejabat tahap Kabid/Asisten. --}}
+					@unless ($this->isDprdContext())
+						<div class="space-y-1 sm:col-span-2">
+							<x-form.searchable-select wire:model="atasan_id" name="atasan_id" label="Atasan Langsung"
+								:options="$supervisorOptions" placeholder="Belum diatur (ikut struktur unit kerja)" searchPlaceholder="Cari nama pejabat..." />
+							<p class="text-xs text-slate-500">
+								Pejabat yang langsung membawahi pegawai ini, misalnya Kabid atau Kabag. Alur persetujuan SPPD dan pejabat tiap tahapnya
+								mengikuti rantai atasan ini. Bila kosong, atasan ditentukan dari struktur unit kerja.
+							</p>
+						</div>
+					@endunless
 				</div>
 			</section>
 

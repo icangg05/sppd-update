@@ -1,5 +1,5 @@
 @extends('errors.layout')
-@section('title', '503 - Sedang Pemeliharaan')
+@section('title', '503 | Sedang Pemeliharaan')
 
 @section('content')
     <div class="mb-6 text-cyan-500">

@@ -32,14 +32,6 @@ class DepartmentForm extends Component
   public $letterhead_second = null;
   public bool $can_view_children_data = true;
 
-  // Penandatangan "Setuju Bayar" pada dokumen cetak (kuitansi, pengeluaran
-  // riil, rincian biaya). Kosong = fallback ke kepala_opd + label bawaan.
-  public $setuju_bayar_user_id = '';
-  public string $setuju_bayar_label = '';
-
-  // Pencarian penandatangan Setuju Bayar (server-side).
-  public string $searchSetujuBayar = '';
-
   public bool $isSuperAdmin = false;
 
   // Konfirmasi hapus kop surat (modal). Target: 'primary' | 'secondary'.
@@ -58,8 +50,6 @@ class DepartmentForm extends Component
       $this->code      = $department->code ?? '';
       $this->type      = $department->type->value;
       $this->parent_id = $department->parent_id ?? '';
-      $this->setuju_bayar_user_id = $department->setuju_bayar_user_id ?? '';
-      $this->setuju_bayar_label   = $department->setuju_bayar_label ?? '';
       $this->can_view_children_data = (bool) $department->can_view_children_data;
 
       $this->authorizeEdit();
@@ -67,14 +57,11 @@ class DepartmentForm extends Component
       return;
     }
 
-    if ($this->isSuperAdmin) {
-      // Default: buat OPD induk baru (tanpa induk). Tipe default OPD.
-      $this->type = DepartmentType::OPD->value;
-    } else {
-      // Admin OPD hanya boleh membuat sub-unit di bawah instansinya sendiri.
-      $this->parent_id = $this->currentUser()->department_id;
-      $this->syncTypeFromParent();
-    }
+    // Menambah instansi/sub-unit hanya oleh Super Admin; Admin OPD cukup mengedit profilnya.
+    abort_unless($this->isSuperAdmin, 403, 'Unit kerja baru hanya dapat ditambahkan oleh Super Admin.');
+
+    // Default: buat OPD induk baru (tanpa induk). Tipe default OPD.
+    $this->type = DepartmentType::OPD->value;
   }
 
   /**
@@ -93,15 +80,12 @@ class DepartmentForm extends Component
   }
 
   /**
-   * Instansi milik admin sendiri (puncak lingkupnya) tidak boleh dipindah/di-rename
-   * oleh admin OPD — induknya berada di luar kewenangannya. Sub-unit di bawah instansi
-   * itu (yang ia buat) tetap boleh dipindah di dalam lingkupnya. Super admin bebas.
+   * Susunan unit kerja (nama & induk) hanya diatur Super Admin. Admin OPD mengedit
+   * profil unit dalam lingkupnya (kode & kop surat) tanpa memindah/me-rename.
    */
   public function isParentLocked(): bool
   {
-    return $this->isEdit
-      && ! $this->isSuperAdmin
-      && (int) $this->department->id === (int) $this->currentUser()->department_id;
+    return $this->isEdit && ! $this->isSuperAdmin;
   }
 
   public function updatedParentId(): void
@@ -136,16 +120,6 @@ class DepartmentForm extends Component
     return empty($this->parent_id);
   }
 
-  public function selectSetujuBayar($id): void
-  {
-    $this->setuju_bayar_user_id = (int) $id;
-  }
-
-  public function clearSetujuBayar(): void
-  {
-    $this->setuju_bayar_user_id = '';
-  }
-
   /**
    * Pengguna login sebagai App\Models\User konkret — agar method domain
    * (hasRole, department, dll.) dikenali analisis statis & autocomplete.
@@ -165,8 +139,6 @@ class DepartmentForm extends Component
     $rules = [
       'name'      => ['required', 'string', 'max:255', $this->uniqueNameAtSameLevelRule()],
       'type'      => ['required', 'in:' . implode(',', array_column(DepartmentType::cases(), 'value'))],
-      'setuju_bayar_user_id' => ['nullable', 'exists:users,id', $this->setujuBayarInScopeRule()],
-      'setuju_bayar_label'   => ['nullable', 'string', 'max:150'],
       // OPD induk (root) tidak punya parent_id — jangan wajibkan, termasuk untuk admin OPD
       // yang mengedit instansinya sendiri. Sub-unit tetap wajib memilih induk.
       'parent_id' => [$this->isSuperAdmin || $this->isRoot() ? 'nullable' : 'required', 'exists:departments,id'],
@@ -193,30 +165,8 @@ class DepartmentForm extends Component
     return [
       'name'      => 'nama unit kerja',
       'parent_id' => 'instansi induk',
-      'setuju_bayar_user_id' => 'penandatangan setuju bayar',
-      'setuju_bayar_label'   => 'label penandatangan setuju bayar',
       'type'      => 'tipe entitas',
     ];
-  }
-
-  /**
-   * Penandatangan Setuju Bayar harus pegawai dalam zona data unit ini
-   * (sesuai daftar kandidat yang ditampilkan pada dropdown).
-   */
-  protected function setujuBayarInScopeRule(): \Closure
-  {
-    return function (string $attribute, $value, \Closure $fail) {
-      if (! $value || ! $this->isEdit) {
-        return;
-      }
-
-      $allowedDeptIds = $this->department->getScopeRootDepartment()->getScopedRelatedIds();
-      $signer = User::find($value);
-
-      if (! $signer || ! $allowedDeptIds->contains($signer->department_id)) {
-        $fail('Penandatangan Setuju Bayar harus pegawai di lingkup instansi ini.');
-      }
-    };
   }
 
   /**
@@ -251,19 +201,10 @@ class DepartmentForm extends Component
       throw $e;
     }
 
-    // Nama OPD induk terkunci untuk admin OPD — jaga agar tidak berubah walau field di-bypass.
+    // Nama & induk terkunci untuk admin OPD — jaga agar tidak berubah walau field di-bypass.
     if ($this->isParentLocked()) {
       $this->name = $this->department->name;
-    }
-
-    // Batasi induk pada lingkup instansi sendiri untuk admin OPD (saat create).
-    if (! $this->isSuperAdmin && ! $this->isParentLocked()) {
-      $dept = $this->currentUser()->department;
-      $allowedIds = $dept ? $dept->getScopedRelatedIds() : collect([$this->currentUser()->department_id]);
-      if (! $allowedIds->contains((int) $this->parent_id)) {
-        $this->addError('parent_id', 'Anda hanya dapat menempatkan unit di bawah instansi Anda sendiri.');
-        return;
-      }
+      $this->parent_id = $this->department->parent_id ?? '';
     }
 
     // Hanya super admin yang boleh mengubah kebijakan zona data —
@@ -278,8 +219,6 @@ class DepartmentForm extends Component
       'name'      => trim($this->name),
       'type'      => $this->type,
       'parent_id' => $this->parent_id ?: null,
-      'setuju_bayar_user_id' => $this->setuju_bayar_user_id ?: null,
-      'setuju_bayar_label'   => trim($this->setuju_bayar_label) ?: null,
       'can_view_children_data' => $this->can_view_children_data,
     ];
 
@@ -450,41 +389,6 @@ class DepartmentForm extends Component
     // Pilihan induk (hierarkis) — jumlah departemen terbatas, aman dimuat penuh.
     $parents = $this->getHierarchicalDepartments();
 
-    $limit = 25;
-
-    // Setuju Bayar hanya diatur di root zona data (mis. Dinas, atau kelurahan/
-    // puskesmas yang mandiri) — sub-unit di bawahnya otomatis mewarisi, jadi
-    // form-nya tidak ditampilkan di sana (lihat Department::resolveSetujuBayar).
-    $isScopeRoot = $this->isEdit
-      && $this->department->getScopeRootDepartment()->id === $this->department->id;
-
-    // Kandidat penandatangan Setuju Bayar: pegawai aktif dalam zona data unit
-    // ini (boleh sama dengan penandatangan unit lain). Hanya relevan di root zona.
-    $sbCandidates = collect();
-    $sbHasMore = false;
-    if ($isScopeRoot) {
-      $sbDeptIds = $this->department->getScopeRootDepartment()->getScopedRelatedIds();
-
-      $sbQuery = User::where('is_active', true)
-        ->whereIn('department_id', $sbDeptIds)
-        // Akun administratif bukan kandidat penandatangan.
-        ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']));
-
-      if (trim($this->searchSetujuBayar) !== '') {
-        $term = trim($this->searchSetujuBayar);
-        $sbQuery->where(function ($q) use ($term) {
-          $q->where('name', 'like', "%{$term}%")
-            ->orWhere('nip', 'like', "%{$term}%");
-        });
-      }
-
-      $sbCandidates = $sbQuery->orderBy('name')->limit($limit + 1)->get();
-      $sbHasMore = $sbCandidates->count() > $limit;
-      $sbCandidates = $sbCandidates->take($limit);
-    }
-
-    $selectedSetujuBayar = $this->setuju_bayar_user_id ? User::find($this->setuju_bayar_user_id) : null;
-
     // Kop yang sedang diwarisi dari induk (untuk preview di unit yang belum
     // punya kop sendiri). Hanya relevan saat edit.
     $inheritedLetterhead = ($this->isEdit && empty($this->department->letterhead))
@@ -495,10 +399,6 @@ class DepartmentForm extends Component
     $view = view('livewire.departments.form', [
       'parents'      => $parents,
       'types'        => DepartmentType::cases(),
-      'sbCandidates' => $sbCandidates,
-      'sbHasMore'    => $sbHasMore,
-      'selectedSetujuBayar' => $selectedSetujuBayar,
-      'isScopeRoot'  => $isScopeRoot,
       'isRoot'       => $this->isRoot(),
       'parentLocked' => $this->isParentLocked(),
       'inheritedLetterhead' => $inheritedLetterhead,

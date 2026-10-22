@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Enums\DepartmentType;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Department;
-use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -16,12 +15,6 @@ use Livewire\Component;
 class DepartmentIndex extends Component
 {
   use InteractsWithToast;
-
-  /** Akun administratif bukan kandidat pimpinan unit. */
-  private const ADMIN_ROLES = ['admin_opd', 'super_admin'];
-
-  /** Role yang tidak dihitung sebagai jabatan pimpinan saat mengurutkan kandidat. */
-  private const NON_LEADER_ROLES = ['staf', 'anggota_dprd'];
 
   // Pencarian & filter tipe disaring di sisi klien (Alpine) — tetap disimpan di URL.
   #[Url(keep: true)]
@@ -35,10 +28,21 @@ class DepartmentIndex extends Component
   public ?int $deletingId = null;
   public ?string $deletingName = null;
 
-  // Pemilih pimpinan unit (head_id).
-  public bool $showHeadModal = false;
-  public ?int $headDeptId = null;
-  public string $headSearch = '';
+  /** Susunan unit kerja hanya diatur Super Admin; Admin OPD langsung ke profil instansinya. */
+  public function mount(): void
+  {
+    $user = auth()->user();
+    if (! $user->hasRole('super_admin')) {
+      abort_unless($user->department_id, 403, 'Anda belum memiliki instansi terkait.');
+      $this->redirectRoute('master.departments.show', $user->department_id, navigate: true);
+    }
+  }
+
+  /** Aksi susun/hapus juga ditolak bila dipanggil langsung oleh selain Super Admin. */
+  public function hydrate(): void
+  {
+    abort_unless(auth()->user()->hasRole('super_admin'), 403);
+  }
 
   public function resetFilters(): void
   {
@@ -97,49 +101,20 @@ class DepartmentIndex extends Component
       return;
     }
 
-    $department   = Department::findOrFail($this->deletingId);
-    $user         = auth()->user();
-    $isSuperAdmin = $user->hasRole('super_admin');
-
-    // Proteksi: Tidak boleh menghapus instansi yang masih memiliki sub-unit
-    if ($department->children()->count() > 0) {
-      $this->toastError('Gagal: Instansi ini masih memiliki sub-unit (Bidang/Seksi) di bawahnya.');
+    $department = Department::findOrFail($this->deletingId);
+    if ($error = $department->deletionError()) {
+      $this->toastError("Gagal: {$error}");
       return;
     }
 
-    // Proteksi untuk Admin OPD
-    if (! $isSuperAdmin) {
-      // Tidak boleh menghapus instansi induk (top-level)
-      if ($department->parent_id === null) {
-        $this->toastError('Anda tidak memiliki otoritas untuk menghapus Instansi Utama (OPD).');
-        return;
-      }
-
-      // Pastikan unit yang dihapus berada di bawah naungan OPD-nya
-      $isOwned = false;
-      $check   = $department;
-      while ($check->parent_id !== null) {
-        if ($check->parent_id == $user->department_id) {
-          $isOwned = true;
-          break;
-        }
-        $check = $check->parent;
-      }
-
-      if (! $isOwned) {
-        $this->toastError('Anda tidak memiliki otoritas untuk menghapus unit di luar organisasi Anda.');
-        return;
-      }
-    }
-
     $name = $department->name;
-    $department->delete();
+    $moved = $department->deleteIntoParent();
 
     $this->deletingId   = null;
     $this->deletingName = null;
 
     $this->refreshTree();
-    $this->toastSuccess("Instansi/OPD {$name} berhasil dihapus.");
+    $this->toastSuccess("Unit {$name} berhasil dihapus." . ($moved ? " {$moved} pegawai dipindah ke unit induknya." : ''));
   }
 
   /**
@@ -275,168 +250,6 @@ class DepartmentIndex extends Component
     }
   }
 
-  public function openHeadPicker(int $id): void
-  {
-    $dept = Department::find($id);
-    if (! $dept || ! $this->canManage($dept)) {
-      $this->toastError('Anda tidak memiliki akses ke unit ini.');
-      return;
-    }
-
-    if ($this->isTopUnit($dept)) {
-      $this->toastError('Pimpinan tidak diatur untuk instansi induk.');
-      return;
-    }
-
-    $this->headDeptId    = $dept->id;
-    $this->headSearch    = '';
-    $this->showHeadModal = true;
-  }
-
-  public function closeHeadModal(): void
-  {
-    $this->showHeadModal = false;
-    $this->headDeptId    = null;
-    $this->headSearch    = '';
-  }
-
-  /**
-   * Tetapkan (atau kosongkan, bila null) pimpinan unit yang sedang dibuka.
-   * Pimpinan ditempatkan di unit yang dipimpinnya: unit kerja pegawai ikut
-   * pindah ke sini, dan posisi pimpinannya di unit lain dikosongkan
-   * (satu orang memimpin satu unit). Mengosongkan pimpinan tidak memindah pegawai.
-   */
-  public function setHead(?int $userId = null): void
-  {
-    $dept = $this->headDeptId ? Department::find($this->headDeptId) : null;
-    if (! $dept || ! $this->canManage($dept) || $this->isTopUnit($dept)) {
-      $this->closeHeadModal();
-      $this->toastError('Anda tidak memiliki akses untuk mengatur pimpinan unit ini.');
-      return;
-    }
-
-    if ($userId && ! $this->headCandidateQuery($dept)->whereKey($userId)->exists()) {
-      $this->toastError('Pimpinan harus pegawai aktif di lingkup unit ini.');
-      return;
-    }
-
-    $head = $userId ? User::with(['roles', 'position'])->find($userId) : null;
-    if ($head && ($error = $this->placementError($head, $dept))) {
-      $this->toastError($error);
-      return;
-    }
-
-    $moved = $head && (int) $head->department_id !== (int) $dept->id;
-
-    DB::transaction(function () use ($dept, $head, $moved) {
-      if ($head) {
-        // Lewat model agar tercatat di log aktivitas.
-        Department::where('head_id', $head->id)->whereKeyNot($dept->id)->get()->each->update(['head_id' => null]);
-        if ($moved) {
-          $head->update(['department_id' => $dept->id]);
-        }
-      }
-      $dept->update(['head_id' => $head?->id]);
-    });
-
-    $this->closeHeadModal();
-    $this->refreshTree($dept->id);
-    $this->toastSuccess(match (true) {
-      ! $head => "Pimpinan {$dept->name} dikosongkan.",
-      $moved  => "{$head->name} ditetapkan sebagai pimpinan dan ditempatkan di {$dept->name}.",
-      default => "{$head->name} ditetapkan sebagai pimpinan {$dept->name}.",
-    });
-  }
-
-  /**
-   * Alasan pegawai tidak bisa ditempatkan di unit ini, atau null bila boleh.
-   * Sama dengan form pegawai: jabatan/role tunggal per unit tidak boleh bentrok
-   * dengan pemegang aktif lain di unit tujuan.
-   */
-  private function placementError(User $user, Department $dept): ?string
-  {
-    if ((int) $user->department_id === (int) $dept->id) {
-      return null;
-    }
-
-    if ($holder = $user->position?->conflictingHolder($dept->id, $user->id)) {
-      return "Jabatan {$user->position->name} di {$dept->name} sudah dijabat {$holder->name}. Nonaktifkan pejabat lama terlebih dahulu.";
-    }
-
-    foreach ($user->roles as $role) {
-      if ($holder = User::roleConflictHolder($role->name, $dept->id, $user->id)) {
-        $label = $role->label ?? $role->name;
-
-        return "Role {$label} di {$dept->name} sudah dipegang {$holder->name}. Nonaktifkan pejabat lama terlebih dahulu.";
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Unit paling atas di pohon — instansi induk, atau instansi admin OPD sendiri —
-   * tidak memakai pemilih pimpinan; pimpinan diatur per bidang/seksi di bawahnya.
-   */
-  private function isTopUnit(Department $dept): bool
-  {
-    $user = auth()->user();
-
-    return $dept->parent_id === null
-      || (! $user->hasRole('super_admin') && (int) $dept->id === (int) $user->department_id);
-  }
-
-  /**
-   * Pegawai aktif di lingkup data unit (instansi induk + bidang/seksinya): pegawai
-   * bidang sering masih terdaftar di instansi induk. Admin OPD dibatasi lingkupnya
-   * sendiri; akun administratif bukan kandidat.
-   */
-  private function headCandidateQuery(Department $dept)
-  {
-    $deptIds = $dept->getScopeRootDepartment()->getScopedRelatedIds();
-    if (($manageable = $this->manageableIds()) !== null) {
-      $deptIds = $deptIds->intersect($manageable);
-    }
-
-    return User::query()
-      ->where('is_active', true)
-      ->whereIn('department_id', $deptIds)
-      ->whereDoesntHave('roles', fn($q) => $q->whereIn('roles.name', self::ADMIN_ROLES));
-  }
-
-  /**
-   * Kandidat pimpinan (pencarian server-side, dibatasi). Urutan: pegawai yang
-   * terdaftar di unit ini, lalu pemegang role pimpinan, lalu menurut nama.
-   *
-   * @return array{0: Collection, 1: bool}
-   */
-  private function headCandidates(Department $dept): array
-  {
-    $limit  = 25;
-    $term   = trim($this->headSearch);
-    $tables = config('permission.table_names');
-
-    $holdsLeaderRole = DB::table($tables['model_has_roles'])
-      ->join($tables['roles'], "{$tables['roles']}.id", '=', "{$tables['model_has_roles']}.role_id")
-      ->whereColumn("{$tables['model_has_roles']}.model_id", 'users.id')
-      ->where("{$tables['model_has_roles']}.model_type", (new User)->getMorphClass())
-      ->whereNotIn("{$tables['roles']}.name", self::NON_LEADER_ROLES)
-      ->selectRaw('count(*)');
-
-    $candidates = $this->headCandidateQuery($dept)
-      ->with(['roles:id,name,label', 'position:id,name', 'department:id,name'])
-      ->when($term !== '', fn($q) => $q->where(fn($w) => $w
-        ->where('users.name', 'like', "%{$term}%")
-        ->orWhere('users.nip', 'like', "%{$term}%")))
-      ->orderByRaw('users.department_id = ? desc', [$dept->id])
-      ->orderByDesc($holdsLeaderRole)
-      ->orderBy('users.name')
-      ->limit($limit + 1)
-      ->get();
-
-    return [$candidates->take($limit), $candidates->count() > $limit];
-  }
-
   /** Kirim ulang data pohon ke Alpine (daftar dirender di klien, wire:ignore). */
   private function refreshTree(?int $focusId = null): void
   {
@@ -458,9 +271,8 @@ class DepartmentIndex extends Component
     }
 
     $all = Department::withCount('users')
-      ->with('head:id,name')
       ->treeOrder()
-      ->get(['id', 'parent_id', 'head_id', 'name', 'code', 'type', 'letterhead', 'sort_order']);
+      ->get(['id', 'parent_id', 'name', 'code', 'type', 'letterhead', 'sort_order']);
 
     $byId     = $all->keyBy('id');
     $byParent = $all->groupBy(fn($d) => $d->parent_id ?? 0);
@@ -501,12 +313,9 @@ class DepartmentIndex extends Component
         'users'     => $dept->users_count,
         'children'  => $children->count(),
         'hasKop'    => $hasKop($dept->id),
-        'head'      => $dept->head?->name,
         'isOwn'     => $isOwn,
         'canDrag'   => $isSuperAdmin || ! $isOwn,
         'canDelete' => $isSuperAdmin || ($dept->parent_id !== null && ! $isOwn),
-        // Sama dengan isTopUnit(): baris paling atas tidak punya pemilih pimpinan.
-        'canHead'   => $depth > 0,
         'showUrl'   => route('master.departments.show', $dept->id),
         'editUrl'   => route('master.departments.edit', $dept->id),
       ];
@@ -528,23 +337,10 @@ class DepartmentIndex extends Component
     $isSuperAdmin = auth()->user()->hasRole('super_admin');
     $rows = $this->treeRows();
 
-    // Data modal pimpinan.
-    $headDept = $this->showHeadModal && $this->headDeptId ? Department::with('head:id,name,nip')->find($this->headDeptId) : null;
-    [$headCandidates, $headHasMore] = $headDept ? $this->headCandidates($headDept) : [collect(), false];
-    // Kandidat yang sedang memimpin unit lain (akan dilepas bila dipilih di sini).
-    $headsElsewhere = $headDept
-      ? Department::whereIn('head_id', $headCandidates->pluck('id'))->whereKeyNot($headDept->id)->pluck('name', 'head_id')
-      : collect();
-
     return view('livewire.departments.index', [
       'rows'           => $rows,
       'types'          => DepartmentType::cases(),
       'isSuperAdmin'   => $isSuperAdmin,
-      'headDept'       => $headDept,
-      'headCandidates' => $headCandidates,
-      'headHasMore'    => $headHasMore,
-      'headsElsewhere' => $headsElsewhere,
-      'nonLeaderRoles' => self::NON_LEADER_ROLES,
     ])->title($isSuperAdmin ? 'Data Instansi' : 'Kelola Unit Kerja');
   }
 }

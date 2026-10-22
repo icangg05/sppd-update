@@ -64,12 +64,6 @@ class SppdCreateDetails extends Component
   // Destinations
   public array $destinations = [];
 
-  /**
-   * Pejabat pilihan per indeks tahap workflow, untuk tahap yang kandidatnya
-   * lebih dari satu (id user, atau SppdWorkflowService::SKIP pada tahap opsional).
-   */
-  public array $stepApprovers = [];
-
   /** Nilai pilihan kota luar negeri "Kota lain (ketik manual)". */
   public const OTHER_CITY = '__other__';
 
@@ -140,18 +134,18 @@ class SppdCreateDetails extends Component
         return;
       }
 
-      $isInspektorat = str_contains(strtolower($user->department?->name ?? ''), 'inspektorat');
+      $isInspektorat = (bool) $user->department?->usesManualNumbering();
       if ($isInspektorat) {
         $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
       }
 
       $this->destinations = [$this->emptyDestination()];
 
-      // Siapkan slot pilihan pejabat (wire:model di-entangle, jadi key harus sudah ada).
-      foreach (app(SppdWorkflowService::class)->simulateApprovals($user, $this->domain) as $step) {
-        if ($step['status'] === 'choose') {
-          $this->stepApprovers[$step['index']] = '';
-        }
+      // Alur wajib lengkap (semua tahap punya pejabat pasti) sebelum mengisi detail.
+      if (! SppdWorkflowService::isComplete(app(SppdWorkflowService::class)->simulateApprovals($user, $this->domain))) {
+        redirect()->route('sppd.create', ['user_id' => $user->getRouteKey(), 'domain' => $this->domain])
+          ->with('error', 'Alur persetujuan ' . $user->name . ' belum lengkap. Lengkapi atau pilih pejabat pada tahap yang masih kosong terlebih dahulu.');
+        return;
       }
     }
 
@@ -321,45 +315,12 @@ class SppdCreateDetails extends Component
       throw $e;
     }
 
-    if (! $this->validateStepApprovers()) {
-      $this->toastError('Pilih pejabat pada alur persetujuan terlebih dahulu.', 'Gagal Mengajukan');
+    if (! $this->sppd_id && ! SppdWorkflowService::isComplete(app(SppdWorkflowService::class)->simulateApprovals(User::findOrFail($this->user_id), $this->domain))) {
+      $this->toastError('Alur persetujuan belum lengkap. Kembali ke Tahap 1 untuk melengkapi pejabatnya.', 'Gagal Mengajukan');
       return;
     }
 
     $this->showConfirmModal = true;
-  }
-
-  /**
-   * Tahap yang kandidat pejabatnya lebih dari satu wajib dipilih (pengajuan baru
-   * saja — pada perbaikan, susunan pejabat sudah tetap sejak pengajuan awal).
-   */
-  protected function validateStepApprovers(): bool
-  {
-    if ($this->sppd_id) {
-      return true;
-    }
-
-    $pelaksana = User::with('department')->findOrFail($this->user_id);
-    $valid = true;
-
-    foreach (app(SppdWorkflowService::class)->simulateApprovals($pelaksana, $this->domain) as $step) {
-      if ($step['status'] !== 'choose') {
-        continue;
-      }
-
-      $choice = (string) ($this->stepApprovers[$step['index']] ?? '');
-      $allowed = array_map('strval', array_column($step['candidates'], 'id'));
-      if ($step['optional']) {
-        $allowed[] = SppdWorkflowService::SKIP;
-      }
-
-      if (! in_array($choice, $allowed, true)) {
-        $this->addError('stepApprovers.' . $step['index'], 'Pilih ' . $step['role_label'] . ' untuk tahap ini.');
-        $valid = false;
-      }
-    }
-
-    return $valid;
   }
 
   public function closeConfirmModal(): void
@@ -378,7 +339,7 @@ class SppdCreateDetails extends Component
     }
 
     $user = User::with('department')->findOrFail($this->user_id);
-    $isInspektorat = str_contains(strtolower($user->department?->name ?? ''), 'inspektorat');
+    $isInspektorat = (bool) $user->department?->usesManualNumbering();
 
     // Validasi tambahan untuk Inspektorat
     if ($isInspektorat) {
@@ -535,7 +496,7 @@ class SppdCreateDetails extends Component
 
           // Generate approvals
           $workflowService = app(SppdWorkflowService::class);
-          $success = $workflowService->generateApprovals($sppd, $this->stepApprovers);
+          $success = $workflowService->generateApprovals($sppd);
 
           if (! $success) {
             throw new \Exception('Sistem belum memiliki aturan Workflow untuk instansi, peran pemohon, atau tujuan tersebut.');
@@ -589,7 +550,7 @@ class SppdCreateDetails extends Component
 
   /**
    * Pratinjau alur: susunan pejabat yang sudah tetap untuk SPPD yang diperbaiki,
-   * atau simulasi untuk pengajuan baru beserta pejabat yang sudah dipilih.
+   * atau simulasi untuk pengajuan baru (selalu lengkap, lihat mount).
    */
   protected function workflowSteps(User $pelaksana): array
   {
@@ -603,30 +564,12 @@ class SppdCreateDetails extends Component
           'role_label'    => $approval->role_label,
           'approver_name' => $approval->approver?->name ?? '-',
           'status'        => 'found',
-          'optional'      => false,
           'candidates'    => [],
         ])
         ->all();
     }
 
-    $steps = app(SppdWorkflowService::class)->simulateApprovals($pelaksana, $this->domain);
-
-    foreach ($steps as &$step) {
-      if ($step['status'] !== 'choose') {
-        continue;
-      }
-
-      $choice = (string) ($this->stepApprovers[$step['index']] ?? '');
-      $chosen = collect($step['candidates'])->firstWhere('id', (int) $choice);
-      $step['approver_name'] = match (true) {
-        $chosen !== null                           => $chosen['name'],
-        $choice === SppdWorkflowService::SKIP      => 'Tidak ada, tahap dilewati',
-        default                                    => 'Belum dipilih',
-      };
-    }
-    unset($step);
-
-    return $steps;
+    return app(SppdWorkflowService::class)->simulateApprovals($pelaksana, $this->domain);
   }
 
   /** Simpan baris tujuan sesuai domain perjalanan. */
@@ -777,7 +720,7 @@ class SppdCreateDetails extends Component
 
     $steps = $this->workflowSteps($pelaksana);
 
-    $isInspektorat = str_contains(strtolower($pelaksana->department?->name ?? ''), 'inspektorat');
+    $isInspektorat = (bool) $pelaksana->department?->usesManualNumbering();
 
     return view('livewire.sppd.create-details', compact(
       'pelaksana',

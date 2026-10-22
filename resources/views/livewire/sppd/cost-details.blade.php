@@ -49,7 +49,8 @@
                 <p class="mt-1 text-xs font-medium text-amber-800">Lengkapi hal berikut agar tombol cetak aktif:</p>
                 <ul class="mt-2 space-y-1 text-xs text-amber-800">
                     @unless ($sppd->pptk_id)
-                        <li><i class="fa-solid fa-circle-xmark mr-1.5 text-amber-500"></i> PPTK belum diatur.</li>
+                        <li><i class="fa-solid fa-circle-xmark mr-1.5 text-amber-500"></i> PPTK belum diatur.
+                            <a href="{{ route('sppd.next', $sppd) }}" wire:navigate class="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">Atur di Portal Dokumen</a></li>
                     @endunless
                     @unless ($hasBendahara)
                         <li><i class="fa-solid fa-circle-xmark mr-1.5 text-amber-500"></i> Bendahara Pengeluaran belum

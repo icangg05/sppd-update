@@ -173,6 +173,15 @@ class SppdRequest extends Model
     // Relationships
     // ──────────────────────────────────────────────
 
+    /**
+     * Nomor dokumen ditampilkan (termasuk keterangan "belum bernomor") bila sudah ada,
+     * atau bila pelaksananya dari instansi yang menginput nomor sendiri (Inspektorat).
+     */
+    public function showsDocumentNumber(): bool
+    {
+        return filled($this->document_number) || (bool) $this->user?->department?->usesManualNumbering();
+    }
+
     /** Pelaksana perjalanan */
     public function user(): BelongsTo
     {

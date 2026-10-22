@@ -1,5 +1,5 @@
 @extends('errors.layout')
-@section('title', '404 - Halaman Tidak Ditemukan')
+@section('title', '404 | Halaman Tidak Ditemukan')
 
 @section('content')
     <div class="mb-6 text-emerald-500">

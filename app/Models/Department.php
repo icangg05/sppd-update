@@ -6,6 +6,7 @@ use App\Enums\DepartmentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -15,7 +16,6 @@ class Department extends Model
 
   protected $fillable = [
     'parent_id',
-    'head_id',
     'setuju_bayar_user_id',
     'setuju_bayar_label',
     'name',
@@ -41,7 +41,7 @@ class Department extends Model
   public function getActivitylogOptions(): LogOptions
   {
     return LogOptions::defaults()
-      ->logOnly(['name', 'code', 'parent_id', 'head_id', 'setuju_bayar_user_id', 'setuju_bayar_label', 'type', 'level', 'can_view_children_data'])
+      ->logOnly(['name', 'code', 'parent_id', 'setuju_bayar_user_id', 'setuju_bayar_label', 'type', 'level', 'can_view_children_data'])
       ->logOnlyDirty()
       ->dontLogEmptyChanges()
       ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
@@ -77,11 +77,6 @@ class Department extends Model
     return $this->belongsTo(Department::class, 'parent_id');
   }
 
-  public function head(): BelongsTo
-  {
-    return $this->belongsTo(User::class, 'head_id');
-  }
-
   public function setujuBayarUser(): BelongsTo
   {
     return $this->belongsTo(User::class, 'setuju_bayar_user_id');
@@ -111,6 +106,58 @@ class Department extends Model
   }
 
   /**
+   * Alasan unit ini tidak bisa dihapus, atau null. Pegawainya dipindah ke unit induk
+   * (lihat deleteIntoParent), jadi yang ditolak: masih punya sub-unit, anggaran (ikut
+   * terhapus bersama unitnya), akun Admin OPD (lingkupnya akan melebar ke unit induk),
+   * atau pegawai yang role tunggalnya bentrok dengan pemegang di unit induk.
+   */
+  public function deletionError(): ?string
+  {
+    if ($this->children()->exists()) {
+      return 'Unit ini masih memiliki sub-unit di bawahnya.';
+    }
+    if ($this->budgets()->exists()) {
+      return 'Unit ini masih memiliki data anggaran (DPA). Pindahkan atau hapus anggarannya terlebih dahulu.';
+    }
+
+    $users = $this->users()->with('roles')->get();
+    if ($users->isNotEmpty() && ! $this->parent_id) {
+      return "Instansi ini masih memiliki {$users->count()} pegawai.";
+    }
+
+    $admins = $users->filter(fn (User $u) => $u->hasRole('admin_opd'));
+    if ($admins->isNotEmpty()) {
+      return 'Unit ini punya akun Admin OPD (' . $admins->pluck('username')->join(', ') . '). Pindahkan atau nonaktifkan akunnya terlebih dahulu.';
+    }
+
+    foreach ($users as $user) {
+      foreach ($user->roles as $role) {
+        if ($holder = User::roleConflictHolder($role->name, $this->parent_id, $user->id)) {
+          return "Role {$role->label} {$user->name} bentrok dengan {$holder->name} di unit induk. Sesuaikan role-nya terlebih dahulu.";
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Hapus unit; pegawainya dipindah ke unit induk agar tidak kehilangan unit kerja.
+   * Periksa deletionError lebih dulu. Mengembalikan jumlah pegawai yang dipindah.
+   */
+  public function deleteIntoParent(): int
+  {
+    return DB::transaction(function () {
+      $users = $this->users()->get();
+      // Lewat model agar perpindahan tercatat di log aktivitas pegawai.
+      $users->each->update(['department_id' => $this->parent_id]);
+      $this->delete();
+
+      return $users->count();
+    });
+  }
+
+  /**
    * Get all descendant department IDs (children, grandchildren, etc.)
    *
    * @return \Illuminate\Support\Collection<int, int>
@@ -134,6 +181,15 @@ class Department extends Model
   public function getAllRelatedIds(): \Illuminate\Support\Collection
   {
     return collect([$this->id])->merge($this->getDescendantIds());
+  }
+
+  /**
+   * Hanya Inspektorat yang menginput sendiri nomor surat tugas di form SPPD;
+   * instansi lain tidak memakai nomor dokumen.
+   */
+  public function usesManualNumbering(): bool
+  {
+    return str_contains(strtolower($this->name ?? ''), 'inspektorat');
   }
 
   /**
@@ -241,13 +297,19 @@ class Department extends Model
     }
 
     if (! $user) {
-      $user = User::role('kepala_opd')
-        ->where('department_id', $scopeRoot->id)
-        ->where('is_active', true)
-        ->first();
+      $user = $scopeRoot->defaultSetujuBayarUser();
     }
 
     return ['user' => $user, 'label' => $label, 'opd' => $scopeRoot];
+  }
+
+  /** Penandatangan Setuju Bayar bawaan bila belum diatur: Kepala OPD aktif di unit ini. */
+  public function defaultSetujuBayarUser(): ?User
+  {
+    return User::role('kepala_opd')
+      ->where('department_id', $this->id)
+      ->where('is_active', true)
+      ->first();
   }
 
   /**

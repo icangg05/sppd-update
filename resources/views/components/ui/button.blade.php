@@ -15,6 +15,8 @@ $variantClasses = [
     'warning' => 'bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-400',
     'danger' => 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
     'ghost' => 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 focus-visible:ring-slate-300',
+    // Aksi hapus/reset sekunder tanpa latar (mis. Hapus pengaturan di footer modal).
+    'danger-ghost' => 'text-rose-600 hover:text-rose-700 hover:bg-rose-50 focus-visible:ring-rose-300',
     'dark' => 'bg-slate-800 text-white hover:bg-slate-900 focus-visible:ring-slate-600',
     'violet' => 'bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-500',
 ];

@@ -3,7 +3,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>{{ 'SPT - ' . config('app.name') }}</title>
+	<title>{{ 'SPT | ' . config('app.name') }}</title>
 	<style>
 		@page {
 			/* margin-bottom diperbesar untuk menyediakan ruang footer tetap

@@ -3,9 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\DepartmentType;
-use App\Enums\EmployeeType;
+use App\Livewire\DepartmentForm;
 use App\Livewire\DepartmentIndex;
-use App\Livewire\UserForm;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,8 +13,8 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Halaman struktur unit kerja: pindah unit lewat seret-lepas (dikonfirmasi
- * modal) dan pemilihan pimpinan langsung dari pohon.
+ * Halaman struktur unit kerja (Super Admin): pindah unit lewat seret-lepas
+ * (dikonfirmasi modal). Admin OPD hanya melihat profil instansinya dan sub-unitnya.
  */
 class DepartmentStructureTest extends TestCase
 {
@@ -118,163 +117,87 @@ class DepartmentStructureTest extends TestCase
         $this->assertSame($dinasB->id, $bidangB->fresh()->parent_id);
     }
 
-    public function test_admin_opd_hanya_menyusun_di_dalam_lingkupnya(): void
+    public function test_admin_opd_diarahkan_ke_profil_instansinya_dan_tidak_bisa_menyusun(): void
     {
-        $dinas   = $this->dept('Dinas A');
-        $bidang  = $this->dept('Bidang Program', $dinas);
-        $bidang2 = $this->dept('Bidang Umum', $dinas);
-        $lain    = $this->dept('Dinas Lain');
-        $admin   = $this->user('admin_opd', $dinas);
+        $dinas  = $this->dept('Dinas A');
+        $bidang = $this->dept('Bidang Program', $dinas);
+        $admin  = $this->user('admin_opd', $dinas);
 
-        $page = Livewire::actingAs($admin)->test(DepartmentIndex::class);
+        Livewire::actingAs($admin)->test(DepartmentIndex::class)
+            ->assertRedirect(route('master.departments.show', $dinas->id));
 
-        // Keluar lingkup atau menjadi instansi induk ditolak.
-        $page->call('saveStructure', $this->nodes([$bidang->id => [$lain->id, 0]]))->assertNotDispatched('department-tree-updated');
-        $page->call('saveStructure', $this->nodes([$bidang->id => [null, 0]]))->assertNotDispatched('department-tree-updated');
+        // Menambah unit hanya oleh Super Admin.
+        $this->actingAs($admin)->get(route('master.departments.create'))->assertForbidden();
+
+        // Menyusun juga, walau aksinya dipanggil langsung dari halaman yang sudah terbuka.
+        $page = Livewire::actingAs($this->user('super_admin'))->test(DepartmentIndex::class);
+        $this->actingAs($admin);
+        $page->call('saveStructure', $this->nodes([$bidang->id => [null, 0]]))->assertForbidden();
         $this->assertSame($dinas->id, $bidang->fresh()->parent_id);
-
-        // Di dalam lingkup boleh; entri instansinya sendiri diabaikan (tidak ikut dipindah).
-        $page->call('saveStructure', $this->nodes([
-            $dinas->id   => [$lain->id, 0],
-            $bidang2->id => [$dinas->id, 0],
-            $bidang->id  => [$bidang2->id, 0],
-        ]))->assertDispatched('department-tree-updated');
-
-        $this->assertSame($bidang2->id, $bidang->fresh()->parent_id);
-        $this->assertNull($dinas->fresh()->parent_id);
     }
 
-    public function test_pohon_admin_opd_hanya_berisi_lingkupnya(): void
+    public function test_profil_instansi_menampilkan_sub_unit_dalam_lingkup_admin(): void
+    {
+        $setda   = $this->dept('Sekretariat Daerah', null, DepartmentType::SETDA);
+        $asisten = $this->dept('Asisten Administrasi Umum', $setda, DepartmentType::ASISTEN);
+        $bagian  = $this->dept('Bagian Umum', $asisten, DepartmentType::BAGIAN);
+        $sub     = $this->dept('Subbagian Rumah Tangga', $bagian, DepartmentType::SUBBAGIAN);
+        $kecamatan = $this->dept('Kecamatan Kadia', null, DepartmentType::KECAMATAN);
+        $kelurahan = $this->dept('Kelurahan Kadia', $kecamatan, DepartmentType::KELURAHAN);
+
+        // Admin Setda menjangkau Asisten sampai Subbagian; tombol Kembali ke unit induk.
+        $this->actingAs($this->user('admin_opd', $setda));
+        $this->get(route('master.departments.show', $setda->id))->assertOk()->assertSee('Asisten Administrasi Umum');
+        $this->get(route('master.departments.show', $sub->id))->assertOk()
+            ->assertSee(route('master.departments.show', $bagian->id), false)
+            ->assertSee('Kode Unit Kerja');
+        $this->get(route('master.departments.show', $kecamatan->id))->assertForbidden();
+
+        // Admin Bagian menjangkau Subbagian-nya, tidak ke atas.
+        $this->actingAs($this->user('admin_opd', $bagian));
+        $this->get(route('master.departments.show', $sub->id))->assertOk();
+        $this->get(route('master.departments.show', $asisten->id))->assertForbidden();
+
+        // Kelurahan tampil di profil Kecamatan, tetapi dikelola admin kelurahannya sendiri.
+        $this->actingAs($this->user('admin_opd', $kecamatan));
+        $this->get(route('master.departments.show', $kecamatan->id))->assertOk()
+            ->assertSee('Kelurahan Kadia')->assertSee('Dikelola admin unit ini');
+        $this->get(route('master.departments.show', $kelurahan->id))->assertForbidden();
+    }
+
+    public function test_admin_opd_tidak_bisa_memindah_atau_mengganti_nama_unit(): void
     {
         $dinas  = $this->dept('Dinas A');
+        $lain   = $this->dept('Dinas Lain');
         $bidang = $this->dept('Bidang Program', $dinas);
-        $this->dept('Dinas Lain');
-
-        $rows = Livewire::actingAs($this->user('admin_opd', $dinas))
-            ->test(DepartmentIndex::class)
-            ->viewData('rows');
-
-        $this->assertSame([$dinas->id, $bidang->id], array_column($rows, 'id'));
-        $this->assertFalse($rows[0]['canDrag'], 'instansi sendiri tidak bisa diseret');
-        $this->assertTrue($rows[1]['canDrag']);
-    }
-
-    public function test_pimpinan_bidang_dipilih_dari_pegawai_lingkup_instansi(): void
-    {
-        $dinas    = $this->dept('Dinas A');
-        $bidang   = $this->dept('Bidang Program', $dinas);
-        $lain     = $this->dept('Dinas B');
-        // Pegawai bidang sering masih terdaftar di instansi induk.
-        $staf     = $this->user('staf', $dinas);
-        $kepala   = $this->user('kepala_opd', $dinas);
-        $diBidang = $this->user('staf', $bidang);
-        $luar     = $this->user('kepala_opd', $lain);
-        $operator = $this->user('admin_opd', $dinas);
-
-        $page = Livewire::actingAs($this->user('super_admin'))
-            ->test(DepartmentIndex::class)
-            ->call('openHeadPicker', $bidang->id)
-            ->assertSet('showHeadModal', true)
-            // Urutan: pegawai unit ini, pemegang role pimpinan, lalu sisanya — tanpa instansi lain & akun admin.
-            ->assertViewHas('headCandidates', fn($c) => $c->pluck('id')->all() === [$diBidang->id, $kepala->id, $staf->id]);
-
-        $page->call('setHead', $luar->id)->call('setHead', $operator->id);
-        $this->assertNull($bidang->fresh()->head_id);
-
-        $page->call('setHead', $staf->id)->assertSet('showHeadModal', false);
-        $this->assertSame($staf->id, $bidang->fresh()->head_id);
-        // Pimpinan ditempatkan di unit yang dipimpinnya.
-        $this->assertSame($bidang->id, $staf->fresh()->department_id);
-
-        $page->call('openHeadPicker', $bidang->id)->call('setHead', null);
-        $this->assertNull($bidang->fresh()->head_id);
-    }
-
-    public function test_unit_paling_atas_tidak_punya_pemilih_pimpinan(): void
-    {
-        $dinas  = $this->dept('Dinas A');
-        $bidang = $this->dept('Bidang Program', $dinas);
-        $this->user('kepala_opd', $dinas);
-
-        $page = Livewire::actingAs($this->user('super_admin'))->test(DepartmentIndex::class);
-        $page->call('openHeadPicker', $dinas->id)->assertSet('showHeadModal', false);
-
-        $rows = collect($page->viewData('rows'))->keyBy('id');
-        $this->assertFalse($rows[$dinas->id]['canHead']);
-        $this->assertTrue($rows[$bidang->id]['canHead']);
-
-        // Admin OPD: instansinya sendiri adalah puncak pohonnya.
-        Livewire::actingAs($this->user('admin_opd', $dinas))
-            ->test(DepartmentIndex::class)
-            ->call('openHeadPicker', $dinas->id)
-            ->assertSet('showHeadModal', false)
-            ->call('openHeadPicker', $bidang->id)
-            ->assertSet('showHeadModal', true);
-    }
-
-    public function test_admin_opd_tidak_bisa_mengatur_pimpinan_di_luar_lingkup(): void
-    {
-        $dinas      = $this->dept('Dinas A');
-        $lain       = $this->dept('Dinas B');
-        $bidangLain = $this->dept('Bidang Lain', $lain);
-        $this->user('kepala_opd', $lain);
 
         Livewire::actingAs($this->user('admin_opd', $dinas))
-            ->test(DepartmentIndex::class)
-            ->call('openHeadPicker', $bidangLain->id)
-            ->assertSet('showHeadModal', false);
+            ->test(DepartmentForm::class, ['department' => $bidang])
+            ->set('name', 'Bidang Baru')
+            ->set('parent_id', $lain->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Bidang Program', $bidang->fresh()->name);
+        $this->assertSame($dinas->id, $bidang->fresh()->parent_id);
     }
 
-    public function test_satu_pegawai_hanya_memimpin_satu_unit(): void
-    {
-        $dinas   = $this->dept('Dinas A');
-        $bidang  = $this->dept('Bidang Program', $dinas);
-        $bidang2 = $this->dept('Bidang Umum', $dinas);
-        $staf    = $this->user('staf', $dinas);
-
-        $page = Livewire::actingAs($this->user('super_admin'))->test(DepartmentIndex::class);
-        $page->call('openHeadPicker', $bidang->id)->call('setHead', $staf->id);
-        $page->call('openHeadPicker', $bidang2->id)->call('setHead', $staf->id);
-
-        $this->assertSame($bidang2->id, $staf->fresh()->department_id);
-        $this->assertSame($staf->id, $bidang2->fresh()->head_id);
-        $this->assertNull($bidang->fresh()->head_id);
-    }
-
-    public function test_pimpinan_tidak_dipindah_bila_role_tunggal_bentrok_di_unit_tujuan(): void
-    {
-        $dinas  = $this->dept('Dinas A');
-        $bidang = $this->dept('Bidang Program', $dinas);
-        $this->user('kepala_opd', $bidang);
-        $kepala = $this->user('kepala_opd', $dinas);
-
-        Livewire::actingAs($this->user('super_admin'))
-            ->test(DepartmentIndex::class)
-            ->call('openHeadPicker', $bidang->id)
-            ->call('setHead', $kepala->id)
-            ->assertSet('showHeadModal', true);
-
-        $this->assertSame($dinas->id, $kepala->fresh()->department_id);
-        $this->assertNull($bidang->fresh()->head_id);
-    }
-
-    public function test_pindah_unit_di_form_pegawai_melepas_posisi_pimpinan(): void
+    public function test_hapus_sub_unit_memindah_pegawai_ke_unit_induk(): void
     {
         $dinas  = $this->dept('Dinas A');
         $bidang = $this->dept('Bidang Program', $dinas);
         $staf   = $this->user('staf', $bidang);
-        $staf->update(['username' => 'staf.satu']);
-        $bidang->update(['head_id' => $staf->id]);
+        $admin  = $this->user('admin_opd', $this->dept('Bidang Umum', $dinas));
 
         Livewire::actingAs($this->user('super_admin'))
-            ->test(UserForm::class, ['user' => $staf])
-            ->assertViewHas('headOfUnits', fn($units) => $units->all() === ['Bidang Program'])
-            ->set('employee_type', EmployeeType::cases()[0]->value)
-            ->set('department_id', $dinas->id)
-            ->call('save')
-            ->assertHasNoErrors();
+            ->test(DepartmentIndex::class)
+            ->call('confirmDelete', $bidang->id)
+            ->call('delete');
 
+        $this->assertNull(Department::find($bidang->id));
         $this->assertSame($dinas->id, $staf->fresh()->department_id);
-        $this->assertNull($bidang->fresh()->head_id);
+
+        // Unit yang punya akun Admin OPD ditolak: lingkup admin akan melebar ke unit induk.
+        $this->assertStringContainsString('Admin OPD', $admin->department->deletionError());
     }
 }

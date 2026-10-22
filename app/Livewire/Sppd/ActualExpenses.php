@@ -6,13 +6,12 @@ use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
  * Laporan Pengeluaran Riil. CRUD reaktif (tanpa reload) via Livewire; tabel
- * dirender ulang server-side tiap aksi. Status kunci tombol cetak (hasPptk)
- * disegarkan dari event `pptk-saved` yang dikirim komponen PptkSelector.
+ * dirender ulang server-side tiap aksi. Tombol cetak terkunci selama PPTK
+ * belum diatur (hasPptk); PPTK diatur di Portal Dokumen (PptkSelector).
  */
 class ActualExpenses extends Component
 {
@@ -46,13 +45,6 @@ class ActualExpenses extends Component
     $this->sppd = $sppd;
     $this->hasPptk = (bool) $sppd->pptk_id;
     $this->selectedUserIds = $this->peopleIds();
-  }
-
-  /** Disegarkan saat PptkSelector menyimpan PPTK, agar tombol cetak membuka. */
-  #[On('pptk-saved')]
-  public function onPptkSaved(bool $hasPptk = true): void
-  {
-    $this->hasPptk = $hasPptk;
   }
 
   protected function validationAttributes(): array

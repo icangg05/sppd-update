@@ -55,7 +55,7 @@ class UserController extends Controller
 
   public function show(User $user)
   {
-    $user->load(['department', 'rank', 'position', 'roles']);
+    $user->load(['department', 'rank', 'position', 'roles', 'atasan.roles']);
 
     $search = request('search_trip');
 

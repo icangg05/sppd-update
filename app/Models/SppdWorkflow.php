@@ -16,6 +16,7 @@ class SppdWorkflow extends Model
         'department_type',
         'applicant_role',
         'destination',
+        'supervisor_role',
         'steps',
         'is_active',
     ];
@@ -25,6 +26,8 @@ class SppdWorkflow extends Model
         'department_type' => 'array',
         'destination' => 'array',
         'applicant_role' => 'array',
+        // Atasan langsung pemohon; null = tidak dibedakan.
+        'supervisor_role' => 'array',
         'is_active' => 'boolean',
     ];
 

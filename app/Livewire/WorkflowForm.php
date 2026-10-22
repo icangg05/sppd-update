@@ -27,7 +27,14 @@ class WorkflowForm extends Component
   public array $destination = [];
   public bool $is_active = true;
 
-  /** @var array<int, array{role:string, signs_spt:bool, signs_sppd:bool, optional:bool}> */
+  /**
+   * Atasan langsung pemohon: 'any' = tidak dibedakan (dipilih eksplisit),
+   * 'specific' = hanya bila atasan langsungnya salah satu role di $supervisor_role.
+   */
+  public string $supervisor_mode = 'any';
+  public array $supervisor_role = [];
+
+  /** @var array<int, array{role:string, signs_spt:bool, signs_sppd:bool}> */
   public array $steps = [];
 
   public function mount(?SppdWorkflow $workflow = null): void
@@ -41,6 +48,8 @@ class WorkflowForm extends Component
       $this->department_type = $workflow->department_type ?? [];
       $this->applicant_role  = $workflow->applicant_role ?? [];
       $this->destination     = $workflow->destination ?? [];
+      $this->supervisor_mode = empty($workflow->supervisor_role) ? 'any' : 'specific';
+      $this->supervisor_role = $workflow->supervisor_role ?? [];
       $this->is_active       = (bool) $workflow->is_active;
       $this->steps           = $this->normalizeSteps($workflow->steps ?? []);
     }
@@ -52,7 +61,7 @@ class WorkflowForm extends Component
 
   private function emptyStep(): array
   {
-    return ['role' => '', 'signs_spt' => false, 'signs_sppd' => false, 'optional' => false];
+    return ['role' => '', 'signs_spt' => false, 'signs_sppd' => false];
   }
 
   /**
@@ -66,11 +75,10 @@ class WorkflowForm extends Component
           'role'       => $step['role'] ?? '',
           'signs_spt'  => (bool) ($step['signs_spt'] ?? false),
           'signs_sppd' => (bool) ($step['signs_sppd'] ?? false),
-          'optional'   => (bool) ($step['optional'] ?? false),
         ];
       }
 
-      return ['role' => (string) $step, 'signs_spt' => false, 'signs_sppd' => false, 'optional' => false];
+      return ['role' => (string) $step, 'signs_spt' => false, 'signs_sppd' => false];
     })->values()->all();
   }
 
@@ -133,6 +141,10 @@ class WorkflowForm extends Component
         'applicant_role.*'  => [Rule::exists('roles', 'name')],
         'destination'       => ['required', 'array', 'min:1'],
         'destination.*'     => [Rule::enum(SppdDomain::class)],
+        // Atasan langsung: "tidak dibedakan" dipilih eksplisit; bila dibedakan, centang minimal satu.
+        'supervisor_mode'   => ['required', Rule::in(['any', 'specific'])],
+        'supervisor_role'   => ['exclude_unless:supervisor_mode,specific', 'required', 'array', 'min:1'],
+        'supervisor_role.*' => ['exclude_unless:supervisor_mode,specific', Rule::in(SppdWorkflowService::APPROVER_ROLES)],
         'steps'             => ['required', 'array', 'min:1'],
         // Tingkat persetujuan terendah Kabid/Irban/Kabag: Staf & Kasubag tidak menyetujui.
         'steps.*.role'      => ['required', 'string', Rule::in(SppdWorkflowService::APPROVER_ROLES)],
@@ -140,6 +152,7 @@ class WorkflowForm extends Component
         'department_type.required' => 'Centang minimal satu tipe instansi.',
         'applicant_role.required'  => 'Centang minimal satu peran pemohon.',
         'destination.required'     => 'Centang minimal satu wilayah tujuan.',
+        'supervisor_role.required' => 'Centang minimal satu jabatan atasan langsung.',
         'steps.*.role.in'          => 'Role ini tidak dapat menjadi tahap persetujuan.',
       ], [
         'steps.*.role' => 'role tahapan',
@@ -161,23 +174,17 @@ class WorkflowForm extends Component
       return;
     }
 
-    // Tahap yang bisa dilewati tidak boleh memegang tanda tangan: SPT/SPPD bisa tanpa penanda tangan.
-    if (collect($this->steps)->contains(fn ($s) => ! empty($s['optional']) && (! empty($s['signs_spt']) || ! empty($s['signs_sppd'])))) {
-      $this->toastError('Tahap yang boleh dilewati tidak dapat menandatangani SPT atau SPPD.');
-      return;
-    }
-
     $data = [
       'name'            => trim($this->name),
       'department_type' => array_values($this->department_type),
       'applicant_role'  => array_values($this->applicant_role),
       'destination'     => array_values($this->destination),
+      'supervisor_role' => $this->supervisor_mode === 'specific' ? array_values($this->supervisor_role) : null,
       'is_active'       => $this->is_active,
       'steps'           => array_map(fn ($s) => [
         'role'       => $s['role'],
         'signs_spt'  => (bool) $s['signs_spt'],
         'signs_sppd' => (bool) $s['signs_sppd'],
-        'optional'   => (bool) ($s['optional'] ?? false),
       ], array_values($this->steps)),
     ];
 

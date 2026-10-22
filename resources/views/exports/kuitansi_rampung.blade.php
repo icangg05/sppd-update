@@ -3,7 +3,7 @@
 
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Kuitansi Rampung - {{ config('app.name') }}</title>
+	<title>Kuitansi Rampung | {{ config('app.name') }}</title>
 	<style>
 		@page {
 			margin: 2cm 1.5cm;

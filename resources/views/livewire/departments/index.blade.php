@@ -59,7 +59,7 @@
   </div>
 
   {{-- Pohon struktur: dirender Alpine (wire:ignore); data baru datang lewat event
-       department-tree-updated (setelah simpan / ganti pimpinan / hapus).
+       department-tree-updated (setelah simpan / hapus).
        Susunan diatur seperti sortable tree: seret naik/turun = urutan, geser kanan/kiri
        = masuk/keluar sub-unit. Perubahan ditampung dulu, baru tersimpan lewat tombol Simpan.
        Tanpa .dash-enter: transform animasinya menjebak elemen fixed (salinan yang diseret). --}}
@@ -77,7 +77,7 @@
       flashIds: {},
       canRoot: @js($isSuperAdmin),
       storageKey: 'sppd:dept-tree-open',
-      // Jarak menjorok per tingkat: lebih rapat di layar sempit agar kolom pimpinan tetap lega.
+      // Jarak menjorok per tingkat: lebih rapat di layar sempit agar nama unit tetap lega.
       indent: 20,
       // Susunan terakhir yang tersimpan (id → induk & urutan) dan perubahan yang belum disimpan.
       baseline: {},
@@ -540,21 +540,8 @@
                 </div>
               </div>
 
-              {{-- Pimpinan & aksi (di HP turun ke baris kedua). Selama ada susunan yang belum
-                   disimpan, ganti pimpinan & hapus dikunci agar tidak bertabrakan. --}}
-              <div class="flex w-full items-center gap-1.5 sm:w-auto">
-                {{-- Unit paling atas tidak memakai pemilih pimpinan; spacer menjaga tombol aksi tetap sejajar. --}}
-                <span x-show="!row.canHead" class="flex-1 sm:w-56 sm:flex-none"></span>
-                <button type="button" x-show="row.canHead" @click="$wire.openHeadPicker(row.id)" :disabled="dirty"
-                  :title="dirty ? 'Simpan atau batalkan perubahan struktur dulu' : null"
-                  :aria-label="'Pimpinan ' + row.name + ': ' + (row.head || 'belum dipilih')"
-                  class="flex h-8 min-w-0 flex-1 items-center gap-2 rounded border bg-white px-2.5 text-left text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-50 sm:w-56 sm:flex-none"
-                  :class="row.head ? 'border-slate-200 text-slate-700 enabled:hover:border-primary-300 enabled:hover:bg-primary-50' : 'border-dashed border-slate-300 text-slate-500 enabled:hover:border-primary-400 enabled:hover:text-primary-700'">
-                  <i class="fa-solid fa-user-tie text-[11px]" :class="row.head ? 'text-primary-600' : 'text-slate-400'"></i>
-                  <span class="min-w-0 flex-1 truncate" x-text="row.head || 'Pilih pimpinan unit'"></span>
-                  <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
-                </button>
-
+              {{-- Aksi. Selama ada susunan yang belum disimpan, hapus dikunci agar tidak bertabrakan. --}}
+              <div class="ml-auto flex shrink-0 items-center gap-1.5">
                 <a :href="row.showUrl" wire:navigate title="Detail"
                   class="flex size-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
                   <i class="fa-solid fa-eye text-xs"></i>
@@ -652,81 +639,6 @@
     </template>
   </div>
 
-  {{-- Modal Pilih Pimpinan Unit --}}
-  <x-ui.modal show="$wire.showHeadModal" title="Pilih Pimpinan Unit" :description="$headDept?->name"
-    icon="fa-solid fa-user-tie text-primary-600" maxWidth="max-w-lg">
-    <div class="space-y-3">
-      @if ($headDept?->head)
-        <div class="flex items-center justify-between gap-3 rounded border border-primary-200 bg-primary-50 px-3 py-2">
-          <div class="min-w-0">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-primary-700">Pimpinan saat ini</p>
-            <p class="truncate text-sm font-semibold text-slate-800">{{ $headDept->head->name }}</p>
-          </div>
-          <x-ui.button type="button" variant="secondary" size="sm" wire:click="setHead(null)" wire:target="setHead">
-            Kosongkan
-          </x-ui.button>
-        </div>
-      @endif
-
-      <x-form.input wire:model.live.debounce.300ms="headSearch" icon="fa-solid fa-magnifying-glass"
-        loadingTarget="headSearch" placeholder="Cari nama atau NIP pegawai..." data-autofocus />
-
-      <ul class="max-h-72 divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200"
-        wire:loading.class="opacity-60" wire:target="setHead,headSearch">
-        @forelse ($headCandidates as $candidate)
-          @php
-            $isCurrent = (int) $headDept->head_id === (int) $candidate->id;
-            $leaderRole = $candidate->roles->first(fn($r) => ! in_array($r->name, $nonLeaderRoles, true));
-          @endphp
-          <li wire:key="head-{{ $candidate->id }}">
-            <button type="button" wire:click="setHead({{ $candidate->id }})"
-              class="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:bg-primary-50 {{ $isCurrent ? 'bg-primary-50' : 'hover:bg-slate-50' }}">
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold {{ $isCurrent ? 'text-primary-800' : 'text-slate-800' }}">
-                  {{ $candidate->name }}
-                </p>
-                <p class="truncate text-[11px] text-slate-500">
-                  {{ $candidate->position?->name ?? 'Tanpa jabatan' }}
-                  {{-- Pegawai bidang sering masih terdaftar di instansi induk — tampilkan unit asalnya
-                       (bila dipilih, unit kerjanya ikut pindah ke unit ini). --}}
-                  @if ((int) $candidate->department_id !== (int) $headDept->id)
-                    · di {{ $candidate->department?->name }}
-                  @endif
-                  @if ($candidate->nip)
-                    · NIP <span class="font-mono">{{ $candidate->nip }}</span>
-                  @endif
-                </p>
-              </div>
-              @if ($headsElsewhere->has($candidate->id))
-                <x-ui.badge color="amber" class="shrink-0" title="Bila dipilih, posisi pimpinan di unit tersebut dikosongkan.">
-                  Pimpinan {{ $headsElsewhere[$candidate->id] }}
-                </x-ui.badge>
-              @endif
-              @if ($leaderRole)
-                <x-ui.badge color="cyan" class="shrink-0">{{ $leaderRole->label ?? $leaderRole->name }}</x-ui.badge>
-              @endif
-              @if ($isCurrent)
-                <i class="fa-solid fa-circle-check shrink-0 text-primary-600"></i>
-              @endif
-            </button>
-          </li>
-        @empty
-          <li class="px-3 py-8 text-center text-xs text-slate-500">
-            {{ trim($headSearch) !== '' ? 'Tidak ada pegawai yang cocok.' : 'Belum ada pegawai aktif di lingkup unit ini.' }}
-          </li>
-        @endforelse
-      </ul>
-
-      @if ($headHasMore)
-        <p class="text-[11px] text-slate-500">Menampilkan 25 pegawai pertama. Ketik nama atau NIP untuk mencari yang lain.</p>
-      @endif
-
-      <p class="flex gap-2 text-[11px] text-slate-500">
-        <i class="fa-solid fa-circle-info mt-0.5 text-slate-400"></i>
-        <span>Pegawai yang dipilih dipindahkan ke unit ini, sehingga unit kerja di data pegawainya ikut berubah. Penyetuju SPPD tetap ditentukan dari role pegawai.</span>
-      </p>
-    </div>
-  </x-ui.modal>
 
   {{-- Modal Konfirmasi Hapus — hanya bisa ditutup lewat tombol (tidak closeable) --}}
   <x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Unit Kerja"

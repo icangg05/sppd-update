@@ -236,9 +236,11 @@ class AppointOfficialTest extends TestCase
         $setda = Department::create(['name' => 'Sekretariat Daerah', 'type' => DepartmentType::SETDA, 'level' => 1]);
         $adminSetda = $this->user('admin_opd', null, $setda);
         $this->user('sekda', null, $setda);
-        $this->user('asisten', null, $setda);
+        $asisten = $this->user('asisten', null, $setda);
         $calon = $this->user('staf', null, $setda);
         $stafSetda = $this->user('staf', null, $setda);
+        // Staf Setda memakai alur per atasan langsung: di sini langsung di bawah Asisten.
+        $stafSetda->update(['atasan_id' => $asisten->id]);
         $walikota = Position::create(['name' => 'Walikota', 'default_role' => 'walikota', 'uniqueness_scope' => 'system']);
 
         // Admin OPD (Dinas Sosial) tidak bisa membuka tahap Wali Kota untuk pegawainya.

@@ -189,6 +189,6 @@ class BudgetIndex extends Component
     $view = view('livewire.budgets.budget-index', compact('budgets', 'departments'));
 
     // title() = macro Livewire pada Illuminate\View\View (dikenali via _ide_helper.php).
-    return $view->title('DPA - Data Anggaran');
+    return $view->title('DPA | Data Anggaran');
   }
 }

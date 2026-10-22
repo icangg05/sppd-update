@@ -73,7 +73,7 @@ class SppdWorkflowResolutionTest extends TestCase
         return $sppd->approvals()->orderBy('step_order')->pluck('approver_id')->all();
     }
 
-    public function test_opd_datar_dengan_beberapa_kabid_pembuat_sppd_memilih_atasan(): void
+    public function test_opd_datar_dengan_beberapa_kabid_atasan_langsung_wajib_diatur(): void
     {
         $dinas = $this->dept('Dinas Perhubungan', DepartmentType::OPD);
         $kepala = $this->user('kepala_opd', $dinas);
@@ -82,53 +82,76 @@ class SppdWorkflowResolutionTest extends TestCase
         $this->user('kabid_irban_kabag', $dinas);
         $staf = $this->user('staf', $dinas);
 
-        $steps = $this->service->simulateApprovals($staf, 'dalam_daerah');
-        $this->assertSame(['choose', 'found', 'found'], array_column($steps, 'status'));
-        $this->assertTrue($steps[0]['optional']);
-        $this->assertCount(2, $steps[0]['candidates']);
+        // Atasan belum pasti (dua Kabid di OPD induk): alur terpanjang tampil dengan
+        // tahap atasan belum dipilih, dan pengajuan ditolak.
+        $this->assertTrue($this->service->matchWorkflow($staf, 'dalam_daerah')['needs_supervisor']);
+        $preview = $this->service->simulateApprovals($staf, 'dalam_daerah');
+        $this->assertSame(['kabid_irban_kabag' => 'choose', 'sekretaris_opd' => 'found', 'kepala_opd' => 'found'], array_column($preview, 'status', 'role'));
+        $this->assertSame([true, false, false], array_column($preview, 'supervisor_step'));
+        $this->assertSame($staf->id, $preview[0]['subordinate_id']);
+        $this->assertFalse(SppdWorkflowService::isComplete($preview));
+        $this->assertFalse($this->service->generateApprovals($this->sppd($staf)));
 
-        // Tanpa pilihan, pengajuan ditolak.
-        try {
-            $this->service->generateApprovals($this->sppd($staf));
-            $this->fail('Pengajuan tanpa memilih Kabid seharusnya ditolak.');
-        } catch (\Exception $e) {
-            $this->assertStringContainsString('Pilih pejabat', $e->getMessage());
-        }
+        $this->service->setSupervisor($staf, $kabidA);
 
-        $sppd = $this->sppd($staf);
-        $this->assertTrue($this->service->generateApprovals($sppd, [$steps[0]['index'] => $kabidA->id]));
+        $steps = $this->service->simulateApprovals($staf->fresh(), 'dalam_daerah');
+        $this->assertSame(['found', 'found', 'found'], array_column($steps, 'status'));
+
+        $sppd = $this->sppd($staf->fresh());
+        $this->assertTrue($this->service->generateApprovals($sppd));
         $this->assertSame([$kabidA->id, $sekretaris->id, $kepala->id], $this->approverIds($sppd));
     }
 
-    public function test_staf_sekretariat_dapat_melewati_kabid(): void
+    public function test_staf_beratasan_sekretaris_memakai_alur_tanpa_kabid(): void
     {
         $dinas = $this->dept('Dinas Pertanian', DepartmentType::OPD);
         $kepala = $this->user('kepala_opd', $dinas);
         $sekretaris = $this->user('sekretaris_opd', $dinas);
-        // Kabid tunggal di OPD induk belum tentu atasan staf, jadi tetap dikonfirmasi.
+        // Kabid tunggal di OPD induk belum tentu atasan staf, jadi atasannya diatur.
         $this->user('kabid_irban_kabag', $dinas);
         $staf = $this->user('staf', $dinas);
 
-        $steps = $this->service->simulateApprovals($staf, 'dalam_daerah');
-        $this->assertSame('choose', $steps[0]['status']);
+        $this->assertTrue($this->service->matchWorkflow($staf, 'dalam_daerah')['needs_supervisor']);
 
-        $sppd = $this->sppd($staf);
-        $this->service->generateApprovals($sppd, [$steps[0]['index'] => SppdWorkflowService::SKIP]);
+        $this->service->setSupervisor($staf, $sekretaris);
+
+        $sppd = $this->sppd($staf->fresh());
+        $this->service->generateApprovals($sppd);
         $this->assertSame([$sekretaris->id, $kepala->id], $this->approverIds($sppd));
     }
 
-    public function test_tanpa_kabid_di_instansi_tahap_kabid_dilewati_otomatis(): void
+    public function test_tanpa_kabid_di_instansi_atasan_sekretaris_dari_struktur(): void
     {
         $dinas = $this->dept('Badan Kepegawaian', DepartmentType::OPD);
         $kepala = $this->user('kepala_opd', $dinas);
         $sekretaris = $this->user('sekretaris_opd', $dinas);
         $staf = $this->user('staf', $dinas);
 
+        // Sekretaris satu per OPD: atasan langsung pasti, alur tanpa Kabid terpilih otomatis.
+        $this->assertSame($sekretaris->id, $this->service->effectiveSupervisor($staf)['user']->id);
         $this->assertSame(['sekretaris_opd', 'kepala_opd'], array_column($this->service->simulateApprovals($staf, 'lddp'), 'role'));
 
         $sppd = $this->sppd($staf, 'lddp');
         $this->service->generateApprovals($sppd);
         $this->assertSame([$sekretaris->id, $kepala->id], $this->approverIds($sppd));
+    }
+
+    public function test_pejabat_belum_terdaftar_memakai_alur_tertinggi_di_bawah_atasan_agar_bisa_dilengkapi(): void
+    {
+        // Belum ada pejabat sama sekali: alur Sekretaris → Kepala, keduanya wajib dilengkapi.
+        $kosong = $this->dept('Dinas Pangan', DepartmentType::OPD);
+        $stafKosong = $this->user('staf', $kosong);
+        $this->assertFalse($this->service->matchWorkflow($stafKosong, 'dalam_daerah')['needs_supervisor']);
+        $this->assertSame(['sekretaris_opd' => 'not_found', 'kepala_opd' => 'not_found'],
+            array_column($this->service->simulateApprovals($stafKosong, 'dalam_daerah'), 'status', 'role'));
+
+        // Hanya Kepala yang terdaftar: Sekretaris tampil kosong untuk dilengkapi, bukan alur hilang.
+        $dinas = $this->dept('Dinas Perikanan', DepartmentType::OPD);
+        $this->user('kepala_opd', $dinas);
+        $staf = $this->user('staf', $dinas);
+        $steps = $this->service->simulateApprovals($staf, 'dalam_daerah');
+        $this->assertSame(['sekretaris_opd' => 'not_found', 'kepala_opd' => 'found'], array_column($steps, 'status', 'role'));
+        $this->assertFalse(SppdWorkflowService::isComplete($steps));
     }
 
     public function test_kabid_di_sub_unit_bidang_dipakai_otomatis(): void
@@ -146,7 +169,7 @@ class SppdWorkflowResolutionTest extends TestCase
         $this->assertSame([$kabid->id, $sekretaris->id, $kepala->id], $this->approverIds($sppd));
     }
 
-    public function test_staf_setda_memilih_kabag_dan_asisten(): void
+    public function test_staf_setda_kabag_dan_asisten_tersimpan_sebagai_rantai_atasan(): void
     {
         $setda = $this->dept('Sekretariat Daerah', DepartmentType::SETDA);
         $asistenUnit = $this->dept('Asisten Administrasi Umum', DepartmentType::ASISTEN, $setda);
@@ -157,19 +180,35 @@ class SppdWorkflowResolutionTest extends TestCase
         $kabag = $this->user('kabid_irban_kabag', $bagian);
         // Staf tercatat langsung di Setda, bukan di Bagian-nya.
         $staf = $this->user('staf', $setda);
+        $rekan = $this->user('staf', $setda);
 
-        $steps = $this->service->simulateApprovals($staf, 'dalam_daerah');
-        $this->assertSame(['choose', 'choose', 'found'], array_column($steps, 'status'));
-        $this->assertTrue($steps[0]['optional']);
-        $this->assertFalse($steps[1]['optional']);
+        $this->assertTrue($this->service->matchWorkflow($staf, 'dalam_daerah')['needs_supervisor']);
+        $this->service->setSupervisor($staf, $kabag);
 
-        $sppd = $this->sppd($staf);
-        $this->service->generateApprovals($sppd, [$steps[0]['index'] => $kabag->id, $steps[1]['index'] => $asisten->id]);
+        $steps = $this->service->simulateApprovals($staf->fresh(), 'dalam_daerah');
+        $this->assertSame(['found', 'choose', 'found'], array_column($steps, 'status'));
+        // Asisten dipilih untuk Kabag-nya, bukan untuk staf.
+        $this->assertSame($kabag->id, $steps[1]['subordinate_id']);
+
+        // Tahap yang belum dipilih menolak pengajuan.
+        try {
+            $this->service->generateApprovals($this->sppd($staf->fresh()));
+            $this->fail('Pengajuan dengan tahap belum dipilih seharusnya ditolak.');
+        } catch (\Exception $e) {
+            $this->assertStringContainsString('belum dipilih', $e->getMessage());
+        }
+
+        $this->service->chooseStepApprover($staf->fresh(), 'dalam_daerah', 'asisten', $asisten->id);
+        $this->assertSame($asisten->id, $kabag->fresh()->atasan_id);
+
+        $sppd = $this->sppd($staf->fresh());
+        $this->service->generateApprovals($sppd);
         $this->assertSame([$kabag->id, $asisten->id, $sekda->id], $this->approverIds($sppd));
 
-        // Tahap Asisten wajib: tidak bisa dilewati.
-        $this->expectException(\Exception::class);
-        $this->service->generateApprovals($this->sppd($staf), [$steps[0]['index'] => $kabag->id, $steps[1]['index'] => SppdWorkflowService::SKIP]);
+        // Rekan satu unit mendapat saran Kabag yang sama; Asisten ikut dari rantai Kabag.
+        $this->assertSame($kabag->id, $this->service->suggestedSupervisor($rekan)?->id);
+        $this->service->setSupervisor($rekan, $kabag);
+        $this->assertTrue(SppdWorkflowService::isComplete($this->service->simulateApprovals($rekan->fresh(), 'dalam_daerah')));
     }
 
     public function test_staf_puskesmas_langsung_ke_kepala_puskesmas(): void
@@ -203,29 +242,23 @@ class SppdWorkflowResolutionTest extends TestCase
         $this->assertSame($walikota->id, $spt->approver_id);
     }
 
-    public function test_form_alur_menolak_kasubag_sebagai_penyetuju_dan_tahap_opsional_bertanda_tangan(): void
+    public function test_form_alur_menolak_kasubag_sebagai_penyetuju(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin);
 
-        $form = fn (array $steps) => Livewire::test(WorkflowForm::class)
+        Livewire::test(WorkflowForm::class)
             ->set('name', 'Uji')
             ->set('department_type', ['opd'])
             ->set('applicant_role', ['staf'])
             ->set('destination', ['dalam_daerah'])
-            ->set('steps', $steps)
-            ->call('save');
-
-        $form([
-            ['role' => 'kasubid_kasubag', 'signs_spt' => false, 'signs_sppd' => false, 'optional' => false],
-            ['role' => 'kepala_opd', 'signs_spt' => true, 'signs_sppd' => true, 'optional' => false],
-        ])->assertHasErrors(['steps.0.role' => 'in']);
-
-        $form([
-            ['role' => 'kabid_irban_kabag', 'signs_spt' => true, 'signs_sppd' => false, 'optional' => true],
-            ['role' => 'kepala_opd', 'signs_spt' => false, 'signs_sppd' => true, 'optional' => false],
-        ])->assertNoRedirect();
+            ->set('steps', [
+                ['role' => 'kasubid_kasubag', 'signs_spt' => false, 'signs_sppd' => false],
+                ['role' => 'kepala_opd', 'signs_spt' => true, 'signs_sppd' => true],
+            ])
+            ->call('save')
+            ->assertHasErrors(['steps.0.role' => 'in']);
 
         $this->assertDatabaseMissing('sppd_workflows', ['name' => 'Uji']);
     }

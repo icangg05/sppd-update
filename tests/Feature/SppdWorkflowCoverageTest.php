@@ -56,6 +56,10 @@ class SppdWorkflowCoverageTest extends TestCase
         $this->assertEqualsCanonicalizing(self::APPLICANT_ROLES, array_values(array_unique(array_merge(...array_values(self::MATRIX)))));
     }
 
+    /**
+     * Tepat satu alur per kombinasi; atau, bila alurnya dibedakan per atasan langsung,
+     * setiap alur memegang jabatan atasan yang berbeda (tidak tumpang tindih).
+     */
     public function test_setiap_kombinasi_cocok_dengan_tepat_satu_alur(): void
     {
         $workflows = SppdWorkflow::where('is_active', true)->get();
@@ -69,7 +73,14 @@ class SppdWorkflowCoverageTest extends TestCase
                         && in_array($role, $w->applicant_role, true)
                         && in_array($domain, $w->destination, true));
 
-                    if ($matches->count() !== 1) {
+                    $general = $matches->filter(fn (SppdWorkflow $w) => empty($w->supervisor_role));
+                    $bySupervisor = $matches->flatMap(fn (SppdWorkflow $w) => $w->supervisor_role ?? []);
+
+                    $valid = $general->count() === 1
+                        ? $bySupervisor->isEmpty()
+                        : $general->isEmpty() && $bySupervisor->isNotEmpty() && $bySupervisor->duplicates()->isEmpty();
+
+                    if (! $valid) {
                         $problems[] = "{$type} / {$role} / {$domain}: " . $matches->count() . ' alur';
                     }
                 }
@@ -77,6 +88,13 @@ class SppdWorkflowCoverageTest extends TestCase
         }
 
         $this->assertSame([], $problems);
+    }
+
+    public function test_alur_per_atasan_dimulai_dari_pejabat_atasan_itu(): void
+    {
+        foreach (SppdWorkflow::whereNotNull('supervisor_role')->get() as $workflow) {
+            $this->assertSame($workflow->supervisor_role, [collect($workflow->steps)->first()['role']], $workflow->name);
+        }
     }
 
     public function test_tahapan_sesuai_aturan_penandatangan(): void
@@ -90,10 +108,8 @@ class SppdWorkflowCoverageTest extends TestCase
             foreach ($steps as $step) {
                 // Tingkat persetujuan terendah Kabid/Irban/Kabag.
                 $this->assertContains($step['role'], SppdWorkflowService::APPROVER_ROLES, "{$workflow->name}: {$step['role']}");
-                // Tahap yang bisa dilewati tidak boleh memegang tanda tangan.
-                if ($step['optional']) {
-                    $this->assertFalse($step['signs_spt'] || $step['signs_sppd'], "{$workflow->name}: tahap opsional menandatangani");
-                }
+                // Semua tahap wajib: tidak ada lagi tahap yang bisa dilewati.
+                $this->assertArrayNotHasKey('optional', $step, "{$workflow->name}: tahap opsional");
             }
 
             // Perjalanan luar negeri selalu ditandatangani Wali Kota (kecuali DPRD oleh Pimpinan DPRD).

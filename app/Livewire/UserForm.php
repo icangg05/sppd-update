@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
 use App\Models\User;
+use App\Services\SppdWorkflowService;
 use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Cache;
@@ -50,6 +51,9 @@ class UserForm extends Component
   public $position_id = '';
   public $role = '';
 
+  // Atasan langsung: menentukan alur & pejabat tahap Kabid/Asisten (kosong = ikut struktur unit kerja).
+  public $atasan_id = '';
+
   // Pencarian server-side untuk jabatan (agar tidak memuat seluruh data jabatan sekaligus).
   public string $searchPosition = '';
 
@@ -74,6 +78,7 @@ class UserForm extends Component
       $this->department_id = $user->department_id;
       $this->rank_id = $user->rank_id;
       $this->position_id = $user->position_id;
+      $this->atasan_id = $user->atasan_id ?? '';
       $this->role = $user->roles->first()?->name ?? '';
       $this->dprd_jabatan = $user->dprd_jabatan ?? '';
       $this->partai = $user->partai ?? '';
@@ -146,6 +151,7 @@ class UserForm extends Component
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
+      'atasan_id' => 'nullable|exists:users,id',
       'role' => ['required', 'string', $this->uniqueRoleRule()],
     ];
 
@@ -442,6 +448,13 @@ class UserForm extends Component
       throw $e;
     }
 
+    // Atasan langsung harus calon yang sah untuk unit & role pegawai ini (dan tidak berputar).
+    if ($this->atasan_id && ($error = $this->supervisorFieldError())) {
+      $this->addError('atasan_id', $error);
+      $this->toastError('Periksa kembali isian formulir.');
+      return;
+    }
+
     $currentUser = auth()->user();
     if (!$currentUser->hasRole('super_admin')) {
       $dept = $currentUser->department;
@@ -465,6 +478,7 @@ class UserForm extends Component
       'department_id' => $this->department_id ?: null,
       'rank_id' => $this->rank_id ?: null,
       'position_id' => $this->position_id ?: null,
+      'atasan_id' => $this->atasan_id ?: null,
     ];
 
     // Simpan data DPRD hanya untuk Anggota DPRD; selain itu kosongkan agar tidak ada data basi.
@@ -489,16 +503,7 @@ class UserForm extends Component
       $this->user->update($data);
       $this->user->syncRoles([$this->role]);
 
-      // Pimpinan unit mengikuti penempatan: pindah ke unit lain melepas posisi pimpinan di unit lama.
-      $released = Department::where('head_id', $this->user->id)
-        ->where('id', '!=', $this->user->department_id)
-        ->get();
-      $released->each->update(['head_id' => null]);
-
       $this->toastSuccess("Pegawai {$this->user->name} berhasil diperbarui.");
-      if ($released->isNotEmpty()) {
-        $this->toastInfo('Posisi pimpinan ' . $released->pluck('name')->join(', ') . ' dikosongkan karena pegawai pindah unit.');
-      }
       return;
     } else {
       $data['is_active'] = true;
@@ -511,6 +516,31 @@ class UserForm extends Component
       $newUser->assignRole($this->role);
       return redirect()->route('master.users.edit', [...$typeParam, 'user' => $newUser])->with('success', "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
     }
+  }
+
+  /** Pegawai yang sedang diisi, dengan unit kerja dari form (untuk calon & validasi atasan). */
+  private function supervisorSubject(): User
+  {
+    $subject = $this->isEdit ? clone $this->user : new User();
+    $subject->name = $this->name ?: 'Pegawai';
+    $subject->department_id = $this->department_id ?: null;
+    $subject->setRelation('department', $this->department_id ? Department::find($this->department_id) : null);
+
+    return $subject;
+  }
+
+  private function supervisorFieldError(): ?string
+  {
+    $service = app(SppdWorkflowService::class);
+    $rank = Position::levelForRole($this->role);
+    $subject = $this->supervisorSubject();
+
+    $allowed = array_column($service->supervisorCandidates($subject, '', $rank, 500), 'id');
+    if (! in_array((int) $this->atasan_id, $allowed, true)) {
+      return 'Pilih atasan dari pejabat di atas pegawai ini pada instansinya.';
+    }
+
+    return $service->supervisorError($subject, User::with('roles')->find($this->atasan_id), $rank);
   }
 
   /**
@@ -574,10 +604,18 @@ class UserForm extends Component
       ? $selectedPosition->requiredDepartmentType()
       : null;
 
+    // Calon atasan langsung: pejabat di atas pegawai ini (yang terdekat lebih dulu).
+    $supervisorOptions = $this->department_id && $this->role
+      ? collect(app(SppdWorkflowService::class)->supervisorCandidates($this->supervisorSubject(), '', Position::levelForRole($this->role), 200))
+        ->map(fn (array $c) => ['value' => $c['id'], 'label' => $c['name'] . ' · ' . $c['role_label'] . ($c['unit'] ? ' (' . $c['unit'] . ')' : '')])
+        ->prepend(['value' => '', 'label' => 'Belum diatur (ikut struktur unit kerja)'])
+        ->all()
+      : [['value' => '', 'label' => 'Pilih unit kerja & role dulu']];
+
     return view('livewire.user-form', [
+      'supervisorOptions' => $supervisorOptions,
       'departmentTree' => $this->getDepartmentTree(),
       // Unit yang dipimpin pegawai ini (diatur di halaman struktur unit kerja).
-      'headOfUnits' => $this->isEdit ? Department::where('head_id', $this->user->id)->pluck('name') : collect(),
       'ranks' => Rank::orderBy('group')->get(),
       'positions' => $positions,
       'positionsHasMore' => $positionsHasMore,

@@ -1,5 +1,5 @@
 @extends('errors.layout')
-@section('title', '500 - Terjadi Kesalahan Sistem')
+@section('title', '500 | Terjadi Kesalahan Sistem')
 
 @section('content')
     <div class="mb-6 text-amber-500">

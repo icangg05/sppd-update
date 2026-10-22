@@ -201,6 +201,15 @@
 							</p>
 						</div>
 
+						@unless ($user->isDprdMember())
+							<div class="sm:col-span-2 space-y-1">
+								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Atasan Langsung</label>
+								<p class="text-sm font-semibold text-slate-800">
+									<i class="fa-solid fa-user-tie mr-1.5 text-slate-500"></i>@if ($user->atasan){{ $user->atasan->name }} <span class="font-normal text-slate-500">· {{ $user->atasan->roles->first()?->label }}</span>@else<span class="font-normal text-slate-500">Belum diatur, ikut struktur unit kerja</span>@endif
+								</p>
+							</div>
+						@endunless
+
 						<div class="sm:col-span-2 space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Instansi / Unit Kerja
 								(OPD)</label>
