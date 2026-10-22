@@ -73,7 +73,7 @@ class SignatureService
 
     // Jika dokumen adalah SPPD, lakukan penandatanganan kedua (Halaman Belakang)
     if (str_starts_with($signature->document_type, 'sppd')) {
-      $tempRelPath = 'doc_dummy/sppd_first_' . uniqid() . '.pdf';
+      $tempRelPath = config('tte.storage.paths.draft') . '/sppd_first_' . uniqid() . '.pdf';
       $disk = Storage::disk(config('tte.storage.disk'));
       $disk->put($tempRelPath, $signedPdf);
       $tempFile = $disk->path($tempRelPath);
@@ -129,7 +129,7 @@ class SignatureService
       "Menandatangani dokumen {$docLabel} {$signature->sppdRequest->document_number} secara elektronik",
     );
 
-    // Poin 4: Hapus file draft (doc_dummy) setelah signing berhasil
+    // Poin 4: Hapus file draft (doc-dummy) setelah signing berhasil
     $this->deleteDraftFile($draftFile);
 
     return true;
@@ -185,7 +185,7 @@ class SignatureService
 
   private function deleteDraftFile(string $draftFile): void
   {
-    // Ambil direktori parent dari file draft (folder doc_dummy)
+    // Ambil direktori parent dari file draft (folder doc-dummy)
     $draftDir = dirname($draftFile);
 
     if (is_dir($draftDir)) {
@@ -235,7 +235,8 @@ class SignatureService
       ? \Carbon\Carbon::parse($dateField)->setTimeFrom(now())->format('Y-m-d_Hi') . substr(now()->format('s'), 0, 1)
       : now()->format('Y-m-d_Hi') . substr(now()->format('s'), 0, 1);
 
-    $filename     = $prefix . '_' . $personName . '_' . $timestamp . '.pdf';
+    // Nama berkas huruf kapital, mis. SPT_BUDI-SANTOSO_2026-10-22_14301.pdf (ekstensi tetap kecil).
+    $filename     = strtoupper($prefix . '_' . $personName . '_' . $timestamp) . '.pdf';
     $relativePath = config('tte.storage.paths.signed') . '/' . $filename;
     $disk->put($relativePath, $pdfContents);
 

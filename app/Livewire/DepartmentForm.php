@@ -6,6 +6,9 @@ use App\Enums\DepartmentType;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\AppSettings;
+use App\Services\ImageCompressor;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -144,7 +147,7 @@ class DepartmentForm extends Component
       'parent_id' => [$this->isSuperAdmin || $this->isRoot() ? 'nullable' : 'required', 'exists:departments,id'],
       'can_view_children_data' => ['boolean'],
       // Kop utama boleh diunggah semua unit (sub-unit yang kosong akan mewarisi induk).
-      'letterhead' => ['nullable', 'image', 'max:2048'],
+      'letterhead' => ['nullable', 'image', 'max:' . app(AppSettings::class)->uploadMaxKb(true)],
     ];
 
     // Kode hanya relevan di tingkat induk (OPD).
@@ -154,7 +157,7 @@ class DepartmentForm extends Component
 
     // Kop kedua (SPT) khusus DPRD.
     if ($this->type === DepartmentType::DPRD->value) {
-      $rules['letterhead_second'] = ['nullable', 'image', 'max:2048'];
+      $rules['letterhead_second'] = ['nullable', 'image', 'max:' . app(AppSettings::class)->uploadMaxKb(true)];
     }
 
     return $rules;
@@ -271,19 +274,23 @@ class DepartmentForm extends Component
 
     if ($this->letterhead) {
       $this->deleteOldFile($dept->letterhead);
-      $ext = $this->letterhead->getClientOriginalExtension();
-      $files['letterhead'] = $this->letterhead->storeAs('kop_surat', "{$dept->id}_primary.{$ext}", 'public');
+      $files['letterhead'] = $this->storeLetterhead($this->letterhead, "{$dept->id}_primary");
     }
 
     if ($this->letterhead_second && $dept->type === DepartmentType::DPRD) {
       $this->deleteOldFile($dept->letterhead_second);
-      $ext = $this->letterhead_second->getClientOriginalExtension();
-      $files['letterhead_second'] = $this->letterhead_second->storeAs('kop_surat', "{$dept->id}_secondary.{$ext}", 'public');
+      $files['letterhead_second'] = $this->storeLetterhead($this->letterhead_second, "{$dept->id}_secondary");
     }
 
     if ($files) {
       $dept->update($files);
     }
+  }
+
+  /** Kop surat dicetak ke PDF: format dipertahankan (PNG transparan tetap PNG) dengan resolusi cetak. */
+  private function storeLetterhead(UploadedFile $file, string $name): string
+  {
+    return app(ImageCompressor::class)->store($file, 'kop-surat', name: $name, keepFormat: true, maxDimension: ImageCompressor::LETTERHEAD_DIMENSION);
   }
 
   private function deleteOldFile(?string $path): void

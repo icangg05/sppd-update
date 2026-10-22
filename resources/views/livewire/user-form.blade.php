@@ -194,27 +194,30 @@
 					</div>
 					<div>
 						<h3 class="text-sm font-bold text-slate-800">Penempatan & Kewenangan</h3>
-						<p class="text-xs text-slate-500">Unit kerja, pangkat, jabatan, dan hak akses.</p>
+						<p class="text-xs text-slate-500">{{ $showDepartmentPicker ? 'Unit kerja, pangkat, jabatan, dan hak akses.' : 'Pangkat, jabatan, dan hak akses.' }}</p>
 					</div>
 				</header>
 
 				<div class="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
-					<div class="space-y-1 sm:col-span-2">
-						<x-form.tree-select wire:model.live="department_id" name="department_id"
-							label="Instansi / Unit Kerja (OPD)" required :nodes="$departmentTree"
-							searchPlaceholder="Cari instansi / unit kerja ..." emptyText="Belum ada unit kerja dipilih."
-							hint="Klik unit kerja tempat pegawai benar-benar ditempatkan. Tekan ▸ untuk membuka sub-unit di bawahnya; pilih unit yang paling spesifik." />
-						{{-- Unit kerja baru hanya ditambahkan Super Admin. --}}
-						@if (auth()->user()->hasRole('super_admin'))
-							<p class="text-xs text-slate-500 mt-1">
-								<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
-								<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
-									class="font-semibold text-primary-600 underline-offset-2 hover:underline">
-									Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-								</a>
-							</p>
-						@endif
-					</div>
+					{{-- Unit kerja hanya satu pilihan (admin OPD tanpa sub-unit) sudah terisi otomatis. --}}
+					@if ($showDepartmentPicker)
+						<div class="space-y-1 sm:col-span-2">
+							<x-form.tree-select wire:model.live="department_id" name="department_id"
+								label="Instansi / Unit Kerja (OPD)" required :nodes="$departmentTree"
+								searchPlaceholder="Cari instansi / unit kerja ..." emptyText="Belum ada unit kerja dipilih."
+								hint="Klik unit kerja tempat pegawai benar-benar ditempatkan. Tekan ▸ untuk membuka sub-unit di bawahnya; pilih unit yang paling spesifik." />
+							{{-- Unit kerja baru hanya ditambahkan Super Admin. --}}
+							@if (auth()->user()->hasRole('super_admin'))
+								<p class="text-xs text-slate-500 mt-1">
+									<i class="fa-solid fa-circle-plus text-primary-500 mr-1"></i>Unit kerja belum ada?
+									<a href="{{ route('master.departments.create') }}" target="_blank" rel="noopener"
+										class="font-semibold text-primary-600 underline-offset-2 hover:underline">
+										Tambah unit kerja baru <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+									</a>
+								</p>
+							@endif
+						</div>
+					@endif
 
 					@unless ($this->isDprdContext())
 						<div class="space-y-1">

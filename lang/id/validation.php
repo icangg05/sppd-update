@@ -29,7 +29,7 @@ return [
   'before_or_equal' => 'Kolom :attribute harus berisi tanggal sebelum atau sama dengan :date.',
   'between' => [
     'array' => 'Kolom :attribute harus memiliki antara :min sampai :max item.',
-    'file' => 'Kolom :attribute harus berukuran antara :min sampai :max kilobita.',
+    'file' => 'Kolom :attribute harus berukuran antara :min sampai :max.',
     'numeric' => 'Kolom :attribute harus bernilai antara :min sampai :max.',
     'string' => 'Kolom :attribute harus berisi antara :min sampai :max karakter.',
   ],
@@ -96,7 +96,7 @@ return [
   'mac_address' => 'Kolom :attribute harus berupa alamat MAC yang valid.',
   'max' => [
     'array' => 'Kolom :attribute tidak boleh memiliki lebih dari :max item.',
-    'file' => 'Kolom :attribute tidak boleh berukuran lebih dari :max kilobita.',
+    'file' => 'Kolom :attribute tidak boleh berukuran lebih dari :max.',
     'numeric' => 'Kolom :attribute tidak boleh bernilai lebih dari :max.',
     'string' => 'Kolom :attribute tidak boleh berisi lebih dari :max karakter.',
   ],
@@ -105,7 +105,7 @@ return [
   'mimetypes' => 'Kolom :attribute harus berupa berkas berjenis: :values.',
   'min' => [
     'array' => 'Kolom :attribute harus memiliki minimal :min item.',
-    'file' => 'Kolom :attribute harus berukuran minimal :min kilobita.',
+    'file' => 'Kolom :attribute harus berukuran minimal :min.',
     'numeric' => 'Kolom :attribute harus bernilai minimal :min.',
     'string' => 'Kolom :attribute harus berisi minimal :min karakter.',
   ],
@@ -149,7 +149,7 @@ return [
   'same' => 'Kolom :attribute dan :other harus cocok.',
   'size' => [
     'array' => 'Kolom :attribute harus berisi :size item.',
-    'file' => 'Kolom :attribute harus berukuran :size kilobita.',
+    'file' => 'Kolom :attribute harus berukuran :size.',
     'numeric' => 'Kolom :attribute harus bernilai :size.',
     'string' => 'Kolom :attribute harus berisi :size karakter.',
   ],

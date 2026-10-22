@@ -63,10 +63,11 @@ return [
     'disk' => env('PDF_STORAGE_DISK', 'public'),
 
     'paths' => [
-      'draft'      => 'doc_dummy',              // Draft PDF sebelum sign
-      'signed'     => date('Y') . '/doc_tte',   // PDF sudah di-sign
-      'signatures' => 'tanda_tangan',           // Gambar tanda tangan
-      'qr_codes'   => 'qr_codes',               // QR code files
+      // Nama folder memakai tanda hubung, bukan garis bawah.
+      'draft'      => 'doc-dummy',              // Draft PDF sebelum sign
+      'signed'     => \App\Support\DocumentFolder::path('doc-tte'), // PDF sudah di-sign: dokumen-{tahun}/doc-tte
+      'signatures' => 'tanda-tangan',           // Gambar tanda tangan
+      'qr_codes'   => 'qr-codes',               // QR code files
     ],
   ],
 

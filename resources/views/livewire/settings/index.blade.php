@@ -29,6 +29,7 @@
           $label = $definitions[$key]['label'] ?? $key;
           $editable = array_key_exists($key, $values);
           $isUrl = is_string($item['value']) && filter_var($item['value'], FILTER_VALIDATE_URL);
+          $isNumber = in_array('integer', $definitions[$key]['rules'] ?? [], true);
         @endphp
         <div wire:key="setting-{{ $key }}" class="grid gap-3 px-4 py-4 md:grid-cols-[16rem_1fr] md:gap-6">
           <div class="min-w-0">
@@ -40,7 +41,10 @@
           </div>
 
           <div class="min-w-0">
-            @if ($editable)
+            @if ($editable && $isNumber)
+              <x-form.input type="number" wire:model="values.{{ $key }}" min="1" max="100"
+                wrapperClass="max-w-40" class="font-mono tabular-nums" />
+            @elseif ($editable)
               <x-form.textarea wire:model="values.{{ $key }}" rows="3" class="font-mono text-xs break-all" />
               @if ($isUrl)
                 <a href="{{ $item['value'] }}" target="_blank" rel="noopener noreferrer"

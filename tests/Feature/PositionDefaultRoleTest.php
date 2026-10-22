@@ -192,6 +192,33 @@ class PositionDefaultRoleTest extends TestCase
         $this->assertSame(['kepala_opd'], $budi->getRoleNames()->all());
     }
 
+    public function test_pemilih_unit_kerja_disembunyikan_bila_hanya_satu_pilihan(): void
+    {
+        $department = $this->makeDepartment('Dinas Komunikasi dan Informatika');
+        $admin = $this->makeUser('admin_opd', $department);
+
+        // Instansi tanpa sub-unit: unit kerja terisi otomatis, pemilihnya tidak ditampilkan.
+        Livewire::actingAs($admin)
+            ->test(UserForm::class)
+            ->assertSet('department_id', $department->id)
+            ->assertViewHas('showDepartmentPicker', false)
+            ->assertDontSee('Cari instansi / unit kerja');
+
+        // Instansi dengan sub-unit tetap perlu memilih.
+        $kecamatan = $this->makeDepartment('Kecamatan Kadia', DepartmentType::KECAMATAN);
+        Department::create(['name' => 'Kelurahan Anaiwoi', 'type' => DepartmentType::KELURAHAN, 'parent_id' => $kecamatan->id, 'level' => 2]);
+
+        Livewire::actingAs($this->makeUser('admin_opd', $kecamatan))
+            ->test(UserForm::class)
+            ->assertViewHas('showDepartmentPicker', true)
+            ->assertSee('Cari instansi / unit kerja');
+
+        // Super Admin selalu melihat pemilih.
+        Livewire::actingAs($this->makeUser('super_admin'))
+            ->test(UserForm::class)
+            ->assertViewHas('showDepartmentPicker', true);
+    }
+
     public function test_admin_opd_tidak_mengubah_role_admin_opd_lain(): void
     {
         $department = $this->makeDepartment('Dinas Sosial');

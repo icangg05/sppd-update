@@ -103,6 +103,12 @@ class UserForm extends Component
       }
     }
 
+    // Unit kerja hanya satu pilihan: isi otomatis (pemilihnya tidak ditampilkan).
+    $tree = $this->getDepartmentTree();
+    if ($this->hasSingleDepartment($tree)) {
+      $this->department_id = $tree[0]['value'];
+    }
+
     // Memulihkan polling jika halaman di-refresh saat menunggu pegawai menekan Start.
     $this->restoreTelegramLinkState();
   }
@@ -570,6 +576,17 @@ class UserForm extends Component
     return $roots->map($build)->values()->all();
   }
 
+  /**
+   * Admin OPD yang instansinya tanpa sub-unit hanya punya satu unit kerja —
+   * tidak perlu dipilih. Super Admin tetap melihat pemilih (dan tautan tambah unit).
+   */
+  private function hasSingleDepartment(array $tree): bool
+  {
+    return ! auth()->user()->hasRole('super_admin')
+      && count($tree) === 1
+      && empty($tree[0]['children']);
+  }
+
   public function render()
   {
     // Field role terkunci untuk selain Super Admin — tampilkan role yang benar-benar akan disimpan.
@@ -612,9 +629,12 @@ class UserForm extends Component
         ->all()
       : [['value' => '', 'label' => 'Pilih unit kerja & role dulu']];
 
+    $departmentTree = $this->getDepartmentTree();
+
     return view('livewire.user-form', [
       'supervisorOptions' => $supervisorOptions,
-      'departmentTree' => $this->getDepartmentTree(),
+      'departmentTree' => $departmentTree,
+      'showDepartmentPicker' => ! $this->hasSingleDepartment($departmentTree),
       // Unit yang dipimpin pegawai ini (diatur di halaman struktur unit kerja).
       'ranks' => Rank::orderBy('group')->get(),
       'positions' => $positions,

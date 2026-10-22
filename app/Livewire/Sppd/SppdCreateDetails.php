@@ -15,9 +15,12 @@ use App\Models\SppdCategory;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Models\User;
+use App\Services\AppSettings;
 use App\Services\ApproverNotifier;
+use App\Services\ImageCompressor;
 use App\Services\QueueHealthService;
 use App\Services\SppdWorkflowService;
+use App\Support\DocumentFolder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -289,7 +292,8 @@ class SppdCreateDetails extends Component
         'spt_date' => 'nullable|date',
         'sppd_date' => 'nullable|date',
         'document_number' => 'nullable|string|max:255',
-        'attachment' => 'nullable|file|max:2048', // 2MB
+        // Gambar & berkas lain punya batas sendiri (Pengaturan Aplikasi).
+        'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:' . app(AppSettings::class)->uploadMaxKb(ImageCompressor::isImage($this->attachment))],
         'destinations' => 'required|array|min:1',
         'destinations.*.province_id' => 'required_if:domain,lddp,ldlp',
         'destinations.*.regency_id' => 'required_if:domain,lddp,ldlp',
@@ -360,7 +364,7 @@ class SppdCreateDetails extends Component
 
           $attachmentPath = $sppd->attachment;
           if ($this->attachment) {
-            $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
+            $attachmentPath = app(ImageCompressor::class)->storeWithOriginalName($this->attachment, DocumentFolder::path('dokumen-pendukung'));
           }
 
           $reviserId = $sppd->reviser_id;
@@ -456,7 +460,7 @@ class SppdCreateDetails extends Component
         } else {
           $attachmentPath = null;
           if ($this->attachment) {
-            $attachmentPath = $this->attachment->store(date('Y') . '/dokumen_pendukung', 'public');
+            $attachmentPath = app(ImageCompressor::class)->storeWithOriginalName($this->attachment, DocumentFolder::path('dokumen-pendukung'));
           }
 
           $sppd = SppdRequest::create([

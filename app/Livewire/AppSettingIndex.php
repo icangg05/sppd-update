@@ -51,8 +51,14 @@ class AppSettingIndex extends Component
     $this->values = array_map(fn ($v) => is_string($v) ? trim($v) : $v, $this->values);
     $this->validate();
 
+    // Pengaturan angka disimpan sebagai bilangan, bukan teks.
+    $definitions = AppSettings::definitions();
+    $values = collect($this->values)
+      ->map(fn ($value, $key) => in_array('integer', $definitions[$key]['rules'] ?? [], true) ? (int) $value : $value)
+      ->all();
+
     // Hanya key yang memang ada di file yang boleh ditulis.
-    $changes = $settings->update(array_intersect_key($this->values, $settings->all()));
+    $changes = $settings->update(array_intersect_key($values, $settings->all()));
 
     if ($changes === []) {
       $this->toastInfo('Tidak ada perubahan untuk disimpan.');

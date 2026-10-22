@@ -107,7 +107,7 @@
             @if ($isAdmin)
               <input type="file" wire:model="reportFile" accept=".pdf,.doc,.docx"
                 class="w-full cursor-pointer rounded border border-slate-200 p-1.5 text-sm text-slate-500 transition file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:border-emerald-300 hover:file:bg-emerald-100">
-              <p class="mt-1 text-xs text-slate-500">Format PDF, DOC, DOCX · maks. 20MB · wajib diisi.</p>
+              <p class="mt-1 text-xs text-slate-500">Format PDF, DOC, DOCX · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(false) }} · wajib diisi.</p>
               <p wire:loading wire:target="reportFile" class="mt-1 text-xs text-slate-500">
                 <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
               @error('reportFile') <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p> @enderror
@@ -137,7 +137,7 @@
             @if ($isAdmin)
               <input type="file" wire:model="documentationFile" accept="image/*"
                 class="w-full cursor-pointer rounded border border-slate-200 p-1.5 text-sm text-slate-500 transition file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:border-emerald-300 hover:file:bg-emerald-100">
-              <p class="mt-1 text-xs text-slate-500">Format JPG, PNG · maks. 20MB · wajib diisi.</p>
+              <p class="mt-1 text-xs text-slate-500">Format JPG, PNG · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }} · dikompres otomatis · wajib diisi.</p>
               <p wire:loading wire:target="documentationFile" class="mt-1 text-xs text-slate-500">
                 <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
               @error('documentationFile') <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p> @enderror

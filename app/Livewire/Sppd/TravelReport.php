@@ -5,6 +5,9 @@ namespace App\Livewire\Sppd;
 use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
+use App\Services\AppSettings;
+use App\Services\ImageCompressor;
+use App\Support\DocumentFolder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -38,7 +41,7 @@ class TravelReport extends Component
     return Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
   }
 
-  public function save(): void
+  public function save(AppSettings $settings): void
   {
     abort_unless($this->canManage(), 403, 'Aksi ini tidak diizinkan.');
     abort_unless(in_array($this->sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
@@ -47,8 +50,8 @@ class TravelReport extends Component
 
     $this->validate([
       'reportDate' => 'required|date',
-      'reportFile' => ($report?->report_file ? 'nullable' : 'required').'|file|max:20480',
-      'documentationFile' => ($report?->documentation_file ? 'nullable' : 'required').'|image|max:20480',
+      'reportFile' => ($report?->report_file ? 'nullable' : 'required').'|file|mimes:pdf,doc,docx|max:'.$settings->uploadMaxKb(false),
+      'documentationFile' => ($report?->documentation_file ? 'nullable' : 'required').'|image|max:'.$settings->uploadMaxKb(true),
     ], [], [
       'reportDate' => 'tanggal laporan',
       'reportFile' => 'file laporan',
@@ -64,14 +67,14 @@ class TravelReport extends Component
       if ($report?->report_file) {
         Storage::disk('public')->delete($report->report_file);
       }
-      $data['report_file'] = $this->reportFile->store(date('Y').'/laporan_perjalanan', 'public');
+      $data['report_file'] = app(ImageCompressor::class)->storeWithOriginalName($this->reportFile, DocumentFolder::path('laporan-perjalanan'));
     }
 
     if ($this->documentationFile) {
       if ($report?->documentation_file) {
         Storage::disk('public')->delete($report->documentation_file);
       }
-      $data['documentation_file'] = $this->documentationFile->store(date('Y').'/dokumentasi_perjalanan', 'public');
+      $data['documentation_file'] = app(ImageCompressor::class)->storeWithOriginalName($this->documentationFile, DocumentFolder::path('dokumentasi-perjalanan'));
     }
 
     $this->sppd->report()->updateOrCreate(['sppd_request_id' => $this->sppd->id], $data);

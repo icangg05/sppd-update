@@ -298,8 +298,9 @@
 					</div>
 					<div>
 						<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Undangan / Dokumen Pendukung</label>
-						<input type="file" wire:model="attachment" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
-						<p class="text-[10px] text-slate-500 mt-1">Format berkas: PDF, DOCX, JPG, PNG (Maks. 2MB)</p>
+						<input type="file" wire:model="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+						@php $uploadSettings = app(\App\Services\AppSettings::class); @endphp
+						<p class="text-[10px] text-slate-500 mt-1">Format berkas: PDF, DOC, DOCX (maks. {{ $uploadSettings->uploadMaxLabel(false) }}), JPG, PNG, WEBP (maks. {{ $uploadSettings->uploadMaxLabel(true) }}, dikompres otomatis)</p>
 						@error('attachment') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
 					</div>
 				</div>

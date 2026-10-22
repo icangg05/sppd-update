@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\FileSize;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -34,7 +35,38 @@ class AppSettings
         'default'     => config('app.survey_url'),
         'rules'       => ['required', 'url', 'max:2000'],
       ],
+      // Batas atas 100 MB mengikuti upload_max_filesize/post_max_size di docker/php.ini.
+      'upload_max_image_mb' => [
+        'label'       => 'Maks. Upload Gambar (MB)',
+        'description' => 'Ukuran maksimal foto/gambar yang diunggah (foto dokumentasi, nota, dokumen pendukung bergambar, kop surat). Gambar dikompres otomatis setelah diunggah. Maksimal 100.',
+        'default'     => 10,
+        'rules'       => ['required', 'integer', 'min:1', 'max:100'],
+      ],
+      'upload_max_file_mb' => [
+        'label'       => 'Maks. Upload Berkas (MB)',
+        'description' => 'Ukuran maksimal berkas selain gambar (PDF, DOC, DOCX) seperti file laporan perjalanan dan dokumen pendukung. Maksimal 100.',
+        'default'     => 50,
+        'rules'       => ['required', 'integer', 'min:1', 'max:100'],
+      ],
     ];
+  }
+
+  /**
+   * Batas ukuran unggahan dalam KB (untuk aturan validasi `max:`), gambar atau berkas lain.
+   * Nilai di file yang bukan bilangan bulat positif memakai nilai awal.
+   */
+  public function uploadMaxKb(bool $image): int
+  {
+    $key = $image ? 'upload_max_image_mb' : 'upload_max_file_mb';
+    $mb  = filter_var($this->get($key), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+    return ($mb ?: self::definitions()[$key]['default']) * 1024;
+  }
+
+  /** Teks batas ukuran untuk petunjuk di bawah input, mis. "10 MB". */
+  public function uploadMaxLabel(bool $image): string
+  {
+    return FileSize::fromKilobytes($this->uploadMaxKb($image));
   }
 
   /**

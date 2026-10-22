@@ -276,7 +276,7 @@
             </div>
             <x-form.input type="number" wire:model="addQuantity" label="Jumlah (Item)" min="1" required />
             <div class="col-span-2">
-                <x-form.file wire:model="addReceipt" label="Lampiran Bukti/Nota" hint="Max 20MB" accept="image/*" />
+                <x-form.file wire:model="addReceipt" label="Lampiran Bukti/Nota" hint="Maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }}, dikompres otomatis" accept="image/*" />
                 <p wire:loading wire:target="addReceipt" class="mt-1 text-xs text-slate-500">
                     <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
             </div>

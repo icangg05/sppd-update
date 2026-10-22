@@ -7,6 +7,9 @@ use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Models\User;
+use App\Services\AppSettings;
+use App\Services\ImageCompressor;
+use App\Support\DocumentFolder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -135,7 +138,7 @@ class CostDetails extends Component
       'addDescription' => 'required|string|max:500',
       'addUnitCost' => 'required|numeric|min:0',
       'addQuantity' => 'required|integer|min:1',
-      'addReceipt' => 'nullable|image|max:20480',
+      'addReceipt' => 'nullable|image|max:'.app(AppSettings::class)->uploadMaxKb(true),
     ]);
 
     $this->sppd->costDetails()->create([
@@ -144,7 +147,7 @@ class CostDetails extends Component
       'description' => $this->addDescription,
       'unit_cost' => (int) $this->addUnitCost,
       'quantity' => (int) $this->addQuantity,
-      'receipt_photo' => $this->addReceipt ? $this->addReceipt->store(date('Y').'/nota_perjalanan', 'public') : null,
+      'receipt_photo' => $this->addReceipt ? app(ImageCompressor::class)->store($this->addReceipt, DocumentFolder::path('nota-perjalanan')) : null,
     ]);
 
     $this->showAddModal = false;
@@ -173,7 +176,7 @@ class CostDetails extends Component
       'editDescription' => 'required|string|max:500',
       'editUnitCost' => 'required|numeric|min:0',
       'editQuantity' => 'required|integer|min:1',
-      'editReceipt' => 'nullable|image|max:20480',
+      'editReceipt' => 'nullable|image|max:'.app(AppSettings::class)->uploadMaxKb(true),
     ]);
 
     $attrs = [
@@ -187,7 +190,7 @@ class CostDetails extends Component
       if ($cost->receipt_photo) {
         Storage::disk('public')->delete($cost->receipt_photo);
       }
-      $attrs['receipt_photo'] = $this->editReceipt->store(date('Y').'/nota_perjalanan', 'public');
+      $attrs['receipt_photo'] = app(ImageCompressor::class)->store($this->editReceipt, DocumentFolder::path('nota-perjalanan'));
     }
 
     $cost->update($attrs);
