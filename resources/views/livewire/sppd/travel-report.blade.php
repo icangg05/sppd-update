@@ -91,28 +91,24 @@
         <h3 class="text-sm font-bold tracking-wide text-slate-700">Detail Laporan</h3>
       </div>
 
-      <div class="space-y-5 p-5">
-        <div>
-          <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">Tanggal Laporan
-            <span class="text-rose-500">*</span></label>
-          <div class="relative w-full sm:w-64">
-            <i class="fa-solid fa-calendar-day pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600" style="display:flex;"></i>
-            <input type="date" wire:model="reportDate" required @disabled(!$isAdmin)
-              class="w-full rounded border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:bg-slate-50 disabled:cursor-not-allowed">
-          </div>
-          @error('reportDate') <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p> @enderror
-        </div>
+      {{-- Kiri: kalender tanggal laporan; kanan: baris unggahan berkas. --}}
+      <div class="grid grid-cols-1 gap-6 p-5 md:grid-cols-[18rem_minmax(0,1fr)]">
+        <x-form.calendar wire:model="reportDate" label="Tanggal Laporan" accent="emerald" required :disabled="!$isAdmin"
+          :min="$this->earliestReportDate()"
+          :minMessage="'Tanggal laporan tidak boleh sebelum perjalanan selesai (' . $sppd->end_date->translatedFormat('d F Y') . ').'"
+          :hint="'Paling awal ' . $sppd->end_date->translatedFormat('d F Y') . ' (tanggal kembali perjalanan).'" />
 
-        <div class="grid grid-cols-1 gap-6 border-t border-slate-100 pt-5 md:grid-cols-2">
+        {{-- Berkas wajib hanya bila belum ada yang tersimpan (sama dengan validasi backend). --}}
+        <div class="divide-y divide-slate-100 md:border-l md:border-slate-100 md:pl-6">
           {{-- File Laporan --}}
-          <div>
-            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+          <div class="pb-5">
+            <label for="reportFile" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
               <i class="fa-solid fa-file-lines mr-1 text-emerald-600"></i> File Laporan (Dokumen)
               <span class="text-rose-500">*</span></label>
             @if ($isAdmin)
-              <input type="file" wire:model="reportFile" accept=".pdf,.doc,.docx"
+              <input type="file" id="reportFile" wire:model="reportFile" accept=".pdf,.doc,.docx" @required(!$hasFile)
                 class="w-full cursor-pointer rounded border border-slate-200 p-1.5 text-sm text-slate-500 transition file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:border-emerald-300 hover:file:bg-emerald-100">
-              <p class="mt-1 text-xs text-slate-500">Format PDF, DOC, DOCX · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(false) }} · wajib diisi.</p>
+              <p class="mt-1 text-xs text-slate-500">Format PDF, DOC, DOCX · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(false) }} · {{ $hasFile ? 'kosongkan bila tidak diganti' : 'wajib diisi' }}.</p>
               <p wire:loading wire:target="reportFile" class="mt-1 text-xs text-slate-500">
                 <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
               @error('reportFile') <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p> @enderror
@@ -135,14 +131,14 @@
           </div>
 
           {{-- Foto Dokumentasi --}}
-          <div>
-            <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+          <div class="pt-5">
+            <label for="documentationFile" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
               <i class="fa-solid fa-camera mr-1 text-emerald-600"></i> Foto Dokumentasi
               <span class="text-rose-500">*</span></label>
             @if ($isAdmin)
-              <input type="file" wire:model="documentationFile" accept="image/*"
+              <input type="file" id="documentationFile" wire:model="documentationFile" accept="image/*" @required(!$hasPhoto)
                 class="w-full cursor-pointer rounded border border-slate-200 p-1.5 text-sm text-slate-500 transition file:mr-4 file:rounded file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:border-emerald-300 hover:file:bg-emerald-100">
-              <p class="mt-1 text-xs text-slate-500">Format JPG, PNG · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }} · dikompres otomatis · wajib diisi.</p>
+              <p class="mt-1 text-xs text-slate-500">Format JPG, PNG · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }} · dikompres otomatis · {{ $hasPhoto ? 'kosongkan bila tidak diganti' : 'wajib diisi' }}.</p>
               <p wire:loading wire:target="documentationFile" class="mt-1 text-xs text-slate-500">
                 <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
               @error('documentationFile') <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p> @enderror
@@ -152,8 +148,9 @@
                 <span class="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
                   <i class="fa-solid fa-check text-emerald-500"></i> Foto Tersimpan
                 </span>
-                <a href="{{ asset('storage/' . $sppd->report->documentation_file) }}" target="_blank"
-                  class="text-xs font-bold text-emerald-600 transition hover:text-emerald-800 hover:underline">Lihat Foto</a>
+                <x-ui.gallery-link :src="asset('storage/' . $sppd->report->documentation_file)" group="dokumentasi"
+                  caption="Foto Dokumentasi Perjalanan"
+                  class="text-xs font-bold text-emerald-600 transition hover:text-emerald-800 hover:underline">Lihat Foto</x-ui.gallery-link>
               </div>
             @elseif (!$isAdmin)
               <div class="mt-2">

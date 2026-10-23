@@ -178,10 +178,11 @@
                                         </div>
                                         <div class="flex shrink-0 items-center gap-1">
                                             @if ($cost->receipt_photo)
-                                                <a href="{{ asset('storage/' . $cost->receipt_photo) }}" target="_blank"
+                                                <x-ui.gallery-link :src="asset('storage/' . $cost->receipt_photo)" group="bukti-biaya"
+                                                    :caption="$person['name'] . ' · ' . $cost->description"
                                                     class="rounded p-1 text-emerald-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer" title="Lihat Bukti/Nota">
                                                     <i class="fa-solid fa-image text-xs"></i>
-                                                </a>
+                                                </x-ui.gallery-link>
                                             @endif
                                             @if ($canManage)
                                                 <button type="button" wire:click="openEdit({{ $cost->id }})"
@@ -275,9 +276,8 @@
             </div>
             <x-form.input type="number" wire:model="addQuantity" label="Jumlah (Item)" min="1" required />
             <div class="col-span-2">
-                <x-form.file wire:model="addReceipt" label="Lampiran Bukti/Nota" hint="Maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }}, dikompres otomatis" accept="image/*" />
-                <p wire:loading wire:target="addReceipt" class="mt-1 text-xs text-slate-500">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
+                <x-form.file wire:model="addReceipt" label="Lampiran Bukti/Nota" accept="image/*"
+                    hint="Format gambar JPG, PNG · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }} · dikompres otomatis · opsional" />
             </div>
         </div>
         <div class="mt-4 flex justify-end gap-3 border-t border-slate-100 pt-3">
@@ -311,9 +311,8 @@
             </div>
             <x-form.input type="number" wire:model="editQuantity" label="Jumlah (Item)" min="1" required />
             <div class="col-span-2">
-                <x-form.file wire:model="editReceipt" label="Upload Bukti Baru" hint="Opsional" accept="image/*" />
-                <p wire:loading wire:target="editReceipt" class="mt-1 text-xs text-slate-500">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...</p>
+                <x-form.file wire:model="editReceipt" label="Upload Bukti Baru" accept="image/*"
+                    hint="Format gambar JPG, PNG · maks. {{ app(\App\Services\AppSettings::class)->uploadMaxLabel(true) }} · dikompres otomatis · opsional" />
             </div>
         </div>
         <div class="mt-4 flex justify-end gap-3 border-t border-slate-100 pt-3">

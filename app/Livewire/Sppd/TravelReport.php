@@ -33,7 +33,15 @@ class TravelReport extends Component
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     $this->sppd = $sppd;
-    $this->reportDate = $sppd->report?->report_date?->format('Y-m-d') ?? now()->format('Y-m-d');
+    // Default hari ini, tapi tidak sebelum perjalanan selesai (tanggal kembali).
+    $this->reportDate = $sppd->report?->report_date?->format('Y-m-d')
+      ?? max(now()->format('Y-m-d'), $this->earliestReportDate());
+  }
+
+  /** Laporan baru bisa dibuat sejak tanggal kembali perjalanan. */
+  public function earliestReportDate(): string
+  {
+    return $this->sppd->end_date->format('Y-m-d');
   }
 
   public function canManage(): bool
@@ -49,10 +57,12 @@ class TravelReport extends Component
     $report = $this->sppd->report;
 
     $this->validate([
-      'reportDate' => 'required|date',
+      'reportDate' => 'required|date|after_or_equal:'.$this->earliestReportDate(),
       'reportFile' => ($report?->report_file ? 'nullable' : 'required').'|file|mimes:pdf,doc,docx|max:'.$settings->uploadMaxKb(false),
       'documentationFile' => ($report?->documentation_file ? 'nullable' : 'required').'|image|max:'.$settings->uploadMaxKb(true),
-    ], [], [
+    ], [
+      'reportDate.after_or_equal' => 'Tanggal laporan tidak boleh sebelum perjalanan selesai ('.$this->sppd->end_date->translatedFormat('d F Y').').',
+    ], [
       'reportDate' => 'tanggal laporan',
       'reportFile' => 'file laporan',
       'documentationFile' => 'foto dokumentasi',

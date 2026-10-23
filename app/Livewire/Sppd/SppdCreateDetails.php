@@ -51,6 +51,8 @@ class SppdCreateDetails extends Component
   public string $end_date;
   public string $transport_type = '';
   public string $transport_name = '';
+  /** Pilihan dropdown kendaraan; OTHER_TRANSPORT membuka isian manual `transport_name`. */
+  public string $transport_choice = '';
   public string $departure_place = '';
   public string $urgency = 'Biasa';
 
@@ -69,6 +71,16 @@ class SppdCreateDetails extends Component
 
   /** Nilai pilihan kota luar negeri "Kota lain (ketik manual)". */
   public const OTHER_CITY = '__other__';
+
+  /** Pilihan nama kendaraan per jenis angkutan (tercetak di dokumen SPPD). */
+  public const TRANSPORT_OPTIONS = [
+    'Darat' => ['Mobil', 'Bus', 'Motor', 'Kereta Api'],
+    'Laut' => ['Kapal', 'Speedboat'],
+    'Udara' => ['Pesawat', 'Helikopter'],
+  ];
+
+  /** Nilai pilihan kendaraan "Lainnya (ketik manual)". */
+  public const OTHER_TRANSPORT = '__other__';
 
   /** Memo daftar kota per negara selama satu request (dipanggil per baris tujuan saat render). */
   protected array $citiesByCountry = [];
@@ -98,6 +110,7 @@ class SppdCreateDetails extends Component
       $this->end_date = $sppd->end_date->format('Y-m-d');
       $this->transport_type = $sppd->transport_type ?? '';
       $this->transport_name = $sppd->transport_name ?? '';
+      $this->transport_choice = $this->transportChoiceFor($this->transport_name);
       $this->departure_place = $sppd->departure_place ?? '';
       $this->urgency = $sppd->urgency ?? 'Biasa';
       $this->spt_date = $sppd->spt_date ? $sppd->spt_date->format('Y-m-d') : '';
@@ -172,6 +185,17 @@ class SppdCreateDetails extends Component
    */
   public function updated($name, $value): void
   {
+    // Nama kendaraan mengikuti jenis angkutan; kosongkan bila tidak lagi cocok
+    // (termasuk isian manual, karena ditulis untuk jenis angkutan sebelumnya).
+    if ($name === 'transport_type' && ! in_array($this->transport_choice, $this->transportNames(), true)) {
+      $this->transport_choice = '';
+      $this->transport_name = '';
+    }
+
+    if ($name === 'transport_choice') {
+      $this->transport_name = $value === self::OTHER_TRANSPORT ? '' : (string) $value;
+    }
+
     if (preg_match('/^destinations\.(\d+)\.province_id$/', $name, $m)) {
       $this->destinations[(int) $m[1]]['regency_id'] = '';
     }
@@ -186,6 +210,22 @@ class SppdCreateDetails extends Component
     if (preg_match('/^destinations\.(\d+)\.city_choice$/', $name, $m)) {
       $this->destinations[(int) $m[1]]['city'] = $value === self::OTHER_CITY ? '' : (string) $value;
     }
+  }
+
+  /** Nama kendaraan yang sesuai dengan jenis angkutan terpilih. */
+  public function transportNames(): array
+  {
+    return self::TRANSPORT_OPTIONS[$this->transport_type] ?? [];
+  }
+
+  /** Pilihan dropdown untuk data tersimpan: kendaraan dari daftar, atau "Lainnya" bila diketik manual. */
+  protected function transportChoiceFor(string $name): string
+  {
+    if ($name === '') {
+      return '';
+    }
+
+    return in_array($name, $this->transportNames(), true) ? $name : self::OTHER_TRANSPORT;
   }
 
   /** Nama kota (urut abjad) milik negara tujuan luar negeri. */
@@ -285,8 +325,10 @@ class SppdCreateDetails extends Component
         'analysis' => 'nullable|string',
         'start_date' => 'required|date',
         'end_date' => 'required|date|after_or_equal:start_date',
-        'transport_type' => 'nullable|string|max:255',
-        'transport_name' => 'nullable|string|max:255',
+        'transport_type' => ['nullable', Rule::in(array_keys(self::TRANSPORT_OPTIONS))],
+        'transport_name' => $this->transport_choice === self::OTHER_TRANSPORT
+          ? ['required', 'string', 'max:255']
+          : ['nullable', Rule::in($this->transportNames())],
         'departure_place' => 'nullable|string|max:255',
         'urgency' => 'nullable|string|max:255',
         'spt_date' => 'nullable|date',
@@ -307,6 +349,8 @@ class SppdCreateDetails extends Component
         'destinations.*.country.required_if' => 'Negara tujuan wajib dipilih.',
         'destinations.*.country.exists' => 'Negara tujuan tidak valid.',
         'destinations.*.city.required_if' => 'Kota tujuan wajib diisi.',
+        'transport_name.in' => 'Nama kendaraan tidak sesuai dengan jenis angkutan.',
+        'transport_name.required' => 'Nama kendaraan wajib diketik.',
       ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
       // Toast ringkas selain error inline, lalu lempar ulang agar modal tetap

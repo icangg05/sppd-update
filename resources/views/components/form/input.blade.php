@@ -30,9 +30,10 @@ $stateClass = $isDisabled
     ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
     : 'bg-white text-slate-800';
 
-// Padding menyesuaikan ada/tidaknya ikon kiri & spinner loading kanan.
+// Padding menyesuaikan ada/tidaknya ikon kiri & spinner loading / slot suffix kanan.
+// Slot `suffix` = tombol kecil di dalam field (posisikan absolute di kanan, lebar w-9).
 $paddingLeft = $icon ? 'pl-8' : 'pl-3';
-$paddingRight = $loadingTarget ? 'pr-8' : 'pr-3';
+$paddingRight = isset($suffix) ? 'pr-9' : ($loadingTarget ? 'pr-8' : 'pr-3');
 
 $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingLeft . ' ' . $paddingRight . ' text-sm placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ' . $stateClass . ' ' . $class);
 @endphp
@@ -61,6 +62,8 @@ $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingL
             @if ($required) required @endif
             {{ $attributes->merge(['class' => $resolvedClass]) }}
         >
+
+        {{ $suffix ?? '' }}
 
         @if ($loadingTarget)
             <div wire:loading wire:target="{{ $loadingTarget }}"

@@ -35,8 +35,18 @@ $resolvedClass = trim('w-full rounded border border-slate-300 bg-white px-2.5 py
         {{ $attributes->merge(['class' => $resolvedClass]) }}
     >
 
+    {{-- Livewire: "Mengunggah..." menggantikan hint di baris yang sama (bukan baris
+         baru), agar isi di bawahnya tidak melompat selama unggah. --}}
     @if ($hint)
-        <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
+        <p class="mt-1 text-xs text-slate-500">
+            @if ($wireModel)
+                <span wire:loading.remove wire:target="{{ $wireModel }}">{{ $hint }}</span>
+                <span wire:loading wire:target="{{ $wireModel }}" class="text-primary-600">
+                    <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...</span>
+            @else
+                {{ $hint }}
+            @endif
+        </p>
     @endif
 
     @if ($key)

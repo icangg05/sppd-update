@@ -142,6 +142,7 @@
 	@livewireScripts
 
 	<x-ui.toast />
+	<x-ui.gallery />
 
 	@stack('scripts')
 </body>

@@ -226,15 +226,31 @@
 								</div>
 								<div class="min-w-0 flex-1">
 									<p class="text-xs text-slate-500 font-medium">Lampiran Dokumen</p>
-									<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
-										class="text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline truncate block">
-										{{ basename($sppd->attachment) }}
-									</a>
+									@if ($sppd->attachmentIsImage())
+										<x-ui.gallery-link :src="\Illuminate\Support\Facades\Storage::url($sppd->attachment)" group="lampiran"
+											:caption="basename($sppd->attachment)"
+											class="text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline truncate block">
+											{{ basename($sppd->attachment) }}
+										</x-ui.gallery-link>
+									@else
+										<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+											class="text-sm font-bold text-primary-600 hover:text-primary-700 hover:underline truncate block">
+											{{ basename($sppd->attachment) }}
+										</a>
+									@endif
 								</div>
-								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
-									class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
-									<i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Buka
-								</a>
+								@if ($sppd->attachmentIsImage())
+									<x-ui.gallery-link :src="\Illuminate\Support\Facades\Storage::url($sppd->attachment)" group="lampiran"
+										:caption="basename($sppd->attachment)"
+										class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+										<i class="fa-solid fa-eye text-[10px]"></i> Lihat
+									</x-ui.gallery-link>
+								@else
+									<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+										class="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+										<i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Buka
+									</a>
+								@endif
 							</div>
 						</div>
 					@endif
@@ -708,11 +724,20 @@
 			@if ($sppd->attachment)
 				<div class="border-t border-slate-200 my-2 pt-2">
 					<p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Lampiran Lainnya</p>
-					<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
-						class="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
-						<i class="fa-solid fa-paperclip"></i>
-						<span>Dokumen Pendukung (Lampiran)</span>
-					</a>
+					@if ($sppd->attachmentIsImage())
+						<x-ui.gallery-link :src="\Illuminate\Support\Facades\Storage::url($sppd->attachment)" group="lampiran"
+							:caption="basename($sppd->attachment)"
+							class="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
+							<i class="fa-solid fa-paperclip"></i>
+							<span>Dokumen Pendukung (Lampiran)</span>
+						</x-ui.gallery-link>
+					@else
+						<a href="{{ \Illuminate\Support\Facades\Storage::url($sppd->attachment) }}" target="_blank"
+							class="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100">
+							<i class="fa-solid fa-paperclip"></i>
+							<span>Dokumen Pendukung (Lampiran)</span>
+						</a>
+					@endif
 				</div>
 			@endif
 		</div>

@@ -198,9 +198,6 @@
             hint="{{ $isRoot
               ? 'Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD.'
               : 'Rekomendasi rasio cetak 1000x200 pixel. Kosongkan untuk mengikuti kop instansi induk.' }}" />
-          <div wire:loading wire:target="letterhead" class="text-[10px] text-primary-600">
-            <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
-          </div>
           @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
             <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
               <div class="flex items-center justify-between gap-2 mb-1.5">
@@ -230,9 +227,6 @@
           <div class="md:col-span-1 space-y-1.5">
             <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
               hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
-            <div wire:loading wire:target="letterhead_second" class="text-[10px] text-primary-600">
-              <i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengunggah...
-            </div>
             @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
               <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
                 <div class="flex items-center justify-between gap-2 mb-1.5">

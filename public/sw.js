@@ -3,12 +3,12 @@
 //   Halaman HTML tidak di-cache agar tidak menampilkan data lama / sesi kedaluwarsa.
 // - Aset statis (css/js/img): network-first, fallback ke cache saat offline.
 // ponytail: tanpa precache versi aset; cukup offline fallback + cache dasar.
-const CACHE = "sppd-v3";
+const CACHE = "sppd-v4"; // naikkan saat offline.html berubah agar cache lama dibuang.
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (e) => {
   // Cache halaman offline; abaikan bila gagal sesaat agar install tidak menolak.
-  e.waitUntil(caches.open(CACHE).then((c) => c.add(OFFLINE_URL)).catch(() => {}));
+  e.waitUntil(caches.open(CACHE).then((c) => c.add(new Request(OFFLINE_URL, { cache: "reload" }))).catch(() => {}));
   self.skipWaiting();
 });
 

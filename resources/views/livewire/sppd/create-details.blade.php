@@ -154,17 +154,54 @@
 			</div>
 			<div class="p-5 space-y-5">
 				{{-- Baris field logistik & tanggal --}}
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-					<x-form.searchable-select wire:model="transport_type" name="transport_type" label="Jenis Angkutan"
-						required placeholder="— Pilih —" searchPlaceholder="Cari angkutan..."
-						:options="[['value' => '', 'label' => '— Pilih —'], 'Darat', 'Laut', 'Udara']" />
-					<x-form.searchable-select wire:model="transport_name" name="transport_name" label="Nama Kendaraan"
-						required placeholder="— Pilih —" searchPlaceholder="Cari kendaraan..."
-						:options="[['value' => '', 'label' => '— Pilih —'], 'Motor', 'Mobil', 'Pesawat', 'Kapal', 'Kereta', 'Lainnya']" />
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					{{-- Jenis angkutan hanya 3 pilihan: radio agar semua opsi langsung terlihat. --}}
+					<fieldset>
+						<legend class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
+							Jenis Angkutan <span class="text-rose-500">*</span>
+						</legend>
+						<div class="grid grid-cols-3 gap-2">
+							@foreach (array_keys($this::TRANSPORT_OPTIONS) as $jenis)
+								<x-form.radio wire:model.live="transport_type" name="transport_type" id="transport-type-{{ strtolower($jenis) }}"
+									value="{{ $jenis }}" :label="$jenis" required :error="false" labelClass="w-full" />
+							@endforeach
+						</div>
+						@error('transport_type')
+							<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+						@enderror
+					</fieldset>
+					@if ($transport_choice === $this::OTHER_TRANSPORT)
+						{{-- "Lainnya": isian manual menggantikan dropdown; tombol × kembali ke daftar. --}}
+						<div wire:key="transport-manual">
+							<x-form.input wire:model="transport_name" label="Nama Kendaraan" required
+								placeholder="Ketik nama kendaraan" x-init="window.matchMedia('(pointer: fine)').matches && $el.focus()">
+								<x-slot:suffix>
+									<button type="button" wire:click="$set('transport_choice', '')"
+										class="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-slate-400 transition hover:text-rose-600"
+										title="Batal ketik manual, pilih dari daftar kendaraan" aria-label="Kembali ke daftar kendaraan">
+										<i class="fa-solid fa-xmark text-sm"></i>
+									</button>
+								</x-slot:suffix>
+							</x-form.input>
+						</div>
+					@else
+						{{-- wire:key memuat jenis angkutan agar opsi kendaraan (di-init Alpine sekali)
+						     ikut berganti saat jenis angkutan diubah. Error ditampilkan untuk transport_name. --}}
+						<div wire:key="transport-name-{{ $transport_type ?: 'none' }}">
+							<x-form.searchable-select wire:model.live="transport_choice" name="transport_name" label="Nama Kendaraan"
+								required :disabled="$transport_type === ''"
+								:placeholder="$transport_type === '' ? 'Pilih jenis angkutan dulu' : '— Pilih —'"
+								searchPlaceholder="Cari kendaraan..."
+								:options="$transport_type === '' ? [] : [
+									['value' => '', 'label' => '— Pilih —'],
+									...$this->transportNames(),
+									['value' => $this::OTHER_TRANSPORT, 'label' => 'Lainnya (ketik manual)…'],
+								]" />
+						</div>
+					@endif
 					<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required
 							placeholder="Contoh: Kantor Dinas Kominfo Kendari" />
-					<x-form.input type="date" wire:model="start_date" label="Tanggal Berangkat" required />
-					<x-form.input type="date" wire:model="end_date" label="Tanggal Kembali" required />
+					<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required />
 				</div>
 
 				{{-- Lokasi tujuan perjalanan --}}

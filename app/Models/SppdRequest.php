@@ -389,6 +389,16 @@ class SppdRequest extends Model
     }
 
     /**
+     * Lampiran berupa gambar (dilihat lewat galeri), bukan PDF/Word.
+     */
+    public function attachmentIsImage(): bool
+    {
+        $extension = strtolower(pathinfo((string) $this->attachment, PATHINFO_EXTENSION));
+
+        return in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+    }
+
+    /**
      * Retrieve the model for a bound value.
      *
      * @param  mixed  $value
