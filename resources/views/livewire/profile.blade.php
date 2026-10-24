@@ -157,8 +157,8 @@
 				</div>
 			</div>
 
-			{{-- ── Ganti Password ── --}}
-			<div class="dash-enter rounded border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+			{{-- ── Ganti Password ── (anchor #ganti-password dari peringatan password bawaan di header) --}}
+			<div id="ganti-password" class="dash-enter scroll-mt-32 rounded border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
 				<div class="mb-5 flex items-center gap-3">
 					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
 						<i class="fa-solid fa-lock"></i>
@@ -193,7 +193,7 @@
 				</div>
 
 				<dl class="grid grid-cols-1 gap-px overflow-hidden rounded border border-slate-200 bg-slate-200 sm:grid-cols-2">
-					<div class="bg-white p-4">
+					<div class="bg-white p-4 sm:col-span-2">
 						<dt class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Unit Kerja</dt>
 						<dd class="mt-1 text-sm font-medium text-slate-800">{{ $user->department?->name ?? '—' }}</dd>
 					</div>
@@ -204,10 +204,6 @@
 					<div class="bg-white p-4">
 						<dt class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Pangkat / Golongan</dt>
 						<dd class="mt-1 text-sm font-medium text-slate-800">{{ $user->rank?->name ?? '—' }}</dd>
-					</div>
-					<div class="bg-white p-4">
-						<dt class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Tipe Pegawai</dt>
-						<dd class="mt-1 text-sm font-medium text-slate-800">{{ $user->employee_type?->label() ?? '—' }}</dd>
 					</div>
 					<div class="bg-white p-4 sm:col-span-2">
 						<dt class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Role</dt>

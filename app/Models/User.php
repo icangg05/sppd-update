@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Enums\EmployeeType;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
@@ -18,6 +18,12 @@ class User extends Authenticatable
 {
   /** @use HasFactory<UserFactory> */
   use HasFactory, HasRoles, LogsActivity, Notifiable;
+
+  /** Role Anggota DPRD — satu-satunya penanda pegawai DPRD. */
+  public const DPRD_ROLES = ['anggota_dprd', 'pimpinan_dprd'];
+
+  /** Prefiks kunci sesi untuk cache hasil usesDefaultPassword() per pengguna. */
+  private const DEFAULT_PASSWORD_SESSION_KEY = 'uses_default_password.';
 
   protected $fillable = [
     'name',
@@ -31,7 +37,6 @@ class User extends Authenticatable
     'telegram_linked_at',
     'telegram_notify',
     'changelog_seen_version',
-    'employee_type',
     'department_id',
     'rank_id',
     'position_id',
@@ -57,7 +62,6 @@ class User extends Authenticatable
     return [
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
-      'employee_type' => EmployeeType::class,
       'is_active' => 'boolean',
       'failed_login_attempts' => 'integer',
       'login_locked_until' => 'datetime',
@@ -79,6 +83,27 @@ class User extends Authenticatable
     return $this->login_blocked_at !== null;
   }
 
+  /** Masih memakai password bawaan (config users.default_password) yang diberikan saat akun dibuat. */
+  public function usesDefaultPassword(): bool
+  {
+    return Hash::check(config('users.default_password'), $this->password);
+  }
+
+  /**
+   * Sama seperti usesDefaultPassword(), tapi hasilnya disimpan di sesi agar
+   * pengecekan bcrypt (lambat) tidak berjalan di setiap pemuatan halaman.
+   */
+  public function usesDefaultPasswordCached(): bool
+  {
+    return session()->remember(self::DEFAULT_PASSWORD_SESSION_KEY . $this->id, fn () => $this->usesDefaultPassword());
+  }
+
+  /** Lupakan hasil cache usesDefaultPasswordCached(), mis. setelah password diganti. */
+  public function forgetDefaultPasswordCache(): void
+  {
+    session()->forget(self::DEFAULT_PASSWORD_SESSION_KEY . $this->id);
+  }
+
   /** Buka blokir login dan reset hitungan percobaan gagal. */
   public function resetLoginAttempts(): void
   {
@@ -94,7 +119,7 @@ class User extends Authenticatable
     return LogOptions::defaults()
       ->logOnly([
         'name', 'username', 'email', 'nip', 'nik',
-        'employee_type', 'department_id', 'rank_id', 'position_id', 'atasan_id',
+        'department_id', 'rank_id', 'position_id', 'atasan_id',
         'dprd_jabatan', 'partai', 'is_active',
       ])
       ->logOnlyDirty()
@@ -152,10 +177,10 @@ class User extends Authenticatable
     return $this->hasMany(SppdDigitalSignature::class, 'signer_id');
   }
 
+  /** Anggota DPRD = pemegang salah satu DPRD_ROLES. */
   public function isDprdMember(): bool
   {
-    return $this->employee_type === EmployeeType::DPRD
-      || $this->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+    return $this->hasRole(self::DPRD_ROLES);
   }
 
   /**

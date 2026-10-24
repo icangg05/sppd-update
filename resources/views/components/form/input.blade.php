@@ -30,10 +30,13 @@ $stateClass = $isDisabled
     ? 'bg-slate-100 text-slate-500 cursor-not-allowed'
     : 'bg-white text-slate-800';
 
+// Field password otomatis mendapat tombol mata (lihat/sembunyikan), kecuali sudah memakai slot suffix.
+$passwordToggle = $type === 'password' && ! isset($suffix);
+
 // Padding menyesuaikan ada/tidaknya ikon kiri & spinner loading / slot suffix kanan.
 // Slot `suffix` = tombol kecil di dalam field (posisikan absolute di kanan, lebar w-9).
 $paddingLeft = $icon ? 'pl-8' : 'pl-3';
-$paddingRight = isset($suffix) ? 'pr-9' : ($loadingTarget ? 'pr-8' : 'pr-3');
+$paddingRight = (isset($suffix) || $passwordToggle) ? 'pr-9' : ($loadingTarget ? 'pr-8' : 'pr-3');
 
 $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingLeft . ' ' . $paddingRight . ' text-sm placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ' . $stateClass . ' ' . $class);
 @endphp
@@ -46,7 +49,7 @@ $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingL
         </label>
     @endif
 
-    <div class="relative">
+    <div class="relative" @if ($passwordToggle) x-data="{ showPassword: false }" @endif>
         @if ($icon)
             <div class="pt-0.5 pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <i class="{{ $icon }} text-xs"></i>
@@ -55,6 +58,8 @@ $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingL
 
         <input
             type="{{ $type }}"
+            {{-- type statis agar password manager tetap mengenali field sebelum Alpine init. --}}
+            @if ($passwordToggle) x-bind:type="showPassword ? 'text' : 'password'" @endif
             @if ($name) name="{{ $name }}" @endif
             id="{{ $id }}"
             @unless ($wireModel) value="{{ $resolvedValue }}" @endunless
@@ -64,6 +69,15 @@ $resolvedClass = trim('w-full rounded border border-slate-300 py-2 ' . $paddingL
         >
 
         {{ $suffix ?? '' }}
+
+        @if ($passwordToggle)
+            <button type="button" x-on:click="showPassword = !showPassword" tabindex="-1"
+                x-bind:aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                x-bind:title="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                class="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 focus:outline-none">
+                <i class="fa-solid text-xs" x-bind:class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+        @endif
 
         @if ($loadingTarget)
             <div wire:loading wire:target="{{ $loadingTarget }}"

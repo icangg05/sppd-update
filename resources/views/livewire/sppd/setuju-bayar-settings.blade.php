@@ -6,7 +6,11 @@
 				<i class="fa-solid fa-signature"></i>
 			</span>
 			<div class="min-w-0 leading-tight">
-				<p class="text-sm font-bold text-slate-800">Penandatangan Setuju Bayar</p>
+				{{-- Cakupan: diatur per instansi, berlaku untuk semua SPPD instansi itu. --}}
+				<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+					<p class="text-sm font-bold text-slate-800">Penandatangan Setuju Bayar</p>
+					<x-ui.badge color="slate"><i class="fa-solid fa-building mr-1 text-[9px]"></i> Berlaku semua SPPD</x-ui.badge>
+				</div>
 				<p class="mt-0.5 truncate text-xs text-slate-500">
 					@if ($current['name'])
 						<span class="font-semibold text-slate-700">{{ $current['name'] }}</span> · {{ $current['role'] }}

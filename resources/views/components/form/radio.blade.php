@@ -22,7 +22,8 @@ $id = $id ?? $key;
 @endphp
 
 <div class="{{ $wrapperClass }}">
-    <label for="{{ $id }}" class="inline-flex cursor-pointer items-start gap-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition-colors hover:border-primary-300 has-checked:border-primary-500 has-checked:bg-primary-50/60 has-checked:ring-1 has-checked:ring-primary-500 {{ $labelClass }}">
+    {{-- Opsi terkunci (input disabled) tampak redup tanpa efek hover agar tidak terlihat bisa diklik. --}}
+    <label for="{{ $id }}" class="inline-flex cursor-pointer items-start gap-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition-colors has-enabled:hover:border-primary-300 has-checked:border-primary-500 has-checked:bg-primary-50/60 has-checked:ring-1 has-checked:ring-primary-500 has-disabled:cursor-not-allowed has-disabled:opacity-60 {{ $labelClass }}">
         <input
             type="radio"
             @if ($name) name="{{ $name }}" @endif

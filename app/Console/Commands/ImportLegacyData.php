@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Enums\DprdJabatan;
 use App\Enums\DprdPartai;
-use App\Enums\EmployeeType;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -212,7 +211,6 @@ class ImportLegacyData extends Command
           'nip'           => $nip,
           'nik'           => trim((string) ($p->pegawai_nik ?? '')) ?: null,
           'password'      => $hash,
-          'employee_type' => 'pns',
           'department_id' => $deptId,
           'rank_id'       => $rankId,
           'position_id'   => $posId,
@@ -367,7 +365,7 @@ class ImportLegacyData extends Command
   // ──────────────────────────────────────────────────────────
 
   /**
-   * Anggota DPRD masuk ke tabel users yang sama (employee_type = 'dprd'),
+   * Anggota DPRD masuk ke tabel users yang sama (ditandai role anggota/pimpinan DPRD),
    * di department Sekretariat DPRD (type=dprd). dprd_jabatan & partai dipetakan
    * ke enum DprdJabatan/DprdPartai; jabatan bebas yang tak terpetakan dibiarkan null.
    * Dedup berdasarkan nama ternormalisasi (anggota DPRD tidak punya NIP).
@@ -388,8 +386,7 @@ class ImportLegacyData extends Command
     $roleAnggota  = DB::table('roles')->where('name', 'anggota_dprd')->where('guard_name', 'web')->value('id');
 
     // Dedup terhadap user DPRD yang sudah ada (mis. hasil seeder), berdasarkan nama.
-    $existingNames = DB::table('users')
-      ->where('employee_type', EmployeeType::DPRD->value)
+    $existingNames = User::whereHas('roles', fn ($r) => $r->whereIn('name', User::DPRD_ROLES))
       ->pluck('name')
       ->map(fn ($n) => $this->normalize((string) $n))
       ->flip();
@@ -429,7 +426,6 @@ class ImportLegacyData extends Command
           'name'          => $name,
           'username'      => $username,
           'password'      => $hash,
-          'employee_type' => EmployeeType::DPRD->value,
           'department_id' => $deptId,
           'dprd_jabatan'  => $jabatan?->value,
           'partai'        => $partai?->value,

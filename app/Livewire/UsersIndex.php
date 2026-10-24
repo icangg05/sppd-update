@@ -91,13 +91,47 @@ class UsersIndex extends Component
     $this->resetPage();
   }
 
+  // Konfirmasi aktifkan / nonaktifkan pegawai
+  public bool $showToggleModal = false;
+  public ?int $togglingId = null;
+  public ?string $togglingName = null;
+  public bool $togglingIsActive = false;
+
+  public function confirmToggleActive(int $id): void
+  {
+    $user = $this->scopedUser($id);
+
+    $this->togglingId       = $user->id;
+    $this->togglingName     = $user->name;
+    $this->togglingIsActive = $user->is_active;
+    $this->showToggleModal  = true;
+  }
+
+  public function closeToggleModal(): void
+  {
+    $this->showToggleModal  = false;
+    $this->togglingId       = null;
+    $this->togglingName     = null;
+    $this->togglingIsActive = false;
+  }
+
   public function toggleActive(int $id): void
   {
-    $user = User::findOrFail($id);
+    $user = $this->scopedUser($id);
     $user->update(['is_active' => ! $user->is_active]);
     $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
+    $this->closeToggleModal();
     $this->toastSuccess("Pegawai {$user->name} berhasil {$status}.");
+  }
+
+  /** Pegawai dalam lingkup daftar ini (instansi admin, tanpa Super Admin); 404 bila di luar. */
+  private function scopedUser(int $id): User
+  {
+    $query = User::query();
+    $this->applyUserScope($query);
+
+    return $query->findOrFail($id);
   }
 
   // Konfirmasi buka blokir login
@@ -141,7 +175,7 @@ class UsersIndex extends Component
 
   public function deleteUser(int $id): void
   {
-    $user = User::findOrFail($id);
+    $user = $this->scopedUser($id);
     $name = $user->name;
 
     try {
@@ -216,14 +250,12 @@ class UsersIndex extends Component
     // Pisahkan konteks halaman: anggota DPRD vs pegawai biasa.
     if ($this->isDprd()) {
       $query->where(function ($q) {
-        $q->whereHas('roles', fn($r) => $r->where('name', 'anggota_dprd'))
-          ->orWhere('employee_type', 'dprd')
+        $q->whereHas('roles', fn($r) => $r->whereIn('name', User::DPRD_ROLES))
           ->orWhereNotNull('dprd_jabatan');
       });
     } else {
       $query->where(function ($q) {
-        $q->whereDoesntHave('roles', fn($r) => $r->where('name', 'anggota_dprd'))
-          ->where('employee_type', '!=', 'dprd')
+        $q->whereDoesntHave('roles', fn($r) => $r->whereIn('name', User::DPRD_ROLES))
           ->whereNull('dprd_jabatan');
       });
     }

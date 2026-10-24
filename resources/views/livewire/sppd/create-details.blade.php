@@ -465,7 +465,7 @@
 										@if ($u->nip)
 												<span class="block text-[10px] text-slate-500 font-mono mt-0.5">{{ $u->nip }}</span>
 											@endif
-											@if ($u->employee_type === \App\Enums\EmployeeType::DPRD)
+											@if ($u->isDprdMember())
 												<span class="block text-[10px] font-semibold text-primary-600 mt-0.5">Anggota DPRD</span>
 											@endif
 										@if ($isTraveling)

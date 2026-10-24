@@ -178,29 +178,34 @@
                         {{-- Garis penuntun per tingkat leluhur (menyambung ke baris induk). --}}
                         <template x-for="d in row.depth" :key="d">
                             <span class="pointer-events-none absolute -top-1 bottom-0 w-px bg-slate-300"
-                                :style="`left: ${(d - 1) * 20 + 13}px`"></span>
+                                :style="`left: ${(d - 1) * 20 + 18}px`"></span>
                         </template>
 
                         <div class="flex min-h-10 items-stretch rounded border transition-colors"
                             :class="isSelected(row)
                                 ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500'
                                 : (onPath(row) ? 'border-primary-200 bg-white' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50')">
+                            {{-- Tombol buka/tutup sub-unit: berlatar & bergaris pemisah agar jelas bisa diklik. --}}
                             <template x-if="row.count">
                                 <button type="button" @click="toggle(row)" :aria-expanded="isOpen(row)"
                                     :aria-label="(isOpen(row) ? 'Tutup ' : 'Buka ') + row.label"
-                                    class="flex w-7 shrink-0 items-center justify-center rounded-l text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
-                                    <i class="fa-solid fa-chevron-right text-[10px] transition-transform"
+                                    :title="(isOpen(row) ? 'Tutup ' : 'Buka ') + row.count + ' sub-unit'"
+                                    class="flex w-9 shrink-0 cursor-pointer items-center justify-center rounded-l border-r transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                                    :class="isOpen(row)
+                                        ? 'border-primary-200 bg-primary-50 text-primary-700'
+                                        : 'border-slate-200 bg-slate-50 text-primary-600 hover:bg-primary-50 hover:text-primary-700'">
+                                    <i class="fa-solid fa-chevron-right text-xs transition-transform"
                                         :class="isOpen(row) && 'rotate-90'"></i>
                                 </button>
                             </template>
                             <template x-if="!row.count">
-                                <span class="flex w-7 shrink-0 items-center justify-center">
+                                <span class="flex w-9 shrink-0 items-center justify-center border-r border-transparent">
                                     <i class="fa-solid fa-circle text-[4px] text-slate-300"></i>
                                 </span>
                             </template>
 
                             <button type="button" @click="choose(row)" :aria-pressed="isSelected(row)"
-                                class="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-r py-2 pr-3 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
+                                class="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-r py-2 pr-3 pl-3 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
                                 <span x-text="row.label" class="min-w-0"
                                     :class="isSelected(row) ? 'font-semibold text-primary-800' : (onPath(row) ? 'font-medium text-slate-800' : 'text-slate-700')"></span>
                                 <span class="flex shrink-0 items-center gap-2">

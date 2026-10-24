@@ -119,6 +119,19 @@
 			}
 		});
 
+		// wire:navigate selalu menggulir ke atas dan mengabaikan #anchor di URL
+		// (mis. tombol "Ganti Password" di header → /profile#ganti-password),
+		// jadi gulir manual ke elemen target setelah halaman baru terpasang.
+		// Ditunda (setTimeout) karena Livewire masih mereset posisi scroll setelah
+		// event ini terpicu; gulir yang dipanggil langsung di sini ikut dibatalkan.
+		document.addEventListener('livewire:navigated', function() {
+			if (!location.hash) return;
+			const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+			if (!target) return;
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			setTimeout(() => target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }));
+		});
+
 		document.addEventListener('livewire:navigated', function() {
 			const submenuToggles = document.querySelectorAll('[data-sidebar-toggle]');
 			submenuToggles.forEach((toggle) => {

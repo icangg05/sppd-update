@@ -127,27 +127,30 @@
 		wire:target="search,department_id,partai,position_id,rank_id,role">
 		<div class="overflow-x-clip">
 			<table class="table-stack w-full text-left table-fixed md:[&_thead_th]:py-2.5 md:[&_tbody_td]:py-2">
+				{{-- Garis bawah header lewat inset shadow per sel: border thead hilang saat sticky
+				     (border-collapse), dan tidak menumpuk dengan garis baris kelompok di bawahnya. --}}
 				<thead
-					class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 shadow-sm">
+					class="sticky top-13 lg:top-16 z-10 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 [&_th]:shadow-[inset_0_-1px_0_var(--color-slate-300)]">
 					<tr>
 						<th class="py-3 px-4 w-12 text-center">No.</th>
-						<th class="py-3 px-4 w-[22%]">Pegawai</th>
+						{{-- Tanpa kolom Instansi (selain Super Admin), ruangnya dipakai untuk nama pegawai. --}}
+						<th class="py-3 px-4 {{ auth()->user()->hasRole('super_admin') ? 'w-[19%]' : 'w-[26%]' }}">Pegawai</th>
 						@if (auth()->user()->hasRole('super_admin'))
-							<th class="py-3 px-4 w-[20%]">Instansi</th>
+							<th class="py-3 px-4 w-[17%]">Instansi</th>
 						@endif
 						@if ($isDprd)
 							<th class="py-3 px-4">Jabatan DPRD</th>
 							<th class="py-3 px-4 w-40">Partai / Fraksi</th>
 						@else
 							<th class="py-3 px-4">Jabatan</th>
-							<th class="py-3 px-4 w-32">Pangkat / Gol.</th>
+							<th class="py-3 px-4 w-44">Pangkat / Gol.</th>
 						@endif
 						<th class="py-3 px-4 w-28">Role</th>
 						<th class="py-3 px-4 w-28 text-center">Status</th>
-						<th class="py-3 px-4 w-36 text-right">Aksi</th>
+						<th class="py-3 px-4 w-40 text-right">Aksi</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-slate-100 text-slate-700">
+				<tbody class="divide-y divide-slate-300 text-slate-700">
 					@php $lastDeptId = null; @endphp
 					@forelse($users as $i => $user)
 						@php
@@ -165,7 +168,7 @@
 						{{-- Department group header row when department changes --}}
 						@if ($deptId !== $lastDeptId)
 							@php $lastDeptId = $deptId; @endphp
-							<tr class="stack-group bg-slate-50/80 border-y border-slate-100">
+							<tr class="stack-group bg-slate-50/80">
 								<td colspan="{{ $colCount }}" class="py-1.5 px-4">
 									<div class="flex items-center gap-2" style="padding-left: {{ $indent }}px">
 										@if ($depth > 0)
@@ -182,7 +185,8 @@
 							</tr>
 						@endif
 
-						<tr class="hover:bg-slate-50/50 transition-colors" wire:key="user-{{ $user->id }}">
+						{{-- Latar selang-seling (zebra) + garis slate-300 agar batas antarpegawai jelas. --}}
+						<tr class="{{ $i % 2 ? 'bg-slate-100/70' : 'bg-white' }} hover:bg-primary-50 transition-colors" wire:key="user-{{ $user->id }}">
 							<td class="stack-hide py-3 px-4 text-center text-xs text-slate-500">{{ $users->firstItem() + $i }}.</td>
 
 							{{-- Pegawai dengan indentasi berdasarkan kedalaman departemen --}}
@@ -219,7 +223,7 @@
 
 								<td data-label="Pangkat / Gol." class="py-3 px-4">
 									@if ($user->rank)
-										<p class="text-[13px] text-slate-800">{{ $user->rank->name }}</p>
+										<p class="text-[13px] whitespace-nowrap text-slate-800">{{ $user->rank->name }}</p>
 										<p class="text-xs text-slate-500">{{ $user->rank->group }}</p>
 									@else
 										<span class="text-sm text-slate-500">-</span>
@@ -255,44 +259,45 @@
 								@endif
 							</td>
 
+							{{-- Aksi ikon bergaya tombol aksi tabel SPPD (lihat livewire.sppd.partials.row-actions);
+							     keterangan lewat tooltip. Buka Blokir di depan agar empat ikon tetap sejajar antarbaris. --}}
 							<td data-label="Aksi" class="py-3 px-4 text-right">
-								<div class="flex items-center justify-end gap-1">
+								@php $actionBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition focus:outline-none focus-visible:ring-2'; @endphp
+								<div class="flex flex-wrap items-center justify-end gap-1">
 									{{-- Buka blokir login (khusus Super Admin) --}}
 									@if ($user->isLoginBlocked() && auth()->user()->hasRole('super_admin'))
 										<button type="button" wire:click="confirmUnblock({{ $user->id }})"
-											title="Buka Blokir Login"
-											class="rounded p-1.5 text-xs font-medium text-rose-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+											title="Buka Blokir Login" aria-label="Buka Blokir Login"
+											class="{{ $actionBtn }} cursor-pointer border-transparent bg-emerald-600 text-white shadow-2xs hover:bg-emerald-700 focus-visible:ring-emerald-500/40">
 											<i class="fa-solid fa-unlock"></i>
 										</button>
 									@endif
 
-									{{-- Toggle Status --}}
-									<button type="button" wire:click="toggleActive({{ $user->id }})"
-										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
-										class="rounded p-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 {{ $user->is_active ? 'text-slate-500 hover:bg-slate-100 hover:text-rose-600' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600' }}">
-										<i class="fa-solid fa-power-off"></i>
-									</button>
-
-									{{-- View --}}
 									<a wire:navigate href="{{ route('master.users.show', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
-										title="Detail Pegawai">
+										title="Detail Pegawai" aria-label="Detail Pegawai"
+										class="{{ $actionBtn }} border-slate-300 bg-slate-100 text-slate-600 shadow-2xs hover:bg-slate-200 focus-visible:ring-slate-400/40">
 										<i class="fa-solid fa-eye"></i>
 									</a>
 
-									{{-- Edit --}}
 									<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => $type])) }}"
-										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-										title="Edit Data">
+										title="Edit Data" aria-label="Edit Data"
+										class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
 										<i class="fa-solid fa-pen-to-square"></i>
 									</a>
 
-									{{-- Delete --}}
+									<button type="button" wire:click="confirmToggleActive({{ $user->id }})"
+										wire:loading.attr="disabled" wire:target="confirmToggleActive({{ $user->id }})"
+										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
+										aria-label="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
+										class="{{ $actionBtn }} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 {{ $user->is_active ? 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50 focus-visible:ring-slate-400/40' : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:ring-emerald-500/40' }}">
+										<i class="fa-solid fa-power-off"></i>
+									</button>
+
 									<button type="button" wire:click="deleteUser({{ $user->id }})"
 										wire:confirm="Yakin ingin menghapus pegawai ini secara permanen?"
-										class="rounded p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
-										title="Hapus Data">
-										<i class="fa-solid fa-trash-can"></i>
+										title="Hapus Data" aria-label="Hapus Data"
+										class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
+										<i class="fa-solid fa-trash"></i>
 									</button>
 								</div>
 							</td>
@@ -338,6 +343,33 @@
 			</div>
 		@endif
 	</div>
+
+	{{-- Modal Konfirmasi Aktifkan / Nonaktifkan Pegawai --}}
+	<x-ui.modal show="$wire.showToggleModal" :closeable="false"
+		:title="$togglingIsActive ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai'"
+		:description="$togglingIsActive ? 'Akun tidak dapat dipakai sampai diaktifkan kembali' : 'Akun dapat dipakai kembali'"
+		:icon="$togglingIsActive ? 'fa-solid fa-power-off text-rose-600' : 'fa-solid fa-power-off text-emerald-600'">
+		<div class="space-y-4">
+			<p class="text-sm text-slate-600">
+				@if ($togglingIsActive)
+					Nonaktifkan <span class="font-bold text-slate-800">{{ $togglingName ?? 'pegawai ini' }}</span>?
+					Pegawai tidak dapat login dan tidak muncul sebagai pilihan pelaksana, pengikut, maupun pejabat SPPD.
+				@else
+					Aktifkan kembali <span class="font-bold text-slate-800">{{ $togglingName ?? 'pegawai ini' }}</span>?
+					Pegawai dapat login dan dipilih lagi dalam SPPD.
+				@endif
+			</p>
+
+			<div class="flex items-center justify-end gap-2 pt-1">
+				<x-ui.button type="button" variant="secondary" wire:click="closeToggleModal">Batal</x-ui.button>
+				<x-ui.button type="button" :variant="$togglingIsActive ? 'danger' : 'success'"
+					wire:click="toggleActive({{ $togglingId ?? 0 }})" wire:target="toggleActive">
+					<x-slot:icon><i class="fa-solid fa-power-off text-xs"></i></x-slot:icon>
+					{{ $togglingIsActive ? 'Nonaktifkan' : 'Aktifkan' }}
+				</x-ui.button>
+			</div>
+		</div>
+	</x-ui.modal>
 
 	{{-- Modal Konfirmasi Buka Blokir Login (khusus Super Admin) --}}
 	<x-ui.modal show="$wire.showUnblockModal" :closeable="false" title="Buka Blokir Login"

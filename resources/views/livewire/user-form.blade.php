@@ -46,8 +46,9 @@
 		{{-- Main Form --}}
 		<form wire:submit.prevent="save" class="space-y-6">
 
-			{{-- Hemat scroll: kolom kiri (Identitas Pegawai) berdampingan dengan Akun Sistem + Telegram. --}}
-			<div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+			{{-- Hemat scroll: Identitas Pegawai & Akun Sistem berdampingan (tinggi kartu disamakan),
+			     Notifikasi Telegram selebar penuh di bawahnya agar tidak ada kolom yang kosong. --}}
+			<div class="grid gap-6 lg:grid-cols-2">
 
 			{{-- ── Kelompok 1: Identitas Pegawai (kolom kiri) ── --}}
 			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -57,7 +58,7 @@
 					</div>
 					<div>
 						<h3 class="text-sm font-bold text-slate-800">Identitas Pegawai</h3>
-						<p class="text-xs text-slate-500">Data diri dan status kepegawaian.</p>
+						<p class="text-xs text-slate-500">Data diri dan nomor identitas.</p>
 					</div>
 				</header>
 
@@ -65,24 +66,6 @@
 					<div class="space-y-1">
 						<x-form.input wire:model="name" name="name" label="Nama Lengkap" required
 							placeholder="Contoh: Budi Santoso" />
-					</div>
-
-					<div class="space-y-1">
-						@php
-							// Opsi "Anggota DPRD" hanya tersedia pada konteks DPRD.
-							$employeeTypeOptions = collect($employeeTypes)
-								->when(! $this->isDprdContext(), fn($c) => $c->reject(fn($type) => $type->value === \App\Enums\EmployeeType::DPRD->value))
-								->map(fn($type) => ['value' => $type->value, 'label' => $type->label()])
-								->values()
-								->all();
-						@endphp
-						<x-form.searchable-select wire:model.live="employee_type" name="employee_type"
-							label="Tipe Status Pegawai" required :disabled="$this->isDprdContext()"
-							:options="$employeeTypeOptions" placeholder="— Pilih Tipe Pegawai —"
-							searchPlaceholder="Cari tipe..." />
-						@if ($this->isDprdContext())
-							<p class="text-xs text-slate-500">Terkunci sebagai Anggota DPRD pada formulir ini.</p>
-						@endif
 					</div>
 
 					@unless ($this->isDprdContext())
@@ -103,9 +86,6 @@
 					</div>
 				</div>
 			</section>
-
-			{{-- Kolom kanan: Akun Sistem + Notifikasi Telegram ditumpuk --}}
-			<div class="space-y-6">
 
 			{{-- ── Kelompok 2: Akun Sistem ── --}}
 			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
@@ -163,8 +143,8 @@
 				</div>
 			</section>
 
-			{{-- ── Kelompok 3: Notifikasi Telegram ── --}}
-			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+			{{-- ── Kelompok 3: Notifikasi Telegram (lebar penuh) ── --}}
+			<section class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
 				<header class="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6">
 					<div class="flex size-9 shrink-0 items-center justify-center rounded bg-sky-50 text-sky-500 ring-1 ring-sky-100">
 						<i class="fa-brands fa-telegram"></i>
@@ -179,11 +159,12 @@
 					@include('livewire.partials.telegram-status', ['testable' => true])
 				</div>
 			</section>
-
-				</div>
 			</div>
 
 			{{-- ── Kelompok 4: Penempatan & Kewenangan (lebar penuh) ── --}}
+			{{-- Anggota DPRD: unit kerja otomatis Sekretariat DPRD & role dari Jabatan DPRD, jadi bagian ini
+			     disembunyikan (tetap tampil bila unit kerja belum bisa diisi otomatis). --}}
+			@unless ($this->isDprdContext() && $department_id)
 			{{-- Catatan: TANPA .dash-enter. Animasi (animation-fill: both) membuat stacking
 			     context permanen yang menjebak panel Jabatan (position: fixed) sehingga
 			     tertutup action bar sticky meski z-index 9999. Lihat [[blade-livewire-pitfalls]]. --}}
@@ -387,70 +368,60 @@
 						</div>
 					@endunless
 
-					<div class="space-y-1 sm:col-span-2">
-						@php
-							// Role DPRD hanya tersedia bila pegawai bertipe DPRD.
-							$roleOptions = ($this->isDprdContext()
-								? $roles->whereIn('name', ['pimpinan_dprd', 'anggota_dprd'])
-								: ($this->isDprdMember()
-									? $roles
-									: $roles->whereNotIn('name', ['pimpinan_dprd', 'anggota_dprd'])))
-								->map(fn($r) => ['value' => $r->name, 'label' => $r->label])
-								->values()
-								->all();
-						@endphp
-						{{-- Hanya Super Admin yang memilih role; selain itu role terkunci mengikuti jabatan. --}}
-						<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
-							required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..."
-							:disabled="! $this->canEditRole()" />
-						@if ($positionRole && ! $this->isDprdContext())
-							@if ($role === $positionRole->name)
-								<p class="text-xs font-medium text-emerald-700">
-									<i class="fa-solid fa-circle-check mr-0.5"></i>
-									Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>{{ $positionRoleAdjusted ? ', disesuaikan dengan alur SPPD di unit kerja ini' : '' }}.
-								</p>
-							@else
-								<div class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
-									<span>
-										<i class="fa-solid fa-triangle-exclamation mr-0.5"></i>
-										Jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span> umumnya memakai role
-										<span class="font-semibold">{{ $positionRole->label }}</span>.
-									</span>
-									@if ($this->canEditRole())
-										<x-ui.button size="sm" variant="warning" wire:click="applyPositionRole" wire:target="applyPositionRole">
-											Gunakan role ini
-										</x-ui.button>
-									@else
-										<span>Role {{ $roles->firstWhere('name', $role)?->label ?? $role }} hanya dapat diubah oleh Super Admin.</span>
-									@endif
-								</div>
-							@endif
-						@endif
-						<p class="text-xs text-slate-500">
-							@if ($this->canEditRole())
-								Role terisi otomatis dari jabatan dan tetap bisa diubah.
-							@else
-								<i class="fa-solid fa-lock mr-0.5 text-[10px]"></i>
-								Role mengikuti jabatan secara otomatis dan hanya dapat diubah oleh Super Admin.
-							@endif
-							Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD, Camat, Lurah, dll.) hanya boleh dipegang
-							satu pegawai aktif sesuai lingkupnya.
-						</p>
-					</div>
-
-					{{-- Atasan langsung: menentukan alur persetujuan & pejabat tahap Kabid/Asisten. --}}
+					{{-- Anggota DPRD: role tidak dipilih, otomatis dari Jabatan DPRD (lihat bagian Data Anggota DPRD). --}}
 					@unless ($this->isDprdContext())
 						<div class="space-y-1 sm:col-span-2">
-							<x-form.searchable-select wire:model="atasan_id" name="atasan_id" label="Atasan Langsung"
-								:options="$supervisorOptions" placeholder="Belum diatur (ikut struktur unit kerja)" searchPlaceholder="Cari nama pejabat..." />
+							@php
+								// Role DPRD hanya tersedia bila pegawai bertipe DPRD.
+								$roleOptions = ($this->isDprdMember() ? $roles : $roles->whereNotIn('name', \App\Models\User::DPRD_ROLES))
+									// Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
+									->when(! ($isEdit && $user?->hasRole('super_admin')), fn($c) => $c->where('name', '!=', 'super_admin'))
+									->map(fn($r) => ['value' => $r->name, 'label' => $r->label])
+									->values()
+									->all();
+							@endphp
+							{{-- Hanya Super Admin yang memilih role; selain itu role terkunci mengikuti jabatan. --}}
+							<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
+								required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..."
+								:disabled="! $this->canEditRole()" />
+							@if ($positionRole)
+								@if ($role === $positionRole->name)
+									<p class="text-xs font-medium text-emerald-700">
+										<i class="fa-solid fa-circle-check mr-0.5"></i>
+										Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>{{ $positionRoleAdjusted ? ', disesuaikan dengan alur SPPD di unit kerja ini' : '' }}.
+									</p>
+								@else
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+										<span>
+											<i class="fa-solid fa-triangle-exclamation mr-0.5"></i>
+											Jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span> umumnya memakai role
+											<span class="font-semibold">{{ $positionRole->label }}</span>.
+										</span>
+										@if ($this->canEditRole())
+											<x-ui.button size="sm" variant="warning" wire:click="applyPositionRole" wire:target="applyPositionRole">
+												Gunakan role ini
+											</x-ui.button>
+										@else
+											<span>Role {{ $roles->firstWhere('name', $role)?->label ?? $role }} hanya dapat diubah oleh Super Admin.</span>
+										@endif
+									</div>
+								@endif
+							@endif
 							<p class="text-xs text-slate-500">
-								Pejabat yang langsung membawahi pegawai ini, misalnya Kabid atau Kabag. Alur persetujuan SPPD dan pejabat tiap tahapnya
-								mengikuti rantai atasan ini. Bila kosong, atasan ditentukan dari struktur unit kerja.
+								@if ($this->canEditRole())
+									Role terisi otomatis dari jabatan dan tetap bisa diubah.
+								@else
+									<i class="fa-solid fa-lock mr-0.5 text-[10px]"></i>
+									Role mengikuti jabatan secara otomatis dan hanya dapat diubah oleh Super Admin.
+								@endif
+								Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD, Camat, Lurah, dll.) hanya boleh dipegang
+								satu pegawai aktif sesuai lingkupnya.
 							</p>
 						</div>
 					@endunless
 				</div>
 			</section>
+			@endunless
 
 			{{-- ── Kelompok 5: Data Anggota DPRD (kondisional) ── --}}
 			@if ($this->isDprdMember())

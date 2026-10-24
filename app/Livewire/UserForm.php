@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Enums\DepartmentType;
 use App\Enums\DprdJabatan;
 use App\Enums\DprdPartai;
-use App\Enums\EmployeeType;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Livewire\Concerns\InteractsWithTelegramLink;
 use App\Enums\PositionScope;
@@ -45,14 +45,10 @@ class UserForm extends Component
   public $password = '';
   public $nip = '';
   public $nik = '';
-  public $employee_type = '';
   public $department_id = '';
   public $rank_id = '';
   public $position_id = '';
   public $role = '';
-
-  // Atasan langsung: menentukan alur & pejabat tahap Kabid/Asisten (kosong = ikut struktur unit kerja).
-  public $atasan_id = '';
 
   // Pencarian server-side untuk jabatan (agar tidak memuat seluruh data jabatan sekaligus).
   public string $searchPosition = '';
@@ -74,11 +70,9 @@ class UserForm extends Component
       $this->email = $user->email;
       $this->nip = $user->nip;
       $this->nik = $user->nik;
-      $this->employee_type = $user->employee_type->value ?? '';
       $this->department_id = $user->department_id;
       $this->rank_id = $user->rank_id;
       $this->position_id = $user->position_id;
-      $this->atasan_id = $user->atasan_id ?? '';
       $this->role = $user->roles->first()?->name ?? '';
       $this->dprd_jabatan = $user->dprd_jabatan ?? '';
       $this->partai = $user->partai ?? '';
@@ -88,25 +82,20 @@ class UserForm extends Component
       if ($user->isDprdMember()) {
         $this->listType = 'dprd';
       }
-    } else {
-      $this->employee_type = EmployeeType::cases()[0]->value ?? '';
     }
 
     // Konteks dari halaman asal (mis. dibuka dari menu Anggota DPRD).
     if (request('type') === 'dprd') {
       $this->listType = 'dprd';
-
-      // Saat menambah dari halaman DPRD, default-kan tipe pegawai ke DPRD
-      // agar field khusus DPRD langsung tampil.
-      if (! $this->isEdit) {
-        $this->employee_type = EmployeeType::DPRD->value;
-      }
     }
 
     // Unit kerja hanya satu pilihan: isi otomatis (pemilihnya tidak ditampilkan).
     $tree = $this->getDepartmentTree();
     if ($this->hasSingleDepartment($tree)) {
       $this->department_id = $tree[0]['value'];
+    } elseif ($this->isDprdContext() && ! $this->isEdit && ! $this->department_id) {
+      // Anggota DPRD baru: unit kerja langsung Sekretariat DPRD (tetap bisa diganti).
+      $this->department_id = $this->dprdDepartmentId($tree) ?? '';
     }
 
     // Memulihkan polling jika halaman di-refresh saat menunggu pegawai menekan Start.
@@ -153,11 +142,9 @@ class UserForm extends Component
       // instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
       'nip' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nip', 'NIP')],
       'nik' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nik', 'NIK')],
-      'employee_type' => 'required|in:' . implode(',', array_column(EmployeeType::cases(), 'value')),
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
-      'atasan_id' => 'nullable|exists:users,id',
       'role' => ['required', 'string', $this->uniqueRoleRule()],
     ];
 
@@ -283,18 +270,32 @@ class UserForm extends Component
   }
 
   /**
-   * Menentukan apakah pegawai yang sedang diisi merupakan Anggota DPRD,
-   * berdasarkan tipe pegawai atau role yang dipilih pada formulir.
+   * Menentukan apakah pegawai yang sedang diisi merupakan Anggota DPRD:
+   * formulir dibuka dari menu Anggota DPRD, atau role DPRD dipilih.
    */
   public function isDprdMember(): bool
   {
-    return $this->employee_type === EmployeeType::DPRD->value
-      || in_array($this->role, ['anggota_dprd', 'pimpinan_dprd'], true);
+    return $this->isDprdContext() || in_array($this->role, User::DPRD_ROLES, true);
+  }
+
+  /** Sekretariat DPRD di antara unit kerja yang bisa dipilih pengguna ini. */
+  private function dprdDepartmentId(array $tree): ?int
+  {
+    $selectable = [];
+    $collect = function (array $nodes) use (&$collect, &$selectable) {
+      foreach ($nodes as $node) {
+        $selectable[] = (int) $node['value'];
+        $collect($node['children'] ?? []);
+      }
+    };
+    $collect($tree);
+
+    return Department::where('type', DepartmentType::DPRD)->whereIn('id', $selectable)->orderBy('id')->value('id');
   }
 
   /**
    * Formulir sedang dalam konteks Anggota DPRD (dibuka dari menu Anggota DPRD).
-   * Pada konteks ini tipe pegawai dikunci ke DPRD dan field kepegawaian umum
+   * Pada konteks ini field kepegawaian umum
    * (NIP, pangkat, jabatan struktural) disembunyikan.
    */
   public function isDprdContext(): bool
@@ -303,25 +304,12 @@ class UserForm extends Component
   }
 
   /**
-   * Sinkronkan role <-> jabatan DPRD:
-   * Pimpinan DPRD ⟺ Ketua DPRD, selain itu Anggota DPRD.
+   * Role tidak dipilih manual: selain Super Admin role mengikuti jabatan, dan Anggota DPRD
+   * selalu mengikuti Jabatan DPRD (Ketua DPRD ⟹ Pimpinan DPRD, selain itu Anggota DPRD).
    */
-  public function updatedRole($value)
+  private function roleIsAutomatic(): bool
   {
-    if ($value === 'pimpinan_dprd') {
-      $this->dprd_jabatan = DprdJabatan::KETUA->value;
-    } elseif ($value === 'anggota_dprd' && $this->dprd_jabatan === DprdJabatan::KETUA->value) {
-      $this->dprd_jabatan = '';
-    }
-  }
-
-  public function updatedDprdJabatan($value)
-  {
-    if ($value === DprdJabatan::KETUA->value) {
-      $this->role = 'pimpinan_dprd';
-    } elseif (! empty($value)) {
-      $this->role = 'anggota_dprd';
-    }
+    return ! $this->canEditRole() || $this->isDprdContext();
   }
 
   public function selectPosition($id): void
@@ -443,7 +431,7 @@ class UserForm extends Component
 
   public function save()
   {
-    if (! $this->canEditRole()) {
+    if ($this->roleIsAutomatic()) {
       $this->role = $this->roleFollowingPosition();
     }
 
@@ -452,13 +440,6 @@ class UserForm extends Component
     } catch (ValidationException $e) {
       $this->toastError('Periksa kembali isian formulir.');
       throw $e;
-    }
-
-    // Atasan langsung harus calon yang sah untuk unit & role pegawai ini (dan tidak berputar).
-    if ($this->atasan_id && ($error = $this->supervisorFieldError())) {
-      $this->addError('atasan_id', $error);
-      $this->toastError('Periksa kembali isian formulir.');
-      return;
     }
 
     $currentUser = auth()->user();
@@ -480,12 +461,20 @@ class UserForm extends Component
       'email' => $this->email ?: null,
       'nip' => $this->nip ?: null,
       'nik' => $this->nik ?: null,
-      'employee_type' => $this->employee_type,
       'department_id' => $this->department_id ?: null,
       'rank_id' => $this->rank_id ?: null,
       'position_id' => $this->position_id ?: null,
-      'atasan_id' => $this->atasan_id ?: null,
     ];
+
+    // Atasan langsung tidak diatur di sini, tetapi dipilih saat membuat SPPD. Bila unit kerja/role
+    // berubah sehingga atasan lama tidak lagi sah, kosongkan agar dipilih ulang saat SPPD dibuat.
+    if ($this->isEdit && $this->user->atasan_id) {
+      $placementChanged = (int) $this->department_id !== (int) $this->user->department_id
+        || $this->role !== $this->user->roles->first()?->name;
+      if ($placementChanged && $this->supervisorError($this->user->atasan_id)) {
+        $data['atasan_id'] = null;
+      }
+    }
 
     // Simpan data DPRD hanya untuk Anggota DPRD; selain itu kosongkan agar tidak ada data basi.
     if ($this->isDprdMember()) {
@@ -535,18 +524,19 @@ class UserForm extends Component
     return $subject;
   }
 
-  private function supervisorFieldError(): ?string
+  /** Alasan atasan ini tidak sah untuk unit & role di form (null = sah). */
+  private function supervisorError(int $atasanId): ?string
   {
     $service = app(SppdWorkflowService::class);
     $rank = Position::levelForRole($this->role);
     $subject = $this->supervisorSubject();
 
     $allowed = array_column($service->supervisorCandidates($subject, '', $rank, 500), 'id');
-    if (! in_array((int) $this->atasan_id, $allowed, true)) {
+    if (! in_array($atasanId, $allowed, true)) {
       return 'Pilih atasan dari pejabat di atas pegawai ini pada instansinya.';
     }
 
-    return $service->supervisorError($subject, User::with('roles')->find($this->atasan_id), $rank);
+    return $service->supervisorError($subject, User::with('roles')->find($atasanId), $rank);
   }
 
   /**
@@ -589,8 +579,9 @@ class UserForm extends Component
 
   public function render()
   {
-    // Field role terkunci untuk selain Super Admin — tampilkan role yang benar-benar akan disimpan.
-    if (! $this->canEditRole()) {
+    // Field role terkunci untuk selain Super Admin, dan Anggota DPRD selalu mengikuti Jabatan DPRD —
+    // tampilkan role yang benar-benar akan disimpan.
+    if ($this->roleIsAutomatic()) {
       $this->role = $this->roleFollowingPosition();
     }
 
@@ -621,18 +612,9 @@ class UserForm extends Component
       ? $selectedPosition->requiredDepartmentType()
       : null;
 
-    // Calon atasan langsung: pejabat di atas pegawai ini (yang terdekat lebih dulu).
-    $supervisorOptions = $this->department_id && $this->role
-      ? collect(app(SppdWorkflowService::class)->supervisorCandidates($this->supervisorSubject(), '', Position::levelForRole($this->role), 200))
-        ->map(fn (array $c) => ['value' => $c['id'], 'label' => $c['name'] . ' · ' . $c['role_label'] . ($c['unit'] ? ' (' . $c['unit'] . ')' : '')])
-        ->prepend(['value' => '', 'label' => 'Belum diatur (ikut struktur unit kerja)'])
-        ->all()
-      : [['value' => '', 'label' => 'Pilih unit kerja & role dulu']];
-
     $departmentTree = $this->getDepartmentTree();
 
     return view('livewire.user-form', [
-      'supervisorOptions' => $supervisorOptions,
       'departmentTree' => $departmentTree,
       'showDepartmentPicker' => ! $this->hasSingleDepartment($departmentTree),
       // Unit yang dipimpin pegawai ini (diatur di halaman struktur unit kerja).
@@ -644,7 +626,6 @@ class UserForm extends Component
       'positionRoleAdjusted' => $positionRoleAdjusted,
       'positionRequiredType' => $positionRequiredType,
       'roles' => $roles,
-      'employeeTypes' => EmployeeType::cases(),
       'dprdJabatans' => DprdJabatan::cases(),
       'dprdPartais' => DprdPartai::cases(),
     ]);

@@ -161,7 +161,7 @@ class SppdCreate extends Component
 
     // Alur buatan Super Admin yang tahap pertamanya bukan role atasan: tidak bisa dipilih di sini.
     if ($match['needs_supervisor'] && ! collect($this->steps)->contains('supervisor_step', true)) {
-      $this->errorMessage = 'Alur persetujuan ' . e($user->name) . ' ditentukan dari atasan langsungnya. Atur atasan langsungnya di Data Pegawai terlebih dahulu.';
+      $this->errorMessage = 'Alur persetujuan ' . e($user->name) . ' ditentukan dari atasan langsungnya, tetapi alur ini tidak memiliki tahap atasan yang bisa dipilih. Hubungi Administrator SPPD (Super Admin) untuk menyesuaikan alur.';
       return;
     }
 
@@ -473,12 +473,12 @@ class SppdCreate extends Component
     }
 
     $limit = 25;
-    $users = $query->with('department.parent.parent.parent')->orderBy('name')->limit($limit + 1)->get();
+    $users = $query->with(['roles', 'department.parent.parent.parent'])->orderBy('name')->limit($limit + 1)->get();
     $usersHasMore = $users->count() > $limit;
     $users = $users->take($limit);
 
     // Pegawai terpilih untuk ditampilkan di trigger (tetap tampil walau di luar hasil pencarian).
-    $selectedUser = $this->user_id ? User::with('department.parent.parent.parent')->find($this->user_id) : null;
+    $selectedUser = $this->user_id ? User::with(['roles', 'department.parent.parent.parent'])->find($this->user_id) : null;
 
     $workflowService = app(SppdWorkflowService::class);
     $isSuperAdmin = Auth::user()->hasRole('super_admin');

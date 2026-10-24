@@ -1,4 +1,13 @@
-<header class="sticky top-0 z-30 w-full border-b border-primary-600/50 bg-primary-700 text-white shadow-sm">
+@php
+	$showPasswordWarning = (bool) auth()->user()?->usesDefaultPasswordCached();
+@endphp
+
+{{-- Saat strip peringatan tampil, garis bawah header jatuh di bawah strip; pakai amber tipis agar tidak kontras. --}}
+<header @class([
+	'sticky top-0 z-30 w-full border-b bg-primary-700 text-white shadow-sm',
+	'border-amber-100' => $showPasswordWarning,
+	'border-primary-600/50' => ! $showPasswordWarning,
+])>
 	<div class="flex h-13 lg:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
 		<div class="flex items-center gap-4">
@@ -54,7 +63,7 @@
 				</button>
 
 				<div id="dropdown-menu"
-					class="absolute right-0 mt-3 w-56 origin-top-right rounded border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200 ease-out motion-reduce:transition-none invisible pointer-events-none -translate-y-2 scale-95 opacity-0">
+					class="absolute right-0 z-50 mt-3 w-56 origin-top-right rounded border border-slate-100 bg-white/95 py-1.5 shadow-xl shadow-slate-200/50 backdrop-blur-sm ring-1 ring-slate-900/5 focus:outline-none transition-all duration-200 ease-out motion-reduce:transition-none invisible pointer-events-none -translate-y-2 scale-95 opacity-0">
 
 					{{-- Mobile User Info --}}
 					<div class="block px-4 py-3 sm:hidden bg-slate-50/50 mb-1.5 border-b border-slate-100">
@@ -100,6 +109,26 @@
 			</div>
 		</div>
 	</div>
+
+	{{-- Peringatan password bawaan: tetap tampil sampai password diganti di Profil Saya.
+	     Disembunyikan langsung (tanpa muat ulang) saat Profil memancarkan event password-changed. --}}
+	@if ($showPasswordWarning)
+		<div x-data="{ show: true }" x-show="show" x-on:password-changed.window="show = false" role="alert"
+			class="bg-amber-50 text-amber-900">
+			<div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:px-6 lg:px-8">
+				<i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+				<p class="min-w-0 flex-1 text-xs font-medium sm:text-sm">
+					Anda masih memakai password bawaan. Segera ganti password agar akun Anda tetap aman.
+				</p>
+				@unless (request()->routeIs('profile'))
+					<x-ui.button href="{{ route('profile') }}#ganti-password" variant="dark" size="xs">
+						<x-slot:icon><i class="fa-solid fa-key"></i></x-slot:icon>
+						Ganti Password
+					</x-ui.button>
+				@endunless
+			</div>
+		</div>
+	@endif
 </header>
 
 <script>

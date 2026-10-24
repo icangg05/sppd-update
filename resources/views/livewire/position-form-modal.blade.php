@@ -24,6 +24,17 @@
               </div>
             </div>
           @else
+            @if ($tier === \App\Enums\PositionTier::LAINNYA->value)
+              {{-- Jabatan khusus lama (Walikota, Sekda, dst.) di luar pilihan tingkat: role dipertahankan
+                   selama tingkat tidak diganti. --}}
+              <div class="flex items-start gap-2.5 rounded border border-amber-200 bg-amber-50 px-3 py-2">
+                <i class="fa-solid fa-circle-info mt-0.5 text-xs text-amber-600"></i>
+                <p class="text-xs leading-relaxed text-amber-800">
+                  Jabatan ini memakai role <span class="font-semibold">{{ $summaryRole ?? 'yang belum ditentukan' }}</span>
+                  di luar pilihan tingkat di bawah. Biarkan agar role tetap, atau pilih salah satu tingkat untuk menggantinya.
+                </p>
+              </div>
+            @endif
             <div class="grid gap-2 sm:grid-cols-2">
               @foreach ($tiers as $t)
                 <x-form.radio wire:model.live="tier" name="tier" id="position-form-tier-{{ $t->value }}"
@@ -38,7 +49,7 @@
 
           <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <i class="fa-solid fa-wand-magic-sparkles mr-1 text-primary-600"></i>
-            Role pegawai: <span class="font-semibold text-slate-800">{{ $summaryRole ?? 'diatur Super Admin' }}</span>
+            Role pegawai: <span class="font-semibold text-slate-800">{{ $summaryRole ?? 'belum ditentukan' }}</span>
             <span class="text-slate-400">·</span>
             Cakupan: <span class="font-semibold text-slate-800">{{ $summaryScope->label() }}</span>
           </div>

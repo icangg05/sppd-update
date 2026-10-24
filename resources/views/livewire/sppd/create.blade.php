@@ -43,7 +43,7 @@
 					->map(fn($d) => ['value' => $d->value, 'label' => $d->label()])
 					->all();
 				$selectedPrefix = $selectedUser
-					? ($selectedUser->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $selectedUser->nip)
+					? ($selectedUser->isDprdMember() ? 'Anggota DPRD' : $selectedUser->nip)
 					: null;
 				$selectedUserLabel = $selectedUser
 					? trim(($selectedPrefix ? $selectedPrefix . ' - ' : '') . $selectedUser->name)
@@ -151,7 +151,7 @@
 											:class="highlighted === {{ $loop->index }}
 												? 'bg-primary-100 text-primary-800'
 												: ({{ $user_id == $u->id ? 'true' : 'false' }} ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
-											@php $prefix = $u->employee_type === \App\Enums\EmployeeType::DPRD ? 'Anggota DPRD' : $u->nip; @endphp
+											@php $prefix = $u->isDprdMember() ? 'Anggota DPRD' : $u->nip; @endphp
 											{{ trim(($prefix ? $prefix . ' - ' : '') . $u->name) }}
 											@if ($origin = $userOrigins[$u->id] ?? null)
 												<span class="block truncate text-[11px] font-normal text-slate-500">

@@ -61,7 +61,8 @@ class Profile extends Component
       'nip' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nip', 'NIP', $user->department_id, $id)],
       'nik' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nik', 'NIK', $user->department_id, $id)],
       'current_password' => ['nullable', 'required_with:password', 'current_password'],
-      'password' => ['nullable', 'string', 'min:6', 'confirmed'],
+      // Tidak boleh kembali ke password bawaan — tujuannya justru menggantinya.
+      'password' => ['nullable', 'string', 'min:6', 'confirmed', Rule::notIn([config('users.default_password')])],
     ];
   }
 
@@ -70,6 +71,7 @@ class Profile extends Component
     'current_password.current_password' => 'Password saat ini tidak sesuai.',
     'password.confirmed' => 'Konfirmasi password tidak cocok.',
     'password.min' => 'Password baru minimal 6 karakter.',
+    'password.not_in' => 'Password baru tidak boleh sama dengan password bawaan.',
   ];
 
   // ── Hook tautan Telegram (InteractsWithTelegramLink) ──
@@ -150,6 +152,12 @@ class Profile extends Component
     }
 
     $user->update($data);
+
+    if (isset($data['password'])) {
+      // Peringatan password bawaan di header disembunyikan tanpa perlu muat ulang.
+      $user->forgetDefaultPasswordCache();
+      $this->dispatch('password-changed');
+    }
 
     $this->reset('current_password', 'password', 'password_confirmation');
 

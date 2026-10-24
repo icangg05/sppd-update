@@ -433,6 +433,40 @@ class PositionDefaultRoleTest extends TestCase
         $this->assertSame(1, $walikota->level);
     }
 
+    public function test_tingkat_lainnya_tidak_bisa_dipilih_untuk_jabatan_baru(): void
+    {
+        $superAdmin = $this->makeUser('super_admin');
+
+        // Lainnya tidak ditawarkan; nama yang tidak dikenali dimulai sebagai Staf,
+        // dan request yang memaksa Lainnya ditolak.
+        Livewire::actingAs($superAdmin)->test(PositionFormModal::class)
+            ->call('open')
+            ->set('name', 'Penjaga Menara Suar')
+            ->assertSet('tier', 'staf')
+            ->assertDontSee('Tidak yakin, role diatur Super Admin')
+            ->set('tier', 'lainnya')
+            ->call('save')
+            ->assertHasErrors('tier');
+
+        $this->assertSame(0, Position::count());
+    }
+
+    public function test_super_admin_hanya_boleh_satu(): void
+    {
+        $superAdmin = $this->makeUser('super_admin');
+        $department = $this->makeDepartment('Dinas Perikanan');
+
+        Livewire::actingAs($superAdmin)->test(UserForm::class)
+            ->set('name', 'Admin Kedua')
+            ->set('username', 'admin.kedua')
+            ->set('department_id', $department->id)
+            ->set('role', 'super_admin')
+            ->call('save')
+            ->assertHasErrors('role');
+
+        $this->assertSame(1, User::role('super_admin')->count());
+    }
+
     public function test_halaman_data_jabatan_terbuka_untuk_admin_opd_saja(): void
     {
         $department = $this->makeDepartment('Dinas Perikanan');

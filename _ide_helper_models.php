@@ -642,7 +642,6 @@ namespace App\Models{
  * @property string|null $telegram_username
  * @property \Illuminate\Support\Carbon|null $telegram_linked_at
  * @property bool $telegram_notify
- * @property \App\Enums\EmployeeType $employee_type
  * @property int|null $rank_id
  * @property int|null $position_id
  * @property string|null $dprd_jabatan
@@ -682,7 +681,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDprdJabatan($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmployeeType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)

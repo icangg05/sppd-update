@@ -68,6 +68,17 @@ enum PositionTier: string
     };
   }
 
+  /**
+   * Tingkat yang bisa dipilih di form jabatan. Lainnya tidak ditawarkan; hanya
+   * dipertahankan untuk jabatan khusus yang sudah ada (Walikota, Sekda, dst.).
+   *
+   * @return self[]
+   */
+  public static function selectable(): array
+  {
+    return array_values(array_filter(self::cases(), fn (self $tier) => $tier !== self::LAINNYA));
+  }
+
   public static function fromRole(?string $role): self
   {
     foreach (self::cases() as $tier) {

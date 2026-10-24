@@ -3,7 +3,6 @@
 namespace App\Livewire\Sppd;
 
 use App\Enums\DepartmentType;
-use App\Enums\EmployeeType;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Livewire\Concerns\InteractsWithToast;
@@ -435,10 +434,7 @@ class SppdIndex extends Component
           } elseif ($jabatan === 'staf') {
             $q->role('staf');
           } elseif ($jabatan === 'anggota_dprd') {
-            $q->where(function ($sub) {
-              $sub->role(['anggota_dprd', 'pimpinan_dprd'])
-                ->orWhere('employee_type', EmployeeType::DPRD);
-            });
+            $q->role(User::DPRD_ROLES);
           } elseif ($jabatan === 'staff_dprd') {
             $q->role('staf')->whereHas('department', function ($d) {
               $d->where(function ($sub) {

@@ -6,7 +6,11 @@
 				<i class="fa-solid fa-user-tie"></i>
 			</span>
 			<div class="min-w-0 leading-tight">
-				<p class="text-sm font-bold text-slate-800">PPTK</p>
+				{{-- Cakupan: PPTK diatur per SPPD (beda dengan Setuju Bayar yang berlaku per instansi). --}}
+				<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+					<p class="text-sm font-bold text-slate-800">PPTK</p>
+					<x-ui.badge color="cyan"><i class="fa-solid fa-route mr-1 text-[9px]"></i> Khusus perjalanan ini</x-ui.badge>
+				</div>
 				<p class="mt-0.5 truncate text-xs text-slate-500">
 					@if ($sppd->pptk)
 						<span class="font-semibold text-slate-700">{{ $sppd->pptk->name }}</span>

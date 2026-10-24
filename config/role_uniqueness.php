@@ -19,6 +19,8 @@ return [
   */
 
   'system' => [
+    // Administrator SPPD hanya satu akun di seluruh sistem.
+    'super_admin',
     'walikota',
     'wakil_walikota',
     'sekda',

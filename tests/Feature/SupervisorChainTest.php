@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\DepartmentType;
 use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
+use App\Livewire\UserForm;
 use App\Livewire\WorkflowForm;
 use App\Models\Department;
 use App\Models\SppdWorkflow;
@@ -236,5 +237,39 @@ class SupervisorChainTest extends TestCase
         SppdWorkflow::where('name', 'Staf beratasan Sekretaris')->delete();
         $form()->call('save')->assertHasNoErrors();
         $this->assertNull(SppdWorkflow::where('name', 'Staf beratasan Sekretaris')->sole()->supervisor_role);
+    }
+
+    public function test_form_pegawai_tidak_mengatur_atasan_dan_menjaga_atasan_tersimpan(): void
+    {
+        $staf = $this->user('staf', $this->setda);
+        $staf->update(['atasan_id' => $this->kabag->id, 'username' => 'staf.uji']);
+        $this->actingAs($this->user('super_admin', $this->setda));
+
+        // Atasan hanya dipilih saat membuat SPPD: form pegawai tidak menampilkannya,
+        // dan menyimpan perubahan lain tidak menghapus atasan yang sudah dipilih.
+        Livewire::test(UserForm::class, ['user' => $staf->fresh()])
+            ->assertDontSee('Atasan Langsung')
+            ->set('name', 'Nama Baru')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame($this->kabag->id, $staf->fresh()->atasan_id);
+    }
+
+    public function test_pindah_instansi_mengosongkan_atasan_yang_tidak_lagi_sah(): void
+    {
+        $staf = $this->user('staf', $this->setda);
+        $staf->update(['atasan_id' => $this->kabag->id, 'username' => 'staf.pindah']);
+        $dinas = Department::create(['name' => 'Dinas Pendidikan', 'type' => DepartmentType::OPD, 'level' => 1]);
+        $this->actingAs($this->user('super_admin', $this->setda));
+
+        // Kabag Setda bukan atasan pegawai Dinas: dikosongkan agar dipilih ulang saat membuat SPPD.
+        Livewire::test(UserForm::class, ['user' => $staf->fresh()])
+            ->set('department_id', $dinas->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame($dinas->id, $staf->fresh()->department_id);
+        $this->assertNull($staf->fresh()->atasan_id);
     }
 }

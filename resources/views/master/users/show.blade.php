@@ -180,13 +180,7 @@
 							<hr class="border-slate-100">
 						</div>
 
-						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Kepegawaian</label>
-							<p class="text-sm font-semibold text-slate-800"><i
-									class="fa-solid fa-user-tag mr-1.5 text-slate-500"></i>{{ $user->employee_type->label() }}</p>
-						</div>
-
-						<div class="space-y-1">
+						<div class="sm:col-span-2 space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Golongan / Pangkat</label>
 							<p class="text-sm font-semibold text-slate-800">
 								<i
@@ -200,15 +194,6 @@
 								<i class="fa-solid fa-briefcase mr-1.5 text-slate-500"></i>{{ $user->isDprdMember() ? (\App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? ($user->dprd_jabatan ?? '-')) : ($user->position?->name ?? '-') }}
 							</p>
 						</div>
-
-						@unless ($user->isDprdMember())
-							<div class="sm:col-span-2 space-y-1">
-								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Atasan Langsung</label>
-								<p class="text-sm font-semibold text-slate-800">
-									<i class="fa-solid fa-user-tie mr-1.5 text-slate-500"></i>@if ($user->atasan){{ $user->atasan->name }} <span class="font-normal text-slate-500">· {{ $user->atasan->roles->first()?->label }}</span>@else<span class="font-normal text-slate-500">Belum diatur, ikut struktur unit kerja</span>@endif
-								</p>
-							</div>
-						@endunless
 
 						<div class="sm:col-span-2 space-y-1">
 							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Instansi / Unit Kerja

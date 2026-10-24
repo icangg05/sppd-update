@@ -125,7 +125,9 @@ class PositionFormModal extends Component
       return;
     }
 
-    $this->tier = PositionTier::guessFromName($this->name)->value;
+    // Nama yang tidak dikenali dimulai sebagai Staf (Lainnya tidak bisa dipilih).
+    $guess = PositionTier::guessFromName($this->name);
+    $this->tier = ($guess === PositionTier::LAINNYA ? PositionTier::STAF : $guess)->value;
     $this->applyTierLevel();
   }
 
@@ -156,9 +158,16 @@ class PositionFormModal extends Component
 
     $isSuperAdmin = $this->isSuperAdmin();
 
+    // Lainnya hanya sah untuk jabatan khusus yang sudah ada (tingkat tidak diganti)
+    // atau tingkat terkunci dari wizard alur (mis. Sekda); jabatan baru wajib bertingkat.
+    $tierRule = Rule::enum(PositionTier::class);
+    if (! $this->fixedRole && $this->tierChanged()) {
+      $tierRule->except(PositionTier::LAINNYA);
+    }
+
     $rules = [
       'name' => ['required', 'string', 'max:255'],
-      'tier' => ['required', Rule::enum(PositionTier::class)],
+      'tier' => ['required', $tierRule],
     ];
     if ($isSuperAdmin) {
       $rules['level'] = ['required', 'integer', 'min:0', 'max:9999'];
@@ -234,7 +243,7 @@ class PositionFormModal extends Component
     $fixedTier = $this->fixedRole ? PositionTier::fromRole($this->fixedRole) : null;
 
     return view('livewire.position-form-modal', [
-      'tiers'        => PositionTier::cases(),
+      'tiers'        => PositionTier::selectable(),
       'summaryRole'  => $summaryRole,
       'summaryScope' => $scope,
       'fixedTier'    => $fixedTier && $fixedTier->role() === $this->fixedRole

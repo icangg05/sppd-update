@@ -3,7 +3,6 @@
 namespace App\Livewire\Sppd;
 
 use App\Enums\ApprovalStatus;
-use App\Enums\EmployeeType;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
 use App\Models\Country;
@@ -714,10 +713,7 @@ class SppdCreateDetails extends Component
 
     // Cocokkan status DPRD pengikut dengan pelaksana: pelaksana anggota DPRD
     // hanya boleh mengikutsertakan sesama anggota DPRD, dan sebaliknya.
-    $dprdMember = function ($q) {
-      $q->where('employee_type', EmployeeType::DPRD)
-        ->orWhereHas('roles', fn ($r) => $r->whereIn('name', ['anggota_dprd', 'pimpinan_dprd']));
-    };
+    $dprdMember = fn ($q) => $q->whereHas('roles', fn ($r) => $r->whereIn('name', User::DPRD_ROLES));
     if ($pelaksana->isDprdMember()) {
       $userQuery->where($dprdMember);
     } else {
@@ -729,12 +725,12 @@ class SppdCreateDetails extends Component
     if ($this->searchFollower !== '') {
       $userQuery->where('name', 'like', '%' . $this->searchFollower . '%');
     }
-    $users = $userQuery->orderBy('name')->limit(100)->get();
+    $users = $userQuery->with('roles')->orderBy('name')->limit(100)->get();
 
     // Pengikut yang sudah dipilih dimuat terpisah (jumlahnya kecil) agar tetap
     // tampil di kolom ringkasan meski tidak ada di hasil pencarian saat ini.
     $selectedFollowerUsers = $this->followers
-      ? User::whereIn('id', $this->followers)->orderBy('name')->get()
+      ? User::with('roles')->whereIn('id', $this->followers)->orderBy('name')->get()
       : collect();
 
     $provinces = Province::orderBy('name')->get();

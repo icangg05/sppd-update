@@ -118,7 +118,7 @@
                 <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
               @enderror
             @endif
-            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Atasan langsung diatur per pegawai, lewat Data Pegawai atau saat membuat SPPD. Pemohon yang atasannya belum pasti tidak bisa membuat SPPD sampai atasannya diatur.</p>
+            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Atasan langsung diatur per pegawai saat membuat SPPD. Pemohon yang atasannya belum pasti harus memilih atasannya dulu sebelum SPPD bisa diajukan.</p>
           </div>
 
           {{-- Status Keaktifan Aturan --}}
