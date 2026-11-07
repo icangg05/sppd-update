@@ -101,8 +101,9 @@ class UserController extends Controller
       });
     }
 
-    $tripsAsPelaksana = $tripsAsPelaksanaQuery->paginate(5, ['*'], 'page_pelaksana')->withQueryString();
-    $tripsAsFollower = $tripsAsFollowerQuery->paginate(5, ['*'], 'page_pengikut')->withQueryString();
+    // Fragment: pindah halaman riwayat tetap di kartu riwayat & tab yang sama.
+    $tripsAsPelaksana = $tripsAsPelaksanaQuery->paginate(5, ['*'], 'page_pelaksana')->withQueryString()->fragment('riwayat');
+    $tripsAsFollower = $tripsAsFollowerQuery->paginate(5, ['*'], 'page_pengikut')->withQueryString()->fragment('riwayat-pengikut');
 
     return view('master.users.show', compact('user', 'tripsAsPelaksana', 'tripsAsFollower'));
   }

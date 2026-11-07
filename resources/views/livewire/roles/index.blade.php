@@ -55,7 +55,7 @@
             <th class="py-2.5 px-4">Label</th>
             <th class="py-2.5 px-4">Permissions</th>
             <th class="py-2.5 px-4 w-28 text-center">Pengguna</th>
-            <th class="py-2.5 px-4 w-24 text-center">Aksi</th>
+            <th class="py-2.5 px-4 w-24 text-right">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
@@ -105,19 +105,21 @@
                 @endif
               </td>
 
-              <td data-label="Aksi" class="py-2.5 px-4 text-center">
-                <div class="flex items-center justify-center gap-1">
+              {{-- Aksi ikon bergaya sama dengan tabel Data Pegawai; keterangan lewat tooltip. --}}
+              <td data-label="Aksi" class="py-2.5 px-4 text-right">
+                @php $actionBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition focus:outline-none focus-visible:ring-2'; @endphp
+                <div class="flex flex-wrap items-center justify-end gap-1">
                   <a wire:navigate href="{{ route('master.roles.edit', $role->id) }}"
-                    class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                    title="Edit">
-                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                    title="Edit Role" aria-label="Edit Role"
+                    class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
+                    <i class="fa-solid fa-pen-to-square"></i>
                   </a>
 
                   @if ($role->name !== 'super_admin')
                     <button type="button" wire:click="confirmDelete({{ $role->id }})"
-                      class="rounded border border-slate-200 bg-white p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                      title="Hapus">
-                      <i class="fa-solid fa-trash-can text-[10px]"></i>
+                      title="Hapus Role" aria-label="Hapus Role"
+                      class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
+                      <i class="fa-solid fa-trash"></i>
                     </button>
                   @endif
                 </div>

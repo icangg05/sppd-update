@@ -6,6 +6,7 @@ use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -101,6 +102,11 @@ class UsersIndex extends Component
   {
     $user = $this->scopedUser($id);
 
+    if ($user->is_active && $this->isSoleUnitAdmin($user)) {
+      $this->toastError("{$user->name} adalah satu-satunya Admin OPD aktif di unit kerjanya, jadi tidak dapat dinonaktifkan.");
+      return;
+    }
+
     $this->togglingId       = $user->id;
     $this->togglingName     = $user->name;
     $this->togglingIsActive = $user->is_active;
@@ -118,6 +124,13 @@ class UsersIndex extends Component
   public function toggleActive(int $id): void
   {
     $user = $this->scopedUser($id);
+
+    if ($user->is_active && $this->isSoleUnitAdmin($user)) {
+      $this->closeToggleModal();
+      $this->toastError("{$user->name} adalah satu-satunya Admin OPD aktif di unit kerjanya, jadi tidak dapat dinonaktifkan.");
+      return;
+    }
+
     $user->update(['is_active' => ! $user->is_active]);
     $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
@@ -132,6 +145,39 @@ class UsersIndex extends Component
     $this->applyUserScope($query);
 
     return $query->findOrFail($id);
+  }
+
+  /**
+   * ID Admin OPD yang tidak boleh dihapus atau dinonaktifkan karena tidak ada Admin OPD
+   * aktif lain di unit kerjanya, agar unit itu tetap punya admin.
+   *
+   * @param  Collection<int, User>  $users
+   * @return array<int, int>
+   */
+  private function soleUnitAdminIds(Collection $users): array
+  {
+    $admins = $users->filter(fn (User $u) => $u->hasRole('admin_opd'));
+    if ($admins->isEmpty()) {
+      return [];
+    }
+
+    $activeCounts = User::role('admin_opd')
+      ->where('is_active', true)
+      ->whereIn('department_id', $admins->pluck('department_id')->filter()->unique())
+      ->selectRaw('department_id, COUNT(*) as total')
+      ->groupBy('department_id')
+      ->pluck('total', 'department_id');
+
+    return $admins
+      ->filter(fn (User $u) => ($activeCounts[$u->department_id] ?? 0) - ($u->is_active ? 1 : 0) <= 0)
+      ->pluck('id')
+      ->values()
+      ->all();
+  }
+
+  private function isSoleUnitAdmin(User $user): bool
+  {
+    return $this->soleUnitAdminIds(collect([$user])) !== [];
   }
 
   // Konfirmasi buka blokir login
@@ -173,10 +219,43 @@ class UsersIndex extends Component
     $this->toastSuccess("Blokir login {$user->name} berhasil dibuka.");
   }
 
+  // Konfirmasi hapus pegawai
+  public bool $showDeleteModal = false;
+  public ?int $deletingId = null;
+  public ?string $deletingName = null;
+
+  public function confirmDelete(int $id): void
+  {
+    $user = $this->scopedUser($id);
+
+    if ($this->isSoleUnitAdmin($user)) {
+      $this->toastError("{$user->name} adalah satu-satunya Admin OPD aktif di unit kerjanya, jadi tidak dapat dihapus.");
+      return;
+    }
+
+    $this->deletingId      = $user->id;
+    $this->deletingName    = $user->name;
+    $this->showDeleteModal = true;
+  }
+
+  public function closeDeleteModal(): void
+  {
+    $this->showDeleteModal = false;
+    $this->deletingId      = null;
+    $this->deletingName    = null;
+  }
+
   public function deleteUser(int $id): void
   {
     $user = $this->scopedUser($id);
     $name = $user->name;
+
+    $this->closeDeleteModal();
+
+    if ($this->isSoleUnitAdmin($user)) {
+      $this->toastError("{$name} adalah satu-satunya Admin OPD aktif di unit kerjanya, jadi tidak dapat dihapus.");
+      return;
+    }
 
     try {
       $user->delete();
@@ -337,6 +416,9 @@ class UsersIndex extends Component
 
     $users = $query->orderBy('name')->paginate(25)->onEachSide(1);
 
+    // Admin OPD tunggal di unit kerjanya: tombol hapus & nonaktifkan disembunyikan.
+    $soleAdminIds = $this->soleUnitAdminIds($users->getCollection());
+
     // Build a depth map for department indentation — avoids N+1 by using in-memory lookup
     $allDepts     = Department::all()->keyBy('id');
     $deptDepthMap = $allDepts->mapWithKeys(function ($dept) use ($allDepts) {
@@ -380,7 +462,7 @@ class UsersIndex extends Component
       ->orderBy('label')
       ->get(['id', 'name', 'label']);
 
-    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole'))
+    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole', 'soleAdminIds'))
       ->title('Data Pegawai');
   }
 }

@@ -15,6 +15,9 @@
     'searchMethod' => null,
     // Label nilai terpilih saat ini (mode backend: opsinya belum tentu ada di hasil cari).
     'selectedLabel' => null,
+    // Opsi bernilai kosong (mis. "— Tidak dipilih —") ditulis abu-abu seperti placeholder.
+    // Tidak dipakai untuk filter "Semua …", karena di sana opsi kosong adalah pilihan nyata.
+    'mutedEmpty' => false,
 ])
 
 @php
@@ -200,7 +203,8 @@
                 'cursor-not-allowed bg-slate-50' => $disabled,
                 $class,
             ])>
-            <span class="truncate text-left" :class="selectedLabel ? 'text-slate-800' : 'text-slate-500'"
+            <span class="truncate text-left"
+                :class="selectedLabel @if ($mutedEmpty) && String(value ?? '') !== '' @endif ? 'text-slate-800' : 'text-slate-500'"
                 x-text="selectedLabel || @js($placeholder)"></span>
             <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                 :class="open && 'rotate-180'"></i>

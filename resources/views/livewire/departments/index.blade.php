@@ -540,20 +540,22 @@
                 </div>
               </div>
 
-              {{-- Aksi. Selama ada susunan yang belum disimpan, hapus dikunci agar tidak bertabrakan. --}}
-              <div class="ml-auto flex shrink-0 items-center gap-1.5">
-                <a :href="row.showUrl" wire:navigate title="Detail"
-                  class="flex size-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
-                  <i class="fa-solid fa-eye text-xs"></i>
+              {{-- Aksi ikon bergaya sama dengan tabel Data Pegawai. Selama ada susunan yang belum
+                   disimpan, hapus dikunci agar tidak bertabrakan. --}}
+              @php $actionBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition focus:outline-none focus-visible:ring-2'; @endphp
+              <div class="ml-auto flex shrink-0 items-center gap-1">
+                <a :href="row.showUrl" wire:navigate title="Detail Unit" aria-label="Detail Unit"
+                  class="{{ $actionBtn }} border-slate-300 bg-slate-100 text-slate-600 shadow-2xs hover:bg-slate-200 focus-visible:ring-slate-400/40">
+                  <i class="fa-solid fa-eye"></i>
                 </a>
-                <a :href="row.editUrl" wire:navigate title="Edit"
-                  class="flex size-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
-                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                <a :href="row.editUrl" wire:navigate title="Edit Unit" aria-label="Edit Unit"
+                  class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
+                  <i class="fa-solid fa-pen-to-square"></i>
                 </a>
                 <button type="button" x-show="row.canDelete" @click="$wire.confirmDelete(row.id)" :disabled="dirty"
-                  :title="dirty ? 'Simpan atau batalkan perubahan struktur dulu' : 'Hapus'"
-                  class="flex size-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 transition-colors enabled:hover:border-rose-200 enabled:hover:bg-rose-50 enabled:hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 disabled:cursor-not-allowed disabled:opacity-50">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
+                  :title="dirty ? 'Simpan atau batalkan perubahan struktur dulu' : 'Hapus Unit'" aria-label="Hapus Unit"
+                  class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 enabled:hover:bg-red-100 focus-visible:ring-red-500/40 disabled:cursor-not-allowed disabled:opacity-50">
+                  <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
             </div>

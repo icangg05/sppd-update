@@ -12,63 +12,40 @@
 		</x-ui.alert>
 	@endif
 
-	{{-- Modal Konfirmasi Hapus SPPD: tombol Hapus baru aktif setelah hitung mundur
-	     (juga dijaga di server). Hanya bisa ditutup lewat tombol. --}}
-	<div class="contents" x-data="{
-			wait: {{ $this::DELETE_WAIT }},
-			left: {{ $this::DELETE_WAIT }},
-			timer: null,
-			start() {
-				clearInterval(this.timer);
-				this.left = this.wait;
-				this.timer = setInterval(() => { if (--this.left <= 0) clearInterval(this.timer); }, 1000);
-			},
-		}" x-init="$watch('$wire.showDeleteModal', (open) => open ? start() : clearInterval(timer))">
-		<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus SPPD?"
-			description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-rose-600">
-			<div class="space-y-3 text-sm text-slate-600">
-				@if ($deleteStatus === 'in_progress')
-					<p>Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> masih dalam proses persetujuan dan akan <strong>dibatalkan serta dihapus permanen</strong>.</p>
-				@else
-					<p>SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dihapus permanen</strong> beserta seluruh datanya.</p>
-				@endif
+	{{-- Modal Konfirmasi Hapus SPPD. Hanya bisa ditutup lewat tombol. --}}
+	<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus SPPD?"
+		description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-triangle-exclamation text-rose-600">
+		<div class="space-y-3 text-sm text-slate-600">
+			@if ($deleteStatus === 'in_progress')
+				<p>Pengajuan SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> masih dalam proses persetujuan dan akan <strong>dibatalkan serta dihapus permanen</strong>.</p>
+			@else
+				<p>SPPD atas nama <strong>{{ $deleteLabel ?? '-' }}</strong> akan <strong>dihapus permanen</strong> beserta seluruh datanya.</p>
+			@endif
 
-				@if (in_array($deleteStatus, ['approved', 'completed'], true))
-					<div class="flex gap-2.5 rounded border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-800">
-						<i class="fa-solid fa-file-circle-xmark mt-0.5 text-rose-500"></i>
-						<p>SPPD ini sudah disetujui. Dokumen SPT/SPPD bertanda tangan elektronik, laporan, dan rincian biayanya ikut terhapus. Dokumen yang sudah dicetak tidak bisa diverifikasi lagi lewat QR, dan anggaran yang terpakai kembali tersedia.</p>
-					</div>
-				@endif
-			</div>
+			@if (in_array($deleteStatus, ['approved', 'completed'], true))
+				<div class="flex gap-2.5 rounded border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-800">
+					<i class="fa-solid fa-file-circle-xmark mt-0.5 text-rose-500"></i>
+					<p>SPPD ini sudah disetujui. Dokumen SPT/SPPD bertanda tangan elektronik, laporan, dan rincian biayanya ikut terhapus. Dokumen yang sudah dicetak tidak bisa diverifikasi lagi lewat QR, dan anggaran yang terpakai kembali tersedia.</p>
+				</div>
+			@endif
+		</div>
 
-			<x-slot name="footer" class="space-y-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
-				{{-- Sisa waktu tunggu sebelum tombol Hapus aktif. --}}
-				<div class="h-1 overflow-hidden rounded-full bg-rose-100" aria-hidden="true">
-					<div class="h-full rounded-full bg-rose-500 transition-[width] duration-1000 ease-linear motion-reduce:transition-none"
-						:style="`width: ${(left / wait) * 100}%`"></div>
-				</div>
-				<div class="flex items-center gap-3">
-					<x-ui.button variant="secondary" @click="$wire.showDeleteModal = false" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
-						class="flex-1 justify-center">
-						Batal
-					</x-ui.button>
-					<x-ui.button variant="danger" wire:click="deleteSppd" ::disabled="left > 0" wire:loading.attr="disabled" wire:target="deleteSppd"
-						class="flex-1 justify-center">
-						<span x-show="left > 0" class="inline-flex items-center gap-2" aria-live="polite">
-							<i class="fa-solid fa-hourglass-half"></i>
-							<span>Hapus dalam <span class="font-mono" x-text="left"></span> detik</span>
-						</span>
-						<span x-show="left <= 0" wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
-							<i class="fa-solid fa-trash"></i> Ya, Hapus
-						</span>
-						<span wire:loading wire:target="deleteSppd" class="inline-flex items-center gap-2">
-							<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...
-						</span>
-					</x-ui.button>
-				</div>
-			</x-slot>
-		</x-ui.modal>
-	</div>
+		<x-slot name="footer" class="flex items-center gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+			<x-ui.button variant="secondary" @click="$wire.showDeleteModal = false" wire:click="closeDeleteModal" wire:loading.attr="disabled" wire:target="deleteSppd"
+				class="flex-1 justify-center">
+				Batal
+			</x-ui.button>
+			<x-ui.button variant="danger" wire:click="deleteSppd" wire:loading.attr="disabled" wire:target="deleteSppd"
+				class="flex-1 justify-center">
+				<span wire:loading.remove wire:target="deleteSppd" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-trash"></i> Ya, Hapus
+				</span>
+				<span wire:loading wire:target="deleteSppd" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...
+				</span>
+			</x-ui.button>
+		</x-slot>
+	</x-ui.modal>
 
 	{{-- Header Halaman --}}
 	<div
@@ -77,7 +54,9 @@
 		<i class="fa-solid fa-plane-departure pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
 			aria-hidden="true"></i>
 
-		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+		{{-- Judul & kontrol baru sejajar mulai xl; di bawahnya (mis. zoom 125%) kontrol turun ke baris kedua
+		     agar tab jabatan dan tombol Buat SPPD tidak terlipat. --}}
+		<div class="relative flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
 			<div class="min-w-0 leading-tight">
 				@if ($isApprovalMode)
 					<span
@@ -127,7 +106,7 @@
 					</div>
 
 				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
-					<x-ui.button href="{{ route('sppd.create') }}" variant="primary" class="justify-center">
+					<x-ui.button href="{{ route('sppd.create') }}" variant="primary" class="shrink-0 justify-center whitespace-nowrap">
 						<x-slot name="icon">
 							<i class="fa-solid fa-plus text-xs"></i>
 						</x-slot>
@@ -195,7 +174,8 @@
 					<th>Pelaksana / Instansi</th>
 					<th>Maksud Perjalanan</th>
 					<th>Tanggal</th>
-					<th class="w-28">Domain</th>
+					{{-- Di bawah xl (mis. laptop dengan zoom 125%) domain ikut kolom Tanggal agar Aksi tidak terpotong. --}}
+					<th class="hidden w-28 xl:table-cell">Domain</th>
 					<th class="w-28">Status</th>
 					<th class="w-44 text-right">Aksi</th>
 				</tr>
@@ -249,9 +229,14 @@
 							<p class="text-slate-500">
 								s/d {{ $sppd->end_date->translatedFormat('d F Y') }}
 							</p>
+
+							<span
+								class="mt-1 inline-block rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 xl:hidden">
+								{{ $sppd->domain->shortLabel() }}
+							</span>
 						</td>
 
-						<td class="whitespace-nowrap">
+						<td class="hidden whitespace-nowrap xl:table-cell">
 							<span
 								class="inline-block rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs font-medium text-slate-600">
 								{{ $sppd->domain->shortLabel() }}

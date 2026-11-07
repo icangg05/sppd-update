@@ -10,6 +10,11 @@
   display: none !important;
 }
 
+/* Layar desktop yang pendek (mis. laptop dengan zoom browser 125%): tata letak seperti
+   halaman login dipadatkan agar muat satu layar tanpa scroll. Tampilan mobile tidak terpengaruh. */
+@custom-variant short (@media (min-width: 64rem) and (max-height: 760px));
+@custom-variant shorter (@media (min-width: 64rem) and (max-height: 600px));
+
 /* Goyangan untuk modal non-closeable: memberi tahu user agar menutup lewat tombol */
 @keyframes modal-shake {
   0%, 100% { transform: translateX(0); }

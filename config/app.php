@@ -15,7 +15,9 @@ return [
 
   'sppd_version' => '4.0',
 
-  'survey_url' => env('SURVEY_URL', '#'),
+  // Link embed Survei Kepuasan Masyarakat (Survei Digital SPBE, KemenPAN-RB).
+  // Nilai awal saja — admin dapat mengubahnya lewat Pengaturan Aplikasi (AppSettings).
+  'survey_url' => 'https://surveidigital.spbe.go.id/embed/survey/eyJzdXJ2ZXlfaWQiOjIsInNlcnZpY2VfaWQiOjg2NSwiaG9zdCI6Imh0dHBzOi8vc3BwZC5rZW5kYXJpa290YS5nby5pZC8saHR0cDovL2xvY2FsaG9zdDo4MDA0Iiwia2V5Ijoia0NFZW9ySGgifQ==/embed/view/?jenis_layanan=SPPD%20Kota%20Kendari',
 
   'name' => env('APP_NAME', 'Laravel'),
 

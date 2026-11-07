@@ -66,7 +66,7 @@
           </div>
         @else
           <div class="md:col-span-2">
-            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">SKPD / Unit Kerja Terikat</label>
+            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">SKPD / Unit Kerja</label>
             <div class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
               <i class="fa-solid fa-building text-xs text-slate-500"></i>
               {{ collect($departments)->firstWhere('id', (int) $department_id)?->name ?? auth()->user()->department?->name ?? '—' }}

@@ -20,7 +20,7 @@ COPY package.json pnpm-lock.yaml* ./
 # ======================
 # DEV: PHP
 # ======================
-FROM php:8.4-fpm AS php_dev
+FROM php:8.5.12-fpm AS php_dev
 
 RUN apt-get update && apt-get install -y \
   libpng-dev \
@@ -42,7 +42,7 @@ RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 
-COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11.1 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
@@ -62,7 +62,7 @@ RUN pnpm run build
 # ======================
 # PROD: PHP
 # ======================
-FROM php:8.4-fpm AS production
+FROM php:8.5.12-fpm AS production
 
 RUN apt-get update && apt-get install -y \
   libpng-dev \
@@ -84,7 +84,7 @@ RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 
-COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11.1 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 

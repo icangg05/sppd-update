@@ -6,6 +6,7 @@ use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Budget;
 use App\Models\Department;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -37,8 +38,10 @@ class BudgetIndex extends Component
 
   public function mount(): void
   {
-    if ($this->year === '') {
-      $this->year = (string) date('Y');
+    // Tahun dari URL yang tidak punya DPA diganti tahun bawaan, karena tidak ada di pilihan filter.
+    $years = $this->availableYears();
+    if ($this->year === '' || ! in_array($this->year, $years, true)) {
+      $this->year = $this->defaultYear($years);
     }
   }
 
@@ -67,8 +70,49 @@ class BudgetIndex extends Component
     $this->search        = '';
     $this->source        = '';
     $this->department_id = '';
-    $this->year          = (string) date('Y');
+    $this->year          = $this->defaultYear();
     $this->resetPage();
+  }
+
+  /** Anggaran dalam lingkup pengguna: Admin OPD hanya melihat anggaran instansinya sendiri. */
+  private function scopedBudgets(): Builder
+  {
+    $query = Budget::query();
+
+    if (! $this->currentUser()->hasRole('super_admin')) {
+      $query->where('department_id', $this->currentUser()->department_id);
+    }
+
+    return $query;
+  }
+
+  /**
+   * Tahun anggaran yang punya DPA dalam lingkup pengguna, terbaru dulu.
+   *
+   * @return array<int, string>
+   */
+  private function availableYears(): array
+  {
+    return $this->scopedBudgets()
+      ->distinct()
+      ->orderByDesc('year')
+      ->pluck('year')
+      ->map(fn ($year) => (string) $year)
+      ->all();
+  }
+
+  /**
+   * Tahun bawaan filter: tahun berjalan bila ada DPA-nya, selain itu tahun terbaru
+   * yang ada, atau semua tahun ('') bila belum ada DPA sama sekali.
+   *
+   * @param  array<int, string>|null  $years
+   */
+  private function defaultYear(?array $years = null): string
+  {
+    $years ??= $this->availableYears();
+    $current = (string) date('Y');
+
+    return in_array($current, $years, true) ? $current : ($years[0] ?? '');
   }
 
   /**
@@ -148,12 +192,7 @@ class BudgetIndex extends Component
   public function render()
   {
     $user  = $this->currentUser();
-    $query = Budget::with('department.parent');
-
-    // Admin OPD hanya melihat anggaran instansinya sendiri.
-    if (! $user->hasRole('super_admin')) {
-      $query->where('department_id', $user->department_id);
-    }
+    $query = $this->scopedBudgets()->with('department.parent');
 
     if ($this->search !== '') {
       $s = $this->search;
@@ -185,8 +224,12 @@ class BudgetIndex extends Component
       ? Department::orderBy('name')->get()
       : collect();
 
+    // Pilihan filter tahun hanya tahun yang punya DPA.
+    $years = $this->availableYears();
+    $defaultYear = $this->defaultYear($years);
+
     /** @var \Illuminate\View\View $view */
-    $view = view('livewire.budgets.budget-index', compact('budgets', 'departments'));
+    $view = view('livewire.budgets.budget-index', compact('budgets', 'departments', 'years', 'defaultYear'));
 
     // title() = macro Livewire pada Illuminate\View\View (dikenali via _ide_helper.php).
     return $view->title('DPA | Data Anggaran');

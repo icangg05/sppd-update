@@ -71,10 +71,10 @@
 					searchPlaceholder="Cari sumber..." class="bg-slate-50" />
 			</div>
 
-			{{-- Year Searchable Select --}}
+			{{-- Year Searchable Select — hanya tahun yang punya DPA --}}
 			@php
-				$yearOptions = collect(range(date('Y'), date('Y') - 4))
-					->map(fn($y) => ['value' => (string) $y, 'label' => (string) $y])
+				$yearOptions = collect($years)
+					->map(fn($y) => ['value' => $y, 'label' => $y])
 					->prepend(['value' => '', 'label' => 'Semua TA'])
 					->all();
 			@endphp
@@ -85,7 +85,7 @@
 			</div>
 
 			{{-- Reset (selalu tampil, nonaktif saat tidak ada filter) --}}
-			@php $hasFilter = $search !== '' || $source !== '' || $department_id !== '' || $year !== (string) date('Y'); @endphp
+			@php $hasFilter = $search !== '' || $source !== '' || $department_id !== '' || $year !== $defaultYear; @endphp
 			<x-ui.button wire:click="resetFilters" type="button" variant="secondary" :disabled="! $hasFilter"
 				class="whitespace-nowrap">
 				<x-slot:icon><i class="fa-solid fa-rotate-right text-xs text-slate-500"></i></x-slot:icon>
@@ -111,7 +111,7 @@
 						<th class="py-3 px-4 min-w-52">Uraian Anggaran</th>
 						<th class="py-3 px-4 text-right w-32">Pagu Total</th>
 						<th class="py-3 px-4 text-right w-32">Sisa Pagu</th>
-						<th class="py-3 px-4 text-center w-28">Aksi</th>
+						<th class="py-3 px-4 text-right w-28">Aksi</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-slate-100 text-slate-700">
@@ -166,30 +166,29 @@
 								@endif
 							</td>
 
-							<td data-label="Aksi" class="py-3.5 px-4 text-center">
-								<div class="flex items-center justify-center gap-1">
-									{{-- Detail --}}
+							{{-- Aksi ikon bergaya sama dengan tabel Data Pegawai; keterangan lewat tooltip. --}}
+							<td data-label="Aksi" class="py-3.5 px-4 text-right">
+								@php $actionBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition focus:outline-none focus-visible:ring-2'; @endphp
+								<div class="flex flex-wrap items-center justify-end gap-1">
 									<a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"
-										class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 transition-colors hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
-										title="Detail Anggaran">
-										<i class="fa-solid fa-eye text-xs"></i>
+										title="Detail Anggaran" aria-label="Detail Anggaran"
+										class="{{ $actionBtn }} border-slate-300 bg-slate-100 text-slate-600 shadow-2xs hover:bg-slate-200 focus-visible:ring-slate-400/40">
+										<i class="fa-solid fa-eye"></i>
 									</a>
 
-									{{-- Edit --}}
 									@can('budget.edit')
 										<a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
-											class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-											title="Edit Anggaran">
-											<i class="fa-solid fa-pen-to-square text-xs"></i>
+											title="Edit Anggaran" aria-label="Edit Anggaran"
+											class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
+											<i class="fa-solid fa-pen-to-square"></i>
 										</a>
 									@endcan
 
-									{{-- Hapus --}}
 									@can('budget.delete')
 										<button type="button" wire:click="confirmDelete({{ $budget->id }})"
-											class="rounded border border-slate-200 bg-white p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40"
-											title="Hapus Anggaran">
-											<i class="fa-solid fa-trash-can text-xs"></i>
+											title="Hapus Anggaran" aria-label="Hapus Anggaran"
+											class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
+											<i class="fa-solid fa-trash"></i>
 										</button>
 									@endcan
 								</div>

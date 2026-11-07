@@ -26,17 +26,12 @@ class SppdIndex extends Component
 
   public ?string $errorMessage = null;
 
-  // Konfirmasi hapus SPPD: tombol hapus baru aktif setelah hitung mundur DELETE_WAIT detik.
-  public const DELETE_WAIT = 10;
   public bool $showDeleteModal = false;
   #[Locked]
   public ?int $deleteId = null;
   public ?string $deleteLabel = null;
   /** Status SPPD yang akan dihapus (untuk peringatan di modal). */
   public ?string $deleteStatus = null;
-  /** Waktu modal dibuka (ms), agar hitung mundur juga dijaga di server. */
-  #[Locked]
-  public ?int $deleteRequestedAt = null;
 
   #[Url(keep: true)]
   public string $search = '';
@@ -310,7 +305,6 @@ class SppdIndex extends Component
     $this->deleteId = $id;
     $this->deleteLabel = $sppd->user?->name;
     $this->deleteStatus = $sppd->status->value;
-    $this->deleteRequestedAt = now()->getTimestampMs();
     $this->showDeleteModal = true;
   }
 
@@ -322,26 +316,16 @@ class SppdIndex extends Component
   {
     $this->showDeleteModal = false;
     $this->deleteId = null;
-    $this->deleteRequestedAt = null;
   }
 
   public function deleteSppd(): void
   {
     $id = $this->deleteId;
-    $requestedAt = $this->deleteRequestedAt;
+    $this->closeDeleteModal();
 
     if (! $id) {
-      $this->closeDeleteModal();
       return;
     }
-
-    // Hitung mundur di modal juga dijaga di server (toleransi setengah detik).
-    if (! $requestedAt || now()->getTimestampMs() - $requestedAt < (self::DELETE_WAIT * 1000 - 500)) {
-      $this->toastError('Tunggu hitung mundur selesai sebelum menghapus.');
-      return;
-    }
-
-    $this->closeDeleteModal();
 
     $sppd = SppdRequest::with('user')->findOrFail($id);
     if (! $this->canDelete($sppd)) {

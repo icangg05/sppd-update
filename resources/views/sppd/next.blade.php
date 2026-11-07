@@ -2,7 +2,7 @@
 @section('title', 'Selanjutnya | Portal Dokumen')
 
 @section('content')
-<div class="p-1 space-y-6">
+<div class="p-1 space-y-5">
 
   {{-- Header Halaman --}}
   <div
@@ -29,30 +29,30 @@
     </div>
   </div>
 
-  <div class="max-w-6xl space-y-8">
+  <div class="max-w-6xl space-y-5">
 
     {{-- Penandatangan dokumen keuangan, masing-masing diatur lewat modal: PPTK (per SPPD)
          dan Setuju Bayar (per instansi: kuitansi, pengeluaran riil, rincian biaya). --}}
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <livewire:sppd.pptk-selector :sppd="$sppd" :key="'pptk-' . $sppd->id" />
       <livewire:sppd.setuju-bayar-settings :sppd="$sppd" />
     </div>
 
     {{-- Bagian Dokumen Sebelum --}}
     <section class="dash-enter">
-      <div class="flex items-center gap-4 mb-5">
+      <div class="mb-3 flex items-center gap-4">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
           <i class="fa-solid fa-file-circle-plus mr-2 text-orange-400"></i> Dokumen Sebelum Perjalanan
         </h3>
         <div class="h-px w-full bg-slate-200"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         @php
           $beforeDocs = [
-            ['route' => 'sppd.manage-sppd', 'title' => 'Surat Perintah Perjalanan Dinas', 'desc' => 'Kelola & Cetak Dokumen SPPD', 'icon' => 'fa-file-lines'],
-            ['route' => 'sppd.manage-spt', 'title' => 'Surat Perintah Tugas', 'desc' => 'Kelola & Cetak Dokumen SPT', 'icon' => 'fa-file-signature'],
-            ['route' => 'sppd.receipts', 'title' => 'Kuitansi', 'desc' => 'Input Panjar & Cetak Kuitansi', 'icon' => 'fa-file-invoice-dollar'],
+            ['route' => 'sppd.manage-sppd', 'title' => 'Surat Perintah Perjalanan Dinas', 'desc' => 'Kelola & cetak dokumen SPPD', 'icon' => 'fa-file-lines'],
+            ['route' => 'sppd.manage-spt', 'title' => 'Surat Perintah Tugas', 'desc' => 'Kelola & cetak dokumen SPT', 'icon' => 'fa-file-signature'],
+            ['route' => 'sppd.receipts', 'title' => 'Kuitansi', 'desc' => 'Input panjar & cetak kuitansi', 'icon' => 'fa-file-invoice-dollar'],
           ];
         @endphp
 
@@ -65,19 +65,19 @@
 
     {{-- Bagian Dokumen Sesudah --}}
     <section class="dash-enter">
-      <div class="flex items-center gap-4 mb-5">
+      <div class="mb-3 flex items-center gap-4">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
           <i class="fa-solid fa-file-circle-check mr-2 text-primary-600"></i> Dokumen Sesudah Perjalanan
         </h3>
         <div class="h-px w-full bg-slate-200"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         @php
           $afterDocs = [
-            ['route' => 'sppd.actual-expenses', 'title' => 'Laporan Pengeluaran Rill', 'desc' => 'Input Biaya Aktual', 'icon' => 'fa-hand-holding-dollar'],
-            ['route' => 'sppd.final-costs', 'title' => 'Rincian Biaya Perjalanan', 'desc' => 'Input Detail Pengeluaran', 'icon' => 'fa-calculator'],
-            ['route' => 'sppd.report-input', 'title' => 'Laporan Perjalanan', 'desc' => 'Input Narasi Hasil', 'icon' => 'fa-pen-to-square'],
+            ['route' => 'sppd.actual-expenses', 'title' => 'Laporan Pengeluaran Riil', 'desc' => 'Input biaya aktual', 'icon' => 'fa-hand-holding-dollar'],
+            ['route' => 'sppd.final-costs', 'title' => 'Rincian Biaya Perjalanan', 'desc' => 'Input detail pengeluaran', 'icon' => 'fa-calculator'],
+            ['route' => 'sppd.report-input', 'title' => 'Laporan Perjalanan', 'desc' => 'Input narasi hasil', 'icon' => 'fa-pen-to-square'],
           ];
         @endphp
 

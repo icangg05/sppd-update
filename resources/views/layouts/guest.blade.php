@@ -25,7 +25,8 @@
 	{{-- Notifikasi Toast global (mis. setelah logout) --}}
 	<x-ui.toast />
 
-	<div class="relative overflow-hidden min-h-dvh lg:min-h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8">
+	{{-- short:/shorter: (app.css) memadatkan kartu di layar desktop pendek agar muat tanpa scroll. --}}
+	<div class="relative overflow-hidden min-h-dvh lg:min-h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8 short:py-3">
 
 		<!-- Efek cahaya di dekat bulatan -->
 		<div
@@ -43,7 +44,7 @@
 		<!-- Card login -->
 		<div
 			class="max-w-6xl grid w-full overflow-hidden rounded border border-sky-100/25 bg-sky-950/30 shadow-[0_30px_100px_rgba(8,47,73,0.45)] backdrop-blur-[28px] lg:grid-cols-[0.95fr_1.05fr]">
-			<div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9">
+			<div class="hidden flex-col justify-center gap-5 px-5 py-6 sm:px-7 sm:py-8 lg:flex lg:px-9 lg:py-9 short:gap-3 short:py-6 shorter:gap-2 shorter:py-4">
 				<div
 					class="dash-enter mx-auto inline-flex w-fit items-center gap-2 rounded border border-sky-100/35 bg-sky-100/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-50">
 					<span class="inline-block h-2 w-2 rounded-full bg-sky-200"></span>
@@ -52,28 +53,29 @@
 
 				<div
 					class="animate-[fadeUp_0.9s_ease] overflow-hidden rounded border border-sky-100/25 bg-sky-100/10 p-2 shadow-[0_18px_40px_rgba(14,165,233,0.16)]">
+					{{-- Layar pendek: tinggi foto mengikuti tinggi layar (lebar menyesuaikan rasio). --}}
 					<img src="{{ asset('img/walikota-dan-wakil.webp') }}" alt="Foto Kepala Daerah dan Wakil"
-						class="h-full w-[70%] mx-auto rounded object-cover opacity-95">
+						class="h-full w-[70%] mx-auto rounded object-cover opacity-95 short:h-[25vh] short:w-auto shorter:h-[22vh]">
 				</div>
 
 				<div class="dash-enter flex flex-row items-center justify-center gap-3 px-1">
 					<img src="{{ asset('img/logo-kendari.png') }}" alt="Logo Pemkot Kendari"
-						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14">
+						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-14 short:h-11 shorter:h-9 shorter:py-1.5">
 					<img src="{{ asset('img/logo-bsre.png') }}" alt="Logo BSrE"
-						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12">
+						class="h-20 rounded border border-sky-100/30 bg-sky-100/15 px-3 py-2 shadow-[0_10px_24px_rgba(14,165,233,0.14)] backdrop-blur-md sm:h-12 short:h-10 shorter:h-8 shorter:py-1.5">
 				</div>
 
-				<div class="dash-enter space-y-2 px-1 text-center uppercase">
-					<h1 class="text-[1.7rem] font-black leading-tight text-white sm:text-[1.85rem]">SPPD Elektronik<br>Kota
+				<div class="dash-enter space-y-2 px-1 text-center uppercase shorter:space-y-1">
+					<h1 class="text-[1.7rem] font-black leading-tight text-white sm:text-[1.85rem] short:text-[1.55rem] shorter:text-[1.35rem]">SPPD Elektronik<br>Kota
 						Kendari</h1>
-					<p class="text-sm leading-6 text-sky-50/90">Sistem perjalanan dinas modern untuk OPD</p>
-					<x-ui.survey-cta class="mt-4 border-t border-sky-100/25 pt-4" />
+					<p class="text-sm leading-6 text-sky-50/90 shorter:text-xs shorter:leading-5">Sistem perjalanan dinas modern untuk OPD</p>
+					<x-ui.survey-cta class="mt-4 border-t border-sky-100/25 pt-4 short:mt-3 short:pt-3 shorter:mt-2 shorter:pt-2" />
 				</div>
 			</div>
 
 			<div
-				class="flex flex-col justify-center border-t border-sky-100/25 bg-sky-100/10 px-5 py-6 text-slate-900 sm:px-7 sm:py-8 lg:border-t-0 lg:border-l lg:px-9">
-				<div class="dash-enter space-y-3">
+				class="flex flex-col justify-center border-t border-sky-100/25 bg-sky-100/10 px-5 py-6 text-slate-900 sm:px-7 sm:py-8 lg:border-t-0 lg:border-l lg:px-9 short:py-6 shorter:py-4">
+				<div class="dash-enter space-y-3 short:space-y-2">
 					<div class="relative">
 						<p class="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">Akses resmi</p>
 						<div class="lg:hidden absolute -top-2 right-0 flex flex-row items-center gap-1.5">
@@ -83,18 +85,18 @@
 								class="h-5">
 						</div>
 					</div>
-					<h2 class="text-[1.55rem] font-black text-white sm:text-[1.65rem]">Masuk ke Akun Anda</h2>
+					<h2 class="text-[1.55rem] font-black text-white sm:text-[1.65rem] short:text-[1.5rem] shorter:text-[1.35rem]">Masuk ke Akun Anda</h2>
 					<p class="text-sm leading-6 text-sky-50/90">Gunakan akun resmi Anda untuk mengakses layanan.</p>
 				</div>
 
 				<div
-					class="dash-enter mt-6 rounded border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5">
+					class="dash-enter mt-6 rounded border border-sky-100/25 bg-sky-100/10 p-4 shadow-[0_20px_40px_rgba(14,165,233,0.12)] backdrop-blur-xl sm:p-5 short:mt-4 short:p-4 shorter:mt-3">
 					{{ $slot }}
 				</div>
 
 				<x-ui.survey-cta compact class="dash-enter mt-6 border-t border-sky-100/25 pt-4 lg:hidden" />
 
-				<div class="dash-enter mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90">
+				<div class="dash-enter mt-6 border-t border-sky-100/25 pt-4 text-xs text-sky-50/90 short:mt-4 short:pt-3 shorter:mt-3 shorter:pt-2">
 					<p>
 						<span class="inline lg:hidden font-bold text-sky-100">SPPD Elektronik</span>
 						<span class="font-bold text-sky-100">V {{ config('app.sppd_version') }}</span> • &copy; <?= date('Y') ?>

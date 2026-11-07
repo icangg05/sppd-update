@@ -18,7 +18,7 @@ use Tests\TestCase;
 
 /**
  * Hapus SPPD di Daftar SPPD: Admin OPD boleh menghapus SPPD apa pun statusnya di
- * lingkup unit kerjanya, setelah hitung mundur konfirmasi selesai.
+ * lingkup unit kerjanya, setelah mengonfirmasi di modal.
  */
 class SppdDeleteTest extends TestCase
 {
@@ -65,22 +65,18 @@ class SppdDeleteTest extends TestCase
         ]);
     }
 
-    public function test_admin_opd_menghapus_sppd_disetujui_setelah_hitung_mundur(): void
+    public function test_admin_opd_menghapus_sppd_disetujui_langsung_setelah_konfirmasi(): void
     {
         $sppd = $this->sppd($this->dinas, SppdStatus::APPROVED);
 
-        $page = Livewire::actingAs($this->admin)->test(SppdIndex::class)
+        Livewire::actingAs($this->admin)->test(SppdIndex::class)
             ->assertSeeHtml("confirmDelete({$sppd->id})")
             ->call('confirmDelete', $sppd->id)
             ->assertSet('showDeleteModal', true)
-            ->assertSee('Dokumen yang sudah dicetak tidak bisa diverifikasi lagi');
+            ->assertSee('Dokumen yang sudah dicetak tidak bisa diverifikasi lagi')
+            ->call('deleteSppd')
+            ->assertSet('showDeleteModal', false);
 
-        // Sebelum hitung mundur selesai: ditolak, modal tetap terbuka.
-        $page->call('deleteSppd')->assertSet('showDeleteModal', true);
-        $this->assertNotNull(SppdRequest::find($sppd->id));
-
-        $this->travel(SppdIndex::DELETE_WAIT)->seconds();
-        $page->call('deleteSppd')->assertSet('showDeleteModal', false);
         $this->assertNull(SppdRequest::find($sppd->id));
     }
 

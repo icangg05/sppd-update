@@ -101,7 +101,8 @@
 			}
 		</style>
 	@endonce
-	<p class="mt-2 text-sky-50/80 {{ $compact ? 'text-[11px]' : 'text-xs' }}"><i
+	{{-- Layar desktop pendek: keterangan disembunyikan agar halaman login muat tanpa scroll. --}}
+	<p class="mt-2 text-sky-50/80 short:hidden {{ $compact ? 'text-[11px]' : 'text-xs' }}"><i
 			class="fa-solid fa-circle-info mr-1"></i>Bantu kami meningkatkan kualitas layanan dengan mengisi survei singkat.
 	</p>
 </div>

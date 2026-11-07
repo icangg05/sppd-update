@@ -209,8 +209,11 @@
 					</div>
 				</div>
 
-				{{-- Card: Riwayat Perjalanan Dinas --}}
-				<div class="dash-enter rounded border border-slate-200 bg-white p-6 shadow-sm mt-6">
+				{{-- Card: Riwayat Perjalanan Dinas. Tautan dari detail SPPD membawa #riwayat (pelaksana) atau
+				     #riwayat-pengikut; wire:navigate selalu menggulir ke atas, jadi kartu digulir manual setelahnya.
+				     scroll-mt memberi ruang untuk header yang menempel di atas. --}}
+				<div id="riwayat" class="dash-enter mt-6 scroll-mt-20 rounded border border-slate-200 bg-white p-6 shadow-sm"
+					x-data x-init="if (location.hash.startsWith('#riwayat')) setTimeout(() => $el.scrollIntoView({ block: 'start' }))">
 					<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-100">
 						<div class="flex items-center gap-3">
 							<div class="flex size-9 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-600 ring-1 ring-primary-100">
@@ -223,7 +226,7 @@
 						</div>
 
 						{{-- Search Trip Form --}}
-						<form method="GET" action="{{ url()->current() }}" class="flex items-center gap-2 w-full sm:w-72">
+						<form method="GET" action="{{ url()->current() }}#riwayat" class="flex items-center gap-2 w-full sm:w-72">
 							@foreach (request()->except(['search_trip', 'page_pelaksana', 'page_pengikut']) as $key => $value)
 								@if (is_array($value))
 									@foreach ($value as $val)
@@ -245,14 +248,14 @@
 								Cari
 							</button>
 							@if(request('search_trip'))
-								<a href="{{ url()->current() }}" class="text-slate-500 hover:text-slate-600">
+								<a href="{{ url()->current() }}#riwayat" class="text-slate-500 hover:text-slate-600">
 									<i class="fa-solid fa-circle-xmark text-sm"></i>
 								</a>
 							@endif
 						</form>
 					</div>
 
-					<div x-data="{ activeTab: '{{ request()->has('page_pengikut') ? 'pengikut' : 'pelaksana' }}' }" class="space-y-4">
+					<div x-data="{ activeTab: { '#riwayat-pengikut': 'pengikut', '#riwayat': 'pelaksana' }[location.hash] ?? '{{ request()->has('page_pengikut') ? 'pengikut' : 'pelaksana' }}' }" class="space-y-4">
 						{{-- Tab Buttons --}}
 						<div class="flex border-b border-slate-200">
 							<button @click="activeTab = 'pelaksana'"

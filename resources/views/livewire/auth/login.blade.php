@@ -17,7 +17,7 @@
 
 	{{-- Banner akun diblokir: hanya super_admin yang dapat membuka blokir --}}
 	@if ($blocked)
-		<div class="mt-3 flex items-start gap-3 rounded border border-rose-200 bg-rose-50 p-3.5 text-sm shadow-sm" role="alert">
+		<div class="mb-4 flex items-start gap-3 rounded border border-rose-200 bg-rose-50 p-3.5 text-sm shadow-sm" role="alert">
 			<i class="fa-solid fa-user-lock mt-0.5 shrink-0 text-base text-rose-600"></i>
 			<div class="leading-snug">
 				<p class="font-bold text-rose-800">Akun diblokir</p>
@@ -31,7 +31,7 @@
 
 	{{-- Alert akun dikunci sementara: hilang sendiri saat hitung mundur selesai --}}
 	<div x-show="remaining > 0" x-cloak
-		class="mt-3 flex items-start gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="alert">
+		class="mb-4 flex items-start gap-3 rounded border border-amber-200 bg-amber-50 p-3.5 text-sm shadow-sm" role="alert">
 		<i class="fa-solid fa-clock mt-0.5 shrink-0 text-base text-amber-600"></i>
 		<div class="leading-snug">
 			<p class="font-bold text-amber-800">Akun Dikunci Sementara</p>
@@ -47,7 +47,7 @@
 	{{-- Autofill browser mengisi DOM tanpa memicu event, sehingga state Livewire tetap kosong
 	     dan login gagal. Nilai hasil autofill dipancing sekali saat load agar ikut ter-sync.
 	     Sengaja TIDAK memakai autocomplete="off" supaya password manager tetap menawarkan simpan. --}}
-	<form wire:submit="login" class="mt-6 space-y-4"
+	<form wire:submit="login" class="space-y-4 short:space-y-3"
 		x-init="window.addEventListener('load', () => setTimeout(() =>
 			$el.querySelectorAll('input:not([type=checkbox])').forEach(
 				i => i.value && i.dispatchEvent(new Event('input', { bubbles: true }))
@@ -62,13 +62,13 @@
 				required
 				autofocus
 				autocomplete="username"
-				class="mt-2 w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
+				class="mt-2 w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm short:mt-1.5 short:py-2.5 text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
 				placeholder="Masukkan username">
 		</div>
 
 		<div x-data="{ show: false }">
 			<label for="password" class="block text-sm font-semibold text-sky-50">Password</label>
-			<div class="relative mt-2">
+			<div class="relative mt-2 short:mt-1.5">
 				<input
 					wire:model="password"
 					{{-- type statis agar password manager mengenali form ini sebelum Alpine init;
@@ -79,7 +79,7 @@
 					name="password"
 					required
 					autocomplete="current-password"
-					class="w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 pr-12 text-sm text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
+					class="w-full rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 pr-12 text-sm short:py-2.5 text-white placeholder:text-sky-100/70 outline-none backdrop-blur-md transition focus:border-sky-200/70 focus:bg-sky-100/20"
 					placeholder="Masukkan password">
 				<button type="button" @click="show = !show" tabindex="-1"
 					:aria-label="show ? 'Sembunyikan password' : 'Tampilkan password'"
@@ -107,7 +107,7 @@
 			:disabled="remaining > 0"
 			wire:loading.attr="disabled"
 			wire:target="login"
-			class="w-full rounded bg-sky-300 px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
+			class="w-full rounded bg-sky-300 px-4 py-3 text-sm font-bold short:py-2.5 uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
 			{{-- Tiga keadaan tombol: terkunci (anti-spam), sedang proses, dan normal. --}}
 			<span wire:loading.remove wire:target="login" x-show="remaining > 0" x-cloak
 				class="inline-flex items-center justify-center gap-2">

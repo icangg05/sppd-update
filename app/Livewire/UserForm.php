@@ -138,10 +138,10 @@ class UserForm extends Component
       'username' => 'required|string|max:255|unique:users,username,' . $userId,
       'email' => 'nullable|email|unique:users,email,' . $userId,
       'password' => 'nullable|string|min:6',
-      // NIP/NIK boleh sama di instansi berbeda (pegawai bisa berakun di dua
-      // instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
-      'nip' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nip', 'NIP')],
-      'nik' => ['nullable', 'string', 'max:20', $this->uniqueIdentityRule('nik', 'NIK')],
+      // NIP/NIK hanya angka dengan panjang baku (NIP 18, NIK 16). Boleh sama di instansi berbeda
+      // (pegawai bisa berakun di dua instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
+      'nip' => ['nullable', 'digits:18', 'not_regex:/^0+$/', $this->uniqueIdentityRule('nip', 'NIP')],
+      'nik' => ['nullable', 'digits:16', 'not_regex:/^0+$/', $this->uniqueIdentityRule('nik', 'NIK')],
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
@@ -262,6 +262,8 @@ class UserForm extends Component
   protected function validationAttributes()
   {
     return [
+      'nip' => 'NIP',
+      'nik' => 'NIK',
       'department_id' => 'instansi / unit kerja',
       'position_id' => 'jabatan',
       'dprd_jabatan' => 'jabatan DPRD',
@@ -434,6 +436,10 @@ class UserForm extends Component
     if ($this->roleIsAutomatic()) {
       $this->role = $this->roleFollowingPosition();
     }
+
+    // NIP sering ditempel berformat "19810807 200502 2 004"; spasinya dibuang sebelum divalidasi.
+    $this->nip = preg_replace('/\s+/', '', (string) $this->nip);
+    $this->nik = preg_replace('/\s+/', '', (string) $this->nik);
 
     try {
       $this->validate();

@@ -285,20 +285,31 @@
 										<i class="fa-solid fa-pen-to-square"></i>
 									</a>
 
-									<button type="button" wire:click="confirmToggleActive({{ $user->id }})"
-										wire:loading.attr="disabled" wire:target="confirmToggleActive({{ $user->id }})"
-										title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
-										aria-label="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
-										class="{{ $actionBtn }} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 {{ $user->is_active ? 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50 focus-visible:ring-slate-400/40' : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:ring-emerald-500/40' }}">
-										<i class="fa-solid fa-power-off"></i>
-									</button>
+									{{-- Admin OPD tunggal di unit kerjanya tidak bisa dinonaktifkan maupun dihapus;
+									     slot kosong menjaga ikon lain tetap sejajar antarbaris. --}}
+									@php $isSoleAdmin = in_array($user->id, $soleAdminIds, true); @endphp
+									@if ($isSoleAdmin && $user->is_active)
+										<span class="size-7 shrink-0" aria-hidden="true"></span>
+									@else
+										<button type="button" wire:click="confirmToggleActive({{ $user->id }})"
+											wire:loading.attr="disabled" wire:target="confirmToggleActive({{ $user->id }})"
+											title="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
+											aria-label="{{ $user->is_active ? 'Nonaktifkan Pegawai' : 'Aktifkan Pegawai' }}"
+											class="{{ $actionBtn }} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 {{ $user->is_active ? 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50 focus-visible:ring-slate-400/40' : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 focus-visible:ring-emerald-500/40' }}">
+											<i class="fa-solid fa-power-off"></i>
+										</button>
+									@endif
 
-									<button type="button" wire:click="deleteUser({{ $user->id }})"
-										wire:confirm="Yakin ingin menghapus pegawai ini secara permanen?"
-										title="Hapus Data" aria-label="Hapus Data"
-										class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
-										<i class="fa-solid fa-trash"></i>
-									</button>
+									@if ($isSoleAdmin)
+										<span class="size-7 shrink-0" aria-hidden="true"></span>
+									@else
+										<button type="button" wire:click="confirmDelete({{ $user->id }})"
+											wire:loading.attr="disabled" wire:target="confirmDelete({{ $user->id }})"
+											title="Hapus Data" aria-label="Hapus Data"
+											class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
+											<i class="fa-solid fa-trash"></i>
+										</button>
+									@endif
 								</div>
 							</td>
 						</tr>
@@ -366,6 +377,26 @@
 					wire:click="toggleActive({{ $togglingId ?? 0 }})" wire:target="toggleActive">
 					<x-slot:icon><i class="fa-solid fa-power-off text-xs"></i></x-slot:icon>
 					{{ $togglingIsActive ? 'Nonaktifkan' : 'Aktifkan' }}
+				</x-ui.button>
+			</div>
+		</div>
+	</x-ui.modal>
+
+	{{-- Modal Konfirmasi Hapus Pegawai --}}
+	<x-ui.modal show="$wire.showDeleteModal" :closeable="false" title="Hapus Pegawai"
+		description="Data yang sudah dihapus tidak dapat dikembalikan" icon="fa-solid fa-trash text-red-600">
+		<div class="space-y-4">
+			<p class="text-sm text-slate-600">
+				Hapus <span class="font-bold text-slate-800">{{ $deletingName ?? 'pegawai ini' }}</span> secara permanen?
+				Bila pegawai hanya pindah tugas atau pensiun, nonaktifkan saja agar riwayat SPPD-nya tetap tersimpan.
+			</p>
+
+			<div class="flex items-center justify-end gap-2 pt-1">
+				<x-ui.button type="button" variant="secondary" wire:click="closeDeleteModal">Batal</x-ui.button>
+				<x-ui.button type="button" variant="danger" wire:click="deleteUser({{ $deletingId ?? 0 }})"
+					wire:target="deleteUser">
+					<x-slot:icon><i class="fa-solid fa-trash text-xs"></i></x-slot:icon>
+					Hapus
 				</x-ui.button>
 			</div>
 		</div>

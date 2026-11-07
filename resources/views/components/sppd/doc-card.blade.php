@@ -18,7 +18,6 @@
             'arrow' => 'text-orange-500',
             'ring'  => 'focus-visible:ring-orange-400',
             'edge'  => 'bg-orange-400/70',
-            'mark'  => 'text-orange-500/10',
         ],
         'primary' => [
             'chip'  => 'bg-primary-100 text-primary-600',
@@ -27,28 +26,25 @@
             'arrow' => 'text-primary-600',
             'ring'  => 'focus-visible:ring-primary-500',
             'edge'  => 'bg-primary-500/70',
-            'mark'  => 'text-primary-500/10',
         ],
     ];
     $t = $tones[$tone] ?? $tones['primary'];
 @endphp
 
 <a wire:navigate href="{{ $href }}"
-    class="group relative flex items-start gap-4 overflow-hidden rounded border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 {{ $t['hover'] }} hover:-translate-y-1 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset {{ $t['ring'] }}">
-    {{-- Ornamen: garis aksen kiri + watermark ikon dokumen di sudut. --}}
+    class="group relative flex items-center gap-3 overflow-hidden rounded border border-slate-200 bg-white py-3 pl-4 pr-10 shadow-sm transition-all duration-200 {{ $t['hover'] }} hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset {{ $t['ring'] }}">
+    {{-- Garis aksen kiri menandai fase (sebelum/sesudah perjalanan). --}}
     <span class="absolute inset-y-0 left-0 w-1 {{ $t['edge'] }}" aria-hidden="true"></span>
-    <i class="fa-solid {{ $icon }} pointer-events-none absolute -bottom-3 -right-2 text-6xl {{ $t['mark'] }} transition-transform duration-300 group-hover:scale-110" aria-hidden="true"></i>
-    <div
-        class="flex size-12 shrink-0 items-center justify-center rounded {{ $t['chip'] }} transition-transform duration-200 group-hover:scale-105">
-        <i class="fa-solid {{ $icon }} text-lg"></i>
+    <div class="flex size-10 shrink-0 items-center justify-center rounded {{ $t['chip'] }}">
+        <i class="fa-solid {{ $icon }} text-base"></i>
     </div>
     <div class="min-w-0 flex-1">
         <p class="text-sm font-bold leading-snug text-slate-800 transition-colors {{ $t['title'] }}">{{ $title }}</p>
-        <p class="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ $desc }}</p>
+        <p class="mt-0.5 text-xs text-slate-500">{{ $desc }}</p>
     </div>
-    {{-- Panah dalam lingkaran (button-in-button), muncul & bergeser saat hover. --}}
+    {{-- Panah muncul & bergeser saat hover; pr-10 di kartu menyisakan tempatnya. --}}
     <span
-        class="absolute right-4 top-5 flex size-6 items-center justify-center rounded-full bg-slate-50 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100 {{ $t['arrow'] }}">
+        class="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-50 opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100 {{ $t['arrow'] }}">
         <i class="fa-solid fa-chevron-right text-[10px]"></i>
     </span>
 </a>

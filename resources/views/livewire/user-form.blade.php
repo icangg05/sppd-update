@@ -71,13 +71,15 @@
 					@unless ($this->isDprdContext())
 						<div class="space-y-1">
 							<x-form.input wire:model="nip" name="nip" label="NIP (Nomor Induk Pegawai)"
-								placeholder="18 digit angka" class="font-mono" />
+								placeholder="18 digit angka" class="font-mono" x-digits inputmode="numeric" maxlength="18"
+								autocomplete="off" />
 						</div>
 					@endunless
 
 					<div class="space-y-1">
 						<x-form.input wire:model="nik" name="nik" label="NIK (Nomor Induk Kependudukan)"
-							placeholder="16 digit angka" class="font-mono" />
+							placeholder="16 digit angka" class="font-mono" x-digits inputmode="numeric" maxlength="16"
+							autocomplete="off" />
 					</div>
 
           <div class="space-y-1">
@@ -209,7 +211,7 @@
 									->all();
 							@endphp
 							<x-form.searchable-select wire:model="rank_id" name="rank_id" label="Golongan / Pangkat"
-								:options="$rankOptions" placeholder="— Pilih Pangkat —" searchPlaceholder="Cari pangkat..." />
+								:options="$rankOptions" placeholder="— Pilih Pangkat —" searchPlaceholder="Cari pangkat..." mutedEmpty />
 						</div>
 
 						<div class="space-y-1">
