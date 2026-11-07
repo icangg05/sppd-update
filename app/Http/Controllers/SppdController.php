@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -177,7 +178,10 @@ class SppdController extends Controller
       'followers.user',
     ]);
 
-    return view('sppd.public', compact('sppd'));
+    // QR halaman ini (kanan atas) agar mudah dibuka/dibagikan dari perangkat lain.
+    $qrSvg = QrCode::size(200)->margin(0)->errorCorrection('M')->generate($sppd->publicUrl());
+
+    return view('sppd.public', compact('sppd', 'qrSvg'));
   }
 
   /**

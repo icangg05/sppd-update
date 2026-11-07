@@ -19,6 +19,7 @@ use Tests\TestCase;
 /**
  * Animasi TTE selesai di halaman persetujuan: event tte-completed hanya dikirim saat
  * proses TTE penanda tangan berakhir dan seluruh dokumennya berhasil ditandatangani.
+ * Modal Batalkan Proses TTE tertutup otomatis begitu proses TTE berakhir.
  */
 class TteCompleteAnimationTest extends TestCase
 {
@@ -95,5 +96,36 @@ class TteCompleteAnimationTest extends TestCase
         $sppd->update(['status' => SignatureStatus::REJECTED]);
 
         $page->call('$refresh')->assertNotDispatched('tte-completed');
+    }
+
+    // ── Modal konfirmasi Batalkan Proses TTE ──
+
+    public function test_modal_batalkan_tte_tertutup_otomatis_saat_tte_selesai(): void
+    {
+        $spt = $this->signature('spt');
+
+        $page = Livewire::actingAs($this->kepala)
+            ->test(SppdShow::class, ['sppd' => $this->sppd])
+            ->call('confirmCancelTte')
+            ->assertSet('showCancelTteModal', true);
+
+        // Polling saat TTE masih berjalan: modal tetap terbuka.
+        $page->call('$refresh')->assertSet('showCancelTteModal', true);
+
+        $spt->update(['status' => SignatureStatus::SIGNED, 'signed_at' => now()]);
+        $page->call('$refresh')->assertSet('showCancelTteModal', false);
+    }
+
+    public function test_konfirmasi_batalkan_tte_menghentikan_proses(): void
+    {
+        $spt = $this->signature('spt');
+
+        Livewire::actingAs($this->kepala)
+            ->test(SppdShow::class, ['sppd' => $this->sppd])
+            ->call('confirmCancelTte')
+            ->call('cancelTte')
+            ->assertSet('showCancelTteModal', false);
+
+        $this->assertSame(SignatureStatus::REJECTED, $spt->fresh()->status);
     }
 }

@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-5 p-1"
-	x-data="{ showDocModal: @entangle('showDocumentModal'), showApproveModal: @entangle('showApproveModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal'), showCancelModal: false, showPassphrase: false }"
+	x-data="{ showDocModal: @entangle('showDocumentModal'), showApproveModal: @entangle('showApproveModal'), showRejectModal: @entangle('showRejectModal'), showRevisionModal: @entangle('showRevisionModal'), showCancelTteModal: @entangle('showCancelTteModal'), showCancelModal: false, showPassphrase: false }"
 	@if ($isProcessing) wire:poll.5s @endif>
 
 	{{-- Gaya bersama halaman ini: kartu datar, header kartu biru solid senada bar atas aplikasi (latar halaman biru muda, jadi header muda tak terbedakan), label kalimat biasa (bukan huruf besar). --}}
@@ -488,7 +488,7 @@
 								<p class="text-xs text-amber-700 leading-relaxed">
 									Proses tanda tangan elektronik sedang berjalan di background. Halaman akan diperbarui otomatis.
 								</p>
-								<button type="button" wire:click="cancelTte" wire:loading.attr="disabled"
+								<button type="button" wire:click="confirmCancelTte" wire:loading.attr="disabled"
 									class="mt-4 inline-flex items-center gap-1.5 rounded border border-rose-200 bg-white px-3.5 py-2 text-xs font-bold text-rose-600 shadow-2xs transition hover:bg-rose-50 hover:text-rose-700 cursor-pointer">
 									<i class="fa-solid fa-circle-xmark"></i> Batalkan Proses TTE
 								</button>
@@ -847,6 +847,33 @@
 				class="flex-1 rounded bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 shadow-sm">
 				Kembalikan
 			</button>
+		</x-slot:footer>
+	</x-ui.modal>
+
+	{{-- Modal Batalkan Proses TTE. Sengaja tidak dibungkus @if: bila TTE selesai saat modal
+	     terbuka, server menutupnya (showCancelTteModal = false) agar animasi tutup & kunci
+	     scroll body tetap berjalan normal. --}}
+	<x-ui.modal show="showCancelTteModal" :closeable="false" title="Batalkan Proses TTE?"
+		description="Dokumen belum akan ditandatangani" icon="fa-solid fa-circle-xmark text-rose-600">
+		<p class="text-sm text-slate-600">
+			Proses tanda tangan elektronik yang sedang berjalan akan dihentikan. Anda dapat mengulang
+			persetujuan dan TTE setelahnya.
+		</p>
+
+		<x-slot:footer class="flex gap-2">
+			<x-ui.button variant="secondary" @click="showCancelTteModal = false" wire:loading.attr="disabled" wire:target="cancelTte"
+				class="flex-1 justify-center">
+				Kembali
+			</x-ui.button>
+			<x-ui.button variant="danger" wire:click="cancelTte" wire:loading.attr="disabled" wire:target="cancelTte"
+				class="flex-1 justify-center">
+				<span wire:loading.remove wire:target="cancelTte" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-circle-xmark"></i> Ya, Batalkan TTE
+				</span>
+				<span wire:loading wire:target="cancelTte" class="inline-flex items-center gap-2">
+					<i class="fa-solid fa-spinner fa-spin"></i> Membatalkan...
+				</span>
+			</x-ui.button>
 		</x-slot:footer>
 	</x-ui.modal>
 

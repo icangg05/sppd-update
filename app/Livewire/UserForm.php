@@ -115,6 +115,7 @@ class UserForm extends Component
         'telegram_chat_id' => $chatId,
         'telegram_username' => $username,
         'telegram_linked_at' => now(),
+        'telegram_notify' => true,
       ]);
     }
   }
@@ -512,6 +513,7 @@ class UserForm extends Component
         $data['telegram_chat_id'] = $this->telegramChatId;
         $data['telegram_username'] = $this->telegramUsername ?: null;
         $data['telegram_linked_at'] = now();
+        $data['telegram_notify'] = true;
       }
       $newUser = User::create($data);
       $newUser->assignRole($this->role);

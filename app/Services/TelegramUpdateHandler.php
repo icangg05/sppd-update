@@ -98,6 +98,7 @@ class TelegramUpdateHandler
     ], now()->addMinutes(self::TTL_MINUTES));
 
     // Simpan langsung ke DB bila pemilik token sudah ada (profil / edit pegawai).
+    // Menghubungkan akun berarti ingin menerima notifikasi: saklarnya langsung aktif.
     if (! empty($cached['user_id'])) {
       $user = User::find($cached['user_id']);
       if ($user) {
@@ -105,6 +106,7 @@ class TelegramUpdateHandler
           'telegram_chat_id' => $chatId,
           'telegram_username' => $username,
           'telegram_linked_at' => now(),
+          'telegram_notify' => true,
         ]);
         Log::info("TelegramUpdate: Berhasil menghubungkan Telegram user ID {$user->id}.");
       }

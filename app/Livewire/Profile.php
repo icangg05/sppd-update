@@ -80,13 +80,16 @@ class Profile extends Component
     return auth()->id();
   }
 
+  /** Akun baru terhubung: saklar notifikasi Telegram langsung diaktifkan. */
   protected function onTelegramLinked(string $chatId, ?string $username): void
   {
     auth()->user()->update([
       'telegram_chat_id' => $chatId,
       'telegram_username' => $username,
       'telegram_linked_at' => now(),
+      'telegram_notify' => true,
     ]);
+    $this->telegramNotify = true;
   }
 
   protected function onTelegramUnlinked(): void

@@ -164,7 +164,8 @@ class TelegramNotificationTest extends TestCase
     public function test_webhook_links_account_with_valid_token(): void
     {
         Queue::fake();
-        $user = User::factory()->create(['username' => 'budi']);
+        // Notifikasi sempat dimatikan: menghubungkan ulang langsung mengaktifkannya.
+        $user = User::factory()->create(['username' => 'budi', 'telegram_notify' => false]);
         $token = str_repeat('a', 32);
         $this->pendingLink($token, $user->id);
 
@@ -178,6 +179,7 @@ class TelegramNotificationTest extends TestCase
         $this->assertSame('555', $user->telegram_chat_id);
         $this->assertSame('budi_k', $user->telegram_username);
         $this->assertNotNull($user->telegram_linked_at);
+        $this->assertTrue($user->telegram_notify);
 
         // Token sekali pakai.
         $this->assertNull(TelegramUpdateHandler::cache()->get("tg_link:{$token}"));
@@ -243,10 +245,11 @@ class TelegramNotificationTest extends TestCase
     public function test_profile_link_flow_saves_chat_id_and_unlink_clears_it(): void
     {
         Queue::fake();
-        $user = User::factory()->create(['username' => 'budi', 'name' => 'Budi']);
+        $user = User::factory()->create(['username' => 'budi', 'name' => 'Budi', 'telegram_notify' => false]);
         $this->actingAs($user);
 
         $component = Livewire::test(Profile::class)
+            ->assertSet('telegramNotify', false)
             ->call('openLinkModal')
             ->assertSet('showLinkModal', true)
             ->assertSet('isPolling', true);
@@ -262,9 +265,12 @@ class TelegramNotificationTest extends TestCase
             ->assertSet('isPolling', false)
             ->assertSet('telegramLinked', true)
             ->assertSet('telegramChatId', '555')
-            ->assertSet('telegramUsername', 'budi_k');
+            ->assertSet('telegramUsername', 'budi_k')
+            // Saklar notifikasi di halaman ikut aktif tanpa perlu muat ulang.
+            ->assertSet('telegramNotify', true);
 
         $this->assertSame('555', $user->fresh()->telegram_chat_id);
+        $this->assertTrue($user->fresh()->telegram_notify);
 
         $component->call('unlinkTelegram')->assertSet('telegramLinked', false);
         $this->assertNull($user->fresh()->telegram_chat_id);

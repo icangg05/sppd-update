@@ -47,7 +47,7 @@ class LocalProxySignService implements SignatureProviderInterface
         $headers = $this->buildHeaders();
 
         try {
-            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 90)])
+            $response = Http::withOptions(['verify' => false, 'timeout' => $this->timeout()])
                 ->withHeaders($headers)
                 ->attach('file', file_get_contents($filePath), basename($filePath))
                 ->post($url);
@@ -79,7 +79,7 @@ class LocalProxySignService implements SignatureProviderInterface
         $headers = $this->buildHeaders();
 
         try {
-            $response = Http::withOptions(['verify' => false, 'timeout' => config('tte.providers.local_proxy.timeout', 90)])
+            $response = Http::withOptions(['verify' => false, 'timeout' => $this->timeout()])
                 ->withHeaders($headers)
                 ->get($url);
 
@@ -97,6 +97,15 @@ class LocalProxySignService implements SignatureProviderInterface
             Log::error('LocalProxySignService.downloadSignedPdf exception', ['exception' => $e]);
             throw $e;
         }
+    }
+
+    /**
+     * Batas waktu request (detik). Guzzle hanya menerima int|float, sedangkan nilai
+     * dari .env (E_SIGN_TIMEOUT) terbaca sebagai string — jadi selalu dikonversi.
+     */
+    protected function timeout(): int
+    {
+        return (int) config('tte.providers.local_proxy.timeout', 90) ?: 90;
     }
 
     protected function buildHeaders(): array

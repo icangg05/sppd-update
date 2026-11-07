@@ -112,5 +112,8 @@ RUN php artisan storage:link || true
 # .env tidak ikut ke image (lihat .dockerignore) — pakai cache store "array"
 # agar cache:clear tidak mencoba konek ke database saat build.
 RUN CACHE_STORE=array php artisan optimize:clear
-RUN php artisan route:cache
+# Jangan route:cache di sini: tanpa .env, APP_KEY kosong, padahal prefix endpoint Livewire
+# (/livewire-<hash>/update) diturunkan dari APP_KEY. Route cache hasil build akan memuat
+# prefix yang salah, sehingga semua request Livewire 404. Route di-cache saat deploy
+# (`php artisan optimize` di dalam container, .env sudah ter-mount).
 RUN php artisan view:cache

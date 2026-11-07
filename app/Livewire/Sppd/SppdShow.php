@@ -41,6 +41,8 @@ class SppdShow extends Component
   public bool $showRevisionModal = false;
   public bool $showPassphrase    = false;
   public bool $wasTteProcessing  = false;
+  /** Modal konfirmasi Batalkan Proses TTE; ditutup otomatis bila TTE selesai saat modal terbuka. */
+  public bool $showCancelTteModal = false;
 
   #[Url]
   public string $from = '';
@@ -615,8 +617,15 @@ class SppdShow extends Component
     ];
   }
 
+  /** Buka modal konfirmasi sebelum membatalkan proses TTE yang sedang berjalan. */
+  public function confirmCancelTte(): void
+  {
+    $this->showCancelTteModal = true;
+  }
+
   public function cancelTte(): void
   {
+    $this->showCancelTteModal = false;
     $sppd = $this->getSppd();
 
     $processingSignatures = $sppd->digitalSignatures()
@@ -624,8 +633,9 @@ class SppdShow extends Component
       ->where('status', SignatureStatus::PROCESSING)
       ->get();
 
+    // Bisa terjadi bila TTE selesai tepat sebelum tombol konfirmasi ditekan.
     if ($processingSignatures->isEmpty()) {
-      $this->toastError('Tidak ada proses TTE aktif yang dapat dibatalkan.');
+      $this->toastInfo('Proses TTE sudah selesai, tidak ada yang perlu dibatalkan.');
       return;
     }
 
@@ -666,6 +676,11 @@ class SppdShow extends Component
     }
 
     $this->wasTteProcessing = $isProcessing;
+
+    // TTE selesai (berhasil/gagal) saat modal Batalkan masih terbuka: tutup otomatis.
+    if (! $isProcessing) {
+      $this->showCancelTteModal = false;
+    }
 
     return view('livewire.sppd.show', compact('sppd', 'needsTte', 'isProcessing', 'hasFailedSignatures'))
       ->title('Detail SPPD');
