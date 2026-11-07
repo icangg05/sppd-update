@@ -9,5 +9,19 @@
 docker-compose.prod.yml
 Dockerfile
 
-# Backup database (berisi data pribadi) — jangan ikut ke image
-/backup-*.sql
+# Backup database (berisi data pribadi) — jangan ikut ke image.
+# Pola lama `/backup-*.sql` tidak cocok dengan `backup_*.sql`, sehingga
+# dump DB sempat terbakar ke dalam image.
+*.sql
+*.sql.gz
+
+# Rahasia (APP_KEY, password DB) — di-mount saat runtime lewat compose.yml,
+# jangan sampai tersimpan di layer image.
+.env
+.env.backup
+.env.production
+
+# Tidak dibutuhkan saat runtime
+/graphify-out
+/public/build
+/public/hot

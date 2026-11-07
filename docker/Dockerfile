@@ -109,6 +109,8 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 RUN composer install --no-dev --optimize-autoloader
 
 RUN php artisan storage:link || true
-RUN php artisan optimize:clear
+# .env tidak ikut ke image (lihat .dockerignore) — pakai cache store "array"
+# agar cache:clear tidak mencoba konek ke database saat build.
+RUN CACHE_STORE=array php artisan optimize:clear
 RUN php artisan route:cache
 RUN php artisan view:cache

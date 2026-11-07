@@ -4,66 +4,114 @@ on:
   push:
     branches:
       - main
+  # Deploy ulang manual dari tab Actions tanpa perlu commit kosong.
+  workflow_dispatch:
+
+# Satu deploy dalam satu waktu. Push beruntun MENGANTRE (tidak dibatalkan),
+# supaya dua `docker compose build` tidak pernah berjalan bersamaan.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      # Tidak perlu actions/checkout: build terjadi di VPS, bukan di runner.
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        # Dipin ke commit SHA (v1.2.5) agar tag tidak bisa digeser diam-diam.
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           port: 22
-          command_timeout: 20m
+          command_timeout: 25m
           script: |
-            set -e
-            cd /var/www/sppd-update
+            set -euo pipefail
+
+            APP_DIR=/var/www/sppd-update
+            BACKUP_DIR=/var/backups/sppd-update   # di luar repo: tak ikut build context
+            KEEP_BACKUPS=10
+            PROJECT_LABEL=com.docker.compose.project=sppd-update
+
+            cd "$APP_DIR"
             # Jangan cetak attestation/provenance manifest yang menumpuk di disk.
             export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 
-            echo "Pull latest code..."
-            git pull origin main
+            # ── 1. Samakan kode PERSIS dengan GitHub ──
+            # `reset --hard` (bukan `pull`) tak pernah macet karena konflik/merge
+            # dan menjamin isi server = origin/main. File untracked (.env, storage)
+            # tidak tersentuh.
+            echo "==> Sinkron kode dengan origin/main"
+            git fetch --prune origin main
+            git reset --hard origin/main
+            git log -1 --format='Commit: %h %s (%ci)'
 
-            # ── Bebaskan disk SEBELUM build ──
-            # Build gagal paling sering karena disk penuh; bersihkan dulu agar
-            # ruang tersedia, bukan setelah build (yang tak pernah tercapai bila gagal).
-            echo "Freeing disk before build..."
-            docker image prune -f
-            docker builder prune -f --reserved-space=3GB
-            df -h /
+            # ── 2. Bebaskan disk hanya bila perlu ──
+            # Prune cache build sebelum build membuat build lambat (cache hilang),
+            # jadi hanya dilakukan saat disk benar-benar menipis.
+            avail_gb=$(df --output=avail -BG / | tail -1 | tr -dc '0-9')
+            echo "==> Sisa disk: ${avail_gb}GB"
+            if [ "$avail_gb" -lt 5 ]; then
+              echo "Disk menipis, bersihkan cache build dulu..."
+              docker builder prune -f --reserved-space=3GB
+            fi
 
-            # ── Build dulu, baru recreate ──
-            # Container lama tetap MELAYANI selama build. Bila build gagal,
-            # `set -e` menghentikan skrip di sini dengan situs tetap HIDUP —
-            # bukan mati seperti pola `docker compose down` + build.
-            echo "Building images..."
+            # ── 3. Build dulu, container lama tetap melayani ──
+            # Bila build gagal, `set -e` berhenti di sini dan situs tetap HIDUP.
+            echo "==> Build image"
             docker compose build
 
-            echo "Recreating containers (minimal downtime)..."
-            docker compose up -d
+            # ── 4. Backup DB lalu migrasi (dengan image BARU) ──
+            echo "==> Backup database sebelum migrasi"
+            mkdir -p "$BACKUP_DIR" && chmod 700 "$BACKUP_DIR"
+            backup="$BACKUP_DIR/predeploy_$(date +%Y%m%d_%H%M%S).sql.gz"
+            docker exec sppd_update_mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump -uroot --single-transaction --routines --triggers --no-tablespaces --set-gtid-purged=OFF "$MYSQL_DATABASE"' \
+              | gzip > "$backup"
+            echo "Backup: $backup ($(du -h "$backup" | cut -f1))"
+            # Rotasi: simpan $KEEP_BACKUPS backup predeploy terakhir saja.
+            ls -1t "$BACKUP_DIR"/predeploy_*.sql.gz | tail -n +$((KEEP_BACKUPS + 1)) | xargs -r rm -f
 
-            echo "Waiting for app container to be ready..."
-            sleep 5
+            echo "==> Migrasi database"
+            docker compose run --rm --no-deps app php artisan migrate --force
 
-            echo "Clearing caches..."
+            # ── 5. Ganti container ──
+            echo "==> Recreate container"
+            docker compose up -d --remove-orphans
+
+            echo "==> Menunggu aplikasi siap (/up)"
+            ok=0
+            for i in $(seq 1 30); do
+              if curl -fsS -o /dev/null http://127.0.0.1:8004/up; then ok=1; break; fi
+              sleep 2
+            done
+            if [ "$ok" -ne 1 ]; then
+              echo "Aplikasi tidak merespons setelah 60 detik!"
+              docker compose logs --tail=50 app
+              exit 1
+            fi
+
+            echo "==> Cache Laravel"
             docker exec sppd_update_app php artisan optimize:clear
             docker exec sppd_update_app php artisan optimize
 
-            echo "Restarting queue worker..."
+            echo "==> Restart queue worker"
             docker exec sppd_update_app php artisan queue:restart
 
-            echo "Final cleanup of dangling artifacts..."
-            docker image prune -f
+            # ── 6. Buang sisa build lama ──
+            # Image versi lama jadi <none> (dangling) setelah di-retag; hapus
+            # khusus milik project ini — VPS ini dipakai bersama project lain.
+            echo "==> Bersihkan image & cache build lama"
+            docker image prune -f --filter "label=$PROJECT_LABEL"
             docker builder prune -f --reserved-space=3GB
 
-            echo "Verifying containers..."
+            echo "==> Status"
             docker compose ps
             df -h /
-
             echo "Done!"
