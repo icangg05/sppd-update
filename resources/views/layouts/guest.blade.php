@@ -86,7 +86,7 @@
 						</div>
 					</div>
 					<h2 class="text-[1.55rem] font-black text-white sm:text-[1.65rem] short:text-[1.5rem] shorter:text-[1.35rem]">Masuk ke Akun Anda</h2>
-					<p class="text-sm leading-6 text-sky-50/90">Gunakan akun resmi Anda untuk mengakses layanan.</p>
+					<p class="text-sm leading-6 text-sky-50/90">Gunakan akun resmi Anda.</p>
 				</div>
 
 				<div

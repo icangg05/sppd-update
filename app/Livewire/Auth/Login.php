@@ -4,6 +4,7 @@ namespace App\Livewire\Auth;
 
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\User;
+use App\Services\TurnstileService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -18,6 +19,9 @@ class Login extends Component
   public string $username = '';
   public string $password = '';
   public bool $remember = false;
+
+  /** Token dari widget Cloudflare Turnstile. */
+  public string $turnstileToken = '';
 
   /** Sisa detik penguncian (0 = tidak terkunci). Dipakai untuk hitung mundur. */
   public int $lockoutSeconds = 0;
@@ -52,6 +56,11 @@ class Login extends Component
     if (trim($this->username) === '' || trim($this->password) === '') {
       $this->toastError('Username dan password wajib diisi.');
 
+      return;
+    }
+
+    // Diperiksa sebelum akun disentuh: bot tanpa token tak bisa menambah hitungan gagal atau mengunci akun orang.
+    if (! $this->passesTurnstile()) {
       return;
     }
 
@@ -105,6 +114,28 @@ class Login extends Component
 
     return redirect()->intended(route('dashboard'))
       ->with('success', "Selamat datang kembali, {$name}!");
+  }
+
+  /** Token Turnstile sekali pakai, jadi widget selalu diminta menerbitkan yang baru setelah dipakai. */
+  protected function passesTurnstile(): bool
+  {
+    $turnstile = app(TurnstileService::class);
+
+    if (! $turnstile->enabled()) {
+      return true;
+    }
+
+    $token = $this->turnstileToken;
+    $this->turnstileToken = '';
+    $this->dispatch('turnstile-reset');
+
+    if ($turnstile->verify($token)) {
+      return true;
+    }
+
+    $this->toastError('Verifikasi keamanan gagal. Silakan coba lagi.');
+
+    return false;
   }
 
   /** Catat password salah lalu kunci sementara atau blokir sesuai jumlah percobaan. */
@@ -243,6 +274,8 @@ class Login extends Component
 
   public function render()
   {
-    return view('livewire.auth.login');
+    return view('livewire.auth.login', [
+      'turnstileSiteKey' => app(TurnstileService::class)->siteKey(),
+    ]);
   }
 }

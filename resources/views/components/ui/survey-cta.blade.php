@@ -101,8 +101,11 @@
 			}
 		</style>
 	@endonce
-	{{-- Layar desktop pendek: keterangan disembunyikan agar halaman login muat tanpa scroll. --}}
-	<p class="mt-2 text-sky-50/80 short:hidden {{ $compact ? 'text-[11px]' : 'text-xs' }}"><i
-			class="fa-solid fa-circle-info mr-1"></i>Bantu kami meningkatkan kualitas layanan dengan mengisi survei singkat.
-	</p>
+	{{-- Keterangan hanya di panel desktop; varian compact (mobile) cukup tombolnya.
+	     Layar desktop pendek: ikut disembunyikan agar halaman login muat tanpa scroll. --}}
+	@unless ($compact)
+		<p class="mt-2 text-xs text-sky-50/80 short:hidden"><i
+				class="fa-solid fa-circle-info mr-1"></i>Bantu kami meningkatkan kualitas layanan dengan mengisi survei singkat.
+		</p>
+	@endunless
 </div>
