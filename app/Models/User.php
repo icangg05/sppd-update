@@ -22,6 +22,9 @@ class User extends Authenticatable
   /** Role Anggota DPRD — satu-satunya penanda pegawai DPRD. */
   public const DPRD_ROLES = ['anggota_dprd', 'pimpinan_dprd'];
 
+  /** Role Kepala Daerah (Walikota & Wakil Walikota) — dikelola di menu tersendiri, bukan di daftar Pegawai. */
+  public const KEPALA_DAERAH_ROLES = ['walikota', 'wakil_walikota'];
+
   /** Prefiks kunci sesi untuk cache hasil usesDefaultPassword() per pengguna. */
   private const DEFAULT_PASSWORD_SESSION_KEY = 'uses_default_password.';
 
@@ -181,6 +184,12 @@ class User extends Authenticatable
   public function isDprdMember(): bool
   {
     return $this->hasRole(self::DPRD_ROLES);
+  }
+
+  /** Kepala Daerah = Walikota atau Wakil Walikota. */
+  public function isKepalaDaerah(): bool
+  {
+    return $this->hasRole(self::KEPALA_DAERAH_ROLES);
   }
 
   /**

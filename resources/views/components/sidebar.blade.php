@@ -119,7 +119,7 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('master.users.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && ! in_array(request('type'), ['dprd', 'kepala_daerah'], true) ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-users fa-fw"></i></span>
 					<span>Pegawai</span>
 				</a>
@@ -131,6 +131,16 @@
 						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-user-tie fa-fw"></i></span>
 						<span>Anggota DPRD</span>
+					</a>
+				@endif
+
+				{{-- Walikota & Wakil Walikota: dipisah dari daftar Pegawai. Tampil untuk Super Admin dan
+				     Admin OPD Sekretariat Daerah (unit kerja Walikota & Wakil Walikota). --}}
+				@if (auth()->user()->hasRole('super_admin') || auth()->user()->department?->type?->value === 'setda')
+					<a wire:navigate.hover href="{{ route('master.users.index', ['type' => 'kepala_daerah']) }}"
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'kepala_daerah' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-landmark fa-fw"></i></span>
+						<span>Walikota &amp; Wakil Walikota</span>
 					</a>
 				@endif
 
@@ -223,7 +233,7 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				<a href="{{ route('master.users.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') !== 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && ! in_array(request('type'), ['dprd', 'kepala_daerah'], true) ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-users fa-fw"></i></span>
 					<span>Pegawai</span>
 				</a>
@@ -234,6 +244,16 @@
 						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'dprd' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
 						<span class="flex w-4 justify-center"><i class="fa-solid fa-user-tie fa-fw"></i></span>
 						<span>Anggota DPRD</span>
+					</a>
+				@endif
+
+				{{-- Walikota & Wakil Walikota: dipisah dari daftar Pegawai. Tampil untuk Super Admin dan
+				     Admin OPD Sekretariat Daerah (unit kerja Walikota & Wakil Walikota). --}}
+				@if (auth()->user()->department?->type?->value === 'setda')
+					<a wire:navigate.hover href="{{ route('master.users.index', ['type' => 'kepala_daerah']) }}"
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('master.users.*') && request('type') === 'kepala_daerah' ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-landmark fa-fw"></i></span>
+						<span>Walikota &amp; Wakil Walikota</span>
 					</a>
 				@endif
 

@@ -34,7 +34,7 @@ class UserForm extends Component
   public ?User $user = null;
   public bool $isEdit = false;
 
-  // Konteks asal: 'dprd' bila formulir dibuka dari halaman Anggota DPRD.
+  // Konteks asal: 'dprd' (menu Anggota DPRD) atau 'kepala_daerah' (menu Walikota & Wakil Walikota).
   // Dipakai agar menu sidebar & tombol kembali tetap mengarah ke daftar yang benar.
   public string $listType = '';
 
@@ -78,15 +78,17 @@ class UserForm extends Component
       $this->partai = $user->partai ?? '';
       $this->fillTelegramState($user->telegram_chat_id, $user->telegram_username);
 
-      // Edit pegawai DPRD tetap dianggap konteks DPRD walau parameter URL hilang.
+      // Edit pegawai DPRD / Walikota & Wakil tetap dianggap konteks menunya walau parameter URL hilang.
       if ($user->isDprdMember()) {
         $this->listType = 'dprd';
+      } elseif ($user->isKepalaDaerah()) {
+        $this->listType = 'kepala_daerah';
       }
     }
 
-    // Konteks dari halaman asal (mis. dibuka dari menu Anggota DPRD).
-    if (request('type') === 'dprd') {
-      $this->listType = 'dprd';
+    // Konteks dari halaman asal (mis. dibuka dari menu Anggota DPRD / Walikota & Wakil Walikota).
+    if (in_array(request('type'), ['dprd', 'kepala_daerah'], true)) {
+      $this->listType = request('type');
     }
 
     // Unit kerja hanya satu pilihan: isi otomatis (pemilihnya tidak ditampilkan).
@@ -95,7 +97,10 @@ class UserForm extends Component
       $this->department_id = $tree[0]['value'];
     } elseif ($this->isDprdContext() && ! $this->isEdit && ! $this->department_id) {
       // Anggota DPRD baru: unit kerja langsung Sekretariat DPRD (tetap bisa diganti).
-      $this->department_id = $this->dprdDepartmentId($tree) ?? '';
+      $this->department_id = $this->departmentIdOfType($tree, DepartmentType::DPRD) ?? '';
+    } elseif ($this->isKepalaDaerahContext() && ! $this->isEdit && ! $this->department_id) {
+      // Walikota / Wakil baru: unit kerja langsung Sekretariat Daerah (tetap bisa diganti).
+      $this->department_id = $this->departmentIdOfType($tree, DepartmentType::SETDA) ?? '';
     }
 
     // Memulihkan polling jika halaman di-refresh saat menunggu pegawai menekan Start.
@@ -281,8 +286,8 @@ class UserForm extends Component
     return $this->isDprdContext() || in_array($this->role, User::DPRD_ROLES, true);
   }
 
-  /** Sekretariat DPRD di antara unit kerja yang bisa dipilih pengguna ini. */
-  private function dprdDepartmentId(array $tree): ?int
+  /** Unit kerja pertama berjenis $type (mis. Sekretariat DPRD / Setda) di antara unit yang bisa dipilih pengguna ini. */
+  private function departmentIdOfType(array $tree, DepartmentType $type): ?int
   {
     $selectable = [];
     $collect = function (array $nodes) use (&$collect, &$selectable) {
@@ -293,7 +298,13 @@ class UserForm extends Component
     };
     $collect($tree);
 
-    return Department::where('type', DepartmentType::DPRD)->whereIn('id', $selectable)->orderBy('id')->value('id');
+    return Department::where('type', $type)->whereIn('id', $selectable)->orderBy('id')->value('id');
+  }
+
+  /** Formulir dibuka dari menu Walikota & Wakil Walikota (pilihan jabatan dibatasi ke keduanya). */
+  public function isKepalaDaerahContext(): bool
+  {
+    return $this->listType === 'kepala_daerah';
   }
 
   /**
@@ -595,6 +606,13 @@ class UserForm extends Component
 
     // Pencarian jabatan server-side: hanya memuat sebagian data (bukan seluruh jabatan).
     $positionQuery = Position::query();
+    // Menu Walikota & Wakil Walikota: hanya jabatan Walikota / Wakil Walikota. Di form Pegawai
+    // jabatan itu disembunyikan, karena datanya dikelola di menu tersendiri.
+    if ($this->isKepalaDaerahContext()) {
+      $positionQuery->whereIn('default_role', User::KEPALA_DAERAH_ROLES);
+    } else {
+      $positionQuery->where(fn ($q) => $q->whereNull('default_role')->orWhereNotIn('default_role', User::KEPALA_DAERAH_ROLES));
+    }
     if (trim($this->searchPosition) !== '') {
       $positionQuery->where('name', 'like', '%' . trim($this->searchPosition) . '%');
     }

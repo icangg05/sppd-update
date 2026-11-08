@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -39,9 +40,49 @@ class UsersIndex extends Component
   #[Url(keep: true)]
   public string $partai = '';
 
+  /** Jenis daftar (?type=): '' = Pegawai, 'dprd' = Anggota DPRD, 'kepala_daerah' = Walikota & Wakil Walikota. */
+  public const TYPE_DPRD = 'dprd';
+  public const TYPE_KEPALA_DAERAH = 'kepala_daerah';
+
   public function isDprd(): bool
   {
-    return $this->type === 'dprd';
+    return $this->type === self::TYPE_DPRD;
+  }
+
+  public function isKepalaDaerah(): bool
+  {
+    return $this->type === self::TYPE_KEPALA_DAERAH;
+  }
+
+  /** Teks halaman sesuai jenis daftar (judul, label tombol, kata benda pada keadaan kosong). */
+  public function listLabels(): array
+  {
+    return match (true) {
+      $this->isDprd() => [
+        'eyebrow' => 'Keanggotaan DPRD',
+        'title' => 'Data Anggota DPRD',
+        'subtitle' => 'Kelola data anggota DPRD dan hak akses pengguna sistem',
+        'noun' => 'anggota DPRD',
+        'add' => 'Tambah Anggota DPRD',
+        'icon' => 'fa-landmark-dome',
+      ],
+      $this->isKepalaDaerah() => [
+        'eyebrow' => 'Kepala Daerah',
+        'title' => 'Data Walikota & Wakil Walikota',
+        'subtitle' => 'Kelola data Walikota dan Wakil Walikota beserta hak akses pengguna sistem',
+        'noun' => 'Walikota / Wakil Walikota',
+        'add' => 'Tambah Walikota / Wakil',
+        'icon' => 'fa-landmark',
+      ],
+      default => [
+        'eyebrow' => 'Manajemen Kepegawaian',
+        'title' => 'Data Pegawai',
+        'subtitle' => 'Kelola data pegawai dan hak akses pengguna sistem',
+        'noun' => 'pegawai',
+        'add' => 'Tambah Pegawai',
+        'icon' => 'fa-users-gear',
+      ],
+    };
   }
 
   public function searchPlaceholder(): string
@@ -77,6 +118,13 @@ class UsersIndex extends Component
   }
 
   public function updatedPartai(): void
+  {
+    $this->resetPage();
+  }
+
+  /** Setelah Walikota / Wakil diganti: render ulang daftar (pejabat lama pindah ke daftar Pegawai). */
+  #[On('kepala-daerah-replaced')]
+  public function refreshAfterReplace(): void
   {
     $this->resetPage();
   }
@@ -326,15 +374,18 @@ class UsersIndex extends Component
       }
     }
 
-    // Pisahkan konteks halaman: anggota DPRD vs pegawai biasa.
+    // Pisahkan konteks halaman: anggota DPRD, Walikota & Wakil Walikota, atau pegawai biasa.
+    // Walikota & Wakil Walikota hanya tampil di menunya sendiri, tidak di daftar Pegawai.
     if ($this->isDprd()) {
       $query->where(function ($q) {
         $q->whereHas('roles', fn($r) => $r->whereIn('name', User::DPRD_ROLES))
           ->orWhereNotNull('dprd_jabatan');
       });
+    } elseif ($this->isKepalaDaerah()) {
+      $query->whereHas('roles', fn($r) => $r->whereIn('name', User::KEPALA_DAERAH_ROLES));
     } else {
       $query->where(function ($q) {
-        $q->whereDoesntHave('roles', fn($r) => $r->whereIn('name', User::DPRD_ROLES))
+        $q->whereDoesntHave('roles', fn($r) => $r->whereIn('name', [...User::DPRD_ROLES, ...User::KEPALA_DAERAH_ROLES]))
           ->whereNull('dprd_jabatan');
       });
     }
@@ -373,7 +424,8 @@ class UsersIndex extends Component
       });
     }
 
-    if ($this->department_id !== '' && auth()->user()->hasRole('super_admin')) {
+    // Halaman Walikota & Wakil tanpa filter instansi: abaikan nilai lama yang terbawa di URL.
+    if ($this->department_id !== '' && auth()->user()->hasRole('super_admin') && ! $this->isKepalaDaerah()) {
       $query->where('department_id', $this->department_id);
     }
 
@@ -463,6 +515,6 @@ class UsersIndex extends Component
       ->get(['id', 'name', 'label']);
 
     return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole', 'soleAdminIds'))
-      ->title('Data Pegawai');
+      ->title($this->listLabels()['title']);
   }
 }

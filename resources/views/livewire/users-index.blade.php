@@ -1,11 +1,16 @@
 <div class="p-1 space-y-4">
-	@php $isDprd = $this->isDprd(); @endphp
+	@php
+		$isDprd = $this->isDprd();
+		// Halaman Walikota & Wakil Walikota: tanpa tombol tambah dan tanpa filter instansi/role.
+		$isKepalaDaerah = $this->isKepalaDaerah();
+		$labels = $this->listLabels();
+	@endphp
 
 	{{-- Header (title card) --}}
 	<div
 		class="dash-enter relative overflow-hidden rounded border border-slate-200 bg-linear-to-br from-white via-white to-primary-50/50 px-5 py-4 shadow-sm">
 		{{-- Watermark institusional (tipis, hanya karakter). --}}
-		<i class="fa-solid {{ $isDprd ? 'fa-landmark-dome' : 'fa-users-gear' }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
+		<i class="fa-solid {{ $labels['icon'] }} pointer-events-none absolute -right-3 -top-4 text-8xl text-primary-500/6"
 			aria-hidden="true"></i>
 
 		<div class="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -13,18 +18,20 @@
 				<span
 					class="mb-1.5 inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-700 ring-1 ring-inset ring-primary-600/15">
 					<i class="fa-solid fa-user-shield text-[9px]"></i>
-					{{ $isDprd ? 'Keanggotaan DPRD' : 'Manajemen Kepegawaian' }}
+					{{ $labels['eyebrow'] }}
 					<span class="ml-1 tabular-nums text-primary-600/70">· {{ $users->total() }}</span>
 				</span>
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">
-					{{ $isDprd ? 'Data Anggota DPRD' : 'Data Pegawai' }}
+					{{ $labels['title'] }}
 				</h1>
-				<p class="mt-1 text-xs text-slate-500">Kelola data pegawai dan hak akses pengguna sistem</p>
+				<p class="mt-1 text-xs text-slate-500">{{ $labels['subtitle'] }}</p>
 			</div>
-			<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}" variant="primary"
-				class="shrink-0 font-bold">
-				<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
-			</x-ui.button>
+			@unless ($isKepalaDaerah)
+				<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}" variant="primary"
+					class="shrink-0 font-bold">
+					<i class="fa-solid fa-plus text-xs"></i> {{ $labels['add'] }}
+				</x-ui.button>
+			@endunless
 		</div>
 	</div>
 
@@ -51,7 +58,7 @@
 						searchPlaceholder="Cari partai / fraksi..." class="bg-slate-50" />
 				</div>
 			{{-- Department Dropdown (Super Admin) --}}
-			@elseif (auth()->user()->hasRole('super_admin'))
+			@elseif (auth()->user()->hasRole('super_admin') && ! $isKepalaDaerah)
 				@php
 					$departmentFilterOptions = collect($departments)
 						->map(fn($d) => ['value' => $d->id, 'label' => $d->display_name])
@@ -66,17 +73,19 @@
 			@endif
 
 			{{-- Filter Role (searchable) — hanya role yang tersedia pada konteks halaman ini --}}
-			@php
-				$roleFilterOptions = collect($availableRoles)
-					->map(fn($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
-					->prepend(['value' => '', 'label' => 'Semua Role'])
-					->all();
-			@endphp
-			<div class="w-full sm:w-56">
-				<x-form.searchable-select wire:model.live="role" name="role"
-					:options="$roleFilterOptions" placeholder="Semua Role"
-					searchPlaceholder="Cari role..." class="bg-slate-50" />
-			</div>
+			@unless ($isKepalaDaerah)
+				@php
+					$roleFilterOptions = collect($availableRoles)
+						->map(fn($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
+						->prepend(['value' => '', 'label' => 'Semua Role'])
+						->all();
+				@endphp
+				<div class="w-full sm:w-56">
+					<x-form.searchable-select wire:model.live="role" name="role"
+						:options="$roleFilterOptions" placeholder="Semua Role"
+						searchPlaceholder="Cari role..." class="bg-slate-50" />
+				</div>
+			@endunless
 
 			{{-- Reset --}}
 			@php $hasActiveFilters = $search !== '' || $department_id !== '' || $partai !== '' || $position_id !== '' || $rank_id !== '' || $role !== ''; @endphp
@@ -147,7 +156,8 @@
 						@endif
 						<th class="py-3 px-4 w-28">Role</th>
 						<th class="py-3 px-4 w-28 text-center">Status</th>
-						<th class="py-3 px-4 w-40 text-right">Aksi</th>
+						{{-- Halaman Walikota punya ikon Ganti (lima ikon): kolom dilebarkan agar tidak terlipat. --}}
+						<th class="py-3 px-4 {{ $isKepalaDaerah ? 'w-48' : 'w-40' }} text-right">Aksi</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-slate-300 text-slate-700">
@@ -279,6 +289,20 @@
 										<i class="fa-solid fa-eye"></i>
 									</a>
 
+									{{-- Walikota & Wakil: pergantian pejabat lewat wizard Ganti pejabat (akun lama menjadi Staf,
+									     riwayat & dokumen lamanya tetap). Slot kosong menjaga ikon tetap sejajar antarbaris. --}}
+									@if ($isKepalaDaerah)
+										@if ($user->is_active)
+											<button type="button" wire:click="$dispatch('replace-kepala-daerah', { userId: {{ $user->id }} })"
+												title="Ganti Pejabat" aria-label="Ganti Pejabat"
+												class="{{ $actionBtn }} cursor-pointer border-primary-200 bg-primary-50 text-primary-700 shadow-2xs hover:bg-primary-100 focus-visible:ring-primary-500/40">
+												<i class="fa-solid fa-user-pen"></i>
+											</button>
+										@else
+											<span class="size-7 shrink-0" aria-hidden="true"></span>
+										@endif
+									@endif
+
 									<a wire:navigate href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => $type])) }}"
 										title="Edit Data" aria-label="Edit Data"
 										class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
@@ -329,15 +353,17 @@
 										</x-ui.button>
 									@else
 										<p class="mt-4 text-sm font-semibold text-slate-700">
-											Belum ada data {{ $isDprd ? 'anggota DPRD' : 'pegawai' }}
+											Belum ada data {{ $labels['noun'] }}
 										</p>
-										<p class="mt-1 text-xs text-slate-500">
-											Mulai dengan menambahkan {{ $isDprd ? 'anggota DPRD' : 'pegawai' }} pertama ke sistem.
-										</p>
-										<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
-											variant="primary" size="sm" class="mt-4">
-											<i class="fa-solid fa-plus text-xs"></i> {{ $isDprd ? 'Tambah Anggota DPRD' : 'Tambah Pegawai' }}
-										</x-ui.button>
+										@unless ($isKepalaDaerah)
+											<p class="mt-1 text-xs text-slate-500">
+												Mulai dengan menambahkan {{ $labels['noun'] }} pertama ke sistem.
+											</p>
+											<x-ui.button href="{{ route('master.users.create', array_filter(['type' => $type])) }}"
+												variant="primary" size="sm" class="mt-4">
+												<i class="fa-solid fa-plus text-xs"></i> {{ $labels['add'] }}
+											</x-ui.button>
+										@endunless
 									@endif
 								</div>
 							</td>
@@ -422,4 +448,9 @@
 			</div>
 		</div>
 	</x-ui.modal>
+
+	{{-- Wizard Ganti Walikota / Wakil Walikota (dibuka dari tombol Ganti di baris). --}}
+	@if ($isKepalaDaerah)
+		<livewire:replace-kepala-daerah-modal />
+	@endif
 </div>

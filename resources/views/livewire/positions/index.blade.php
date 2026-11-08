@@ -151,7 +151,8 @@
                 </td>
                 <td data-label="Pemangku" class="py-2.5 px-4 text-center">
                   @if($position->users_count > 0)
-                    <a href="{{ route('master.users.index', ['position_id' => $position->hashid()]) }}" wire:navigate
+                    {{-- Jabatan Walikota/Wakil: pemangkunya ada di menu Walikota & Wakil Walikota, bukan daftar Pegawai. --}}
+                    <a href="{{ route('master.users.index', array_filter(['position_id' => $position->hashid(), 'type' => in_array($position->default_role, \App\Models\User::KEPALA_DAERAH_ROLES, true) ? 'kepala_daerah' : ''])) }}" wire:navigate
                       class="inline-flex items-center gap-1 rounded bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-700 ring-1 ring-primary-600/20 transition hover:bg-primary-100"
                       title="Lihat pegawai dengan jabatan ini">
                       <i class="fa-solid fa-users text-[10px]"></i> {{ $position->users_count }}

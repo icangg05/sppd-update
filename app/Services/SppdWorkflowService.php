@@ -908,9 +908,57 @@ class SppdWorkflowService
       throw new \RuntimeException('Pegawai tidak berada di instansi pelaksana atau sudah memegang jabatan lain.');
     }
 
+    [$position, $newRole] = $this->validateAppointment($actor, $role, $label, $pelaksana, $candidate, $positionId, $outgoing);
+
+    // Pejabat baru untuk role yang bisa dijabat beberapa orang (Kabid, Asisten) langsung
+    // ditautkan sebagai atasan bawahannya, agar tidak perlu dipilih lagi.
+    $steps = $outgoing ? [] : $this->simulateApprovals($pelaksana, $destination);
+    $missingAt = collect($steps)->search(fn (array $s) => $s['role'] === $role && $s['status'] === 'not_found');
+    $subordinate = $missingAt !== false && $this->isReassignable($role) ? $this->stepSubordinate($pelaksana, $steps, $missingAt) : null;
+
+    return $this->applyAppointment($actor, $candidate, $position, $role, $newRole, $label, $outgoing, $subordinate, 'dari pengajuan SPPD');
+  }
+
+  /**
+   * Ganti Walikota / Wakil Walikota langsung dari menu Walikota & Wakil Walikota, tanpa konteks
+   * pengajuan SPPD. Aturannya sama dengan Ganti pejabat di wizard Buat SPPD: calon dari pegawai
+   * Staf aktif Sekretariat Daerah, jabatan pejabat lama boleh dialihkan, dan pejabat lama kembali
+   * menjadi Staf. Riwayat & dokumen lama tetap atas nama pejabat lama (akunnya tidak diubah).
+   *
+   * @throws \RuntimeException Pesan siap tampil bila penggantian tidak diizinkan.
+   */
+  public function replaceKepalaDaerah(User $actor, int $outgoingId, int $candidateId, ?int $positionId = null): User
+  {
+    $outgoing = User::with(['position', 'department', 'roles'])->where('is_active', true)->find($outgoingId);
+    $role = $outgoing?->roles->pluck('name')->first(fn (string $r) => in_array($r, User::KEPALA_DAERAH_ROLES, true));
+    if (! $role) {
+      throw new \RuntimeException('Pegawai ini sudah bukan Walikota / Wakil Walikota aktif. Muat ulang halaman lalu coba lagi.');
+    }
+    $label = $this->roleLabel($role);
+
+    // Role tingkat kota: calon & jabatannya tidak bergantung pada pelaksana (selalu dari
+    // Sekretariat Daerah), jadi pejabat lama dipakai sebagai acuan $pelaksana.
+    $candidate = $this->candidateQuery($role, $outgoing)?->with(['position', 'department', 'roles'])->find($candidateId);
+    if (! $candidate) {
+      throw new \RuntimeException('Pegawai tidak berada di Sekretariat Daerah atau sudah memegang jabatan lain.');
+    }
+
+    [$position, $newRole] = $this->validateAppointment($actor, $role, $label, $outgoing, $candidate, $positionId, $outgoing);
+
+    return $this->applyAppointment($actor, $candidate, $position, $role, $newRole, $label, $outgoing, null, 'dari menu Walikota & Wakil Walikota');
+  }
+
+  /**
+   * Validasi jabatan & role pejabat baru (dipakai appointOfficial & replaceKepalaDaerah).
+   *
+   * @return array{0: ?array, 1: string} [jabatan terpilih (lihat officialPositions) atau null, role baru]
+   * @throws \RuntimeException
+   */
+  private function validateAppointment(User $actor, string $role, string $label, User $pelaksana, User $candidate, ?int $positionId, ?User $outgoing): array
+  {
     $position = null;
     if ($positionId) {
-      $position = collect($this->officialPositions($role, $pelaksana, $candidateId, $outgoing?->id))->firstWhere('id', $positionId);
+      $position = collect($this->officialPositions($role, $pelaksana, $candidate->id, $outgoing?->id))->firstWhere('id', $positionId);
       if (! $position) {
         throw new \RuntimeException("Jabatan tersebut bukan jabatan {$label}.");
       }
@@ -931,15 +979,19 @@ class SppdWorkflowService
       throw new \RuntimeException("Role {$label} sudah dipegang oleh {$holder->name}.");
     }
 
-    // Pejabat baru untuk role yang bisa dijabat beberapa orang (Kabid, Asisten) langsung
-    // ditautkan sebagai atasan bawahannya, agar tidak perlu dipilih lagi.
-    $steps = $outgoing ? [] : $this->simulateApprovals($pelaksana, $destination);
-    $missingAt = collect($steps)->search(fn (array $s) => $s['role'] === $role && $s['status'] === 'not_found');
-    $subordinate = $missingAt !== false && $this->isReassignable($role) ? $this->stepSubordinate($pelaksana, $steps, $missingAt) : null;
+    return [$position, $newRole];
+  }
 
-    $appointed = DB::transaction(function () use ($actor, $candidate, $position, $role, $newRole, $label, $outgoing, $subordinate) {
+  /**
+   * Terapkan penetapan pejabat dalam satu transaksi: pejabat lama (bila ada) dilepas, jabatan &
+   * role pejabat baru disimpan, lalu bawahan pejabat lama dialihkan. $source melengkapi catatan
+   * log aktivitas (mis. "dari pengajuan SPPD").
+   */
+  private function applyAppointment(User $actor, User $candidate, ?array $position, string $role, string $newRole, string $label, ?User $outgoing, ?array $subordinate, string $source): User
+  {
+    $appointed = DB::transaction(function () use ($actor, $candidate, $position, $role, $newRole, $label, $outgoing, $subordinate, $source) {
       if ($outgoing) {
-        $this->releaseOfficial($actor, $outgoing, $role, $label, $candidate, $position['id'] ?? null);
+        $this->releaseOfficial($actor, $outgoing, $role, $label, $candidate, $position['id'] ?? null, $source);
       }
 
       if ($position) {
@@ -955,8 +1007,8 @@ class SppdWorkflowService
         ->event('updated')
         ->withChanges(['old' => ['role' => $oldRole], 'attributes' => ['role' => $newRole]])
         ->log($outgoing
-          ? "Pegawai {$candidate->name} ditetapkan sebagai {$label} menggantikan {$outgoing->name} dari pengajuan SPPD"
-          : "Pegawai {$candidate->name} ditetapkan sebagai {$label} dari pengajuan SPPD");
+          ? "Pegawai {$candidate->name} ditetapkan sebagai {$label} menggantikan {$outgoing->name} {$source}"
+          : "Pegawai {$candidate->name} ditetapkan sebagai {$label} {$source}");
 
       if ($outgoing) {
         $this->handOverSubordinates($actor, $outgoing, $candidate);
@@ -1018,7 +1070,7 @@ class SppdWorkflowService
     }
   }
 
-  private function releaseOfficial(User $actor, User $outgoing, string $role, string $label, User $successor, ?int $handoverPositionId): void
+  private function releaseOfficial(User $actor, User $outgoing, string $role, string $label, User $successor, ?int $handoverPositionId, string $source): void
   {
     $released = $this->releasedPosition($outgoing, $role, $handoverPositionId);
     if ($released !== null) {
@@ -1033,7 +1085,7 @@ class SppdWorkflowService
       ->causedBy($actor)
       ->event('updated')
       ->withChanges(['old' => ['role' => $oldRole], 'attributes' => ['role' => $this->releasedRole($role)]])
-      ->log("Pegawai {$outgoing->name} tidak lagi menjabat {$label}, digantikan {$successor->name} dari pengajuan SPPD");
+      ->log("Pegawai {$outgoing->name} tidak lagi menjabat {$label}, digantikan {$successor->name} {$source}");
   }
 
   /** @return array{id:int, name:string, nip:?string, position:?string, unit:?string, fits:bool} */

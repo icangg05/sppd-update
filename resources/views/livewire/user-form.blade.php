@@ -376,6 +376,10 @@
 							@php
 								// Role DPRD hanya tersedia bila pegawai bertipe DPRD.
 								$roleOptions = ($this->isDprdMember() ? $roles : $roles->whereNotIn('name', \App\Models\User::DPRD_ROLES))
+									// Walikota & Wakil dikelola di menunya sendiri: di sana hanya kedua role itu, di form Pegawai disembunyikan.
+									->when($this->isKepalaDaerahContext(),
+										fn($c) => $c->whereIn('name', \App\Models\User::KEPALA_DAERAH_ROLES),
+										fn($c) => $c->whereNotIn('name', \App\Models\User::KEPALA_DAERAH_ROLES))
 									// Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
 									->when(! ($isEdit && $user?->hasRole('super_admin')), fn($c) => $c->where('name', '!=', 'super_admin'))
 									->map(fn($r) => ['value' => $r->name, 'label' => $r->label])

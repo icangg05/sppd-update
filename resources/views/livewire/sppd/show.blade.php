@@ -488,7 +488,8 @@
 								<p class="text-xs text-amber-700 leading-relaxed">
 									Proses tanda tangan elektronik sedang berjalan di background. Halaman akan diperbarui otomatis.
 								</p>
-								<button type="button" wire:click="confirmCancelTte" wire:loading.attr="disabled"
+								{{-- wire:target: tanpa ini tombol ikut nonaktif di setiap polling 5 detik dan klik bisa terabaikan. --}}
+								<button type="button" wire:click="confirmCancelTte" wire:loading.attr="disabled" wire:target="confirmCancelTte"
 									class="mt-4 inline-flex items-center gap-1.5 rounded border border-rose-200 bg-white px-3.5 py-2 text-xs font-bold text-rose-600 shadow-2xs transition hover:bg-rose-50 hover:text-rose-700 cursor-pointer">
 									<i class="fa-solid fa-circle-xmark"></i> Batalkan Proses TTE
 								</button>
@@ -560,13 +561,25 @@
 
 								@if ($needsTte && auth()->user()->nik)
 									<div>
-										<label class="mb-1 block text-xs font-semibold text-slate-700">Passphrase
+										<label for="tte-signer-key" class="mb-1 block text-xs font-semibold text-slate-700">Passphrase
 											Penandatangan</label>
-										<div class="relative">
-											<input :type="showPassphrase ? 'text' : 'password'" wire:model="passphrase" required minlength="4"
+										{{-- Passphrase TTE tidak boleh tersimpan di browser. Prompt "Simpan/Update password" hanya muncul
+										     untuk input type="password" (atribut autocomplete diabaikan untuk prompt ini), jadi dipakai input
+										     teks yang disamarkan CSS -webkit-text-security. Tanpa ini Chrome menawarkan menimpa password
+										     login tersimpan dengan passphrase. Browser yang tidak mendukung penyamaran CSS kembali ke
+										     type="password" agar passphrase tetap tidak terlihat. id/name sengaja tanpa kata "password".
+										     autocapitalize/autocorrect/spellcheck dimatikan agar keyboard HP tidak mengubah passphrase. --}}
+										<div class="relative" x-data="{ canMask: window.CSS?.supports?.('-webkit-text-security', 'disc') ?? false }">
+											<input id="tte-signer-key" type="text" :type="!canMask && !showPassphrase ? 'password' : 'text'"
+												wire:model="passphrase" required minlength="4"
+												autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+												data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
+												style="-webkit-text-security: disc"
+												:style="{ '-webkit-text-security': showPassphrase ? 'none' : 'disc' }"
 												class="w-full rounded border border-slate-300 bg-white pl-3 pr-10 py-2 text-sm text-slate-800 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
 												placeholder="••••••••">
 											<button type="button" @click="showPassphrase = !showPassphrase"
+												:aria-label="showPassphrase ? 'Sembunyikan passphrase' : 'Tampilkan passphrase'"
 												class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-600">
 												<i :class="showPassphrase ? 'fa-eye-slash' : 'fa-eye'" class="fa-solid text-sm"></i>
 											</button>
