@@ -64,8 +64,8 @@ class DefaultPasswordWarningTest extends TestCase
 
         Livewire::test(Profile::class)
             ->set('current_password', $default)
-            ->set('password', 'rahasia-baru')
-            ->set('password_confirmation', 'rahasia-baru')
+            ->set('password', 'Rahasia-baru')
+            ->set('password_confirmation', 'Rahasia-baru')
             ->call('save')
             ->assertHasNoErrors()
             ->assertDispatched('password-changed');

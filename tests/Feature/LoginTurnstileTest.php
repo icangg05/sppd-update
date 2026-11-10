@@ -101,13 +101,69 @@ class LoginTurnstileTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_token_dikosongkan_dan_widget_direset_setiap_percobaan(): void
+    public function test_token_ditolak_mereset_widget(): void
+    {
+        $this->fakeCloudflare(false);
+
+        $this->attemptLogin('token-palsu', 'salah')
+            ->assertSet('turnstileToken', '')
+            ->assertDispatched('turnstile-reset');
+    }
+
+    public function test_salah_password_tidak_mereset_widget_dan_tidak_meminta_token_baru(): void
     {
         $this->fakeCloudflare(true);
 
         $this->attemptLogin('token-sah', 'salah')
             ->assertSet('turnstileToken', '')
+            ->assertNotDispatched('turnstile-reset');
+
+        $this->attemptLogin('', 'salah')
+            ->assertNotDispatched('turnstile-reset');
+
+        Http::assertSentCount(1);
+        $this->assertSame(2, $this->user->refresh()->failed_login_attempts);
+    }
+
+    public function test_setelah_salah_password_bisa_login_tanpa_verifikasi_ulang(): void
+    {
+        $this->fakeCloudflare(true);
+
+        $this->attemptLogin('token-sah', 'salah');
+        $this->attemptLogin('', 'password')->assertRedirect();
+
+        $this->assertAuthenticatedAs($this->user);
+        Http::assertSentCount(1);
+    }
+
+    public function test_verifikasi_kedaluwarsa_setelah_batas_waktu(): void
+    {
+        $this->fakeCloudflare(true);
+
+        $this->attemptLogin('token-sah', 'salah');
+        $this->travel(Login::TURNSTILE_PASS_SECONDS + 1)->seconds();
+
+        $this->attemptLogin('', 'password')
+            ->assertNoRedirect()
             ->assertDispatched('turnstile-reset');
+
+        $this->assertGuest();
+    }
+
+    public function test_verifikasi_habis_setelah_batas_percobaan(): void
+    {
+        $this->fakeCloudflare(true);
+
+        foreach (range(1, Login::TURNSTILE_PASS_ATTEMPTS) as $attempt) {
+            $last = $this->attemptLogin($attempt === 1 ? 'token-sah' : '', 'salah');
+        }
+
+        $last->assertDispatched('turnstile-reset');
+
+        $this->attemptLogin('', 'password')->assertNoRedirect();
+
+        $this->assertGuest();
+        Http::assertSentCount(1);
     }
 
     public function test_tanpa_kunci_turnstile_nonaktif(): void

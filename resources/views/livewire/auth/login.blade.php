@@ -2,8 +2,7 @@
 	x-data="{
 		remaining: @entangle('lockoutSeconds'),
 		timer: null,
-		verified: @js(! $turnstileSiteKey),
-		verifyFailed: false,
+		captcha: @js($turnstileSiteKey ? 'idle' : 'verified'),
 		startTimer() {
 			if (this.timer) clearInterval(this.timer);
 			if (this.remaining <= 0) return;
@@ -104,73 +103,98 @@
 			Ingat saya
 		</label>
 
-		{{-- Cloudflare Turnstile. wire:ignore menjaga iframe widget dari morph Livewire.
+		{{-- Cloudflare Turnstile. Managed widget tidak bisa dipaksa menampilkan checkbox, jadi kotak centang
+		     ini yang memulai tantangan (execution: execute); widget Cloudflare hanya muncul bila meminta
+		     interaksi. wire:ignore menjaga iframe dan status centang dari morph Livewire.
 		     Lebar minimum widget normal 300px; kartu di layar HP lebih sempit, jadi pakai ukuran compact. --}}
 		@if ($turnstileSiteKey)
 			@assets
 				<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 			@endassets
 
-			<div>
-				<div wire:ignore
-					class="min-h-[65px] leading-[0]"
-					x-data="{
-						widgetId: null,
-						mount(tries = 0) {
-							if (! window.turnstile) {
-								if (tries >= 100) { this.verifyFailed = true; return; }
-								setTimeout(() => this.mount(tries + 1), 100);
-								return;
-							}
-							const compact = this.$el.clientWidth < 300;
-							if (compact) this.$el.style.minHeight = '140px';
-							this.widgetId = turnstile.render(this.$el, {
-								sitekey: @js($turnstileSiteKey),
-								theme: 'dark',
-								language: 'id',
-								size: compact ? 'compact' : 'flexible',
-								callback: (token) => this.setToken(token),
-								'expired-callback': () => this.setToken(''),
-								'timeout-callback': () => this.setToken(''),
-								'error-callback': () => { this.setToken(''); this.verifyFailed = true; return true; },
-							});
-						},
-						setToken(token) {
-							this.$wire.turnstileToken = token;
-							this.verified = token !== '';
-							if (token) this.verifyFailed = false;
-						},
-						reset() {
-							this.setToken('');
-							if (this.widgetId !== null) turnstile.reset(this.widgetId);
-						},
-					}"
-					x-init="mount()"
-					@turnstile-reset.window="reset()"></div>
-				<p x-show="verifyFailed" x-cloak class="mt-2 text-xs leading-5 text-rose-200" role="alert">
-					Verifikasi keamanan gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.
-				</p>
+			<div wire:ignore
+				x-data="{
+					widgetId: null,
+					challenge: false,
+					mount(tries = 0) {
+						if (! window.turnstile) {
+							if (tries >= 100) { this.captcha = 'failed'; return; }
+							setTimeout(() => this.mount(tries + 1), 100);
+							return;
+						}
+						this.widgetId = turnstile.render(this.$refs.widget, {
+							sitekey: @js($turnstileSiteKey),
+							theme: 'dark',
+							language: 'id',
+							size: this.$refs.widget.clientWidth < 300 ? 'compact' : 'flexible',
+							execution: 'execute',
+							appearance: 'interaction-only',
+							retry: 'never',
+							'refresh-expired': 'never',
+							'refresh-timeout': 'never',
+							callback: (token) => this.setToken(token),
+							'before-interactive-callback': () => { this.challenge = true; },
+							'expired-callback': () => this.reset(),
+							'timeout-callback': () => this.reset(),
+							'error-callback': () => { this.reset('failed'); return true; },
+						});
+						if (this.captcha === 'verifying') this.tick();
+					},
+					tick() {
+						this.captcha = 'verifying';
+						if (this.widgetId !== null) turnstile.execute(this.$refs.widget);
+					},
+					setToken(token) {
+						this.$wire.turnstileToken = token;
+						if (token) this.captcha = 'verified';
+					},
+					reset(state = 'idle') {
+						this.setToken('');
+						this.captcha = state;
+						this.challenge = false;
+						if (this.widgetId !== null) turnstile.reset(this.widgetId);
+					},
+				}"
+				x-init="mount()"
+				@turnstile-reset.window="reset()">
+				<label
+					class="flex items-center gap-3 rounded border border-sky-100/30 bg-sky-100/15 px-4 py-3 text-sm font-medium text-sky-50 backdrop-blur-md transition select-none short:py-2.5"
+					:class="captcha === 'idle' || (captcha === 'failed' && widgetId !== null) ? 'cursor-pointer hover:bg-sky-100/20' : 'cursor-default'">
+					<span class="relative inline-flex shrink-0">
+						<input type="checkbox" class="peer sr-only" @change="tick()"
+							:checked="captcha === 'verifying' || captcha === 'verified'"
+							:disabled="captcha === 'verifying' || captcha === 'verified' || (captcha === 'failed' && widgetId === null)">
+						<span class="flex size-5 items-center justify-center rounded border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-sky-200"
+							:class="captcha === 'verified' ? 'border-emerald-300 bg-emerald-300 text-slate-950' : 'border-sky-100/70 bg-slate-950/20 text-sky-100'">
+							<i class="fa-solid fa-spinner fa-spin text-[11px]" x-show="captcha === 'verifying'" x-cloak></i>
+							<i class="fa-solid fa-check text-xs" x-show="captcha === 'verified'" x-cloak></i>
+						</span>
+					</span>
+					<span x-text="captcha === 'verified' ? 'Terverifikasi' : (captcha !== 'verifying' ? 'Saya bukan robot' : (challenge ? 'Selesaikan di bawah' : 'Memverifikasi…'))">Saya bukan robot</span>
+					<span class="ml-auto inline-flex items-center gap-1.5 text-xs font-normal text-sky-100/80">
+						<i class="fa-brands fa-cloudflare"></i>
+						Cloudflare
+					</span>
+				</label>
+				<div x-ref="widget" class="leading-[0]" :class="challenge && 'mt-2'"></div>
+				<p x-show="captcha === 'failed'" x-cloak class="mt-2 text-xs leading-5 text-rose-200" role="alert"
+					x-text="widgetId === null ? 'Verifikasi keamanan gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.' : 'Verifikasi keamanan gagal. Silakan centang lagi.'"></p>
 			</div>
 		@endif
 
 		<button
 			type="submit"
-			:disabled="remaining > 0 || ! verified"
+			:disabled="remaining > 0 || captcha !== 'verified'"
 			wire:loading.attr="disabled"
 			wire:target="login"
 			class="w-full rounded bg-sky-300 px-4 py-3 text-sm font-bold short:py-2.5 uppercase tracking-[0.2em] text-slate-950 shadow-[0_18px_40px_rgba(125,211,252,0.25)] transition hover:-translate-y-0.5 hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
-			{{-- Empat keadaan tombol: terkunci (anti-spam), menunggu Turnstile, sedang proses, dan normal. --}}
+			{{-- Tiga keadaan tombol: terkunci (anti-spam), sedang proses, dan normal (nonaktif sampai kotak verifikasi dicentang). --}}
 			<span wire:loading.remove wire:target="login" x-show="remaining > 0" x-cloak
 				class="inline-flex items-center justify-center gap-2">
 				<i class="fa-solid fa-spinner fa-spin"></i>
 				Tunggu <span x-text="remaining"></span> detik
 			</span>
-			<span wire:loading.remove wire:target="login" x-show="remaining <= 0 && ! verified" x-cloak
-				class="inline-flex items-center justify-center gap-2">
-				<i class="fa-solid fa-spinner fa-spin" x-show="! verifyFailed"></i>
-				<span x-text="verifyFailed ? 'Verifikasi gagal' : 'Memverifikasi…'"></span>
-			</span>
-			<span wire:loading.remove wire:target="login" x-show="remaining <= 0 && verified" x-cloak>Login</span>
+			<span wire:loading.remove wire:target="login" x-show="remaining <= 0" x-cloak>Login</span>
 			<span wire:loading wire:target="login" x-cloak class="inline-flex items-center justify-center gap-2">
 				<i class="fa-solid fa-spinner fa-spin"></i>
 				Memproses…

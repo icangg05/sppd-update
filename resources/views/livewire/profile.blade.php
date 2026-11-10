@@ -172,9 +172,28 @@
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<x-form.input wire:model="current_password" type="password" label="Password Saat Ini"
 						placeholder="••••••" wrapperClass="sm:col-span-2" />
-					<x-form.input wire:model="password" type="password" label="Password Baru" placeholder="Minimal 6 karakter" />
+					<x-form.input wire:model="password" type="password" label="Password Baru" placeholder="Minimal 8 karakter"
+						aria-describedby="password-hint" />
 					<x-form.input wire:model="password_confirmation" type="password" label="Konfirmasi Password Baru"
 						placeholder="Ulangi password baru" />
+
+					{{-- Petunjuk password aman, tercentang sambil mengetik. Polanya mengikuti Profile::rules(). --}}
+					<div id="password-hint" class="sm:col-span-2" x-data="{ met: (pattern) => pattern.test($wire.password ?? '') }">
+						<p class="mb-1.5 text-xs font-semibold text-slate-600">Syarat password yang aman:</p>
+						<ul class="grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+							@foreach ([
+								'Minimal 8 karakter' => '/^.{8,}$/su',
+								'Minimal 1 huruf kapital (A-Z)' => '/\p{Lu}/u',
+								'Minimal 1 huruf kecil (a-z)' => '/\p{Ll}/u',
+								'Minimal 1 simbol (mis. ! # $ % &)' => '/[\p{Z}\p{S}\p{P}]/u',
+							] as $hint => $pattern)
+								<li class="flex items-center gap-2 transition-colors" :class="met({{ $pattern }}) ? 'text-emerald-700' : 'text-slate-500'">
+									<i class="fa-solid w-3 text-center" :class="met({{ $pattern }}) ? 'fa-circle-check' : 'fa-circle text-[5px]'"></i>
+									{{ $hint }}
+								</li>
+							@endforeach
+						</ul>
+					</div>
 				</div>
 			</div>
 

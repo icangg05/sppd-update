@@ -8,6 +8,7 @@ use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -61,8 +62,9 @@ class Profile extends Component
       'nip' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nip', 'NIP', $user->department_id, $id)],
       'nik' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nik', 'NIK', $user->department_id, $id)],
       'current_password' => ['nullable', 'required_with:password', 'current_password'],
+      // Syarat ini ditampilkan sebagai petunjuk di profile.blade.php, ubah keduanya bersamaan.
       // Tidak boleh kembali ke password bawaan — tujuannya justru menggantinya.
-      'password' => ['nullable', 'string', 'min:6', 'confirmed', Rule::notIn([config('users.default_password')])],
+      'password' => ['nullable', 'string', Password::min(8)->mixedCase()->symbols(), 'confirmed', Rule::notIn([config('users.default_password')])],
     ];
   }
 
@@ -70,7 +72,9 @@ class Profile extends Component
     'current_password.required_with' => 'Masukkan password saat ini untuk mengganti password.',
     'current_password.current_password' => 'Password saat ini tidak sesuai.',
     'password.confirmed' => 'Konfirmasi password tidak cocok.',
-    'password.min' => 'Password baru minimal 6 karakter.',
+    'password.min' => 'Password baru minimal 8 karakter.',
+    'password.password.mixed' => 'Password baru harus memuat huruf kapital dan huruf kecil.',
+    'password.password.symbols' => 'Password baru harus memuat minimal satu simbol.',
     'password.not_in' => 'Password baru tidak boleh sama dengan password bawaan.',
   ];
 

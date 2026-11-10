@@ -41,6 +41,10 @@ class Login extends Component
   public const LOCKOUT_SECONDS = 60;
   public const BLOCK_AFTER_ATTEMPTS = self::MAX_ATTEMPTS * 2;
 
+  /** Satu verifikasi Turnstile berlaku selama ini (sama dengan umur token) dan sebanyak ini percobaan login. */
+  public const TURNSTILE_PASS_SECONDS = 300;
+  public const TURNSTILE_PASS_ATTEMPTS = self::BLOCK_AFTER_ATTEMPTS;
+
   public function mount(): void
   {
     if (Auth::check()) {
@@ -116,7 +120,11 @@ class Login extends Component
       ->with('success', "Selamat datang kembali, {$name}!");
   }
 
-  /** Token Turnstile sekali pakai, jadi widget selalu diminta menerbitkan yang baru setelah dipakai. */
+  /**
+   * Token Turnstile sekali pakai, jadi keberhasilannya diingat per sesi agar salah password
+   * tidak memaksa verifikasi ulang. Batas waktu dan jumlah percobaan mencegah satu verifikasi
+   * dipakai menebak tanpa henti.
+   */
   protected function passesTurnstile(): bool
   {
     $turnstile = app(TurnstileService::class);
@@ -127,13 +135,29 @@ class Login extends Component
 
     $token = $this->turnstileToken;
     $this->turnstileToken = '';
-    $this->dispatch('turnstile-reset');
+    $key = 'login-turnstile:' . session()->getId();
+
+    if (RateLimiter::attempts($key) > 0) {
+      $used = RateLimiter::hit($key, self::TURNSTILE_PASS_SECONDS);
+
+      if ($used >= self::TURNSTILE_PASS_ATTEMPTS) {
+        RateLimiter::clear($key);
+        $this->dispatch('turnstile-reset');
+      }
+
+      if ($used <= self::TURNSTILE_PASS_ATTEMPTS) {
+        return true;
+      }
+    }
 
     if ($turnstile->verify($token)) {
+      RateLimiter::hit($key, self::TURNSTILE_PASS_SECONDS);
+
       return true;
     }
 
-    $this->toastError('Verifikasi keamanan gagal. Silakan coba lagi.');
+    $this->dispatch('turnstile-reset');
+    $this->toastError('Verifikasi keamanan gagal atau kedaluwarsa. Centang ulang, lalu coba lagi.');
 
     return false;
   }
