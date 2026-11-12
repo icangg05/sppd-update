@@ -303,15 +303,9 @@
 									<i class="fa-solid fa-circle-notch fa-spin mr-2 text-primary-600"></i>Memvalidasi alur instansi...
 								</div>
 							@else
-								{{-- Belum ada langkah yang bisa ditampilkan: pegawai sedang bertugas (sementara → amber)
-								     atau alur belum dibuat (memblokir → merah). --}}
-								@php $isBusy = $errorMessageName !== ''; @endphp
-								<x-ui.alert class="w-full" :variant="$isBusy ? 'warning' : 'danger'"
-									:icon="$isBusy ? 'fa-user-clock' : 'fa-link-slash'"
-									:title="$isBusy ? 'Belum dapat membuat SPPD' : 'Alur persetujuan belum tersedia'">
-									@if ($isBusy)
-										Pegawai <strong class="font-semibold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
-									@elseif ($errorMessageRole !== '')
+								{{-- Belum ada langkah yang bisa ditampilkan: alur belum dibuat. --}}
+								<x-ui.alert class="w-full" variant="danger" icon="fa-link-slash" title="Alur persetujuan belum tersedia">
+									@if ($errorMessageRole !== '')
 										{{ $errorMessage }} <span class="whitespace-nowrap">(Role: <strong class="font-semibold">{{ $errorMessageRole }}</strong>)</span>
 									@else
 										{!! $errorMessage !!}
@@ -326,20 +320,35 @@
 					@if ($errorMessage !== '' && count($steps) > 0)
 						@php
 							$alertTitle = match (true) {
-								$errorMessageName !== '' => 'Pegawai sedang bertugas',
 								collect($steps)->contains('status', 'not_found') => 'Pejabat alur belum lengkap',
 								collect($steps)->contains('status', 'choose') => 'Pejabat alur belum dipilih',
 								default => 'Data dokumen belum lengkap',
 							};
 						@endphp
-						<x-ui.alert id="workflow-error-msg" class="mt-4.5" :variant="$errorMessageName !== '' ? 'warning' : 'danger'" :title="$alertTitle">
-							@if ($errorMessageName !== '')
-								Pegawai <strong class="font-semibold">{{ $errorMessageName }}</strong> {{ $errorMessage }}
-							@elseif ($errorMessageRole !== '')
+						<x-ui.alert id="workflow-error-msg" class="mt-4.5" variant="danger" :title="$alertTitle">
+							@if ($errorMessageRole !== '')
 								{{ $errorMessage }} <span class="whitespace-nowrap">(Role Pelaksana: <strong class="font-semibold">{{ $errorMessageRole }}</strong>)</span>
 							@else
 								{!! $errorMessage !!}
 							@endif
+						</x-ui.alert>
+					@endif
+
+					{{-- SPPD aktif pelaksana tidak menghalangi pengajuan baru: hanya acuan agar tanggal
+					     perjalanan di Tahap 2 tidak bentrok. --}}
+					@if ($activeTrips->isNotEmpty())
+						<x-ui.alert id="active-trips" class="mt-4.5" variant="info" icon="fa-calendar-days"
+							:title="$selectedUser->name . ' memiliki ' . $activeTrips->count() . ' SPPD aktif'">
+							<p>Pengajuan baru tetap bisa dibuat selama tanggalnya tidak bentrok dengan perjalanan berikut:</p>
+							<ul class="mt-1.5 space-y-1">
+								@foreach ($activeTrips as $trip)
+									<li class="flex flex-wrap items-baseline gap-x-1.5">
+										<span class="font-semibold tabular-nums">{{ $trip->periodLabel() }}</span>
+										<span>· {{ $trip->domain?->shortLabel() }} · {{ $trip->instansiName() }}</span>
+										<x-ui.badge :color="$trip->status->color()">{{ $trip->status->label() }}</x-ui.badge>
+									</li>
+								@endforeach
+							</ul>
 						</x-ui.alert>
 					@endif
 

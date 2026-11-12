@@ -61,6 +61,17 @@ class SupervisorChainTest extends TestCase
         return $this->user('admin_opd', $this->setda);
     }
 
+    /** Alur yang diatur Super Admin dimulai dari Kabag, walau tingkat pemohon setara atau di atasnya. */
+    private function mulaiDariKabag(string $applicantRole): void
+    {
+        SppdWorkflow::whereJsonContains('applicant_role', $applicantRole)
+            ->whereJsonContains('department_type', 'setda')
+            ->get()
+            ->each->update([
+                'steps' => [['role' => 'kabid_irban_kabag'], ['role' => 'asisten'], ['role' => 'sekda'], ['role' => 'walikota']],
+            ]);
+    }
+
     public function test_buat_sppd_meminta_atasan_lalu_pilih_asisten_berurutan(): void
     {
         $staf = $this->user('staf', $this->setda);
@@ -169,6 +180,77 @@ class SupervisorChainTest extends TestCase
             ->call('saveSupervisor');
 
         $this->assertSame($kabagLain->id, $staf->fresh()->atasan_id);
+    }
+
+    public function test_wakil_walikota_memilih_kabag_di_sub_unit_sebagai_tahap_alur(): void
+    {
+        Role::firstOrCreate(['name' => 'wakil_walikota', 'guard_name' => 'web'], ['label' => 'wakil_walikota']);
+        $this->mulaiDariKabag('wakil_walikota');
+        // Kabag di unit induk tidak boleh menutup Kabag yang tercatat di sub-unit.
+        $this->user('kabid_irban_kabag', $this->setda);
+        $this->user('walikota', $this->setda);
+        $this->kabag->update(['atasan_id' => $this->asisten->id]);
+        $wakil = $this->user('wakil_walikota', $this->setda);
+        $this->actingAs($this->adminSetda());
+
+        $component = Livewire::test(SppdCreate::class)
+            ->call('selectUser', $wakil->id)
+            ->call('chooseStep', 'kabid_irban_kabag')
+            ->assertSet('supervisorMode', 'step')
+            ->assertSet('showSupervisorModal', true);
+        $this->assertContains($this->kabag->id, array_column($component->viewData('supervisorModal')['candidates'], 'id'));
+
+        $component->call('pickSupervisor', $this->kabag->id)->call('saveSupervisor');
+
+        $this->assertSame($this->kabag->id, $wakil->fresh()->atasan_id);
+        $this->assertSame($this->asisten->id, $component->get('steps')[1]['approver_id']);
+        $this->assertTrue(SppdWorkflowService::isComplete($component->get('steps')));
+    }
+
+    public function test_asisten_pemohon_menjadi_pejabat_tahap_asistennya_sendiri(): void
+    {
+        $this->mulaiDariKabag('asisten');
+        $this->user('walikota', $this->setda);
+        // Kabag bawahan Asisten ini tetap boleh dipilih untuk alurnya (bukan rantai berputar).
+        $this->kabag->update(['atasan_id' => $this->asisten->id]);
+        $this->actingAs($this->adminSetda());
+
+        $component = Livewire::test(SppdCreate::class)
+            ->call('selectUser', $this->asisten->id)
+            ->call('chooseStep', 'kabid_irban_kabag')
+            ->call('pickSupervisor', $this->kabag->id)
+            ->call('saveSupervisor');
+
+        $this->assertSame($this->kabag->id, $this->asisten->fresh()->atasan_id);
+        $this->assertSame($this->asisten->id, $component->get('steps')[1]['approver_id']);
+        $this->assertTrue(SppdWorkflowService::isComplete($component->get('steps')));
+    }
+
+    public function test_kabag_pemohon_memilih_dirinya_tanpa_memutus_atasannya(): void
+    {
+        $this->mulaiDariKabag('kabid_irban_kabag');
+        $this->kabag->update(['atasan_id' => $this->asisten->id]);
+        $this->user('kabid_irban_kabag', $this->setda);
+        $this->actingAs($this->adminSetda());
+
+        $component = Livewire::test(SppdCreate::class)
+            ->call('selectUser', $this->kabag->id)
+            ->call('chooseStep', 'kabid_irban_kabag')
+            ->call('pickSupervisor', $this->kabag->id)
+            ->call('saveSupervisor');
+
+        $this->assertSame($this->asisten->id, $this->kabag->fresh()->atasan_id);
+        $this->assertSame([$this->kabag->id, $this->asisten->id], array_slice(array_column($component->get('steps'), 'approver_id'), 0, 2));
+    }
+
+    public function test_tautan_pimpinan_ke_kabag_tidak_terbawa_ke_rantai_pegawai_lain(): void
+    {
+        User::role('sekda')->firstOrFail()->update(['atasan_id' => $this->kabag->id]);
+
+        // Rantai Asisten naik ke Sekda; Kabag pilihan Sekda bukan Kabag untuk Asisten ini.
+        $resolved = $this->service->resolveStep('kabid_irban_kabag', $this->asisten);
+
+        $this->assertSame('choose', $resolved['status']);
     }
 
     public function test_atasan_ditolak_bila_diri_sendiri_lebih_rendah_atau_berputar(): void

@@ -494,16 +494,19 @@ class SppdIndex extends Component
       ->values()
       ->all();
 
+    $sudahIcon = 'fa-solid fa-circle-check text-emerald-600';
+    $belumIcon = 'fa-solid fa-circle-xmark text-red-600';
+
     $realisasiOptions = [
       ['value' => '', 'label' => 'Semua Realisasi'],
-      ['value' => 'sudah', 'label' => 'Sudah Realisasi'],
-      ['value' => 'belum', 'label' => 'Belum Realisasi'],
+      ['value' => 'sudah', 'label' => 'Sudah Realisasi', 'icon' => $sudahIcon],
+      ['value' => 'belum', 'label' => 'Belum Realisasi', 'icon' => $belumIcon],
     ];
 
     $laporanOptions = [
       ['value' => '', 'label' => 'Semua Laporan'],
-      ['value' => 'sudah', 'label' => 'Sudah Upload Laporan'],
-      ['value' => 'belum', 'label' => 'Belum Upload Laporan'],
+      ['value' => 'sudah', 'label' => 'Sudah Upload Laporan', 'icon' => $sudahIcon],
+      ['value' => 'belum', 'label' => 'Belum Upload Laporan', 'icon' => $belumIcon],
     ];
 
     return view('livewire.sppd.index', compact(
@@ -532,8 +535,8 @@ class SppdIndex extends Component
 
   /**
    * SPPD Lanjutan: buka Tahap 1 Buat SPPD dengan pelaksana yang sama agar domain perjalanan
-   * dipilih dulu (domain SPPD sebelumnya terpilih sebagai bawaan). Cek perjalanan aktif, alur,
-   * pejabat, dan kop surat dijalankan di sana sesuai domain yang dipilih.
+   * dipilih dulu (domain SPPD sebelumnya terpilih sebagai bawaan). Alur, pejabat, dan kop surat
+   * dicek di Tahap 1; bentrok tanggal dengan SPPD lain baru dicek di Tahap 2.
    */
   public function startSppdLanjutan(int $sppdId): void
   {

@@ -4,7 +4,6 @@ namespace App\Livewire\Sppd;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\SppdDomain;
-use App\Enums\SppdStatus;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Position;
 use App\Models\SppdApproval;
@@ -31,7 +30,6 @@ class SppdCreate extends Component
   public bool $hasHeader = false;
   public bool $isComplete = false;
   public string $errorMessage = '';
-  public string $errorMessageName = '';
   public string $errorMessageRole = '';
   public array $userInfo = [];
 
@@ -101,7 +99,6 @@ class SppdCreate extends Component
   public function checkWorkflow(): void
   {
     $this->errorMessage = '';
-    $this->errorMessageName = '';
     $this->errorMessageRole = '';
     $this->steps = [];
     $this->isComplete = false;
@@ -123,26 +120,10 @@ class SppdCreate extends Component
       'role_label' => $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role'),
     ];
 
-    // 1. Cek perjalanan aktif
-    $activeSppd = SppdRequest::where('user_id', $user->id)
-      ->where(function ($q) {
-        $q->where('status', SppdStatus::IN_PROGRESS)
-          ->orWhere(function ($q2) {
-            $q2->where('status', SppdStatus::APPROVED)
-              ->where('end_date', '>=', today());
-          });
-      })
-      ->first();
+    // SPPD aktif lain tidak menghalangi: bentrok tanggal baru dicek di Tahap 2 (lihat
+    // SppdRequest::clashingForUsers), karena SPT/SPPD perlu dibuat jauh hari.
 
-    if ($activeSppd) {
-      $this->errorMessageName = $user->name;
-      $this->errorMessage = $activeSppd->status === SppdStatus::IN_PROGRESS
-        ? 'masih memiliki SPPD yang sedang dalam proses persetujuan.'
-        : 'masih memiliki SPPD yang sedang dalam periode perjalanan.';
-      return;
-    }
-
-    // 2. Workflow dipilih dari atasan langsung pemohon. Bila atasannya belum pasti,
+    // 1. Workflow dipilih dari atasan langsung pemohon. Bila atasannya belum pasti,
     //    alur terpanjang tampil dengan tahap atasan belum dipilih.
     $workflowService = app(SppdWorkflowService::class);
     $match = $workflowService->matchWorkflow($user, $this->domain);
@@ -156,7 +137,7 @@ class SppdCreate extends Component
       return;
     }
 
-    // 3. Cek Kop Surat
+    // 2. Cek Kop Surat
     $this->hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
 
     // Alur buatan Super Admin yang tahap pertamanya bukan role atasan: tidak bisa dipilih di sini.
@@ -165,7 +146,7 @@ class SppdCreate extends Component
       return;
     }
 
-    // 4. Verifikasi Kelengkapan Pejabat: setiap tahap wajib punya pejabat pasti.
+    // 3. Verifikasi Kelengkapan Pejabat: setiap tahap wajib punya pejabat pasti.
     if (collect($this->steps)->contains('status', 'not_found')) {
       $this->errorMessage = 'Ada pejabat struktural yang belum ditentukan dalam alur ini. Lengkapi lewat tombol pada tahap yang masih kosong.';
       return;
@@ -542,13 +523,19 @@ class SppdCreate extends Component
       }])->all()
       : [];
 
+    // SPPD aktif pelaksana (termasuk sebagai pengikut dan lewat akunnya di OPD lain) sebagai
+    // acuan memilih tanggal yang tidak bentrok di Tahap 2.
+    $activeTrips = $selectedUser
+      ? SppdRequest::activeForUsers(collect([$selectedUser]))[$selectedUser->id] ?? collect()
+      : collect();
+
     $supervisorModal = $this->showSupervisorModal && $selectedUser
       ? $this->supervisorModalData($workflowService, $selectedUser)
       : null;
 
     return view('livewire.sppd.create', compact(
       'users', 'usersHasMore', 'selectedUser', 'isSuperAdmin', 'pelaksanaOrigin', 'userOrigins', 'official', 'completable',
-      'editActions', 'canManagePelaksana', 'supervisorModal'
+      'editActions', 'canManagePelaksana', 'supervisorModal', 'activeTrips'
     ))->title('Buat SPPD Baru');
   }
 

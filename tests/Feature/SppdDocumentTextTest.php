@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Enums\SppdDomain;
 use App\Models\Budget;
 use App\Models\Department;
+use App\Models\Rank;
 use App\Models\SppdDestination;
+use App\Models\SppdFollower;
 use App\Models\SppdRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,6 +66,55 @@ class SppdDocumentTextTest extends TestCase
             'Mengikuti Kegiatan Evaluasi Kinerja PEMDI Onsite Wilayah Provinsi Sulawesi Tenggara di Kantor Dinas Kominfo Prov. Sulawesi Tenggara Selama 2 hari dari tanggal 05 Oktober 2026 s/d 06 Oktober 2026.',
             $this->text($html),
         );
+    }
+
+    public function test_spt_tanpa_pangkat_mencetak_strip(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
+        $pdfData = ['approver_nip' => '197001012000011002'] + $this->pdfData();
+
+        $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $pdfData])->render());
+        $this->assertStringContainsString('Pangkat/Golongan : - NIP', $spt);
+        $this->assertStringContainsString('- NIP. 197001012000011002', $spt);
+        $this->assertStringNotContainsString('Gol.', $spt);
+
+        $dprd = $this->text(view('exports.spt_dprd', ['sppd' => $sppd, 'pdfData' => $pdfData, 'participants' => collect()])->render());
+        $this->assertStringContainsString('- NIP. 197001012000011002', $dprd);
+        $this->assertStringNotContainsString('Gol.', $dprd);
+    }
+
+    public function test_spt_peserta_tanpa_nip_tetap_mencetak_pangkat_dan_nip_strip(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
+        $sppd->user->nip = null;
+        $pengikut = new User(['name' => 'Sari', 'nip' => '']);
+        $pengikut->setRelation('rank', new Rank(['name' => 'Penata', 'group' => 'III/c']));
+        $sppd->setRelation('followers', collect([(new SppdFollower(['travel_position' => 'Anggota']))->setRelation('user', $pengikut)]));
+
+        $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $this->pdfData()])->render());
+
+        $this->assertStringContainsString('Nama : Budi Pangkat/Golongan : - NIP : - Jabatan', $spt);
+        $this->assertStringContainsString('Nama : Sari Pangkat/Golongan : Penata, Gol. III/c NIP : - Jabatan : Anggota', $spt);
+    }
+
+    public function test_spt_dengan_pangkat_tetap_lengkap(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
+        $sppd->user->setRelation('rank', new Rank(['name' => 'Penata', 'group' => 'III/c']));
+        $pdfData = ['approver_nip' => '197001012000011002', 'approver_rank' => 'Pembina', 'approver_group' => 'IV/a'] + $this->pdfData();
+
+        $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $pdfData])->render());
+
+        $this->assertStringContainsString('Pangkat/Golongan : Penata, Gol. III/c NIP', $spt);
+        $this->assertStringContainsString('Pembina, Gol. IV/a NIP. 197001012000011002', $spt);
+    }
+
+    public function test_pangkat_golongan_hanya_mencetak_bagian_yang_ada(): void
+    {
+        $this->assertSame('-', Rank::pangkatGolongan(null, null));
+        $this->assertSame('-', Rank::pangkatGolongan('', ' '));
+        $this->assertSame('Penata', Rank::pangkatGolongan('Penata', null));
+        $this->assertSame('Gol. III/c', Rank::pangkatGolongan(null, 'III/c'));
     }
 
     public function test_sppd_luar_negeri_menyebut_kota_dan_negara(): void

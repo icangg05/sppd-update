@@ -33,3 +33,6 @@ Thumbs.db
 
 # Backup database lokal
 /backup-*.sql
+
+# Override compose khusus lokal (mount public/build); tidak boleh ikut ke VPS.
+/compose.override.yml

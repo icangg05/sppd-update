@@ -9,11 +9,19 @@
     'class' => '',
     'labelClass' => '',
     'wrapperClass' => '',
+    // Kirim rentang ke server begitu dipilih (mis. agar daftar lain ikut menyesuaikan).
+    'live' => false,
+    // Sabtu & Minggu tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung.
+    'skipWeekends' => false,
+    // Rentang yang sudah terpakai: [['start' => Y-m-d, 'end' => Y-m-d, 'label' => ...], ...].
+    // Tanggalnya tidak bisa dipilih, dan rentang baru tidak bisa melompatinya.
+    'blocked' => [],
 ])
 
 {{-- Satu field rentang tanggal: klik tanggal awal, lalu tanggal akhir di kalender.
      Klik tanggal yang sama dua kali untuk rentang satu hari. Nilai baru dikirim ke
-     Livewire setelah rentang lengkap; menutup panel di tengah jalan membatalkannya. --}}
+     Livewire setelah rentang lengkap; menutup panel di tengah jalan membatalkannya.
+     Dua tanggal terpisah dalam satu field (mis. SPT & SPPD): pakai x-form.date-pair. --}}
 <div class="{{ $wrapperClass }}">
     @if ($label)
         <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase {{ $labelClass }}">
@@ -25,8 +33,10 @@
     <div
         x-data="{
             open: false,
-            start: @entangle($start),
-            end: @entangle($end),
+            start: @if ($live) @entangle($start).live @else @entangle($start) @endif,
+            end: @if ($live) @entangle($end).live @else @entangle($end) @endif,
+            skipWeekends: @js((bool) $skipWeekends),
+            blocked: @js(array_values($blocked)),
             // Tanggal awal yang sudah diklik, menunggu klik tanggal akhir.
             draft: null,
             hover: null,
@@ -65,7 +75,32 @@
                 if (!this.start) return 0;
                 const s = this.parse(this.start);
                 const e = this.parse(this.end || this.start);
-                return Math.round((Date.UTC(e.y, e.m, e.d) - Date.UTC(s.y, s.m, s.d)) / 86400000) + 1;
+                const total = Math.round((Date.UTC(e.y, e.m, e.d) - Date.UTC(s.y, s.m, s.d)) / 86400000) + 1;
+                if (!this.skipWeekends) return total;
+                let count = 0;
+                for (let i = 0; i < total; i++) {
+                    const dow = new Date(Date.UTC(s.y, s.m, s.d + i)).getUTCDay();
+                    if (dow !== 0 && dow !== 6) count++;
+                }
+                return count;
+            },
+            isWeekend(iso) {
+                const p = this.parse(iso);
+                const dow = new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay();
+                return dow === 0 || dow === 6;
+            },
+            blockOf(iso) {
+                return this.blocked.find((b) => iso >= b.start && iso <= b.end) ?? null;
+            },
+            // Saat memilih tanggal kembali: rentang berhenti sebelum tanggal terpakai berikutnya.
+            get limit() {
+                if (!this.draft) return null;
+                return this.blocked.map((b) => b.start).filter((s) => s > this.draft).sort()[0] ?? null;
+            },
+            isOff(iso) {
+                return (this.skipWeekends && this.isWeekend(iso))
+                    || this.blockOf(iso) !== null
+                    || (this.limit !== null && iso >= this.limit);
             },
             get months() {
                 const list = [];
@@ -111,6 +146,13 @@
             },
             dayClass(cell) {
                 const iso = cell.iso;
+                // Tanggal terpakai SPPD lain: merah dicoret.
+                if (this.blockOf(iso)) return 'bg-rose-50 text-rose-400 line-through cursor-not-allowed';
+                // Akhir pekan di rentang tetap tampak di dalam pita, tetapi pudar karena tidak dihitung.
+                if (this.isOff(iso)) {
+                    const muted = iso > this.from && iso < this.to ? 'text-slate-400 line-through' : 'text-slate-300';
+                    return muted + ' cursor-not-allowed';
+                }
                 if (iso === this.from || (iso === this.to && !this.draft)) return 'bg-primary-600 font-semibold text-white hover:bg-primary-700';
                 if (iso === this.to) return 'bg-primary-100 font-semibold text-primary-800';
                 if (iso > this.from && iso < this.to) return 'text-primary-800 hover:bg-primary-100';
@@ -121,9 +163,13 @@
             },
             dayLabel(cell) {
                 const p = this.parse(cell.iso);
-                return this.dayNames[cell.dow] + ', ' + p.d + ' ' + this.monthsLong[p.m] + ' ' + p.y;
+                const block = this.blockOf(cell.iso);
+                return this.dayNames[cell.dow] + ', ' + p.d + ' ' + this.monthsLong[p.m] + ' ' + p.y
+                    + (block ? ', terpakai SPPD ' + block.label : '');
             },
             pick(iso) {
+                if (this.isOff(iso)) return;
+                // Tanggal sebelum tanggal berangkat yang sudah diklik memulai rentang baru.
                 if (!this.draft || iso < this.draft) {
                     this.draft = iso;
                     this.hover = null;
@@ -200,7 +246,7 @@
             <i class="fa-regular fa-calendar text-xs text-slate-500"></i>
             <span class="min-w-0 flex-1 truncate text-left" :class="summary ? 'text-slate-800' : 'text-slate-500'"
                 x-text="summary || @js($placeholder)"></span>
-            <span x-show="days > 0" x-cloak x-text="days + ' hari'"
+            <span x-show="days > 0" x-cloak x-text="days + (skipWeekends ? ' hari kerja' : ' hari')"
                 class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600"></span>
         </button>
 
@@ -242,7 +288,9 @@
                                 <template x-for="cell in cells(month.y, month.m)" :key="cell.key">
                                     <div class="py-0.5" :class="cell.iso && bandClass(cell.iso)">
                                         <template x-if="cell.iso">
-                                            <button type="button" @click="pick(cell.iso)" @mouseenter="if (draft) hover = cell.iso"
+                                            <button type="button" @click="pick(cell.iso)" @mouseenter="if (draft && !isOff(cell.iso)) hover = cell.iso"
+                                                :disabled="isOff(cell.iso)"
+                                                :title="blockOf(cell.iso) ? 'Terpakai SPPD ' + blockOf(cell.iso).label : null"
                                                 :aria-label="dayLabel(cell)" :aria-pressed="cell.iso === from || cell.iso === to"
                                                 class="mx-auto flex size-9 items-center justify-center rounded text-sm tabular-nums transition-colors"
                                                 :class="dayClass(cell)" x-text="cell.day"></button>
@@ -260,6 +308,12 @@
                     </template>
                     <template x-if="draft">
                         <span>Klik <strong class="font-semibold text-slate-800">tanggal kembali</strong>. Klik tanggal yang sama untuk perjalanan satu hari.</span>
+                    </template>
+                    <template x-if="blocked.length">
+                        <span class="mt-0.5 block text-rose-600">Tanggal merah sudah terpakai SPPD lain dan tidak bisa dipilih.</span>
+                    </template>
+                    <template x-if="skipWeekends">
+                        <span class="mt-0.5 block text-slate-500">Sabtu &amp; Minggu tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat atau kembali.</span>
                     </template>
                 </div>
             </div>

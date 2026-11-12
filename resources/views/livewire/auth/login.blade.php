@@ -105,7 +105,8 @@
 
 		{{-- Cloudflare Turnstile. Managed widget tidak bisa dipaksa menampilkan checkbox, jadi kotak centang
 		     ini yang memulai tantangan (execution: execute); widget Cloudflare hanya muncul bila meminta
-		     interaksi. wire:ignore menjaga iframe dan status centang dari morph Livewire.
+		     interaksi dan disembunyikan lagi setelah berhasil, karena Cloudflare tetap menampilkan "Berhasil!".
+		     wire:ignore menjaga iframe dan status centang dari morph Livewire.
 		     Lebar minimum widget normal 300px; kartu di layar HP lebih sempit, jadi pakai ukuran compact. --}}
 		@if ($turnstileSiteKey)
 			@assets
@@ -176,7 +177,7 @@
 						Cloudflare
 					</span>
 				</label>
-				<div x-ref="widget" class="leading-[0]" :class="challenge && 'mt-2'"></div>
+				<div x-ref="widget" x-show="captcha !== 'verified'" class="leading-[0]" :class="challenge && 'mt-2'"></div>
 				<p x-show="captcha === 'failed'" x-cloak class="mt-2 text-xs leading-5 text-rose-200" role="alert"
 					x-text="widgetId === null ? 'Verifikasi keamanan gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.' : 'Verifikasi keamanan gagal. Silakan centang lagi.'"></p>
 			</div>

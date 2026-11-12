@@ -373,45 +373,17 @@
 					{{-- Anggota DPRD: role tidak dipilih, otomatis dari Jabatan DPRD (lihat bagian Data Anggota DPRD). --}}
 					@unless ($this->isDprdContext())
 						<div class="space-y-1 sm:col-span-2">
-							@php
-								// Role DPRD hanya tersedia bila pegawai bertipe DPRD.
-								$roleOptions = ($this->isDprdMember() ? $roles : $roles->whereNotIn('name', \App\Models\User::DPRD_ROLES))
-									// Walikota & Wakil dikelola di menunya sendiri: di sana hanya kedua role itu, di form Pegawai disembunyikan.
-									->when($this->isKepalaDaerahContext(),
-										fn($c) => $c->whereIn('name', \App\Models\User::KEPALA_DAERAH_ROLES),
-										fn($c) => $c->whereNotIn('name', \App\Models\User::KEPALA_DAERAH_ROLES))
-									// Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
-									->when(! ($isEdit && $user?->hasRole('super_admin')), fn($c) => $c->where('name', '!=', 'super_admin'))
-									->map(fn($r) => ['value' => $r->name, 'label' => $r->label])
-									->values()
-									->all();
-							@endphp
-							{{-- Hanya Super Admin yang memilih role; selain itu role terkunci mengikuti jabatan. --}}
-							<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
-								required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..."
-								:disabled="! $this->canEditRole()" />
-							@if ($positionRole)
-								@if ($role === $positionRole->name)
-									<p class="text-xs font-medium text-emerald-700">
-										<i class="fa-solid fa-circle-check mr-0.5"></i>
-										Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>{{ $positionRoleAdjusted ? ', disesuaikan dengan alur SPPD di unit kerja ini' : '' }}.
-									</p>
-								@else
-									<div class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
-										<span>
-											<i class="fa-solid fa-triangle-exclamation mr-0.5"></i>
-											Jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span> umumnya memakai role
-											<span class="font-semibold">{{ $positionRole->label }}</span>.
-										</span>
-										@if ($this->canEditRole())
-											<x-ui.button size="sm" variant="warning" wire:click="applyPositionRole" wire:target="applyPositionRole">
-												Gunakan role ini
-											</x-ui.button>
-										@else
-											<span>Role {{ $roles->firstWhere('name', $role)?->label ?? $role }} hanya dapat diubah oleh Super Admin.</span>
-										@endif
-									</div>
-								@endif
+							{{-- Pilihan disimpan di Alpine: wire:key memuat ulang select hanya bila daftar role berubah. --}}
+							<div wire:key="role-select-{{ md5(implode(',', array_column($roleOptions, 'value'))) }}">
+								<x-form.searchable-select wire:model.live="role" name="role" label="Role Otentikasi Sistem"
+									required :options="$roleOptions" placeholder="— Pilih Role —" searchPlaceholder="Cari role..."
+									:disabled="! $this->canEditRole()" />
+							</div>
+							@if ($positionRole && $role === $positionRole)
+								<p class="text-xs font-medium text-emerald-700">
+									<i class="fa-solid fa-circle-check mr-0.5"></i>
+									Role mengikuti jabatan <span class="font-semibold">{{ $selectedPosition->name }}</span>{{ $positionRoleAdjusted ? ', disesuaikan dengan alur SPPD di unit kerja ini' : '' }}.
+								</p>
 							@endif
 							<p class="text-xs text-slate-500">
 								@if ($this->canEditRole())

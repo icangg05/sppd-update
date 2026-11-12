@@ -230,6 +230,10 @@
 								s/d {{ $sppd->end_date->translatedFormat('d F Y') }}
 							</p>
 
+							<p class="text-slate-500">
+								Durasi: {{ $sppd->duration_days }} hari
+							</p>
+
 							<span
 								class="mt-1 inline-block rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 xl:hidden">
 								{{ $sppd->domain->shortLabel() }}

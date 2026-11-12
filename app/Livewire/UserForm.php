@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\SppdWorkflowService;
 use App\Rules\UniqueIdentityInInstansi;
 use App\Services\UsernameGenerator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +31,19 @@ class UserForm extends Component
   // Role operasional yang tidak terkait jabatan — tidak ditimpa otomatis saat
   // jabatan diganti (agar super admin tak kehilangan akses & admin OPD tak turun jadi staf).
   private const ROLES_NOT_FROM_POSITION = ['super_admin', 'admin_opd'];
+
+  // Role di atas lingkup OPD (atau khusus DPRD): Admin OPD tidak bisa memilihnya bebas,
+  // hanya mengikuti jabatan, dan pegawai pemegangnya hanya bisa diubah Super Admin.
+  private const ROLES_SUPER_ADMIN_ONLY = [
+    'super_admin',
+    'walikota',
+    'wakil_walikota',
+    'sekda',
+    'asisten',
+    'sekwan',
+    'pimpinan_dprd',
+    'anggota_dprd',
+  ];
 
   public ?User $user = null;
   public bool $isEdit = false;
@@ -103,6 +117,11 @@ class UserForm extends Component
       $this->department_id = $this->departmentIdOfType($tree, DepartmentType::SETDA) ?? '';
     }
 
+    // Admin OPD tetap mendapat isian awal (Staf / role jabatan) agar tidak wajib memilih role dari kosong.
+    if ($this->role === '' && ! auth()->user()->hasRole('super_admin')) {
+      $this->role = $this->roleFollowingPosition();
+    }
+
     // Memulihkan polling jika halaman di-refresh saat menunggu pegawai menekan Start.
     $this->restoreTelegramLinkState();
   }
@@ -151,7 +170,7 @@ class UserForm extends Component
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
-      'role' => ['required', 'string', $this->uniqueRoleRule()],
+      'role' => ['required', 'string', $this->selectableRoleRule(), $this->uniqueRoleRule()],
     ];
 
     // Validasi: jabatan struktural yang dibatasi (Walikota, Sekda, Kepala OPD, dst.)
@@ -231,6 +250,23 @@ class UserForm extends Component
           ? 'pada unit kerja ini'
           : 'di lingkup pemerintah daerah';
         $fail("Role {$label} sudah dipegang oleh {$holder->name} {$cakupan}. Nonaktifkan pejabat lama terlebih dahulu.");
+      }
+    };
+  }
+
+  /**
+   * Aturan: Admin OPD hanya boleh menyimpan role yang memang ditawarkan kepadanya.
+   * Dicek di server karena nilai role dari formulir bisa dimanipulasi.
+   */
+  protected function selectableRoleRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      if ($this->roleIsAutomatic() || auth()->user()->hasRole('super_admin')) {
+        return;
+      }
+
+      if (! $this->selectableRoles()->contains('name', $value)) {
+        $fail('Role ini hanya dapat diatur oleh Super Admin.');
       }
     };
   }
@@ -318,7 +354,7 @@ class UserForm extends Component
   }
 
   /**
-   * Role tidak dipilih manual: selain Super Admin role mengikuti jabatan, dan Anggota DPRD
+   * Role tidak dipilih manual: bila field terkunci role mengikuti jabatan, dan Anggota DPRD
    * selalu mengikuti Jabatan DPRD (Ketua DPRD ⟹ Pimpinan DPRD, selain itu Anggota DPRD).
    */
   private function roleIsAutomatic(): bool
@@ -329,27 +365,22 @@ class UserForm extends Component
   public function selectPosition($id): void
   {
     $this->position_id = (int) $id;
-    $this->applyPositionRole(auto: true);
+    $this->applyPositionRole();
   }
 
   /**
-   * Samakan role dengan role default jabatan terpilih. Saat otomatis (jabatan
-   * baru dipilih), role operasional seperti Admin OPD tidak ditimpa; lewat
-   * tombol "Gunakan role ini" role selalu disamakan.
+   * Samakan role dengan role default jabatan terpilih. Role operasional
+   * seperti Admin OPD tidak ditimpa.
    */
-  public function applyPositionRole(bool $auto = false): void
+  private function applyPositionRole(): void
   {
-    // Selain Super Admin, role selalu diturunkan otomatis (lihat roleFollowingPosition()).
+    // Bila field terkunci, role diturunkan otomatis (lihat roleFollowingPosition()).
     if (! $this->canEditRole()) {
       return;
     }
 
     $roleName = $this->positionDefaultRole();
-    if (! $roleName) {
-      return;
-    }
-
-    if ($auto && in_array($this->role, self::ROLES_NOT_FROM_POSITION, true)) {
+    if (! $roleName || in_array($this->role, self::ROLES_NOT_FROM_POSITION, true)) {
       return;
     }
 
@@ -358,12 +389,65 @@ class UserForm extends Component
   }
 
   /**
-   * Hanya Super Admin yang boleh memilih role secara bebas. Admin OPD melihat
-   * role terkunci yang mengikuti jabatan / jabatan DPRD.
+   * Super Admin bebas memilih role. Admin OPD boleh mengubah role pegawai di
+   * lingkup OPD-nya, kecuali akunnya sendiri, data di menu Walikota & Wakil,
+   * dan pegawai pemegang role khusus Super Admin.
    */
   public function canEditRole(): bool
   {
-    return auth()->user()->hasRole('super_admin');
+    $actor = auth()->user();
+
+    if ($actor->hasRole('super_admin')) {
+      return true;
+    }
+
+    if (! $actor->hasRole('admin_opd') || $this->isKepalaDaerahContext()) {
+      return false;
+    }
+
+    if (! $this->isEdit) {
+      return true;
+    }
+
+    return $this->user->id !== $actor->id
+      && ! in_array($this->originalRole(), self::ROLES_SUPER_ADMIN_ONLY, true)
+      && (bool) $actor->department?->getScopedRelatedIds()->contains($this->user->department_id);
+  }
+
+  /** Role pegawai yang tersimpan saat ini (null untuk pegawai baru). */
+  private function originalRole(): ?string
+  {
+    return $this->isEdit ? $this->user->roles->first()?->name : null;
+  }
+
+  /**
+   * Role yang ditawarkan di formulir ini. Pilihan Admin OPD divalidasi ulang
+   * terhadap daftar yang sama di server (lihat selectableRoleRule()).
+   */
+  private function selectableRoles(): Collection
+  {
+    $roles = Role::all()
+      // Role DPRD hanya tersedia bila pegawai bertipe DPRD.
+      ->when(! $this->isDprdMember(), fn ($c) => $c->whereNotIn('name', User::DPRD_ROLES))
+      // Walikota & Wakil dikelola di menunya sendiri: di sana hanya kedua role itu, di form Pegawai disembunyikan.
+      ->when(
+        $this->isKepalaDaerahContext(),
+        fn ($c) => $c->whereIn('name', User::KEPALA_DAERAH_ROLES),
+        fn ($c) => $c->whereNotIn('name', User::KEPALA_DAERAH_ROLES),
+      )
+      // Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
+      ->when(! ($this->isEdit && $this->user->hasRole('super_admin')), fn ($c) => $c->where('name', '!=', 'super_admin'));
+
+    if (auth()->user()->hasRole('super_admin')) {
+      return $roles;
+    }
+
+    // Admin OPD: role khusus Super Admin hanya muncul bila sudah dipegang atau berasal dari jabatan.
+    $kept = [$this->originalRole(), $this->positionDefaultRole()];
+
+    return $roles->reject(
+      fn (Role $role) => in_array($role->name, self::ROLES_SUPER_ADMIN_ONLY, true) && ! in_array($role->name, $kept, true)
+    );
   }
 
   /**
@@ -379,14 +463,14 @@ class UserForm extends Component
   }
 
   /**
-   * Role yang berlaku bila pengisi formulir bukan Super Admin. Dihitung di
-   * server (bukan dari input) agar Admin OPD tidak bisa memberi role sembarang.
+   * Role yang berlaku bila field role terkunci. Dihitung di server (bukan dari
+   * input) agar role tidak bisa dimanipulasi.
    */
   private function roleFollowingPosition(): string
   {
-    $original = $this->isEdit ? $this->user->roles->first()?->name : null;
+    $original = $this->originalRole();
 
-    // Kewenangan operasional (Super Admin / Admin OPD) hanya bisa diubah Super Admin.
+    // Kewenangan operasional (Super Admin / Admin OPD) tidak berubah mengikuti jabatan.
     if (in_array($original, self::ROLES_NOT_FROM_POSITION, true)) {
       return $original;
     }
@@ -598,7 +682,7 @@ class UserForm extends Component
 
   public function render()
   {
-    // Field role terkunci untuk selain Super Admin, dan Anggota DPRD selalu mengikuti Jabatan DPRD —
+    // Bila field role terkunci atau Anggota DPRD (selalu mengikuti Jabatan DPRD),
     // tampilkan role yang benar-benar akan disimpan.
     if ($this->roleIsAutomatic()) {
       $this->role = $this->roleFollowingPosition();
@@ -626,11 +710,9 @@ class UserForm extends Component
     $selectedPosition = $this->position_id ? Position::find($this->position_id) : null;
 
     // Role jabatan terpilih di unit kerja ini — untuk petunjuk sinkron jabatan ↔ role.
-    $roles = Role::all();
-    $positionRoleName = $this->positionDefaultRole();
-    $positionRole = $positionRoleName ? $roles->firstWhere('name', $positionRoleName) : null;
+    $positionRole = $this->positionDefaultRole();
     // true bila role default jabatan diturunkan ke Staf karena tak dikenal alur unit ini.
-    $positionRoleAdjusted = $positionRole && $positionRoleName !== $selectedPosition?->default_role;
+    $positionRoleAdjusted = $positionRole && $positionRole !== $selectedPosition?->default_role;
 
     // Jabatan kewilayahan (Camat/Lurah/Kapus) yang dipasang di jenis unit lain.
     $selectedDepartment = $this->department_id ? Department::find($this->department_id) : null;
@@ -651,7 +733,7 @@ class UserForm extends Component
       'positionRole' => $positionRole,
       'positionRoleAdjusted' => $positionRoleAdjusted,
       'positionRequiredType' => $positionRequiredType,
-      'roles' => $roles,
+      'roleOptions' => $this->selectableRoles()->map(fn ($r) => ['value' => $r->name, 'label' => $r->label])->values()->all(),
       'dprdJabatans' => DprdJabatan::cases(),
       'dprdPartais' => DprdPartai::cases(),
     ]);

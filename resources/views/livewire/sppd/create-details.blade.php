@@ -201,7 +201,25 @@
 					@endif
 					<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required
 							placeholder="Contoh: Kantor Dinas Kominfo Kendari" />
-					<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required />
+					{{-- Alpine kalender hanya membaca tanggal terpakai saat dibuat: key berganti ketika daftarnya
+					     berubah (mis. pengikut dicentang) agar kalender dibuat ulang dengan data baru. --}}
+					<div wire:key="travel-dates-{{ md5(json_encode($blockedDates)) }}">
+						{{-- live: daftar calon pengikut menyesuaikan bentrok tanggal begitu rentang dipilih. --}}
+						<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required live
+							:skipWeekends="\App\Enums\SppdDomain::tryFrom($domain)?->skipsWeekends() ?? false"
+							:blocked="$blockedDates" />
+						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari). --}}
+						@if ($otherTrips->isNotEmpty())
+							<div id="other-trips" class="mt-1.5 text-xs text-slate-600">
+								<span class="font-semibold">SPPD lain {{ $pelaksana->name }}:</span>
+								@foreach ($otherTrips as $trip)
+									@php $clash = in_array($trip->id, $clashingTripIds, true); @endphp
+									<span @class(['whitespace-nowrap', 'font-semibold text-red-600' => $clash])
+										title="{{ $trip->domain?->shortLabel() }} · {{ $trip->instansiName() }} · {{ $trip->status->label() }}">{{ $trip->periodLabel(true) }}@if ($clash) (bentrok)@endif</span>@if (! $loop->last),@endif
+								@endforeach
+							</div>
+						@endif
+					</div>
 				</div>
 
 				{{-- Lokasi tujuan perjalanan --}}
@@ -268,7 +286,6 @@
 										@else
 											@php
 												$provinceOptions = $provinces
-													->filter(fn($p) => !($domain === 'ldlp' && $p->name === 'Sulawesi Tenggara'))
 													->map(fn($p) => ['value' => $p->id, 'label' => $p->name])
 													->values();
 												$regencyOptions = $this->getRegenciesForProvince($dest['province_id'])
@@ -448,32 +465,53 @@
 
 				<div class="p-4 bg-slate-50/50 flex-1 overflow-y-auto max-h-56">
 					<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+						@php $selectedCount = $selectedFollowerUsers->count(); @endphp
 						@forelse ($users as $u)
+							{{-- Pengikut yang dicentang selalu di atas (lihat render), dipisah dari pegawai lain. --}}
+							@if ($loop->first && $selectedCount > 0)
+								<p wire:key="follower-head-selected" class="col-span-full text-[11px] font-bold tracking-wide text-primary-700 uppercase">
+									<i class="fa-solid fa-user-check mr-1"></i>Ikut perjalanan ({{ $selectedCount }})
+								</p>
+							@elseif ($selectedCount > 0 && $loop->index === $selectedCount)
+								<p wire:key="follower-head-others" class="col-span-full mt-1 border-t border-slate-200 pt-2.5 text-[11px] font-bold tracking-wide text-slate-500 uppercase">
+									Pegawai lain
+								</p>
+							@endif
 							@if ($u->id != $pelaksana->id)
 								@php
-									$isTraveling = in_array($u->id, $travelingFollowerIds);
-									$isPending = !$isTraveling && in_array($u->id, $pendingFollowerIds);
-									$isBusy = $isTraveling || $isPending;
+									$isSelected = $loop->index < $selectedCount;
+									// Bentrok dengan tanggal yang dipilih: disetujui/selesai (merah) atau masih diajukan (kuning).
+									$busy = $busyFollowers[$u->id] ?? null;
+									$isBusy = $busy !== null;
+									$isPending = $busy?->status === \App\Enums\SppdStatus::IN_PROGRESS;
+									$isTraveling = $isBusy && !$isPending;
+									// Sudah dicentang lalu jadi bentrok karena tanggal diubah: tetap bisa dilepas.
+									$lockBusy = $isBusy && !in_array($u->id, array_map('intval', $followers), true);
 								@endphp
-								<label
-									class="follower-item flex items-start gap-2.5 rounded border border-slate-200 bg-white p-2.5 shadow-2xs transition-colors hover:bg-slate-50 cursor-pointer {{ $isTraveling ? 'opacity-60 cursor-not-allowed bg-rose-50/50 border-rose-200' : ($isPending ? 'opacity-60 cursor-not-allowed bg-amber-50/50 border-amber-200' : '') }}">
+								<label wire:key="follower-{{ $u->id }}"
+									class="follower-item flex items-start gap-2.5 rounded border p-2.5 shadow-2xs transition-colors cursor-pointer {{ $isTraveling ? 'opacity-60 bg-rose-50/50 border-rose-200' : ($isPending ? 'opacity-60 bg-amber-50/50 border-amber-200' : ($isSelected ? 'border-primary-300 bg-primary-50/60 hover:bg-primary-50' : 'border-slate-200 bg-white hover:bg-slate-50')) }} {{ $lockBusy ? 'cursor-not-allowed' : '' }}">
 									<input type="checkbox" wire:model.live="followers" value="{{ $u->id }}"
 										class="follower-cb rounded border-slate-300 text-primary-600 focus:ring-primary-500 mt-0.5"
-										@disabled($isBusy)>
+										@disabled($lockBusy)>
 									<div class="min-w-0 leading-tight">
-										<span class="block text-xs font-semibold text-slate-700 truncate follower-name">{{ $u->name }}</span>
+										<span class="block text-xs font-semibold text-slate-700 truncate follower-name" title="{{ $u->name }}">{{ $u->name }}</span>
 										@if ($u->nip)
 												<span class="block text-[10px] text-slate-500 font-mono mt-0.5">{{ $u->nip }}</span>
 											@endif
 											@if ($u->isDprdMember())
 												<span class="block text-[10px] font-semibold text-primary-600 mt-0.5">Anggota DPRD</span>
 											@endif
+										{{-- Hanya yang beririsan dengan tanggal perjalanan terpilih yang dikunci; SPPD lain di
+										     tanggal berbeda cuma keterangan, pegawainya tetap bisa ikut. --}}
 										@if ($isTraveling)
 											<span class="inline-block text-[10px] text-rose-600 font-semibold mt-0.5"><i
-													class="fa-solid fa-route"></i> Sedang dalam perjalanan dinas</span>
+													class="fa-solid fa-route"></i> Bentrok: bertugas {{ $busy->periodLabel(true) }} di {{ $busy->instansiName() }}</span>
 										@elseif ($isPending)
 											<span class="inline-block text-[10px] text-amber-600 font-semibold mt-0.5"><i
-													class="fa-solid fa-hourglass-half"></i> Dalam proses pengajuan</span>
+													class="fa-solid fa-hourglass-half"></i> Bentrok: diajukan {{ $busy->periodLabel(true) }} di {{ $busy->instansiName() }}</span>
+										@elseif (isset($followerTrips[$u->id]))
+											<span class="inline-block text-[10px] text-slate-500 mt-0.5"><i
+													class="fa-regular fa-calendar"></i> SPPD lain: {{ $followerTrips[$u->id]->map(fn ($trip) => $trip->periodLabel(true))->join(', ') }}</span>
 										@endif
 									</div>
 								</label>
@@ -509,8 +547,9 @@
 						@if ($isInspektorat)
 							<x-form.input type="text" wire:model="document_number" label="Nomor Surat Tugas" placeholder="Contoh: 700/100/Insp/V/2026" wrapperClass="md:col-span-2" />
 						@endif
-							<x-form.input type="date" wire:model="spt_date" label="Tanggal Penerbitan SPT" required />
-							<x-form.input type="date" wire:model="sppd_date" label="Tanggal Penerbitan SPPD" required />
+							{{-- Satu field, dua kalender berdampingan: tanggal SPT di kiri, SPPD di kanan. --}}
+							<x-form.date-pair first="spt_date" second="sppd_date" firstLabel="SPT" secondLabel="SPPD"
+								label="Tanggal Penerbitan SPT & SPPD" required wrapperClass="md:col-span-2" />
 					</div>
 
 					{{-- Tombol Submit Pembuat Aksi --}}
@@ -607,19 +646,18 @@
 								@php $folUser = $selectedFollowerUsers->firstWhere('id', $fId); @endphp
 								@if ($folUser)
 									<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
-										<span class="text-xs font-semibold text-slate-700 truncate">
+										{{-- Nama panjang terpotong: tooltip menampilkan nama lengkap. --}}
+										<span class="min-w-0 text-xs font-semibold text-slate-700 truncate" title="{{ $folUser->name }}">
 											<i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i>{{ $folUser->name }}
 										</span>
 										<select wire:model="follower_positions.{{ $fId }}"
 											class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none shrink-0"
 											required>
 											<option value="">— Pilih Jabatan —</option>
-											<option value="Penanggung Jawab">Penanggung Jawab</option>
-											<option value="Pembantu Penanggung Jawab">Pembantu Penanggung Jawab</option>
-											<option value="Pengendali Teknis">Pengendali Teknis</option>
-											<option value="Ketua Tim">Ketua Tim</option>
-											<option value="Anggota">Anggota</option>
-											<option value="Admin Tim">Admin Tim</option>
+											{{-- Urut dari jabatan tertinggi; urutan yang sama dipakai di SPT. --}}
+											@foreach (\App\Models\SppdFollower::TRAVEL_POSITIONS as $jabatan)
+												<option value="{{ $jabatan }}">{{ $jabatan }}</option>
+											@endforeach
 										</select>
 									</div>
 									@error('follower_positions.' . $fId)

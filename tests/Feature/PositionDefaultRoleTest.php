@@ -160,15 +160,13 @@ class PositionDefaultRoleTest extends TestCase
             ->call('selectPosition', $kadis->id)
             ->assertSet('role', 'kepala_opd');
 
-        // Role operasional tidak ditimpa otomatis, hanya lewat tombol "Gunakan role ini".
+        // Role operasional tidak ditimpa otomatis saat jabatan diganti.
         $form->set('role', 'admin_opd')
             ->call('selectPosition', $staf->id)
-            ->assertSet('role', 'admin_opd')
-            ->call('applyPositionRole')
-            ->assertSet('role', 'staf');
+            ->assertSet('role', 'admin_opd');
     }
 
-    public function test_admin_opd_tidak_bisa_memilih_role_sendiri(): void
+    public function test_admin_opd_bisa_memilih_role_pegawai_baru(): void
     {
         $department = $this->makeDepartment('Dinas Kesehatan');
         $admin = $this->makeUser('admin_opd', $department);
@@ -177,19 +175,76 @@ class PositionDefaultRoleTest extends TestCase
         Livewire::actingAs($admin)
             ->test(UserForm::class)
             ->assertSet('role', 'staf')
+            ->assertViewHas('roleOptions', function (array $options) {
+                $values = array_column($options, 'value');
+
+                return in_array('kabid_irban_kabag', $values, true) && ! in_array('super_admin', $values, true);
+            })
             ->set('name', 'Budi Santoso')
             ->set('username', 'budi')
             ->set('department_id', $department->id)
             ->call('selectPosition', $kadis->id)
             ->assertSet('role', 'kepala_opd')
-            // Manipulasi request: role bebas diabaikan, tetap mengikuti jabatan.
-            ->set('role', 'super_admin')
-            ->assertSet('role', 'kepala_opd')
+            ->set('role', 'kabid_irban_kabag')
+            ->assertSet('role', 'kabid_irban_kabag')
             ->call('save')
             ->assertHasNoErrors();
 
         $budi = User::where('username', 'budi')->firstOrFail();
-        $this->assertSame(['kepala_opd'], $budi->getRoleNames()->all());
+        $this->assertSame(['kabid_irban_kabag'], $budi->getRoleNames()->all());
+    }
+
+    public function test_admin_opd_tidak_bisa_memberi_role_khusus_super_admin(): void
+    {
+        $department = $this->makeDepartment('Dinas Kesehatan');
+
+        // Manipulasi request: role yang tidak ditawarkan ditolak di server.
+        Livewire::actingAs($this->makeUser('admin_opd', $department))
+            ->test(UserForm::class)
+            ->set('name', 'Budi Santoso')
+            ->set('username', 'budi')
+            ->set('department_id', $department->id)
+            ->set('role', 'super_admin')
+            ->call('save')
+            ->assertHasErrors('role');
+
+        $this->assertFalse(User::where('username', 'budi')->exists());
+    }
+
+    public function test_admin_opd_mendapat_role_lingkup_pemda_hanya_lewat_jabatan(): void
+    {
+        Role::firstOrCreate(['name' => 'sekda', 'guard_name' => 'web'], ['label' => 'Sekda']);
+        $setda = $this->makeDepartment('Sekretariat Daerah', DepartmentType::SETDA);
+        $jabatan = Position::create(['name' => 'Sekretaris Daerah', 'default_role' => 'sekda']);
+
+        Livewire::actingAs($this->makeUser('admin_opd', $setda))
+            ->test(UserForm::class)
+            ->set('name', 'Budi Santoso')
+            ->set('username', 'budi')
+            ->set('department_id', $setda->id)
+            ->call('selectPosition', $jabatan->id)
+            ->assertSet('role', 'sekda')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['sekda'], User::where('username', 'budi')->firstOrFail()->getRoleNames()->all());
+    }
+
+    public function test_role_terkunci_untuk_akun_sendiri_opd_lain_dan_pemegang_role_khusus(): void
+    {
+        Role::firstOrCreate(['name' => 'asisten', 'guard_name' => 'web'], ['label' => 'Asisten']);
+        $department = $this->makeDepartment('Dinas Sosial');
+        $admin = $this->makeUser('admin_opd', $department);
+        $opdLain = $this->makeUser('staf', $this->makeDepartment('Dinas Pangan'));
+        $asisten = $this->makeUser('asisten', $department);
+
+        foreach ([[$admin, 'admin_opd'], [$opdLain, 'staf'], [$asisten, 'asisten']] as [$target, $role]) {
+            Livewire::actingAs($admin)
+                ->test(UserForm::class, ['user' => $target])
+                ->assertSet('role', $role)
+                ->set('role', 'kepala_opd')
+                ->assertSet('role', $role);
+        }
     }
 
     public function test_pemilih_unit_kerja_disembunyikan_bila_hanya_satu_pilihan(): void
@@ -219,7 +274,7 @@ class PositionDefaultRoleTest extends TestCase
             ->assertViewHas('showDepartmentPicker', true);
     }
 
-    public function test_admin_opd_tidak_mengubah_role_admin_opd_lain(): void
+    public function test_admin_opd_mengubah_role_admin_opd_lain_tanpa_tertimpa_jabatan(): void
     {
         $department = $this->makeDepartment('Dinas Sosial');
         $admin = $this->makeUser('admin_opd', $department);
@@ -230,8 +285,12 @@ class PositionDefaultRoleTest extends TestCase
             ->test(UserForm::class, ['user' => $colleague])
             ->call('selectPosition', $kadis->id)
             ->assertSet('role', 'admin_opd')
-            ->call('applyPositionRole')
-            ->assertSet('role', 'admin_opd');
+            ->set('username', 'rekan.admin')
+            ->set('role', 'kabid_irban_kabag')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(['kabid_irban_kabag'], $colleague->fresh()->getRoleNames()->all());
     }
 
     public function test_role_jabatan_menyesuaikan_alur_unit_kerja(): void

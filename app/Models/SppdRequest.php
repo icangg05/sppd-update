@@ -7,6 +7,10 @@ use App\Enums\SignatureStatus;
 use App\Helpers\SmartTitle;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
+use App\Services\SppdWorkflowService;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -228,13 +232,16 @@ class SppdRequest extends Model
     }
 
     /**
-     * Pengikut untuk dokumen SPT: jabatan tertinggi dulu (level jabatan kecil),
+     * Pengikut untuk dokumen SPT: jabatan perjalanan tertinggi dulu (Inspektorat, lihat
+     * SppdFollower::TRAVEL_POSITIONS), lalu jabatan struktural tertinggi (level kecil),
      * lalu golongan tertinggi; sisanya tetap sesuai urutan input.
      */
     public function followersForSpt(): Collection
     {
         return $this->followers
             ->sortBy([
+                fn ($a, $b) => SppdFollower::travelPositionRank($a->travel_position)
+                    <=> SppdFollower::travelPositionRank($b->travel_position),
                 fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
                     <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
                 fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
@@ -336,12 +343,176 @@ class SppdRequest extends Model
             ->first();
     }
 
+    /** SPPD yang masih berjalan: dalam proses, atau disetujui dan periodenya belum lewat. */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q
+            ->where('status', SppdStatus::IN_PROGRESS)
+            ->orWhere(fn ($approved) => $approved
+                ->where('status', SppdStatus::APPROVED)
+                ->whereDate('end_date', '>=', today())));
+    }
+
     /**
-     * Calculate the trip duration in days.
+     * SPPD yang memakai tanggal pesertanya: semua status kecuali ditolak, termasuk yang sudah
+     * selesai, karena orang yang sama tidak mungkin bertugas di dua tempat pada hari yang sama.
+     */
+    public function scopeScheduled(Builder $query): Builder
+    {
+        return $query->where('status', '!=', SppdStatus::REJECTED);
+    }
+
+    /** SPPD terjadwal (lihat scopeScheduled) yang periodenya beririsan dengan $start s/d $end (inklusif). */
+    public function scopeOverlapping(Builder $query, CarbonInterface|string $start, CarbonInterface|string $end): Builder
+    {
+        return $query->scheduled()
+            ->whereDate('start_date', '<=', Carbon::parse($end)->toDateString())
+            ->whereDate('end_date', '>=', Carbon::parse($start)->toDateString());
+    }
+
+    /**
+     * SPPD aktif tiap pegawai, urut tanggal berangkat. Pegawai boleh punya beberapa SPPD
+     * aktif selama tanggalnya tidak bentrok (lihat clashingForUsers); daftar ini hanya
+     * ditampilkan sebagai acuan saat memilih tanggal.
+     *
+     * @param  Collection<int, User>  $users
+     * @return array<int, Collection<int, self>> pegawai tanpa SPPD aktif tidak ada di hasil.
+     */
+    public static function activeForUsers(Collection $users, ?int $exceptId = null): array
+    {
+        return static::tripsOfUsers($users, static::active(), $exceptId);
+    }
+
+    /**
+     * Semua SPPD terjadwal tiap pegawai (lihat scopeScheduled), urut tanggal berangkat:
+     * tanggalnya dinonaktifkan di kalender agar tidak bisa dipilih.
+     *
+     * @param  Collection<int, User>  $users
+     * @return array<int, Collection<int, self>> pegawai tanpa SPPD tidak ada di hasil.
+     */
+    public static function scheduledForUsers(Collection $users, ?int $exceptId = null): array
+    {
+        return static::tripsOfUsers($users, static::scheduled(), $exceptId);
+    }
+
+    /**
+     * SPPD yang tanggalnya bentrok dengan perjalanan $start s/d $end, satu per pegawai
+     * (yang berangkat paling awal). Inilah syarat seseorang bisa menjadi pelaksana atau
+     * pengikut: SPT/SPPD boleh dibuat jauh hari karena persetujuan TTE memakan waktu.
+     *
+     * @param  Collection<int, User>  $users
+     * @return array<int, self> pegawai yang bebas pada tanggal itu tidak ada di hasil.
+     */
+    public static function clashingForUsers(Collection $users, CarbonInterface|string $start, CarbonInterface|string $end, ?int $exceptId = null): array
+    {
+        return array_map(
+            fn (Collection $trips) => $trips->first(),
+            static::tripsOfUsers($users, static::overlapping($start, $end), $exceptId),
+        );
+    }
+
+    /**
+     * SPPD tiap pegawai, sebagai pelaksana maupun pengikut, lewat akun mana pun miliknya.
+     * Pegawai yang bertugas di dua instansi punya satu akun per instansi dengan NIP yang
+     * sama. NIK sengaja tidak dipakai karena banyak data lama memuat NIK sama untuk orang
+     * berbeda.
+     *
+     * @param  Collection<int, User>  $users
+     * @param  Builder<self>  $query
+     * @return array<int, Collection<int, self>>
+     */
+    private static function tripsOfUsers(Collection $users, Builder $query, ?int $exceptId): array
+    {
+        $ownersByAccount = $users->mapWithKeys(fn (User $user) => [$user->id => [$user->id]])->all();
+
+        $holders = $users->filter(fn (User $user) => filled($user->nip))->groupBy('nip');
+        if ($holders->isNotEmpty()) {
+            // Kunci array PHP mengubah NIP menjadi angka, padahal MySQL membandingkan
+            // angka 18 digit secara tidak presisi; jadi dikirim kembali sebagai teks.
+            $nips = $holders->keys()->map(fn ($nip) => (string) $nip)->all();
+
+            foreach (User::whereIn('nip', $nips)->get(['id', 'nip']) as $account) {
+                $ownersByAccount[$account->id] = [
+                    ...($ownersByAccount[$account->id] ?? []),
+                    ...$holders[$account->nip]->pluck('id'),
+                ];
+            }
+        }
+
+        $accountIds = array_keys($ownersByAccount);
+        if ($accountIds === []) {
+            return [];
+        }
+
+        $trips = $query
+            ->with(['user.department.parent', 'followers:id,sppd_request_id,user_id'])
+            ->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))
+            ->where(fn ($q) => $q
+                ->whereIn('user_id', $accountIds)
+                ->orWhereHas('followers', fn ($f) => $f->whereIn('user_id', $accountIds)))
+            ->orderBy('start_date')
+            ->orderBy('id')
+            ->get();
+
+        $result = [];
+        foreach ($trips as $sppd) {
+            foreach ([$sppd->user_id, ...$sppd->followers->pluck('user_id')] as $participantId) {
+                foreach ($ownersByAccount[$participantId] ?? [] as $ownerId) {
+                    $result[$ownerId][$sppd->id] = $sppd;
+                }
+            }
+        }
+
+        return array_map(fn (array $byId) => collect(array_values($byId)), $result);
+    }
+
+    /** Nama instansi pelaksana SPPD ini, mis. "Dinas Kominfo" untuk pelaksana di salah satu Bidang-nya. */
+    public function instansiName(): string
+    {
+        return app(SppdWorkflowService::class)->instansiOf($this->user)?->name ?? 'unit kerja lain';
+    }
+
+    /** Periode perjalanan, mis. "12–15 November 2026", "28 November – 02 Desember 2026", atau satu tanggal. */
+    public function periodLabel(bool $shortMonth = false): string
+    {
+        $month = $shortMonth ? 'M' : 'F';
+        $start = $this->start_date;
+        $end = $this->end_date;
+
+        return match (true) {
+            $start->isSameDay($end) => $start->translatedFormat("d {$month} Y"),
+            $start->isSameMonth($end) => $start->format('d') . '–' . $end->translatedFormat("d {$month} Y"),
+            $start->isSameYear($end) => $start->translatedFormat("d {$month}") . ' – ' . $end->translatedFormat("d {$month} Y"),
+            default => $start->translatedFormat("d {$month} Y") . ' – ' . $end->translatedFormat("d {$month} Y"),
+        };
+    }
+
+    /** Tahap SPPD ini dalam kalimat, mis. "dalam proses persetujuan". */
+    public function statusPhrase(): string
+    {
+        return match ($this->status) {
+            SppdStatus::IN_PROGRESS => 'dalam proses persetujuan',
+            SppdStatus::APPROVED => 'sudah disetujui',
+            SppdStatus::COMPLETED => 'sudah selesai',
+            default => strtolower($this->status?->label() ?? ''),
+        };
+    }
+
+    /** Alasan pesertanya tidak bisa bepergian pada tanggal yang dipilih, disambung setelah nama pegawai. */
+    public function clashMessage(): string
+    {
+        return "sudah memiliki SPPD di {$this->instansiName()} pada {$this->periodLabel()} ({$this->statusPhrase()}) yang bentrok dengan tanggal perjalanan ini.";
+    }
+
+    /**
+     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung Sabtu & Minggu
+     * (lihat SppdDomain::travelDays).
      */
     public function durationInDays(): int
     {
-        return $this->start_date->diffInDays($this->end_date) + 1;
+        return $this->domain
+            ? $this->domain->travelDays($this->start_date, $this->end_date)
+            : (int) $this->start_date->diffInDays($this->end_date) + 1;
     }
 
     /** Tempat berangkat diketik bebas: huruf pertama tiap kata selalu kapital. */

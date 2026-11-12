@@ -3,6 +3,7 @@
 namespace App\Livewire\Sppd;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Models\Budget;
 use App\Models\Country;
@@ -11,6 +12,7 @@ use App\Models\Province;
 use App\Models\Regency;
 use App\Models\SppdApproval;
 use App\Models\SppdCategory;
+use App\Models\SppdFollower;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
 use App\Models\User;
@@ -20,6 +22,8 @@ use App\Services\ImageCompressor;
 use App\Services\QueueHealthService;
 use App\Services\SppdWorkflowService;
 use App\Support\DocumentFolder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -138,8 +142,10 @@ class SppdCreateDetails extends Component
       $this->user_id = (int) request('user_id');
       $this->domain = request('domain', 'dalam_daerah');
 
-      $this->start_date = date('Y-m-d');
-      $this->end_date = date('Y-m-d');
+      // Tanggal perjalanan sengaja kosong sampai dipilih sendiri: tanggal bawaan membuat
+      // pengikut yang SPPD-nya kebetulan beririsan tampak bentrok padahal belum tentu.
+      $this->start_date = '';
+      $this->end_date = '';
       $this->spt_date = date('Y-m-d');
       $this->sppd_date = date('Y-m-d');
 
@@ -155,6 +161,8 @@ class SppdCreateDetails extends Component
       }
 
       $this->destinations = [$this->emptyDestination()];
+
+      // SPPD aktif lain tidak menghalangi: yang dicek adalah bentrok tanggal saat diajukan.
 
       // Alur wajib lengkap (semua tahap punya pejabat pasti) sebelum mengisi detail.
       if (! SppdWorkflowService::isComplete(app(SppdWorkflowService::class)->simulateApprovals($user, $this->domain))) {
@@ -322,8 +330,8 @@ class SppdCreateDetails extends Component
         'problem' => 'nullable|string',
         'facts' => 'nullable|string',
         'analysis' => 'nullable|string',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date|after_or_equal:start_date',
+        'start_date' => ['required', 'date', $this->workdayRule('berangkat')],
+        'end_date' => ['required', 'date', 'after_or_equal:start_date', $this->workdayRule('kembali')],
         'transport_type' => ['nullable', Rule::in(array_keys(self::TRANSPORT_OPTIONS))],
         'transport_name' => $this->transport_choice === self::OTHER_TRANSPORT
           ? ['required', 'string', 'max:255']
@@ -367,12 +375,109 @@ class SppdCreateDetails extends Component
       return;
     }
 
+    if ($busy = $this->busyTravelerMessage()) {
+      $this->addError('start_date', $busy);
+      $this->toastError($busy, 'Gagal Mengajukan');
+      return;
+    }
+
     $this->showConfirmModal = true;
   }
 
   public function closeConfirmModal(): void
   {
     $this->showConfirmModal = false;
+  }
+
+  /**
+   * Pesan penolakan bila tanggal perjalanan bentrok dengan SPPD lain milik pelaksana atau
+   * pengikut (di OPD mana pun), atau null. SPPD aktif yang tanggalnya tidak bentrok boleh.
+   */
+  private function busyTravelerMessage(): ?string
+  {
+    $period = $this->travelPeriod();
+    if (! $period) {
+      return null;
+    }
+
+    $travelers = $this->travelers();
+    $clashes = SppdRequest::clashingForUsers($travelers, $period[0], $period[1], $this->sppd_id);
+
+    foreach ($travelers as $traveler) {
+      if (isset($clashes[$traveler->id])) {
+        return "{$traveler->name} {$clashes[$traveler->id]->clashMessage()}";
+      }
+    }
+
+    return null;
+  }
+
+  /** Pelaksana lalu pengikut sesuai urutan dipilih. */
+  private function travelers(): Collection
+  {
+    $ids = [$this->user_id, ...array_map('intval', $this->followers)];
+
+    return User::whereIn('id', $ids)->get()
+      ->sortBy(fn (User $u) => array_search($u->id, $ids, true))
+      ->values();
+  }
+
+  /**
+   * Rentang tanggal yang sudah terpakai SPPD lain milik pelaksana atau pengikut terpilih,
+   * untuk dinonaktifkan di kalender. Pengecekan otoritatif tetap busyTravelerMessage().
+   *
+   * @return list<array{start:string, end:string, label:string}>
+   */
+  private function blockedRanges(): array
+  {
+    $travelers = $this->travelers();
+    $trips = SppdRequest::scheduledForUsers($travelers, $this->sppd_id);
+
+    $ranges = [];
+    foreach ($travelers as $traveler) {
+      foreach ($trips[$traveler->id] ?? [] as $trip) {
+        $ranges[$trip->id] ??= [
+          'start' => $trip->start_date->format('Y-m-d'),
+          'end' => $trip->end_date->format('Y-m-d'),
+          'label' => "{$trip->periodLabel(true)} ({$traveler->name})",
+        ];
+      }
+    }
+
+    return array_values($ranges);
+  }
+
+  /** Tanggal berangkat & kembali yang valid (kembali tidak sebelum berangkat), atau null. */
+  private function travelPeriod(): ?array
+  {
+    try {
+      $start = Carbon::createFromFormat('!Y-m-d', $this->start_date);
+      $end = Carbon::createFromFormat('!Y-m-d', $this->end_date);
+    } catch (\Throwable) {
+      return null;
+    }
+
+    return $start && $end && $end->gte($start) ? [$start, $end] : null;
+  }
+
+  /** Dalam daerah tidak menghitung Sabtu & Minggu, jadi tidak boleh berangkat/kembali di hari itu. */
+  private function workdayRule(string $moment): \Closure
+  {
+    return function (string $attribute, mixed $value, \Closure $fail) use ($moment) {
+      if (! SppdDomain::tryFrom($this->domain)?->skipsWeekends()) {
+        return;
+      }
+
+      try {
+        $date = Carbon::parse($value);
+      } catch (\Throwable) {
+        return; // Format tanggal sudah ditangani aturan 'date'.
+      }
+
+      if ($date->isWeekend()) {
+        $fail("Perjalanan dalam daerah tidak bisa {$moment} pada hari {$date->translatedFormat('l')}, karena Sabtu & Minggu tidak dihitung. Pilih hari kerja.");
+      }
+    };
   }
 
   public function submit()
@@ -385,15 +490,28 @@ class SppdCreateDetails extends Component
       return;
     }
 
+    // Gerbang akhir: SPPD di OPD lain bisa saja terbit setelah modal konfirmasi dibuka.
+    if (! $this->travelPeriod()) {
+      $this->toastError('Tanggal kembali tidak boleh sebelum tanggal berangkat.', 'Gagal Mengajukan');
+      $this->showConfirmModal = false;
+      return;
+    }
+    if ($busy = $this->busyTravelerMessage()) {
+      $this->toastError($busy, 'Gagal Mengajukan');
+      $this->showConfirmModal = false;
+      return;
+    }
+
     $user = User::with('department')->findOrFail($this->user_id);
     $isInspektorat = (bool) $user->department?->usesManualNumbering();
 
     // Validasi tambahan untuk Inspektorat
     if ($isInspektorat) {
       foreach ($this->followers as $fId) {
-        if (empty($this->follower_positions[$fId])) {
-          $this->addError('follower_positions.' . $fId, 'Jabatan pengikut harus diisi.');
-          $this->toastError('Jabatan setiap pengikut wajib diisi sebelum mengajukan.', 'Data Belum Lengkap');
+        $jabatan = $this->follower_positions[$fId] ?? '';
+        if (! in_array($jabatan, SppdFollower::TRAVEL_POSITIONS, true)) {
+          $this->addError('follower_positions.' . $fId, $jabatan === '' ? 'Jabatan pengikut harus diisi.' : 'Jabatan pengikut tidak dikenal.');
+          $this->toastError('Jabatan setiap pengikut wajib dipilih dari daftar sebelum mengajukan.', 'Data Belum Lengkap');
           $this->showConfirmModal = false;
           return;
         }
@@ -727,31 +845,34 @@ class SppdCreateDetails extends Component
     }
     $users = $userQuery->with('roles')->orderBy('name')->limit(100)->get();
 
-    // Pengikut yang sudah dipilih dimuat terpisah (jumlahnya kecil) agar tetap
-    // tampil di kolom ringkasan meski tidak ada di hasil pencarian saat ini.
+    // Pengikut yang sudah dipilih dimuat terpisah (jumlahnya kecil) dan selalu tampil paling
+    // atas daftar, juga saat tidak cocok dengan pencarian, agar terlihat siapa saja yang ikut.
     $selectedFollowerUsers = $this->followers
       ? User::with('roles')->whereIn('id', $this->followers)->orderBy('name')->get()
       : collect();
+    $users = $selectedFollowerUsers
+      ->concat($users->whereNotIn('id', $selectedFollowerUsers->pluck('id')))
+      ->reject(fn (User $u) => $u->id === $pelaksana->id)
+      ->values();
 
     $provinces = Province::orderBy('name')->get();
     $countries = Country::selectOptions();
 
-    // Pegawai sibuk — dibedakan: sedang dalam perjalanan (SPPD disetujui &
-    // periodenya belum lewat) vs masih dalam proses persetujuan (IN_PROGRESS).
-    $followerIds = $users->pluck('id');
+    // Pegawai yang tanggalnya bentrok dengan SPPD lain, di OPD mana pun, tidak bisa dipilih sebagai pengikut.
+    $period = $this->travelPeriod();
+    $busyFollowers = $period ? SppdRequest::clashingForUsers($users, $period[0], $period[1], $this->sppd_id) : [];
 
-    $travelingFollowerIds = SppdRequest::whereIn('user_id', $followerIds)
-      ->where('status', SppdStatus::APPROVED)
-      ->where('end_date', '>=', today())
-      ->pluck('user_id')
-      ->unique()
-      ->toArray();
+    // SPPD aktif lain tiap calon pengikut yang tidak bentrok: hanya keterangan, tetap bisa dipilih.
+    $followerTrips = SppdRequest::activeForUsers($users, $this->sppd_id);
 
-    $pendingFollowerIds = SppdRequest::whereIn('user_id', $followerIds)
-      ->where('status', SppdStatus::IN_PROGRESS)
-      ->pluck('user_id')
-      ->unique()
-      ->toArray();
+    // Tanggal yang terpakai SPPD lain pelaksana/pengikut: dinonaktifkan di kalender.
+    $blockedDates = $this->blockedRanges();
+
+    // SPPD aktif lain milik pelaksana: acuan memilih tanggal yang tidak bentrok.
+    $otherTrips = SppdRequest::activeForUsers(collect([$pelaksana]), $this->sppd_id)[$pelaksana->id] ?? collect();
+    $clashingTripIds = $period
+      ? $otherTrips->filter(fn (SppdRequest $trip) => $trip->start_date->lte($period[1]) && $trip->end_date->gte($period[0]))->pluck('id')->all()
+      : [];
 
     $steps = $this->workflowSteps($pelaksana);
 
@@ -769,8 +890,11 @@ class SppdCreateDetails extends Component
       'countries',
       'steps',
       'selectedFollowerUsers',
-      'travelingFollowerIds',
-      'pendingFollowerIds',
+      'busyFollowers',
+      'followerTrips',
+      'otherTrips',
+      'clashingTripIds',
+      'blockedDates',
       'isInspektorat',
       'editingSppd'
     ))->title('Detail Perjalanan Dinas');

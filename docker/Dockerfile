@@ -92,6 +92,9 @@ COPY . .
 
 # Copy hasil build Vite
 COPY --from=node_builder /app/public/build /app/public/build
+# Salinan kedua untuk lokal: compose.override.yml me-mount public/build dari host (menutupi
+# salinan di atas), lalu mengisinya dari sini setiap container app dibuat ulang.
+COPY --from=node_builder /app/public/build /opt/vite-build
 
 # Prepare Laravel
 RUN mkdir -p \

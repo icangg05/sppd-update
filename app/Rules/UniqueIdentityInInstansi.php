@@ -4,14 +4,17 @@ namespace App\Rules;
 
 use App\Models\Department;
 use App\Models\User;
+use App\Services\SppdWorkflowService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Keunikan NIP/NIK per instansi: seorang pegawai boleh terdaftar (berakun)
  * di dua instansi berbeda dengan NIP/NIK yang sama, tetapi tidak boleh ganda
- * di dalam satu instansi yang sama — OPD induk beserta seluruh unit kerja
- * di bawahnya dihitung sebagai satu instansi.
+ * di dalam satu instansi yang sama — OPD induk beserta unit kerja di bawahnya
+ * dihitung satu instansi, kecuali zona mandiri (Puskesmas, Kelurahan) yang
+ * menjadi instansi tersendiri. Akun dengan NIP sama dianggap orang yang sama
+ * saat mengecek bentrok tanggal perjalanan (lihat SppdRequest::clashingForUsers).
  */
 class UniqueIdentityInInstansi implements ValidationRule
 {
@@ -33,8 +36,9 @@ class UniqueIdentityInInstansi implements ValidationRule
       return;
     }
 
-    // Satu instansi = OPD induk + seluruh turunannya (tanpa memandang zona data).
-    $instansiIds = $dept->getRootDepartment()->getAllRelatedIds();
+    // Batas instansi sama dengan alur persetujuan: zona mandiri berdiri sendiri.
+    $workflow = app(SppdWorkflowService::class);
+    $instansiIds = $workflow->zoneIds($workflow->instansiRoot($dept));
 
     $existing = User::where($this->column, $value)
       ->whereIn('department_id', $instansiIds)

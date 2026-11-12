@@ -92,10 +92,6 @@
 			font-size: 10pt;
 		}
 
-		.bold {
-			font-weight: bold;
-		}
-
 		.uppercase {
 			text-transform: uppercase;
 		}
@@ -167,8 +163,7 @@
 			$peserta = [];
 			$peserta[] = [
 				'name'    => $sppd->user->name,
-				'rank'    => $sppd->user->rank->name ?? '-',
-				'group'   => $sppd->user->rank->group ?? '-',
+				'pangkat' => \App\Models\Rank::pangkatGolongan($sppd->user->rank?->name, $sppd->user->rank?->group),
 				'nip'     => $sppd->user->nip,
 				'jabatan' => $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-'),
 			];
@@ -176,8 +171,7 @@
 			foreach ($sppd->followersForSpt() as $follower) {
 				$peserta[] = [
 					'name'    => $follower->user->name,
-					'rank'    => $follower->user->rank->name ?? '-',
-					'group'   => $follower->user->rank->group ?? '-',
+					'pangkat' => \App\Models\Rank::pangkatGolongan($follower->user->rank?->name, $follower->user->rank?->group),
 					'nip'     => $follower->user->nip,
 					'jabatan' => $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')),
 				];
@@ -195,20 +189,19 @@
 							<td style="padding: 0 0; width: 10px">:</td>
 							<td style="padding: 0 0;">{{ $p['name'] }}</td>
 						</tr>
-						@if ($p['nip'])
-							<tr>
-								<td style="padding: 0 0;"></td>
-								<td style="padding: 0 0;">Pangkat/Golongan</td>
-								<td style="padding: 0 0;">:</td>
-								<td style="padding: 0 0;">{{ $p['rank'] }}, Gol. {{ $p['group'] }}</td>
-							</tr>
-							<tr>
-								<td style="padding: 0 0;"></td>
-								<td style="padding: 0 0;">NIP</td>
-								<td style="padding: 0 0;">:</td>
-								<td style="padding: 0 0;">{{ $p['nip'] }}</td>
-							</tr>
-						@endif
+						{{-- Selalu dicetak; peserta tanpa pangkat/golongan atau NIP (mis. PPPK, non-ASN) mendapat '-'. --}}
+						<tr>
+							<td style="padding: 0 0;"></td>
+							<td style="padding: 0 0;">Pangkat/Golongan</td>
+							<td style="padding: 0 0;">:</td>
+							<td style="padding: 0 0;">{{ $p['pangkat'] }}</td>
+						</tr>
+						<tr>
+							<td style="padding: 0 0;"></td>
+							<td style="padding: 0 0;">NIP</td>
+							<td style="padding: 0 0;">:</td>
+							<td style="padding: 0 0;">{{ filled($p['nip']) ? $p['nip'] : '-' }}</td>
+						</tr>
 						<tr>
 							<td style="padding: 0 0;"></td>
 							<td style="padding: 0 0;">Jabatan</td>
@@ -225,7 +218,7 @@
 			<td style="padding-top: 20px; padding-left: 5px; text-align: justify;">
 				{{-- Format: "<maksud> di <tempat tujuan> Selama N hari dari tanggal ... s/d ...". --}}
 				@php $tempatTujuan = $sppd->destinations->pluck('full_address')->filter()->join(', ', ' dan '); @endphp
-				<span class="bold">{{ rtrim(trim($sppd->purpose), '.') }}</span>
+				{{ rtrim(trim($sppd->purpose), '.') }}
 				@if ($tempatTujuan !== '')
 					di {{ $tempatTujuan }}
 				@endif
@@ -269,7 +262,7 @@
 				@if ($pdfData['approver_nip'])
 					<br>
 					<span>
-						{{ $pdfData['approver_rank'] ?? '-' }}, Gol. {{ $pdfData['approver_group'] ?? '-' }} <br>
+						{{ \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null) }} <br>
 					</span>
 					<span>
 						NIP. {{ $pdfData['approver_nip'] }}

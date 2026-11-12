@@ -184,7 +184,7 @@
 				@if ($pdfData['approver_nip'])
 					<br>
 					<span>
-						{{ $pdfData['approver_rank'] ?? '-' }}, Gol. {{ $pdfData['approver_group'] ?? '-' }} <br>
+						{{ \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null) }} <br>
 					</span>
 					<span>
 						NIP. {{ $pdfData['approver_nip'] }}

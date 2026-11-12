@@ -28,17 +28,19 @@
     $key = $name ?? ($model->value() ?? null);
     // Untuk form non-Livewire, pakai nilai awal dari old()/value agar tetap tersubmit.
     $initialValue = $hasWire ? null : old($name, $attributes->get('value'));
-    // Normalisasi options menjadi list of ['value' => ..., 'label' => ..., 'keywords' => ...].
+    // Normalisasi options menjadi list of ['value' => ..., 'label' => ..., 'keywords' => ..., 'icon' => ...].
     // `keywords` (opsional) ikut dicocokkan saat mencari, mis. nama lain negara.
+    // `icon` (opsional) kelas ikon beserta warnanya, tampil di kiri label.
     $normalized = collect($options)->map(function ($opt) {
         if (is_array($opt)) {
             return [
                 'value' => (string) ($opt['value'] ?? ''),
                 'label' => (string) ($opt['label'] ?? ''),
                 'keywords' => (string) ($opt['keywords'] ?? ''),
+                'icon' => (string) ($opt['icon'] ?? ''),
             ];
         }
-        return ['value' => (string) $opt, 'label' => (string) $opt, 'keywords' => ''];
+        return ['value' => (string) $opt, 'label' => (string) $opt, 'keywords' => '', 'icon' => ''];
     })->values()->all();
 @endphp
 
@@ -66,6 +68,9 @@
             request: 0,
             get selected() {
                 return this.options.find(o => String(o.value) === String(this.value ?? ''));
+            },
+            get hasIcons() {
+                return this.options.some(o => o.icon);
             },
             get selectedLabel() {
                 if (this.selected) return this.selected.label;
@@ -203,9 +208,12 @@
                 'cursor-not-allowed bg-slate-50' => $disabled,
                 $class,
             ])>
-            <span class="truncate text-left"
-                :class="selectedLabel @if ($mutedEmpty) && String(value ?? '') !== '' @endif ? 'text-slate-800' : 'text-slate-500'"
-                x-text="selectedLabel || @js($placeholder)"></span>
+            <span class="flex min-w-0 items-center gap-2">
+                <i x-show="selected?.icon" :class="selected?.icon" class="shrink-0 text-xs" aria-hidden="true"></i>
+                <span class="truncate text-left"
+                    :class="selectedLabel @if ($mutedEmpty) && String(value ?? '') !== '' @endif ? 'text-slate-800' : 'text-slate-500'"
+                    x-text="selectedLabel || @js($placeholder)"></span>
+            </span>
             <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                 :class="open && 'rotate-180'"></i>
         </button>
@@ -241,6 +249,8 @@
                             :class="index === highlighted
                                 ? 'bg-primary-100 text-primary-800'
                                 : (String(opt.value) === String(value ?? '') ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
+                            {{-- Selebar ikon juga untuk opsi tanpa ikon, agar labelnya tetap sejajar. --}}
+                            <span x-show="hasIcons" class="mr-2 inline-block w-3.5 text-center text-xs" aria-hidden="true"><i :class="opt.icon"></i></span>
                             <span x-text="opt.label"></span>
                             <span x-show="matchedKeywords(opt)" x-text="'· ' + matchedKeywords(opt)"
                                 class="ml-1 text-xs font-normal text-slate-400"></span>

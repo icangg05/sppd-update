@@ -429,7 +429,7 @@ class SppdController extends Controller
 
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
     $sptApproval = $this->resolveSptApproval($sppd);
-    $duration = Carbon::parse($sppd->start_date)->diffInDays(Carbon::parse($sppd->end_date)) + 1;
+    $duration = $sppd->durationInDays();
 
     $approver = $sptApproval?->approver;
     $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
@@ -520,7 +520,7 @@ class SppdController extends Controller
     }
 
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $duration = Carbon::parse($sppd->start_date)->diffInDays(Carbon::parse($sppd->end_date)) + 1;
+    $duration = $sppd->durationInDays();
 
     $isMain = $targetUser->id === $sppd->user_id;
 

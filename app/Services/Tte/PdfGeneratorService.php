@@ -58,7 +58,7 @@ class PdfGeneratorService
     protected function buildSppdData(SppdRequest $sppd, string $documentType): array
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank', 'approvals.approver']);
-        $duration = $sppd->start_date->diffInDays($sppd->end_date) + 1;
+        $duration = $sppd->durationInDays();
 
         // Parse target user from document_type
         $targetUser = $sppd->user;
@@ -118,7 +118,7 @@ class PdfGeneratorService
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
         $sptApproval = $this->resolveSptApproval($sppd);
-        $duration = $sppd->start_date->diffInDays($sppd->end_date) + 1;
+        $duration = $sppd->durationInDays();
 
         $approver = $sptApproval?->approver;
         $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)

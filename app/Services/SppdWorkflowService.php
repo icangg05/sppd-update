@@ -296,6 +296,11 @@ class SppdWorkflowService
       }
     }
 
+    // Pemohon memegang sendiri role tahap ini (mis. Asisten pada alur Kabag → Asisten): dialah pejabatnya.
+    if ($applicant->roles->whereIn('name', $roles)->isNotEmpty()) {
+      return $this->resolution('found', $applicant);
+    }
+
     $root = $this->instansiRoot($applicant->department);
     $confirm = in_array($roleName, self::CONFIRM_ROLES, true) && ! $this->isUniquePerUnit($roleName);
     $currentDept = $applicant->department;
@@ -310,9 +315,13 @@ class SppdWorkflowService
         // atasan pemohon (bisa staf Sekretariat), jadi tetap dikonfirmasi.
         $certain = $holders->count() === 1 && (! $confirm || $currentDept->id !== $root?->id);
 
-        return $certain
-          ? $this->resolution('found', $holders->first())
-          : $this->resolution('choose', null, $holders);
+        if ($certain) {
+          return $this->resolution('found', $holders->first());
+        }
+
+        // Di unit induk calonnya seluruh instansi, termasuk pejabat yang tercatat di sub-unit
+        // (mis. Kabag di unit Bagian saat pemohon tercatat langsung di Sekretariat Daerah).
+        return $this->resolution('choose', null, $currentDept->id === $root?->id ? $this->holders($roles, $this->zoneIds($root)) : $holders);
       }
 
       // Zona mandiri (kelurahan/puskesmas) tidak mencari penyetuju ke unit
@@ -374,6 +383,10 @@ class SppdWorkflowService
       $next = $current->atasan_id
         ? User::with(['roles', 'department.parent', 'position'])->where('is_active', true)->find($current->atasan_id)
         : null;
+      // Tautan ke pejabat di bawahnya (tahap awal alur pimpinan) hanya berlaku bagi pengajuan pimpinan itu.
+      if ($next && $depth > 0 && $this->rankOf($next) >= $this->rankOf($current)) {
+        $next = null;
+      }
       $source = 'set';
 
       if (! $next) {
@@ -487,8 +500,9 @@ class SppdWorkflowService
   /**
    * Pesan kesalahan bila $supervisor tidak sah sebagai atasan langsung $user, atau null.
    * $rank: tingkat role $user bila role-nya sedang diubah (form Pegawai).
+   * $checkRank: false bila pejabatnya ditetapkan tahap alur, bukan jenjang jabatan.
    */
-  public function supervisorError(User $user, ?User $supervisor, ?int $rank = null): ?string
+  public function supervisorError(User $user, ?User $supervisor, ?int $rank = null, bool $checkRank = true): ?string
   {
     if (! $supervisor) {
       return null;
@@ -501,16 +515,21 @@ class SppdWorkflowService
       return "{$supervisor->name} sudah tidak aktif.";
     }
     if ($this->rankOf($supervisor) >= ($rank ?? $this->rankOf($user))) {
-      return "{$supervisor->name} tidak berada di atas {$user->name} dalam jenjang jabatan.";
+      // Tautan tahap alur ke pejabat di bawahnya hanya dipakai pemohon itu (lihat supervisorChain), jadi tidak bisa berputar.
+      return $checkRank ? "{$supervisor->name} tidak berada di atas {$user->name} dalam jenjang jabatan." : null;
     }
 
     // Rantai tidak boleh berputar kembali ke pegawai itu sendiri.
     $current = $supervisor;
     for ($depth = 0; $user->exists && $current?->atasan_id && $depth < self::CHAIN_DEPTH; $depth++) {
-      if ($current->atasan_id === $user->id) {
+      $next = User::with('roles')->find($current->atasan_id);
+      if (! $next || $this->rankOf($next) >= $this->rankOf($current)) {
+        break;
+      }
+      if ($next->id === $user->id) {
         return 'Pilihan ini membuat rantai atasan berputar.';
       }
-      $current = User::find($current->atasan_id);
+      $current = $next;
     }
 
     return null;
@@ -574,16 +593,32 @@ class SppdWorkflowService
       throw new \RuntimeException("Lengkapi tahap sebelum {$label} terlebih dahulu.");
     }
 
-    DB::transaction(function () use ($subordinate, $approver) {
+    DB::transaction(function () use ($subordinate, $approver, $steps, $position) {
       if ($subordinate['link']) {
         $this->insertSupervisor($subordinate['link']['from'], $subordinate['link']['to']);
       }
-      $this->insertSupervisor($subordinate['user'], $approver);
+
+      if ($subordinate['user']->id === $approver->id) {
+        $this->releaseStepToApplicant($approver, $steps[$position]['approver_id']);
+      } else {
+        $this->insertSupervisor($subordinate['user'], $approver);
+      }
     });
 
     $this->chainCache = [];
 
     return $approver;
+  }
+
+  /** Pemohon mengambil sendiri tahapnya: lepas pejabat lain yang dipilih sebelumnya, atasan di atasnya tetap tersambung. */
+  private function releaseStepToApplicant(User $applicant, ?int $chosenId): void
+  {
+    if (! $chosenId || $applicant->atasan_id !== $chosenId) {
+      return;
+    }
+
+    $above = User::find($chosenId)?->atasan_id;
+    $applicant->update(['atasan_id' => $above === $applicant->id ? null : $above]);
   }
 
   /**
@@ -682,7 +717,8 @@ class SppdWorkflowService
     if ($user->atasan_id === $supervisor->id) {
       return;
     }
-    if ($error = $this->supervisorError($user, $supervisor)) {
+    // Pejabat ditetapkan tahap alur: alur pimpinan (mis. Wakil Wali Kota) memang dimulai dari Kabag di bawahnya.
+    if ($error = $this->supervisorError($user, $supervisor, checkRank: false)) {
       throw new \RuntimeException($error);
     }
 
@@ -1230,7 +1266,7 @@ class SppdWorkflowService
   }
 
   /** Unit teratas instansi pemohon (OPD, Setda, Kecamatan, atau zona mandiri itu sendiri). */
-  private function instansiRoot(?Department $dept): ?Department
+  public function instansiRoot(?Department $dept): ?Department
   {
     while ($dept && $dept->parent && ! $this->stopsClimbing($dept)) {
       $dept = $dept->parent;
@@ -1245,7 +1281,7 @@ class SppdWorkflowService
    *
    * @return array<int, int>
    */
-  private function zoneIds(Department $root): array
+  public function zoneIds(Department $root): array
   {
     $ids = [$root->id];
     $types = [$root->id => $root->type];
