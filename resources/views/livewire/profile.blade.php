@@ -40,7 +40,7 @@
 				<div class="mt-4 flex flex-wrap items-center gap-2">
 					<x-ui.badge color="blue">
 						<i class="fa-solid fa-shield-halved mr-1.5 text-[10px]"></i>
-						{{ $user->roles->first()?->label ?? 'Tanpa Role' }}
+						{{ $user->primaryRoleLabel() }}
 					</x-ui.badge>
 
 					@if ($telegramLinked)
@@ -91,7 +91,8 @@
             </label>
             <div class="flex gap-2">
               <input wire:model="username" type="text" id="username" name="username" required
-                placeholder="Username"
+                x-username autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+                placeholder="Contoh: budi.santoso"
                 class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('username') border-red-400 @else border-slate-300 @enderror" />
 
               <button type="button" wire:click="generateUsername" wire:loading.attr="disabled"
@@ -107,6 +108,8 @@
             </div>
             @error('username')
               <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+            @else
+              <p class="mt-1 text-xs text-slate-500">Huruf kecil, angka, dan titik saja (tanpa spasi atau simbol lain).</p>
             @enderror
           </div>
 
@@ -227,7 +230,7 @@
 					<div class="bg-white p-4 sm:col-span-2">
 						<dt class="text-[11px] font-bold uppercase tracking-wide text-slate-400">Role</dt>
 						<dd class="mt-1.5">
-							<x-ui.badge>{{ $user->roles->first()?->label ?? 'Tanpa Role' }}</x-ui.badge>
+							<x-ui.badge>{{ $user->primaryRoleLabel() }}</x-ui.badge>
 						</dd>
 					</div>
 				</dl>

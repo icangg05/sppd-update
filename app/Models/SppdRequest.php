@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\DepartmentType;
+use App\Enums\DprdJabatan;
 use App\Enums\SignatureStatus;
 use App\Helpers\SmartTitle;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Services\SppdWorkflowService;
+use App\Support\NarrativeText;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,6 +47,7 @@ class SppdRequest extends Model
         'urgency',
         'status',
         'document_number',
+        'travel_position',
         'notes',
         'revision_note',
         'rejection_note',
@@ -73,6 +77,7 @@ class SppdRequest extends Model
             ->logOnly([
                 'status',
                 'document_number',
+                'travel_position',
                 'purpose',
                 'start_date',
                 'end_date',
@@ -232,20 +237,56 @@ class SppdRequest extends Model
     }
 
     /**
-     * Pengikut untuk dokumen SPT: jabatan perjalanan tertinggi dulu (Inspektorat, lihat
+     * Urutan cetak peserta SPT: jabatan perjalanan tertinggi dulu (Inspektorat, lihat
      * SppdFollower::TRAVEL_POSITIONS), lalu jabatan struktural tertinggi (level kecil),
-     * lalu golongan tertinggi; sisanya tetap sesuai urutan input.
+     * lalu golongan tertinggi; sisanya tetap sesuai urutan input. Berlaku untuk objek apa
+     * pun yang punya `travel_position` dan `user` (SppdFollower, atau baris sptParticipants).
+     *
+     * @return list<\Closure>
      */
+    private static function sptOrder(): array
+    {
+        return [
+            fn ($a, $b) => SppdFollower::travelPositionRank($a->travel_position)
+                <=> SppdFollower::travelPositionRank($b->travel_position),
+            fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
+                <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
+            fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
+        ];
+    }
+
+    /** Pengikut untuk dokumen SPT, diurutkan menurut sptOrder(). */
     public function followersForSpt(): Collection
     {
-        return $this->followers
-            ->sortBy([
-                fn ($a, $b) => SppdFollower::travelPositionRank($a->travel_position)
-                    <=> SppdFollower::travelPositionRank($b->travel_position),
-                fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
-                    <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
-                fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
-            ])
+        return $this->followers->sortBy(self::sptOrder())->values();
+    }
+
+    /**
+     * Peserta SPT (pelaksana + pengikut) sesuai urutan cetak. Bila pelaksana punya jabatan
+     * perjalanan (Inspektorat), pelaksana ikut diurutkan bersama pengikut menurut jabatan itu
+     * (pelaksana didahulukan bila setara). Tanpa jabatan perjalanan, pelaksana tetap nomor 1.
+     *
+     * @return Collection<int, object{user: User, travel_position: ?string, is_pelaksana: bool}>
+     */
+    public function sptParticipants(): Collection
+    {
+        $row = fn (?User $user, ?string $travelPosition, bool $isPelaksana) => (object) [
+            'user' => $user,
+            'travel_position' => blank($travelPosition) ? null : $travelPosition,
+            'is_pelaksana' => $isPelaksana,
+        ];
+
+        $pelaksana = $row($this->user, $this->travel_position, true);
+
+        if ($pelaksana->travel_position === null) {
+            return collect([$pelaksana])
+                ->concat($this->followersForSpt()->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false)))
+                ->values();
+        }
+
+        return collect([$pelaksana])
+            ->concat($this->followers->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false)))
+            ->sortBy(self::sptOrder())
             ->values();
     }
 
@@ -505,7 +546,7 @@ class SppdRequest extends Model
     }
 
     /**
-     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung Sabtu & Minggu
+     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung hari Minggu
      * (lihat SppdDomain::travelDays).
      */
     public function durationInDays(): int
@@ -513,6 +554,51 @@ class SppdRequest extends Model
         return $this->domain
             ? $this->domain->travelDays($this->start_date, $this->end_date)
             : (int) $this->start_date->diffInDays($this->end_date) + 1;
+    }
+
+    /*
+     * Maksud perjalanan & uraian telaah selalu diawali huruf kapital (juga tiap baris/poin),
+     * di semua tampilan, dokumen, dan notifikasi. Data lama ikut tampil kapital tanpa
+     * diubah; isian baru/diedit tersimpan kapital. Lihat NarrativeText::capitalize.
+     */
+    public function getPurposeAttribute(?string $value): ?string
+    {
+        return NarrativeText::capitalize($value);
+    }
+
+    public function setPurposeAttribute(?string $value): void
+    {
+        $this->attributes['purpose'] = NarrativeText::capitalize($value);
+    }
+
+    public function getProblemAttribute(?string $value): ?string
+    {
+        return NarrativeText::capitalize($value);
+    }
+
+    public function setProblemAttribute(?string $value): void
+    {
+        $this->attributes['problem'] = NarrativeText::capitalize($value);
+    }
+
+    public function getFactsAttribute(?string $value): ?string
+    {
+        return NarrativeText::capitalize($value);
+    }
+
+    public function setFactsAttribute(?string $value): void
+    {
+        $this->attributes['facts'] = NarrativeText::capitalize($value);
+    }
+
+    public function getAnalysisAttribute(?string $value): ?string
+    {
+        return NarrativeText::capitalize($value);
+    }
+
+    public function setAnalysisAttribute(?string $value): void
+    {
+        $this->attributes['analysis'] = NarrativeText::capitalize($value);
     }
 
     /** Tempat berangkat diketik bebas: huruf pertama tiap kata selalu kapital. */
@@ -557,6 +643,45 @@ class SppdRequest extends Model
     public function publicUrl(): string
     {
         return route('sppd.public', ['sppd' => $this, 'token' => $this->publicToken()]);
+    }
+
+    /**
+     * SPT memakai format DPRD (beserta kop surat kedua) bila pelaksana adalah
+     * anggota DPRD di bawah instansi DPRD. Dipakai bersama oleh pratinjau SPT dan
+     * draft TTE agar dokumen yang ditandatangani sama dengan yang dipratinjau.
+     */
+    public function usesDprdSptFormat(): bool
+    {
+        $user = $this->user;
+
+        return $user?->department?->getRootDepartment()?->type === DepartmentType::DPRD
+            && $user->isDprdMember();
+    }
+
+    /**
+     * Peserta SPT DPRD (pelaksana + pengikut), diurutkan berdasarkan jabatan
+     * DPRD dari tertinggi ke terendah. Non-DPRD/tanpa jabatan ditaruh di akhir.
+     *
+     * @return Collection<int, array{name: string, jabatan: string, level: int}>
+     */
+    public function sptDprdParticipants(): Collection
+    {
+        $makeRow = function (User $u, ?string $travelPosition = null): array {
+            $jabatan = $u->isDprdMember()
+                ? (DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->label(true) ?? $u->dprd_jabatan ?? 'ANGGOTA DPRD')
+                : ($travelPosition ?? ($u->position->name ?? ($u->roles->first()->name ?? '-')));
+
+            return [
+                'name' => $u->name,
+                'jabatan' => $jabatan,
+                'level' => DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->level() ?? PHP_INT_MAX,
+            ];
+        };
+
+        return collect([$makeRow($this->user, $this->travel_position)])
+            ->merge($this->followers->map(fn ($f) => $makeRow($f->user, $f->travel_position)))
+            ->sortBy('level')
+            ->values();
     }
 
     /**

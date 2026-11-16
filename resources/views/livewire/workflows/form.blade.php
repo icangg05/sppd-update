@@ -56,7 +56,7 @@
             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Tipe Instansi <span class="text-rose-500">*</span></label>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('department_type') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($departmentTypes as $type)
-                <x-form.checkbox wire:model="department_type" :value="$type->value" :label="$type->label()" :show-error="false"
+                <x-form.checkbox wire:model.live="department_type" :value="$type->value" :label="$type->label()" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
@@ -71,7 +71,7 @@
             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Peran Pemohon <span class="text-rose-500">*</span></label>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('applicant_role') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($roles as $role)
-                <x-form.checkbox wire:model="applicant_role" :value="$role->name" :label="$role->label ?? $role->name" :show-error="false"
+                <x-form.checkbox wire:model="applicant_role" :value="$role->name" :label="$roleLabelOf($role)" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
@@ -110,7 +110,7 @@
             @if ($supervisor_mode === 'specific')
               <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('supervisor_role') border-rose-300 @else border-slate-200 @enderror">
                 @foreach ($approverRoles as $role)
-                  <x-form.checkbox wire:model="supervisor_role" :value="$role->name" :label="$role->label ?? $role->name" :show-error="false"
+                  <x-form.checkbox wire:model="supervisor_role" :value="$role->name" :label="$roleLabelOf($role)" :show-error="false"
                     wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
                 @endforeach
               </div>
@@ -155,8 +155,10 @@
         @enderror
 
         @php
+          // Ditambah tahap eksternal: pejabat dicari di instansi lain (mis. Kepala Dinas Kesehatan).
           $roleOptions = collect($approverRoles)
-            ->map(fn ($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
+            ->map(fn ($r) => ['value' => $r->name, 'label' => $roleLabelOf($r)])
+            ->concat(collect($externalStepRoles)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values())
             ->all();
         @endphp
         <div class="space-y-2 max-w-2xl">
@@ -179,7 +181,8 @@
                 </div>
 
                 <div class="flex-1">
-                  <x-form.searchable-select wire:model="steps.{{ $i }}.role" :options="$roleOptions"
+                  {{-- wire:key memuat ulang pilihan saat sebutan role berubah (tipe instansi diganti). --}}
+                  <x-form.searchable-select wire:model="steps.{{ $i }}.role" :options="$roleOptions" wire:key="step-role-{{ $i }}-{{ md5(json_encode($roleOptions)) }}"
                     placeholder="— Pilih Pejabat Penyetuju —" searchPlaceholder="Cari role..."
                     class="px-2.5 py-1.5 text-xs" />
                 </div>

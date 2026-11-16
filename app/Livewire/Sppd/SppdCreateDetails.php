@@ -64,6 +64,9 @@ class SppdCreateDetails extends Component
   public ?string $document_number = null;
   public $attachment;
 
+  /** Jabatan perjalanan pelaksana (khusus Inspektorat), dipilih di modal konfirmasi. */
+  public string $travel_position = '';
+
   // Followers
   public array $followers = [];
   public array $follower_positions = [];
@@ -93,7 +96,7 @@ class SppdCreateDetails extends Component
 
   public function mount(): void
   {
-    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat mengisi detail SPPD.');
+    abort_unless(Auth::user()->can('sppd.create'), 403, 'Anda tidak memiliki izin untuk mengisi detail SPPD.');
 
     $sppdId = request('sppd_id') ? (int) request('sppd_id') : null;
 
@@ -119,6 +122,7 @@ class SppdCreateDetails extends Component
       $this->spt_date = $sppd->spt_date ? $sppd->spt_date->format('Y-m-d') : '';
       $this->sppd_date = $sppd->sppd_date ? $sppd->sppd_date->format('Y-m-d') : '';
       $this->document_number = $sppd->document_number;
+      $this->travel_position = $sppd->travel_position ?? '';
 
       $this->followers = $sppd->followers->pluck('user_id')->toArray();
       $this->follower_positions = $sppd->followers->pluck('travel_position', 'user_id')->toArray();
@@ -460,11 +464,11 @@ class SppdCreateDetails extends Component
     return $start && $end && $end->gte($start) ? [$start, $end] : null;
   }
 
-  /** Dalam daerah tidak menghitung Sabtu & Minggu, jadi tidak boleh berangkat/kembali di hari itu. */
+  /** Dalam daerah tidak menghitung hari Minggu, jadi tidak boleh berangkat/kembali di hari itu. */
   private function workdayRule(string $moment): \Closure
   {
     return function (string $attribute, mixed $value, \Closure $fail) use ($moment) {
-      if (! SppdDomain::tryFrom($this->domain)?->skipsWeekends()) {
+      if (! SppdDomain::tryFrom($this->domain)?->skipsSundays()) {
         return;
       }
 
@@ -474,8 +478,8 @@ class SppdCreateDetails extends Component
         return; // Format tanggal sudah ditangani aturan 'date'.
       }
 
-      if ($date->isWeekend()) {
-        $fail("Perjalanan dalam daerah tidak bisa {$moment} pada hari {$date->translatedFormat('l')}, karena Sabtu & Minggu tidak dihitung. Pilih hari kerja.");
+      if ($date->isSunday()) {
+        $fail("Perjalanan dalam daerah tidak bisa {$moment} pada hari Minggu, karena hari Minggu tidak dihitung. Pilih hari Senin–Sabtu.");
       }
     };
   }
@@ -505,21 +509,18 @@ class SppdCreateDetails extends Component
     $user = User::with('department')->findOrFail($this->user_id);
     $isInspektorat = (bool) $user->department?->usesManualNumbering();
 
-    // Validasi tambahan untuk Inspektorat
-    if ($isInspektorat) {
-      foreach ($this->followers as $fId) {
-        $jabatan = $this->follower_positions[$fId] ?? '';
-        if (! in_array($jabatan, SppdFollower::TRAVEL_POSITIONS, true)) {
-          $this->addError('follower_positions.' . $fId, $jabatan === '' ? 'Jabatan pengikut harus diisi.' : 'Jabatan pengikut tidak dikenal.');
-          $this->toastError('Jabatan setiap pengikut wajib dipilih dari daftar sebelum mengajukan.', 'Data Belum Lengkap');
-          $this->showConfirmModal = false;
-          return;
-        }
-      }
+    // Inspektorat: jabatan perjalanan pelaksana & pengikut dipilih di modal ini, jadi modal
+    // tetap terbuka agar pesan error tampil di samping pilihannya dan bisa langsung diperbaiki.
+    if ($isInspektorat && $missing = $this->missingTravelPositions($user)) {
+      // Sebut namanya: dengan banyak pengikut, baris yang terlewat bisa saja tidak terlihat di layar.
+      $listed = implode(', ', array_slice($missing, 0, 3)) . (count($missing) > 3 ? ', dan ' . (count($missing) - 3) . ' lainnya' : '');
+      $this->toastError("Jabatan belum dipilih untuk: {$listed}.", 'Data Belum Lengkap');
+      return;
     }
+    $travelPosition = $isInspektorat ? $this->travel_position : null;
 
     try {
-      DB::transaction(function () use (&$sppd) {
+      DB::transaction(function () use (&$sppd, $travelPosition) {
         if ($this->sppd_id) {
           $sppd = SppdRequest::findOrFail($this->sppd_id);
 
@@ -536,7 +537,7 @@ class SppdCreateDetails extends Component
                 ->map(fn ($d) => collect([$d->address, $d->place_name])->filter()->implode(', '))
                 ->implode(' | '),
               'followers' => $s->followers()->with('user')->orderBy('id')->get()
-                ->map(fn ($f) => $f->user?->name ?? ('#' . $f->user_id))
+                ->map(fn ($f) => ($f->user?->name ?? ('#' . $f->user_id)) . ($f->travel_position ? " ({$f->travel_position})" : ''))
                 ->implode(', '),
             ];
           };
@@ -560,6 +561,7 @@ class SppdCreateDetails extends Component
             'sppd_date' => $this->sppd_date,
             'spt_date' => $this->spt_date,
             'document_number' => $this->document_number,
+            'travel_position' => $travelPosition,
             'attachment' => $attachmentPath,
             'revision_note' => null,
             'reviser_id' => null,
@@ -643,6 +645,7 @@ class SppdCreateDetails extends Component
             'spt_date' => $this->spt_date,
             'status' => SppdStatus::IN_PROGRESS,
             'document_number' => $this->document_number,
+            'travel_position' => $travelPosition,
             'attachment' => $attachmentPath,
           ]);
 
@@ -705,6 +708,38 @@ class SppdCreateDetails extends Component
   }
 
   /**
+   * Jabatan perjalanan pelaksana dan tiap pengikut harus dari SppdFollower::TRAVEL_POSITIONS
+   * (menentukan urutan di SPT). Error ditaruh pada pilihan masing-masing di modal konfirmasi.
+   *
+   * @return list<string> nama pegawai yang jabatannya belum dipilih / tidak dikenal
+   */
+  private function missingTravelPositions(User $pelaksana): array
+  {
+    $followerNames = User::whereIn('id', $this->followers)->pluck('name', 'id');
+
+    $fields = ['travel_position' => [$pelaksana->name, 'Jabatan pelaksana', $this->travel_position]];
+    foreach ($this->followers as $fId) {
+      $fields["follower_positions.{$fId}"] = [
+        $followerNames[$fId] ?? "#{$fId}",
+        'Jabatan pengikut',
+        (string) ($this->follower_positions[$fId] ?? ''),
+      ];
+    }
+
+    $this->resetErrorBag(array_keys($fields));
+
+    $missing = [];
+    foreach ($fields as $key => [$name, $label, $jabatan]) {
+      if (! in_array($jabatan, SppdFollower::TRAVEL_POSITIONS, true)) {
+        $this->addError($key, $jabatan === '' ? "{$label} harus dipilih." : "{$label} tidak dikenal.");
+        $missing[] = trim($name);
+      }
+    }
+
+    return $missing;
+  }
+
+  /**
    * Pratinjau alur: susunan pejabat yang sudah tetap untuk SPPD yang diperbaiki,
    * atau simulasi untuk pengajuan baru (selalu lengkap, lihat mount).
    */
@@ -721,6 +756,8 @@ class SppdCreateDetails extends Component
           'approver_name' => $approval->approver?->name ?? '-',
           'status'        => 'found',
           'candidates'    => [],
+          'signs_spt'     => (bool) $approval->signs_spt,
+          'signs_sppd'    => (bool) $approval->signs_sppd,
         ])
         ->all();
     }

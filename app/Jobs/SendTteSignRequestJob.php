@@ -7,12 +7,14 @@ use App\Enums\SignatureStatus;
 use App\Enums\SppdStatus;
 use App\Models\SppdDigitalSignature;
 use App\Models\User;
+use App\Services\Tte\LocalProxySignService;
 use App\Services\Tte\SignatureService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -27,13 +29,17 @@ class SendTteSignRequestJob implements ShouldQueue
   public string $passphrase;
   public ?string $notes;
   public int $tries = 1;
-  public int $timeout = 120;
+  public int $timeout;
 
   public function __construct(SppdDigitalSignature $signature, string $passphrase, ?string $notes = null)
   {
     $this->signature = $signature;
     $this->passphrase = Crypt::encryptString($passphrase);
     $this->notes = $notes;
+    // Dokumen SPPD = 2 permintaan ke provider (halaman 1 & 2), masing-masing bisa
+    // diulang otomatis; +60 dtk untuk render PDF draft & unduh hasil. Bila kurang,
+    // worker mematikan job di tengah proses penandatanganan.
+    $this->timeout = 2 * LocalProxySignService::maxRequestSeconds() + 60;
   }
 
   public function handle(SignatureService $signatureService): void
@@ -62,7 +68,20 @@ class SendTteSignRequestJob implements ShouldQueue
       // Handle approval transition after successful signature
       $this->handleApprovalTransition($signature);
     } catch (Throwable $exception) {
-      $signature->markError($exception->getMessage());
+      // Penolakan provider sudah ditandai (REJECTED) & dicatat ke log TTE oleh
+      // SignatureService. Kegagalan lain — mis. error saat membuat PDF draft —
+      // belum tercatat, jadi dicatat di sini agar terlihat di halaman Log TTE.
+      // Harus sebelum fail(): chain catch menandai semua dokumen PROCESSING
+      // sebagai REJECTED lebih dulu daripada failed().
+      if ($signature->status === SignatureStatus::PROCESSING) {
+        $signature->markError($exception->getMessage());
+        $signatureService->logTteActivity(
+          $signature,
+          'rejected',
+          'Penandatanganan elektronik gagal (kesalahan sistem saat memproses dokumen)',
+        );
+      }
+
       Log::error('SendTteSignRequestJob failed', ['exception' => $exception, 'signature_id' => $signature->id]);
 
       // Immediately fail the job (no retries) — this triggers the chain catch handler
@@ -71,14 +90,31 @@ class SendTteSignRequestJob implements ShouldQueue
     }
   }
 
+  /**
+   * Dipanggil saat job gagal: lewat fail() di atas, atau oleh worker bila job
+   * melewati batas waktu / terhenti di tengah jalan.
+   */
   public function failed(Throwable $exception): void
   {
     $signature = SppdDigitalSignature::find($this->signature->id);
-    if (!$signature) {
+
+    // Dokumen yang sudah tertandatangani (gagal di langkah sesudahnya, mis. transisi
+    // persetujuan) tidak ditandai gagal agar tidak perlu TTE ulang.
+    if (!$signature || $signature->status === SignatureStatus::SIGNED) {
       return;
     }
 
     $signature->markError($exception->getMessage());
+
+    // Job dihentikan worker (melewati batas waktu, atau worker mati lalu batas
+    // percobaan habis) sehingga handle() tidak sempat mencatatnya ke log TTE.
+    if ($exception instanceof MaxAttemptsExceededException) {
+      app(SignatureService::class)->logTteActivity(
+        $signature,
+        'rejected',
+        'Penandatanganan elektronik gagal (proses terhenti atau melewati batas waktu)',
+      );
+    }
   }
 
   /**

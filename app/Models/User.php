@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -72,6 +73,16 @@ class User extends Authenticatable
       'telegram_linked_at' => 'datetime',
       'telegram_notify' => 'boolean',
     ];
+  }
+
+  /**
+   * Nama selalu disimpan tanpa spasi di awal/akhir. Input Livewire (form Pegawai) tidak
+   * melewati middleware TrimStrings, sehingga spasi tak sengaja ikut tersimpan dan, mis.,
+   * inisial avatar menjadi kosong.
+   */
+  protected function name(): Attribute
+  {
+    return Attribute::make(set: fn (?string $value) => $value === null ? null : trim($value));
   }
 
   /** Boleh dikirimi notifikasi Telegram: akun sudah terhubung & notifikasi tidak dimatikan sendiri. */
@@ -190,6 +201,39 @@ class User extends Authenticatable
   public function isKepalaDaerah(): bool
   {
     return $this->hasRole(self::KEPALA_DAERAH_ROLES);
+  }
+
+  /** Label role utama untuk ditampilkan, menurut sebutan instansinya (Kepala OPD di Rumah Sakit = "Direktur"). */
+  public function primaryRoleLabel(string $fallback = 'Tanpa Role'): string
+  {
+    $role = $this->roles->first();
+
+    return $role ? $this->roleLabelFor($role) : $fallback;
+  }
+
+  /**
+   * Label salah satu role pegawai ini menurut sebutan instansinya.
+   *
+   * @param  \Spatie\Permission\Models\Role  $role
+   */
+  public function roleLabelFor($role): string
+  {
+    return $this->department?->roleTitle($role->name) ?? ($role->label ?: $role->name);
+  }
+
+  /**
+   * Boleh membuka menu Selanjutnya (dokumen & biaya perjalanan): hanya lewat permission
+   * cost.view. Kelola biaya (cost.manage) tidak ikut membuka menu ini.
+   */
+  public function canOpenCostMenu(): bool
+  {
+    return $this->can('cost.view');
+  }
+
+  /** Boleh mengisi/mengubah biaya perjalanan di dalam menu Selanjutnya: cost.manage + akses menunya. */
+  public function canManageCosts(): bool
+  {
+    return $this->canOpenCostMenu() && $this->can('cost.manage');
   }
 
   /**

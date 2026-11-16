@@ -34,6 +34,25 @@
       this.showDelete = false;
       clearInterval(this.deleteTimer);
     },
+    showImport: false,
+    importTarget: '',
+    importCountdown: 10,
+    importTimer: null,
+    {{-- importTarget kosong = file unggahan; berisi nama = pulihkan dari daftar backup. --}}
+    openImport(name) {
+      this.importTarget = name;
+      this.importCountdown = 10;
+      this.showImport = true;
+      clearInterval(this.importTimer);
+      this.importTimer = setInterval(() => {
+        if (this.importCountdown > 0) this.importCountdown--;
+        if (this.importCountdown <= 0) clearInterval(this.importTimer);
+      }, 1000);
+    },
+    closeImport() {
+      this.showImport = false;
+      clearInterval(this.importTimer);
+    },
   }"
   x-on:open-backup-confirm.window="openConfirm()">
 
@@ -121,10 +140,47 @@
     <i class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
     <p>
       File berformat <strong>.sql.gz</strong> (SQL terkompresi). Simpan di tempat aman.
-      <strong>Restore</strong> sengaja tidak disediakan lewat aplikasi demi keamanan. Pemulihan
-      sebaiknya dilakukan administrator melalui CLI pada jendela pemeliharaan terkontrol.
+      @if ($importEnabled)
+        <strong>Mode development:</strong> import dan pulihkan database tersedia di halaman ini.
+        Di server produksi fitur tersebut tidak muncul; pemulihan dilakukan administrator melalui CLI.
+      @else
+        <strong>Restore</strong> sengaja tidak disediakan lewat aplikasi demi keamanan. Pemulihan
+        sebaiknya dilakukan administrator melalui CLI pada jendela pemeliharaan terkontrol.
+      @endif
     </p>
   </div>
+
+  {{-- Import database: hanya mode development (gerbang juga dicek di server). --}}
+  @if ($importEnabled)
+    <div class="dash-enter rounded border border-red-200 bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-start gap-3">
+        <div class="flex size-10 shrink-0 items-center justify-center rounded bg-red-50 text-red-600"><i class="fa-solid fa-file-import"></i></div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-sm font-bold text-slate-800">Import Database</h2>
+            <span class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Mode Development</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-500">
+            Isi database <strong class="text-slate-700">{{ $database }}</strong> akan <strong class="text-red-600">diganti seluruhnya</strong>
+            dengan isi file. Sebelum itu sistem membuat backup pengaman (<span class="font-mono">…-pre-import-…</span>) di daftar bawah,
+            dan bila import gagal database dikembalikan otomatis.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <x-form.file wire:model="importFile" accept=".sql,.gz" wrapperClass="flex-1"
+          hint="Format .sql atau .sql.gz (mis. hasil backup halaman ini), maksimal 100 MB." />
+
+        <x-ui.button type="button" variant="danger" class="shrink-0"
+          x-on:click="openImport('')" x-bind:disabled="! $wire.importFile"
+          wire:loading.attr="disabled" wire:target="importFile">
+          <x-slot name="icon"><i class="fa-solid fa-file-import text-xs"></i></x-slot>
+          Import Database
+        </x-ui.button>
+      </div>
+    </div>
+  @endif
 
   {{-- Daftar backup --}}
   <div class="dash-enter table-wrapper">
@@ -159,6 +215,12 @@
                     <i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan...
                   </span>
                 </button>
+                @if ($importEnabled)
+                  <button type="button" x-on:click="openImport('{{ $backup['name'] }}')"
+                    class="inline-flex items-center gap-1.5 rounded border border-amber-500 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-500 hover:text-white">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Pulihkan
+                  </button>
+                @endif
                 <button type="button" x-on:click="openDelete('{{ $backup['name'] }}')"
                   class="inline-flex items-center gap-1.5 rounded border border-red-400 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-600 hover:text-white">
                   <i class="fa-solid fa-trash-can"></i> Hapus
@@ -224,6 +286,59 @@
       <p class="text-xs text-slate-500">Worker sedang membuat cadangan database. Jendela ini akan tertutup otomatis setelah selesai.</p>
     </div>
   </x-ui.modal>
+
+  @if ($importEnabled)
+    {{-- Modal konfirmasi import/pulihkan dengan jeda 10 detik --}}
+    <x-ui.modal show="showImport" :closeable="false" title="Konfirmasi Import Database"
+      description="Seluruh isi database akan ditimpa" icon="fa-solid fa-triangle-exclamation text-red-600" maxWidth="max-w-md">
+      <div class="space-y-3 text-sm text-slate-600">
+        <p>Semua tabel di database <strong>{{ $database }}</strong> akan <strong>dihapus</strong> lalu diisi dari:</p>
+        <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 break-all"
+          x-text="importTarget || 'file yang Anda unggah'"></div>
+        <p class="text-xs text-slate-500">Bila akun Anda tidak ada di data baru, Anda akan diminta masuk kembali.</p>
+        <div class="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <i class="fa-regular fa-clock mt-0.5"></i>
+          <span>Demi keamanan, tombol import aktif setelah <strong>10 detik</strong>.</span>
+        </div>
+      </div>
+
+      <x-slot name="footer" class="flex items-center justify-end gap-3 bg-slate-50">
+        <button type="button" x-on:click="closeImport()"
+          class="rounded border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+          Batal
+        </button>
+
+        <button type="button"
+          x-on:click="importTarget ? $wire.restoreBackup(importTarget) : $wire.importDatabase(); closeImport()"
+          x-bind:disabled="importCountdown > 0"
+          class="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+          <template x-if="importCountdown > 0">
+            <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="importCountdown"></span>s</span>
+          </template>
+          <template x-if="importCountdown <= 0">
+            <span><i class="fa-solid fa-file-import"></i> Ya, Timpa Database</span>
+          </template>
+        </button>
+      </x-slot>
+    </x-ui.modal>
+
+    {{-- Lapisan proses selama import berjalan (request sinkron; jangan tutup halaman).
+         Di-teleport ke body seperti x-ui.modal: di dalam <main> lapisan ini terjebak di
+         stacking context konten sehingga header & sidebar tetap tampil di atasnya. --}}
+    <template x-teleport="body">
+      <div wire:loading.flex wire:target="importDatabase,restoreBackup"
+        class="fixed inset-0 z-[70] items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+        <div role="status" aria-live="polite"
+          class="flex w-full max-w-sm flex-col items-center gap-3 rounded border border-slate-200 bg-white px-6 py-8 text-center shadow-xl">
+          <div class="flex size-14 items-center justify-center rounded-full bg-red-50 text-2xl text-red-600">
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-700">Mengimport database…</p>
+          <p class="text-xs text-slate-500">Membuat backup pengaman, menghapus tabel lama, lalu memuat data baru. Jangan tutup halaman ini.</p>
+        </div>
+      </div>
+    </template>
+  @endif
 
   {{-- Modal konfirmasi hapus dengan jeda 10 detik --}}
   <x-ui.modal show="showDelete" :closeable="false" title="Konfirmasi Hapus Backup"

@@ -105,7 +105,7 @@
 							placeholder="Semua Tahun" searchPlaceholder="Cari tahun..." />
 					</div>
 
-				@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+				@if (auth()->user()->can('sppd.create'))
 					<x-ui.button href="{{ route('sppd.create') }}" variant="primary" class="shrink-0 justify-center whitespace-nowrap">
 						<x-slot name="icon">
 							<i class="fa-solid fa-plus text-xs"></i>

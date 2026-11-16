@@ -109,6 +109,7 @@
 						</label>
 						<div class="flex gap-2">
 							<input wire:model="username" type="text" id="username" name="username" required
+								x-username autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
 								placeholder="Contoh: budi.santoso"
 								class="block w-full flex-1 rounded border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 @error('username') border-red-400 @else border-slate-300 @enderror" />
 
@@ -126,6 +127,8 @@
 
 						@error('username')
 							<p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+						@else
+							<p class="mt-1 text-xs text-slate-500">Huruf kecil, angka, dan titik saja (tanpa spasi atau simbol lain).</p>
 						@enderror
 					</div>
 
@@ -359,7 +362,7 @@
 									Periksa kembali unit kerja pegawai. Role pimpinan tidak diberikan selama unitnya belum sesuai.
 								</p>
 							@endif
-							<p class="text-xs text-slate-500">Jabatan pimpinan (Walikota, Sekda, Kepala OPD, dll.) hanya boleh
+							<p class="text-xs text-slate-500">Jabatan pimpinan (Walikota, Sekda, {{ $kepalaLabel }}, dll.) hanya boleh
 								dipangku satu pegawai aktif sesuai lingkupnya.</p>
 							<p class="text-xs text-slate-500">Jabatan tidak ada?
 								<button type="button" x-on:click="$dispatch('open-position-form', { name: $wire.searchPosition })"
@@ -392,7 +395,7 @@
 									<i class="fa-solid fa-lock mr-0.5 text-[10px]"></i>
 									Role mengikuti jabatan secara otomatis dan hanya dapat diubah oleh Super Admin.
 								@endif
-								Role kewenangan tunggal (Walikota, Sekda, Kepala/Sekretaris OPD, Camat, Lurah, dll.) hanya boleh dipegang
+								Role kewenangan tunggal (Walikota, Sekda, {{ $kepalaLabel === 'Kepala OPD' ? 'Kepala/Sekretaris OPD' : $kepalaLabel . '/' . ($selectedDepartment?->roleLabel('sekretaris_opd', 'Sekretaris OPD') ?? 'Sekretaris OPD') }}, Camat, Lurah, dll.) hanya boleh dipegang
 								satu pegawai aktif sesuai lingkupnya.
 							</p>
 						</div>

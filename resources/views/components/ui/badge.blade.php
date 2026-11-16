@@ -6,6 +6,8 @@
     // Mode warna manual (dipakai jika status & color tidak diisi).
     'bg' => 'bg-slate-100',
     'text' => 'text-slate-700',
+    // Ukuran mode token warna: md (bawaan) | xs (penanda ringkas, mis. penanda tangan di kartu alur).
+    'size' => 'md',
 ])
 
 @php
@@ -33,7 +35,8 @@
 
     if ($color) {
         $pill = $colorMap[$color] ?? $colorMap['slate'];
-        $base = 'inline-flex items-center rounded px-2 py-1 text-[11px] font-medium ring-1 ring-inset ' . $pill;
+        $sizing = $size === 'xs' ? 'gap-0.5 px-1 py-0.5 text-[10px] leading-none' : 'px-2 py-1 text-[11px]';
+        $base = 'inline-flex items-center rounded font-medium ring-1 ring-inset ' . $sizing . ' ' . $pill;
     } elseif ($status) {
         // Warna mengikuti .badge-{status} di app.css; bentuk/teks lewat class tambahan.
         $base = 'badge-' . $status;

@@ -2,7 +2,7 @@
     use Illuminate\Support\Js;
     $grandTotal = $sppd->costDetails->sum('total');
     $filledCount = $people->filter(fn ($p) => $sppd->costDetails->where('user_id', $p['id'])->count() > 0)->count();
-    $canManage = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
+    $canManage = auth()->user()->canManageCosts();
     $printReady = $sppd->pptk_id && $hasBendahara;
     // Tombol ikon kecil per item, sama dengan tombol aksi tabel di halaman lain (Edit kuning, Hapus merah).
     $iconBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition-colors focus:outline-none focus-visible:ring-2';

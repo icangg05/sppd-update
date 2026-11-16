@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
 
 /**
@@ -31,11 +33,11 @@ class DatabaseBackupService
    * minggu), sehingga membuat backup beberapa kali dalam minggu yang sama akan
    * MENIMPA file minggu itu — menjamin tepat satu backup per minggu.
    */
-  public function create(): string
+  public function create(?string $filename = null): string
   {
     @set_time_limit(0);
 
-    $filename = $this->currentWeekFilename();
+    $filename ??= $this->currentWeekFilename();
     $dir = $this->directory();
     if (! is_dir($dir)) {
       mkdir($dir, 0775, true);
@@ -181,6 +183,197 @@ class DatabaseBackupService
     }
 
     return $deleted;
+  }
+
+  // ───────────────────────── import (khusus development) ─────────────────────────
+
+  /** Import hanya boleh di lingkungan pengembangan, tidak pernah di produksi. */
+  public static function importEnabled(): bool
+  {
+    return app()->environment('local', 'development');
+  }
+
+  /**
+   * Ganti SELURUH isi database dengan file .sql / .sql.gz.
+   *
+   * Urutan: file divalidasi & diekstrak dulu (database belum disentuh) → backup
+   * pengaman dibuat → semua tabel dihapus → SQL dijalankan. Bila import gagal,
+   * database dipulihkan otomatis dari backup pengaman.
+   *
+   * @return string nama file backup pengaman (tampil di daftar backup)
+   */
+  public function import(string $sourcePath): string
+  {
+    if (! self::importEnabled()) {
+      throw new \RuntimeException('Import database hanya tersedia di mode development.');
+    }
+
+    @set_time_limit(0);
+
+    $sqlPath = $this->extractSql($sourcePath);
+
+    try {
+      $safety = $this->create($this->safetyFilename());
+
+      try {
+        $this->replaceDatabaseWith($sqlPath);
+      } catch (\Throwable $e) {
+        Log::error('Import database gagal, memulihkan dari backup pengaman.', ['error' => $e->getMessage()]);
+
+        try {
+          $this->replaceDatabaseWith($this->extractSql($this->directory() . '/' . $safety));
+        } catch (\Throwable $rollback) {
+          throw new \RuntimeException(
+            'Import gagal DAN pemulihan otomatis juga gagal. Pulihkan manual dari backup ' . $safety
+              . '. Galat import: ' . $this->shortError($e) . ' Galat pemulihan: ' . $this->shortError($rollback),
+            previous: $e
+          );
+        }
+
+        throw new \RuntimeException(
+          'Import gagal; database sudah dikembalikan seperti semula. Galat: ' . $this->shortError($e),
+          previous: $e
+        );
+      }
+
+      return $safety;
+    } finally {
+      @unlink($sqlPath);
+    }
+  }
+
+  /** Nama backup pengaman sebelum import (lolos isValidName, ikut daftar backup). */
+  private function safetyFilename(): string
+  {
+    $database = config('database.connections.mysql.database');
+
+    return "backup-{$database}-pre-import-" . Carbon::now()->format('Y-m-d-His') . '.sql.gz';
+  }
+
+  /**
+   * Ekstrak (bila gzip) ke file .sql sementara dan pastikan isinya dump SQL yang
+   * memuat struktur tabel — supaya file salah ditolak SEBELUM database dihapus.
+   */
+  private function extractSql(string $sourcePath): string
+  {
+    $in = @fopen($sourcePath, 'rb');
+    if ($in === false) {
+      throw new \RuntimeException('File import tidak dapat dibaca.');
+    }
+    $magic = fread($in, 2);
+    fclose($in);
+
+    $tmpDir = storage_path('app/tmp');
+    if (! is_dir($tmpDir)) {
+      mkdir($tmpDir, 0775, true);
+    }
+    $sqlPath = tempnam($tmpDir, 'import-');
+
+    $isGzip = $magic === "\x1f\x8b";
+    $in = $isGzip ? gzopen($sourcePath, 'rb') : fopen($sourcePath, 'rb');
+    $out = fopen($sqlPath, 'wb');
+
+    $hasTable = false;
+    $tail = '';
+    try {
+      while (true) {
+        $chunk = $isGzip ? gzread($in, 1 << 20) : fread($in, 1 << 20);
+        if ($chunk === false) {
+          throw new \RuntimeException('File import rusak (gagal diekstrak).');
+        }
+        if ($chunk === '') {
+          break;
+        }
+        fwrite($out, $chunk);
+
+        // Sisa 20 byte potongan sebelumnya ikut diperiksa agar kata yang terbelah tetap terdeteksi.
+        $hasTable = $hasTable || stripos($tail . $chunk, 'CREATE TABLE') !== false;
+        $tail = substr($chunk, -20);
+      }
+    } catch (\Throwable $e) {
+      fclose($out);
+      @unlink($sqlPath);
+      throw $e;
+    } finally {
+      $isGzip ? gzclose($in) : fclose($in);
+    }
+    fclose($out);
+
+    if (! $hasTable) {
+      @unlink($sqlPath);
+      throw new \RuntimeException('File bukan dump database: tidak ada perintah CREATE TABLE.');
+    }
+
+    return $sqlPath;
+  }
+
+  /** Hapus semua tabel/view lalu jalankan file SQL. */
+  private function replaceDatabaseWith(string $sqlPath): void
+  {
+    Schema::dropAllViews();
+    Schema::dropAllTables();
+
+    if ($this->mysqlClientAvailable()) {
+      $this->runWithMysqlClient($sqlPath);
+    } else {
+      // Cadangan tanpa binary: cukup untuk dump buatan aplikasi (tanpa DELIMITER).
+      DB::unprepared(file_get_contents($sqlPath));
+    }
+
+    DB::reconnect();
+    // Cache (mis. permission Spatie, pengaturan) masih berisi data database lama.
+    Cache::flush();
+  }
+
+  private function mysqlClientAvailable(): bool
+  {
+    $probe = new Process(['bash', '-c', 'command -v mysql']);
+    $probe->run();
+
+    return $probe->isSuccessful();
+  }
+
+  /**
+   * Jalankan SQL lewat klien mysql (mendukung DELIMITER dari mysqldump). Klien
+   * MariaDB memaksa verifikasi TLS yang gagal pada sertifikat self-signed MySQL
+   * di container, jadi TLS dimatikan (jaringan internal, khusus development).
+   */
+  private function runWithMysqlClient(string $sqlPath): void
+  {
+    $c = config('database.connections.mysql');
+
+    $version = new Process(['mysql', '--version']);
+    $version->run();
+    $noTls = str_contains($version->getOutput(), 'MariaDB') ? '--skip-ssl' : '--ssl-mode=DISABLED';
+
+    $process = new Process([
+      'mysql', $noTls, '--default-character-set=utf8mb4',
+      '-h', (string) $c['host'], '-P', (string) $c['port'], '-u', (string) $c['username'],
+      (string) $c['database'],
+    ], null, ['MYSQL_PWD' => (string) $c['password']], null, 1800);
+
+    $input = fopen($sqlPath, 'rb');
+    try {
+      $process->setInput($input);
+      $process->run();
+    } finally {
+      if (is_resource($input)) {
+        fclose($input);
+      }
+    }
+
+    if (! $process->isSuccessful()) {
+      // Klien mysql mengulang potongan SQL di antara garis "-----"; cukup ambil baris ERROR-nya.
+      $lines = array_filter(array_map('trim', explode("\n", $process->getErrorOutput())));
+      $error = collect($lines)->last(fn($line) => str_starts_with($line, 'ERROR')) ?? end($lines);
+
+      throw new \RuntimeException($error ?: 'Klien mysql berhenti dengan kode ' . $process->getExitCode() . '.');
+    }
+  }
+
+  private function shortError(\Throwable $e): string
+  {
+    return \Illuminate\Support\Str::limit($e->getMessage(), 300);
   }
 
   // ───────────────────────── internal ─────────────────────────

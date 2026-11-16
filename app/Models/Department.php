@@ -133,7 +133,7 @@ class Department extends Model
     foreach ($users as $user) {
       foreach ($user->roles as $role) {
         if ($holder = User::roleConflictHolder($role->name, $this->parent_id, $user->id)) {
-          return "Role {$role->label} {$user->name} bentrok dengan {$holder->name} di unit induk. Sesuaikan role-nya terlebih dahulu.";
+          return "Role {$user->roleLabelFor($role)} {$user->name} bentrok dengan {$holder->name} di unit induk. Sesuaikan role-nya terlebih dahulu.";
         }
       }
     }
@@ -222,6 +222,21 @@ class Department extends Model
     }
 
     return $dept;
+  }
+
+  /**
+   * Sebutan role di zona data unit ini bila berbeda dari label role-nya: di Rumah Sakit,
+   * Kepala OPD = "Direktur" dan Sekretaris OPD = "Sekretaris" (DepartmentType::roleTitle).
+   */
+  public function roleTitle(string $role): ?string
+  {
+    return $this->getScopeRootDepartment()->type?->roleTitle($role);
+  }
+
+  /** Label role untuk ditampilkan di unit ini: sebutan khususnya, atau $label bawaan. */
+  public function roleLabel(string $role, ?string $label = null): string
+  {
+    return $this->roleTitle($role) ?? $label ?? ucwords(str_replace('_', ' ', $role));
   }
 
   /**

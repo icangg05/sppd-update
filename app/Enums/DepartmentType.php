@@ -12,6 +12,7 @@ enum DepartmentType: string
   case KECAMATAN   = 'kecamatan';
   case KELURAHAN   = 'kelurahan';
   case PUSKESMAS   = 'puskesmas';
+  case RUMAH_SAKIT = 'rumah_sakit';
   case BAGIAN      = 'bagian';
   case SUBBAGIAN   = 'subbagian';
   case ASISTEN     = 'asisten';
@@ -19,13 +20,27 @@ enum DepartmentType: string
   /**
    * Entitas yang mengelola datanya sendiri (anggaran/SPPD) dan terpisah dari
    * zona data induknya — mis. Kelurahan di bawah Kecamatan, Puskesmas di bawah
-   * Dinas Kesehatan. Lihat Department::getScopedDescendantIds/getScopeRootDepartment.
+   * Dinas Kesehatan. Rumah Sakit ikut mandiri agar datanya tetap terpisah bila kelak
+   * diletakkan di bawah Dinas Kesehatan. Lihat Department::getScopedDescendantIds/getScopeRootDepartment.
    */
   public function isIndependentZone(): bool
   {
     return match ($this) {
-      self::KELURAHAN, self::PUSKESMAS => true,
+      self::KELURAHAN, self::PUSKESMAS, self::RUMAH_SAKIT => true,
       default => false,
+    };
+  }
+
+  /**
+   * Sebutan pejabat di tipe instansi ini bila berbeda dari label role-nya: Rumah Sakit
+   * memakai role Kepala OPD & Sekretaris OPD, tetapi pejabatnya disebut Direktur &
+   * Sekretaris. Null = pakai label role.
+   */
+  public function roleTitle(string $role): ?string
+  {
+    return match ($this) {
+      self::RUMAH_SAKIT => ['kepala_opd' => 'Direktur', 'sekretaris_opd' => 'Sekretaris'][$role] ?? null,
+      default => null,
     };
   }
 
@@ -40,6 +55,7 @@ enum DepartmentType: string
       self::KECAMATAN   => 'Kecamatan',
       self::KELURAHAN   => 'Kelurahan',
       self::PUSKESMAS   => 'Puskesmas',
+      self::RUMAH_SAKIT => 'Rumah Sakit',
       self::BAGIAN      => 'Bagian',
       self::SUBBAGIAN   => 'Sub Bagian',
       self::ASISTEN     => 'Asisten',
@@ -62,6 +78,7 @@ enum DepartmentType: string
       self::KECAMATAN   => 'bg-amber-50 text-amber-700 border-amber-200',
       self::KELURAHAN   => 'bg-lime-50 text-lime-700 border-lime-200',
       self::PUSKESMAS   => 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+      self::RUMAH_SAKIT => 'bg-orange-50 text-orange-700 border-orange-200',
     };
   }
 }

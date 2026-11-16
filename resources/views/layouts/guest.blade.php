@@ -24,6 +24,7 @@
 
 	{{-- Notifikasi Toast global (mis. setelah logout) --}}
 	<x-ui.toast />
+	<x-ui.dev-watermark />
 
 	{{-- short:/shorter: (app.css) memadatkan kartu di layar desktop pendek agar muat tanpa scroll. --}}
 	<div class="relative overflow-hidden min-h-dvh lg:min-h-screen flex justify-center items-center px-4 py-5 sm:px-6 lg:px-8 short:py-3">

@@ -15,10 +15,10 @@
 					@if ($current['name'])
 						<span class="font-semibold text-slate-700">{{ $current['name'] }}</span> · {{ $current['role'] }}
 						@if ($current['isDefault'])
-							<span class="text-slate-400">(bawaan: Kepala OPD)</span>
+							<span class="text-slate-400">(bawaan: {{ $kepalaLabel }})</span>
 						@endif
 					@else
-						<span class="text-amber-700">Belum ada penandatangan. Kepala OPD instansi ini belum terdaftar.</span>
+						<span class="text-amber-700">Belum ada penandatangan. {{ $kepalaLabel }} instansi ini belum terdaftar.</span>
 					@endif
 				</p>
 			</div>
@@ -67,12 +67,12 @@
 				<p class="text-sm leading-relaxed text-slate-600">
 					Pejabat yang menandatangani kolom <strong class="text-slate-800">Setuju Bayar / Mengetahui</strong> pada
 					kuitansi, pengeluaran riil, dan rincian biaya. Berlaku untuk semua SPPD {{ $instansi->name }}.
-					Biarkan pegawai kosong untuk memakai Kepala OPD.
+					Biarkan pegawai kosong untuk memakai {{ $kepalaLabel }}.
 				</p>
 
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<x-form.searchable-select wire:model="signerId" label="Pegawai Penandatangan" searchMethod="searchSigners"
-						:selectedLabel="$selectedLabel" placeholder="Kepala OPD (bawaan)" searchPlaceholder="Cari nama / NIP pegawai..." />
+						:selectedLabel="$selectedLabel" :placeholder="$kepalaLabel . ' (bawaan)'" searchPlaceholder="Cari nama / NIP pegawai..." />
 					<x-form.input wire:model="label" label="Label Jabatan"
 						placeholder="Contoh: Kuasa Pengguna Anggaran"
 						hint="Kosongkan untuk memakai nama jabatan penandatangan." />

@@ -76,7 +76,7 @@
 			@unless ($isKepalaDaerah)
 				@php
 					$roleFilterOptions = collect($availableRoles)
-						->map(fn($r) => ['value' => $r->name, 'label' => $r->label ?? $r->name])
+						->map(fn($r) => ['value' => $r->name, 'label' => $roleContext?->roleTitle($r->name) ?? $r->label ?? $r->name])
 						->prepend(['value' => '', 'label' => 'Semua Role'])
 						->all();
 				@endphp
@@ -121,7 +121,7 @@
 				@if ($activeRole)
 					<span class="inline-flex items-center gap-1.5 rounded bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-600/20">
 						<i class="fa-solid fa-shield-halved text-[10px]"></i>
-						Role: {{ $activeRole->label ?? $activeRole->name }}
+						Role: {{ $roleContext?->roleTitle($activeRole->name) ?? $activeRole->label ?? $activeRole->name }}
 						<button type="button" wire:click="$set('role', '')" class="ml-1 text-violet-500 hover:text-violet-800" title="Hapus filter">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
@@ -244,7 +244,7 @@
 							<td data-label="Role" class="py-3 px-4">
 								<div class="flex flex-wrap gap-1">
 									@foreach ($user->roles as $role)
-										<x-ui.badge :color="$role->color ?? 'slate'" class="whitespace-nowrap">{{ $role->label }}</x-ui.badge>
+										<x-ui.badge :color="$role->color ?? 'slate'" class="whitespace-nowrap">{{ $user->roleLabelFor($role) }}</x-ui.badge>
 									@endforeach
 								</div>
 							</td>

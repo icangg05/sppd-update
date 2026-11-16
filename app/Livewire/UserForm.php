@@ -160,7 +160,13 @@ class UserForm extends Component
     $userId = $this->isEdit ? $this->user->id : 'NULL';
     $rules = [
       'name' => 'required|string|max:255',
-      'username' => 'required|string|max:255|unique:users,username,' . $userId,
+      // Username dipakai untuk login. Username lama yang bersimbol dibiarkan; aturan huruf
+      // kecil, angka, dan titik hanya ditegakkan saat akun baru atau username diubah.
+      'username' => array_filter([
+        'required', 'string', 'max:255',
+        $this->usernameChanged() ? 'regex:' . UsernameGenerator::PATTERN : null,
+        'unique:users,username,' . $userId,
+      ]),
       'email' => 'nullable|email|unique:users,email,' . $userId,
       'password' => 'nullable|string|min:6',
       // NIP/NIK hanya angka dengan panjang baku (NIP 18, NIK 16). Boleh sama di instansi berbeda
@@ -245,7 +251,8 @@ class UserForm extends Component
       );
 
       if ($holder) {
-        $label = Role::where('name', $value)->value('label') ?? $value;
+        $label = ($this->department_id ? Department::find($this->department_id)?->roleTitle($value) : null)
+          ?? Role::where('name', $value)->value('label') ?? $value;
         $cakupan = in_array($value, config('role_uniqueness.department', []), true)
           ? 'pada unit kerja ini'
           : 'di lingkup pemerintah daerah';
@@ -299,6 +306,19 @@ class UserForm extends Component
         $fail("Jabatan {$value} sudah dijabat oleh {$holder->name}. Nonaktifkan pejabat lama terlebih dahulu.");
       }
     };
+  }
+
+  protected function messages()
+  {
+    return [
+      'username.regex' => UsernameGenerator::INVALID_MESSAGE,
+    ];
+  }
+
+  /** Akun baru, atau username akun lama diganti (bukan sekadar disimpan ulang). */
+  protected function usernameChanged(): bool
+  {
+    return ! $this->isEdit || $this->username !== $this->user->username;
   }
 
   protected function validationAttributes()
@@ -533,9 +553,20 @@ class UserForm extends Component
       $this->role = $this->roleFollowingPosition();
     }
 
+    // Spasi di awal/akhir (sering ikut saat menempel teks) dibuang sebelum divalidasi; input
+    // Livewire tidak melewati middleware TrimStrings. Password sengaja tidak di-trim.
+    $this->name = trim((string) $this->name);
+    $this->username = trim((string) $this->username);
+    $this->email = trim((string) $this->email);
+
     // NIP sering ditempel berformat "19810807 200502 2 004"; spasinya dibuang sebelum divalidasi.
     $this->nip = preg_replace('/\s+/', '', (string) $this->nip);
     $this->nik = preg_replace('/\s+/', '', (string) $this->nik);
+
+    // Huruf besar dipaksa kecil; spasi/simbol tetap ditolak validasi.
+    if ($this->usernameChanged()) {
+      $this->username = mb_strtolower((string) $this->username);
+    }
 
     try {
       $this->validate();
@@ -733,7 +764,10 @@ class UserForm extends Component
       'positionRole' => $positionRole,
       'positionRoleAdjusted' => $positionRoleAdjusted,
       'positionRequiredType' => $positionRequiredType,
-      'roleOptions' => $this->selectableRoles()->map(fn ($r) => ['value' => $r->name, 'label' => $r->label])->values()->all(),
+      // Sebutan role mengikuti unit kerja terpilih (Rumah Sakit: Kepala OPD = Direktur).
+      'selectedDepartment' => $selectedDepartment,
+      'kepalaLabel' => $selectedDepartment?->roleLabel('kepala_opd', 'Kepala OPD') ?? 'Kepala OPD',
+      'roleOptions' => $this->selectableRoles()->map(fn ($r) => ['value' => $r->name, 'label' => $selectedDepartment?->roleTitle($r->name) ?? $r->label])->values()->all(),
       'dprdJabatans' => DprdJabatan::cases(),
       'dprdPartais' => DprdPartai::cases(),
     ]);

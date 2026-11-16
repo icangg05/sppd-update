@@ -55,7 +55,12 @@ class Profile extends Component
 
     return [
       'name' => 'required|string|max:255',
-      'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($id)],
+      // Username lama yang bersimbol dibiarkan; aturan huruf kecil, angka, titik hanya saat diganti.
+      'username' => array_filter([
+        'required', 'string', 'max:255',
+        $this->usernameChanged() ? 'regex:' . UsernameGenerator::PATTERN : null,
+        Rule::unique('users', 'username')->ignore($id),
+      ]),
       'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
       // NIP/NIK unik per instansi (bukan global) — pegawai yang sama boleh
       // berakun di dua instansi berbeda dengan NIP/NIK yang sama.
@@ -68,7 +73,13 @@ class Profile extends Component
     ];
   }
 
+  protected function usernameChanged(): bool
+  {
+    return $this->username !== auth()->user()->username;
+  }
+
   protected $messages = [
+    'username.regex' => UsernameGenerator::INVALID_MESSAGE,
     'current_password.required_with' => 'Masukkan password saat ini untuk mengganti password.',
     'current_password.current_password' => 'Password saat ini tidak sesuai.',
     'password.confirmed' => 'Konfirmasi password tidak cocok.',
@@ -137,6 +148,16 @@ class Profile extends Component
 
   public function save()
   {
+    // Spasi di awal/akhir dibuang sebelum divalidasi (sama seperti form Pegawai); password tidak.
+    $this->name = trim((string) $this->name);
+    $this->username = trim((string) $this->username);
+    $this->email = trim((string) $this->email);
+
+    // Huruf besar dipaksa kecil; spasi/simbol tetap ditolak validasi.
+    if ($this->usernameChanged()) {
+      $this->username = mb_strtolower($this->username);
+    }
+
     try {
       $this->validate();
     } catch (ValidationException $e) {

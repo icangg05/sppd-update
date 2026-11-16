@@ -30,6 +30,7 @@ class AppointOfficialTest extends TestCase
         foreach (['super_admin', 'admin_opd', 'staf', 'kabid_irban_kabag', 'sekretaris_opd', 'kepala_opd', 'asisten', 'sekda', 'walikota'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
         $this->seed(SppdWorkflowSeeder::class);
 
         $this->dinas = Department::create(['name' => 'Dinas Sosial', 'type' => DepartmentType::OPD, 'level' => 1]);
@@ -330,6 +331,7 @@ class AppointOfficialTest extends TestCase
         foreach (['camat', 'sekcam'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super_admin');
         $kecamatan = Department::create(['name' => 'Kecamatan Mandonga', 'type' => DepartmentType::KECAMATAN, 'level' => 1]);

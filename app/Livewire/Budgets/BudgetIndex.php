@@ -129,6 +129,11 @@ class BudgetIndex extends Component
 
   public function confirmDelete(int $id): void
   {
+    if (! $this->currentUser()->can('budget.delete')) {
+      $this->toastError('Anda tidak memiliki izin menghapus DPA.');
+      return;
+    }
+
     $budget = Budget::find($id);
     if (! $budget) {
       return;
@@ -166,6 +171,12 @@ class BudgetIndex extends Component
     $budget = Budget::find($this->deletingId);
     if (! $budget) {
       $this->closeDeleteModal();
+      return;
+    }
+
+    if (! $this->currentUser()->can('budget.delete')) {
+      $this->closeDeleteModal();
+      $this->toastError('Anda tidak memiliki izin menghapus DPA.');
       return;
     }
 

@@ -64,7 +64,7 @@ class SppdCreate extends Component
 
   public function mount(): void
   {
-    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Hanya Admin OPD atau Super Admin yang dapat membuat SPPD.');
+    abort_unless(Auth::user()->can('sppd.create'), 403, 'Anda tidak memiliki izin untuk membuat SPPD.');
 
     // Kembali dari Tahap 2: pulihkan pilihan pelaksana & domain agar tetap terpilih.
     // user_id datang sebagai hashid (getRouteKey), jadi perlu di-decode dulu.
@@ -117,7 +117,7 @@ class SppdCreate extends Component
     $this->userInfo = [
       'name' => $user->name,
       'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
-      'role_label' => $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role'),
+      'role_label' => $user->primaryRoleLabel(),
     ];
 
     // SPPD aktif lain tidak menghalangi: bentrok tanggal baru dicek di Tahap 2 (lihat
@@ -131,7 +131,7 @@ class SppdCreate extends Component
 
     if (empty($this->steps)) {
       $this->errorMessage = $match['supervisor_role']
-        ? 'Aturan alur untuk pemohon dengan atasan langsung ' . e($workflowService->roleLabel($match['supervisor_role'])) . ' belum dibuat oleh Administrator SPPD (Super Admin)'
+        ? 'Aturan alur untuk pemohon dengan atasan langsung ' . e($workflowService->roleLabelIn($match['supervisor_role'], $user->department_id)) . ' belum dibuat oleh Administrator SPPD (Super Admin)'
         : 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin)';
       $this->errorMessageRole = $this->userInfo['role_label'];
       return;
@@ -147,8 +147,13 @@ class SppdCreate extends Component
     }
 
     // 3. Verifikasi Kelengkapan Pejabat: setiap tahap wajib punya pejabat pasti.
-    if (collect($this->steps)->contains('status', 'not_found')) {
-      $this->errorMessage = 'Ada pejabat struktural yang belum ditentukan dalam alur ini. Lengkapi lewat tombol pada tahap yang masih kosong.';
+    $missing = collect($this->steps)->where('status', 'not_found');
+    if ($missing->isNotEmpty()) {
+      // Tahap eksternal (mis. Kepala Dinas Kesehatan) tidak punya tombol Lengkapi di sini.
+      $internal = $missing->reject(fn (array $step) => $workflowService->isExternalStep($step['role']));
+      $this->errorMessage = $internal->isNotEmpty()
+        ? 'Ada pejabat struktural yang belum ditentukan dalam alur ini. Lengkapi lewat tombol pada tahap yang masih kosong.'
+        : 'Pejabat ' . e($missing->first()['role_label']) . ' belum terdaftar di sistem. Hubungi Admin instansi tersebut atau Super Admin untuk melengkapinya di Data Pegawai.';
       return;
     }
 
@@ -217,7 +222,7 @@ class SppdCreate extends Component
         $this->toastSuccess("{$chosen->name} dipilih sebagai atasan langsung. Pilihan disimpan untuk pengajuan berikutnya." . ($also ? ' Berlaku juga untuk ' . count($also) . ' rekan satu unit.' : ''));
       } else {
         $chosen = $service->chooseStepApprover($pelaksana, $this->domain, (string) $this->supervisorRole, $this->supervisorChoiceId);
-        $this->toastSuccess("{$chosen->name} dipilih sebagai {$service->roleLabel((string) $this->supervisorRole)}. Pilihan disimpan untuk pengajuan berikutnya.");
+        $this->toastSuccess("{$chosen->name} dipilih sebagai {$service->roleLabelIn((string) $this->supervisorRole, $pelaksana->department_id)}. Pilihan disimpan untuk pengajuan berikutnya.");
       }
     } catch (\RuntimeException $e) {
       $this->toastError($e->getMessage());
@@ -359,7 +364,7 @@ class SppdCreate extends Component
       return;
     }
 
-    $label = $service->roleLabel((string) $this->officialRole);
+    $label = $service->roleLabelIn((string) $this->officialRole, $pelaksana->department_id);
     $this->toastSuccess($outgoing
       ? "{$appointed->name} menggantikan {$outgoing->name} sebagai {$label}."
       : "{$appointed->name} ditetapkan sebagai {$label}.");
@@ -369,9 +374,17 @@ class SppdCreate extends Component
   /**
    * Pengguna boleh melengkapi tahap bila instansi asal calonnya dalam lingkupnya —
    * Sekda/Wali Kota hanya oleh Admin Sekretariat Daerah atau Super Admin.
+   *
+   * Menetapkan pejabat mengubah jabatan & role pegawai (data kepegawaian), jadi tetap
+   * khusus Super Admin & Admin OPD walau pembuat SPPD lain (mis. Kasubid/Kasubag)
+   * memegang sppd.create. Modal Tambah Jabatan di wizard ini pun dibatasi ke dua role itu.
    */
   private function canCompleteOfficial(string $role): bool
   {
+    if (! Auth::user()->hasAnyRole(['super_admin', 'admin_opd'])) {
+      return false;
+    }
+
     $root = app(SppdWorkflowService::class)->officialPoolRoot($role, $this->pelaksana());
 
     return $root !== null && $this->canManageDepartment($root->id);
@@ -389,7 +402,7 @@ class SppdCreate extends Component
     return User::with('department.parent')->findOrFail($this->user_id);
   }
 
-  /** Super Admin mengelola semua unit; Admin OPD hanya unit dalam lingkupnya. */
+  /** Super Admin mengelola semua unit; pembuat SPPD lain hanya unit dalam lingkupnya. */
   private function canManageDepartment(?int $departmentId): bool
   {
     $actor = Auth::user();
@@ -434,7 +447,7 @@ class SppdCreate extends Component
         $q->whereIn('name', ['super_admin', 'admin_opd']);
       });
 
-    // Filter: Admin OPD bisa melihat pegawai di instansinya + sub-department
+    // Filter: selain Super Admin hanya melihat pegawai di instansinya + sub-department
     if (! Auth::user()->hasRole('super_admin')) {
       $dept = Auth::user()->department;
       if ($dept) {

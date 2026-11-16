@@ -160,22 +160,14 @@
 		     Dompdf dapat memecah halaman DI ANTARA orang (bukan menendang seluruh
 		     daftar ke halaman berikutnya), sehingga pergantian halaman rapi. --}}
 		@php
-			$peserta = [];
-			$peserta[] = [
-				'name'    => $sppd->user->name,
-				'pangkat' => \App\Models\Rank::pangkatGolongan($sppd->user->rank?->name, $sppd->user->rank?->group),
-				'nip'     => $sppd->user->nip,
-				'jabatan' => $sppd->user->position->name ?? ($sppd->user->roles->first()->name ?? '-'),
-			];
-			// Pengikut diurutkan dari jabatan & golongan tertinggi (SppdRequest::followersForSpt).
-			foreach ($sppd->followersForSpt() as $follower) {
-				$peserta[] = [
-					'name'    => $follower->user->name,
-					'pangkat' => \App\Models\Rank::pangkatGolongan($follower->user->rank?->name, $follower->user->rank?->group),
-					'nip'     => $follower->user->nip,
-					'jabatan' => $follower->travel_position ?? ($follower->user->position->name ?? ($follower->user->roles->first()->name ?? '-')),
-				];
-			}
+			// Pelaksana + pengikut sesuai urutan cetak (SppdRequest::sptParticipants): di Inspektorat
+			// semuanya diurutkan menurut jabatan perjalanan, selain itu pelaksana tetap nomor 1.
+			$peserta = $sppd->sptParticipants()->map(fn ($p) => [
+				'name'    => $p->user->name,
+				'pangkat' => \App\Models\Rank::pangkatGolongan($p->user->rank?->name, $p->user->rank?->group),
+				'nip'     => $p->user->nip,
+				'jabatan' => $p->travel_position ?? ($p->user->position->name ?? ($p->user->roles->first()->name ?? '-')),
+			])->all();
 		@endphp
 		@foreach ($peserta as $i => $p)
 			<tr style="page-break-inside: avoid;">

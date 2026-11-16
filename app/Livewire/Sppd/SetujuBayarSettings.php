@@ -16,7 +16,8 @@ use Livewire\Component;
  * Penandatangan "Setuju Bayar" pada Portal Dokumen SPPD: kolom Setuju Bayar /
  * Mengetahui di kuitansi, pengeluaran riil, dan rincian biaya. Disimpan per
  * instansi (root zona data pelaksana, lihat Department::resolveSetujuBayar), jadi
- * berlaku untuk seluruh SPPD instansi itu. Diatur Admin OPD instansi / Super Admin.
+ * berlaku untuk seluruh SPPD instansi itu. Diatur pemegang permission cost.manage
+ * dalam lingkup instansi itu, atau Super Admin.
  */
 class SetujuBayarSettings extends Component
 {
@@ -44,6 +45,12 @@ class SetujuBayarSettings extends Component
     return SppdRequest::with(['user.department.parent', 'pptk'])->findOrFail($this->sppdId);
   }
 
+  /** Sebutan pimpinan instansi (penandatangan bawaan): Kepala OPD, di Rumah Sakit "Direktur". */
+  private function kepalaLabel(?Department $instansi): string
+  {
+    return $instansi?->roleLabel('kepala_opd', 'Kepala OPD') ?? 'Kepala OPD';
+  }
+
   /** Instansi tempat pengaturan disimpan: root zona data unit kerja pelaksana. */
   private function instansi(SppdRequest $sppd): ?Department
   {
@@ -60,7 +67,7 @@ class SetujuBayarSettings extends Component
       return true;
     }
 
-    return $actor->hasRole('admin_opd')
+    return $actor->canManageCosts()
       && ($actor->department?->getScopedRelatedIds() ?? collect([$actor->department_id]))->contains($instansi->id);
   }
 
@@ -85,7 +92,7 @@ class SetujuBayarSettings extends Component
     $result = $this->employeeOptions($this->candidateQuery($instansi), $term);
     if (trim($term) === '') {
       $kepala = $instansi->defaultSetujuBayarUser()?->load('position');
-      array_unshift($result['options'], ['value' => '', 'label' => 'Kepala OPD (bawaan)' . ($kepala ? " - {$kepala->name}" : '')]
+      array_unshift($result['options'], ['value' => '', 'label' => $this->kepalaLabel($instansi) . ' (bawaan)' . ($kepala ? " - {$kepala->name}" : '')]
         + ($kepala ? static::employeeDetails($kepala) : ['name' => null, 'nip' => null, 'position' => null]));
     }
 
@@ -96,7 +103,7 @@ class SetujuBayarSettings extends Component
   {
     $instansi = $this->instansi($this->sppd());
     if (! $this->canManage($instansi)) {
-      $this->toastError('Penandatangan Setuju Bayar diatur oleh Admin OPD instansi pelaksana atau Super Admin.');
+      $this->toastError('Penandatangan Setuju Bayar diatur oleh pengelola biaya instansi pelaksana atau Super Admin.');
       return;
     }
 
@@ -111,7 +118,7 @@ class SetujuBayarSettings extends Component
   {
     $instansi = $this->instansi($this->sppd());
     if (! $this->canManage($instansi)) {
-      $this->toastError('Penandatangan Setuju Bayar diatur oleh Admin OPD instansi pelaksana atau Super Admin.');
+      $this->toastError('Penandatangan Setuju Bayar diatur oleh pengelola biaya instansi pelaksana atau Super Admin.');
       return;
     }
 
@@ -133,7 +140,7 @@ class SetujuBayarSettings extends Component
     // Isian kosong (mis. setelah Reset pengaturan di modal) = kembali ke Kepala OPD.
     $this->toastSuccess($instansi->setuju_bayar_user_id || $instansi->setuju_bayar_label
       ? "Penandatangan Setuju Bayar {$instansi->name} disimpan."
-      : "Pengaturan Setuju Bayar {$instansi->name} direset. Dokumen kembali memakai Kepala OPD.");
+      : "Pengaturan Setuju Bayar {$instansi->name} direset. Dokumen kembali memakai {$this->kepalaLabel($instansi)}.");
   }
 
   /**
@@ -200,6 +207,7 @@ class SetujuBayarSettings extends Component
     return view('livewire.sppd.setuju-bayar-settings', [
       'sppd'      => $sppd,
       'instansi'  => $instansi,
+      'kepalaLabel' => $this->kepalaLabel($instansi),
       'canManage' => $canManage,
       'current'   => $current,
       'preview'   => $preview,

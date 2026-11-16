@@ -14,7 +14,7 @@ use Livewire\Component;
 /**
  * PPTK SPPD di Portal Dokumen: ringkasan + modal pengaturan. Kandidat dibatasi
  * pada pegawai aktif di OPD induk pelaksana (root department + seluruh sub-unitnya).
- * Hanya admin OPD & super admin yang boleh mengubah PPTK.
+ * Hanya pemegang permission cost.manage yang boleh mengubah PPTK.
  */
 class PptkSelector extends Component
 {
@@ -52,10 +52,10 @@ class PptkSelector extends Component
     $this->showModal = true;
   }
 
-  /** Hanya admin OPD & super admin yang boleh mengubah PPTK. */
+  /** Pemegang permission cost.manage + akses menu Selanjutnya (lihat User::canManageCosts) yang boleh mengubah PPTK. */
   public function canManage(): bool
   {
-    return Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
+    return Auth::user()->canManageCosts();
   }
 
   /** ID department: zona data OPD pelaksana (root zona + sub-unit yang berbagi data). */

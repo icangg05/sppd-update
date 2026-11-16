@@ -27,6 +27,7 @@ class TravelReportDateTest extends TestCase
         foreach (['staf', 'admin_opd'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
 
         $dinas = Department::create(['name' => 'Dinas Perhubungan', 'type' => DepartmentType::OPD, 'level' => 1]);
         $admin = User::factory()->create(['department_id' => $dinas->id]);

@@ -156,6 +156,7 @@
 
 	<x-ui.toast />
 	<x-ui.gallery />
+	<x-ui.dev-watermark />
 
 	@stack('scripts')
 </body>

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
-use App\Enums\DprdJabatan;
 use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Enums\DepartmentType;
 use App\Enums\SignatureDocumentType;
@@ -142,7 +141,7 @@ class SppdController extends Controller
    */
   public function next(SppdRequest $sppd)
   {
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user', 'followers.user']);
 
@@ -189,8 +188,7 @@ class SppdController extends Controller
    */
   public function manageSppd(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user', 'followers.user']);
 
@@ -202,8 +200,7 @@ class SppdController extends Controller
    */
   public function manageSpt(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user']);
 
@@ -215,8 +212,7 @@ class SppdController extends Controller
    */
   public function receipts(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
 
@@ -245,8 +241,7 @@ class SppdController extends Controller
    */
   public function actualExpenses(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
 
@@ -260,7 +255,7 @@ class SppdController extends Controller
    */
   public function updatePptk(SppdRequest $sppd, Request $request)
   {
-    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    abort_unless(Auth::user()->canManageCosts(), 403, 'Aksi ini tidak diizinkan.');
     $this->authorizeSppdAccess($sppd);
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
@@ -290,8 +285,7 @@ class SppdController extends Controller
    */
   public function finalCosts(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
 
@@ -309,8 +303,7 @@ class SppdController extends Controller
    */
   public function reportInput(SppdRequest $sppd)
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $sppd->load(['user', 'report']);
 
@@ -405,7 +398,7 @@ class SppdController extends Controller
         'name' => $user->name,
         'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
         'role' => $user->getRoleNames()->first() ?? 'Tanpa Role',
-        'role_label' => $user->roles->first()?->label ?? ($user->getRoleNames()->first() ?? 'Tanpa Role'),
+        'role_label' => $user->primaryRoleLabel(),
       ],
       'has_header' => (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/')),
       'steps' => $steps,
@@ -449,7 +442,7 @@ class SppdController extends Controller
       'is_approved' => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image' => null,
       'duration' => $duration,
-      'letterhead_url' => ($sppd->user->department?->getRootDepartment()?->type === DepartmentType::DPRD && $sppd->user->isDprdMember())
+      'letterhead_url' => $sppd->usesDprdSptFormat()
         ? $sppd->user->department->getInheritedLetterheadSecond()
         : $sppd->user->department?->getInheritedLetterhead(),
     ];
@@ -459,31 +452,9 @@ class SppdController extends Controller
       $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 65);
     }
 
-    $isDprdMember = $sppd->user->department?->getRootDepartment()?->type === DepartmentType::DPRD && $sppd->user->isDprdMember();
-
+    $isDprdMember = $sppd->usesDprdSptFormat();
     $viewName = $isDprdMember ? 'exports.spt_dprd' : 'exports.spt';
-
-    // SPT DPRD: peserta (pelaksana + pengikut) diurutkan berdasarkan jabatan
-    // DPRD dari tertinggi ke terendah. Non-DPRD/ tanpa jabatan ditaruh di akhir.
-    $participants = collect();
-    if ($isDprdMember) {
-      $makeRow = function (User $u, ?string $travelPosition = null): array {
-        $jabatan = $u->isDprdMember()
-          ? (DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->label(true) ?? $u->dprd_jabatan ?? 'ANGGOTA DPRD')
-          : ($travelPosition ?? ($u->position->name ?? ($u->roles->first()->name ?? '-')));
-
-        return [
-          'name' => $u->name,
-          'jabatan' => $jabatan,
-          'level' => DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->level() ?? PHP_INT_MAX,
-        ];
-      };
-
-      $participants = collect([$makeRow($sppd->user)])
-        ->merge($sppd->followers->map(fn ($f) => $makeRow($f->user, $f->travel_position)))
-        ->sortBy('level')
-        ->values();
-    }
+    $participants = $isDprdMember ? $sppd->sptDprdParticipants() : collect();
 
     return Pdf::loadView($viewName, compact('sppd', 'pdfData', 'participants'))
       ->setPaper('f4', 'portrait')
@@ -547,7 +518,8 @@ class SppdController extends Controller
       'qr_image' => null,
       'duration' => $duration,
       'is_follower' => ! $isMain,
-      'travel_position' => $follower?->travel_position,
+      // Jabatan perjalanan (Inspektorat): milik pelaksana di SPPD-nya, atau milik pengikut.
+      'travel_position' => $isMain ? $sppd->travel_position : $follower?->travel_position,
       'letterhead_url' => $targetUser->department?->getInheritedLetterhead(),
     ];
 
@@ -567,10 +539,10 @@ class SppdController extends Controller
 
   public function destroy(SppdRequest $sppd)
   {
-    $isAdmin = Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
-    if (! $isAdmin) {
+    if (! Auth::user()->can('sppd.delete')) {
       return back()->with('error', 'Anda tidak memiliki akses untuk menghapus SPPD ini.');
     }
+    $this->authorizeSppdAccess($sppd);
 
     if ($sppd->status !== SppdStatus::IN_PROGRESS) {
       return back()->with('error', 'SPPD yang sudah disetujui penuh atau selesai tidak dapat dihapus.');
@@ -586,7 +558,7 @@ class SppdController extends Controller
    */
   public function streamKuitansiRampung(SppdRequest $sppd, Request $request)
   {
-    $this->authorizeSppdAccess($sppd);
+    $this->authorizeCostMenu($sppd);
     $sppd->load([
       'user.department.parent',
       'user.rank',
@@ -686,7 +658,7 @@ class SppdController extends Controller
    */
   public function streamKuitansiPanjar(SppdRequest $sppd, Request $request)
   {
-    $this->authorizeSppdAccess($sppd);
+    $this->authorizeCostMenu($sppd);
     $sppd->load([
       'user.department.parent',
       'user.rank',
@@ -779,7 +751,7 @@ class SppdController extends Controller
    */
   public function streamPengeluaranRiil(SppdRequest $sppd, Request $request)
   {
-    $this->authorizeSppdAccess($sppd);
+    $this->authorizeCostMenu($sppd);
     $sppd->load([
       'user.department.parent',
       'user.rank',
@@ -851,7 +823,7 @@ class SppdController extends Controller
    */
   public function streamRincianBiaya(SppdRequest $sppd, Request $request)
   {
-    $this->authorizeSppdAccess($sppd);
+    $this->authorizeCostMenu($sppd);
     $sppd->load([
       'user.department.parent',
       'user.rank',

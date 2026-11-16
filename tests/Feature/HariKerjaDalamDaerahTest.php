@@ -18,8 +18,8 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Perjalanan dinas dalam daerah hanya dihitung pada hari kerja: 5 hari mulai Rabu
- * = Rabu, Kamis, Jumat, lalu lompat ke Senin, Selasa. Domain lain menghitung semua hari.
+ * Perjalanan dinas dalam daerah tidak menghitung hari Minggu: 6 hari mulai Rabu
+ * = Rabu, Kamis, Jumat, Sabtu, lalu lompat ke Senin, Selasa. Domain lain menghitung semua hari.
  */
 class HariKerjaDalamDaerahTest extends TestCase
 {
@@ -30,22 +30,25 @@ class HariKerjaDalamDaerahTest extends TestCase
         return $domain->travelDays(Carbon::parse($mulai), Carbon::parse($selesai));
     }
 
-    public function test_dalam_daerah_melewati_sabtu_dan_minggu(): void
+    public function test_dalam_daerah_hanya_melewati_hari_minggu(): void
     {
-        // Rabu 11 s/d Selasa 17 November 2026.
-        $this->assertSame(5, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-11', '2026-11-17'));
+        // Rabu 11 s/d Selasa 17 November 2026: Minggu 15 dilewati, Sabtu 14 dihitung.
+        $this->assertSame(6, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-11', '2026-11-17'));
         $this->assertSame(1, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-11', '2026-11-11'));
         $this->assertSame(3, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-11', '2026-11-13'));
-        // Senin 2 s/d Jumat 13 November: dua pekan kerja.
-        $this->assertSame(10, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-02', '2026-11-13'));
-        $this->assertSame(0, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-14', '2026-11-15'));
+        // Rabu 11 s/d Sabtu 14 November: Sabtu ikut dihitung.
+        $this->assertSame(4, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-11', '2026-11-14'));
+        // Senin 2 s/d Sabtu 14 November: dua pekan, Minggu 8 dilewati.
+        $this->assertSame(12, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-02', '2026-11-14'));
+        $this->assertSame(1, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-14', '2026-11-15'));
+        $this->assertSame(0, $this->hari(SppdDomain::DALAM_DAERAH, '2026-11-15', '2026-11-15'));
     }
 
     public function test_domain_lain_menghitung_semua_hari(): void
     {
         foreach ([SppdDomain::LDDP, SppdDomain::LDLP, SppdDomain::LUAR_NEGERI] as $domain) {
             $this->assertSame(7, $this->hari($domain, '2026-11-11', '2026-11-17'), $domain->value);
-            $this->assertFalse($domain->skipsWeekends());
+            $this->assertFalse($domain->skipsSundays());
         }
     }
 
@@ -54,23 +57,28 @@ class HariKerjaDalamDaerahTest extends TestCase
         $dalamDaerah = new SppdRequest(['domain' => 'dalam_daerah', 'start_date' => '2026-11-11', 'end_date' => '2026-11-17']);
         $luarDaerah = new SppdRequest(['domain' => 'lddp', 'start_date' => '2026-11-11', 'end_date' => '2026-11-17']);
 
-        $this->assertSame(5, $dalamDaerah->durationInDays());
-        $this->assertSame(5, $dalamDaerah->duration_days);
+        $this->assertSame(6, $dalamDaerah->durationInDays());
+        $this->assertSame(6, $dalamDaerah->duration_days);
         $this->assertSame(7, $luarDaerah->durationInDays());
     }
 
-    public function test_dalam_daerah_tidak_bisa_berangkat_atau_kembali_di_akhir_pekan(): void
+    public function test_dalam_daerah_tidak_bisa_berangkat_atau_kembali_di_hari_minggu(): void
     {
         $form = $this->formSppd('dalam_daerah');
 
-        // Sabtu 14 s/d Minggu 22 November 2026.
-        $form->set('start_date', '2026-11-14')->set('end_date', '2026-11-22')
+        // Minggu 15 s/d Minggu 22 November 2026.
+        $form->set('start_date', '2026-11-15')->set('end_date', '2026-11-22')
             ->call('openConfirmModal')
             ->assertHasErrors(['start_date', 'end_date'])
-            ->assertSee('Perjalanan dalam daerah tidak bisa berangkat pada hari Sabtu')
+            ->assertSee('Perjalanan dalam daerah tidak bisa berangkat pada hari Minggu')
             ->assertSee('Perjalanan dalam daerah tidak bisa kembali pada hari Minggu');
 
-        // Rabu 11 s/d Selasa 17 November 2026 melewati akhir pekan: boleh.
+        // Sabtu 14 s/d Sabtu 21 November 2026: Sabtu boleh jadi hari berangkat/kembali.
+        $form->set('start_date', '2026-11-14')->set('end_date', '2026-11-21')
+            ->call('openConfirmModal')
+            ->assertHasNoErrors(['start_date', 'end_date']);
+
+        // Rabu 11 s/d Selasa 17 November 2026 melewati hari Minggu: boleh.
         $form->set('start_date', '2026-11-11')->set('end_date', '2026-11-17')
             ->call('openConfirmModal')
             ->assertHasNoErrors(['start_date', 'end_date']);
@@ -88,6 +96,7 @@ class HariKerjaDalamDaerahTest extends TestCase
     private function formSppd(string $domain)
     {
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web'], ['label' => 'Super Admin']);
+        $this->grantDefaultPermissions();
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super_admin');
         $this->actingAs($superAdmin);

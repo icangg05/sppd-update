@@ -140,7 +140,7 @@ class SignatureService
    * Causer di-set eksplisit ke penanda tangan karena proses berjalan di queue
    * (tanpa konteks auth), sehingga "siapa yang TTE" tetap terekam.
    */
-  private function logTteActivity(SppdDigitalSignature $signature, string $event, string $description): void
+  public function logTteActivity(SppdDigitalSignature $signature, string $event, string $description): void
   {
     $docLabel = SignatureDocumentType::tryFrom($signature->document_type)?->label() ?? strtoupper($signature->document_type);
 

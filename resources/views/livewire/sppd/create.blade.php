@@ -260,6 +260,8 @@
 										@endif
 									</span>
 									<span class="line-clamp-2 text-sm font-semibold {{ $nameClass }}" title="{{ $approverName }}">{{ $approverName }}</span>
+									{{-- Penanda tangan SPT/SPPD sudah terlihat sejak pratinjau, sebelum pengajuan. --}}
+									<x-sppd.signer-badge :spt="$step['signs_spt'] ?? false" :sppd="$step['signs_sppd'] ?? false" class="mt-0.5" />
 									{{-- Beberapa kandidat: dipilih per tahap, berurutan dari tahap pertama. --}}
 									@if ($isChoose)
 										@if ($canManagePelaksana && $step['subordinate_id'])
@@ -269,7 +271,7 @@
 											</x-ui.button>
 										@else
 											<span class="mt-1 block text-[11px] text-slate-500">
-												{{ $canManagePelaksana ? 'Pilih tahap sebelumnya dulu' : 'Diatur Admin instansi pelaksana / Super Admin' }}
+												{{ $canManagePelaksana ? 'Pilih tahap sebelumnya dulu' : 'Diatur instansi pelaksana / Super Admin' }}
 											</span>
 										@endif
 									@endif
@@ -282,7 +284,11 @@
 											</x-ui.button>
 										@else
 											<span class="mt-1 block text-[11px] text-slate-500">
-												Diatur {{ in_array($step['role'], \App\Services\SppdWorkflowService::CITY_WIDE_ROLES, true) ? 'Admin Sekretariat Daerah' : 'Admin instansi pelaksana' }} / Super Admin
+												Diatur {{ match (true) {
+													in_array($step['role'], \App\Services\SppdWorkflowService::CITY_WIDE_ROLES, true) => 'Admin Sekretariat Daerah',
+													array_key_exists($step['role'], \App\Services\SppdWorkflowService::EXTERNAL_STEP_ROLES) => 'Admin ' . str_replace('Kepala ', '', \App\Services\SppdWorkflowService::EXTERNAL_STEP_ROLES[$step['role']]),
+													default => 'Admin instansi pelaksana',
+												} }} / Super Admin
 											</span>
 										@endif
 									@endif

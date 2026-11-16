@@ -39,6 +39,7 @@ class SppdDeleteTest extends TestCase
         foreach (['staf', 'admin_opd'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
 
         $this->dinas = Department::create(['name' => 'Dinas Perhubungan', 'type' => DepartmentType::OPD, 'level' => 1]);
         $this->admin = User::factory()->create(['department_id' => $this->dinas->id]);

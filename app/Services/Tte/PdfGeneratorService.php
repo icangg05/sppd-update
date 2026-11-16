@@ -96,7 +96,8 @@ class PdfGeneratorService
             'qr_image' => null,
             'duration' => $duration,
             'is_follower' => !$isMain,
-            'travel_position' => $followerRecord?->travel_position,
+            // Jabatan perjalanan (Inspektorat): milik pelaksana di SPPD-nya, atau milik pengikut.
+            'travel_position' => $isMain ? $sppd->travel_position : $followerRecord?->travel_position,
             'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
         ];
 
@@ -125,8 +126,8 @@ class PdfGeneratorService
             ? $approver->dprd_jabatan
             : ($approver?->position_name ?? $approver?->position?->name ?? $sptApproval?->role_label ?? 'Kepala Dinas');
 
-        $isDprd = $sppd->user->department?->type === \App\Enums\DepartmentType::DPRD
-            || $sppd->user->department?->parent?->type === \App\Enums\DepartmentType::DPRD;
+        // Syarat format DPRD harus sama dengan pratinjau SPT (SppdController::streamSpt).
+        $isDprd = $sppd->usesDprdSptFormat();
 
         $pdfData = [
             'approver_name' => $approver?->name ?? '................................',
@@ -153,6 +154,8 @@ class PdfGeneratorService
             'data' => [
                 'sppd' => $sppd,
                 'pdfData' => $pdfData,
+                // Wajib untuk view spt_dprd; tanpanya TTE SPT DPRD selalu gagal.
+                'participants' => $isDprd ? $sppd->sptDprdParticipants() : collect(),
             ],
         ];
     }

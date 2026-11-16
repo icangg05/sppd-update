@@ -37,6 +37,7 @@ class SetujuBayarSettingsTest extends TestCase
         foreach (['staf', 'admin_opd', 'kepala_opd'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
 
         $this->dinas = Department::create(['name' => 'Dinas Perhubungan', 'type' => DepartmentType::OPD, 'level' => 1, 'can_view_children_data' => true]);
         $bidang = Department::create(['name' => 'Bidang Lalu Lintas', 'type' => DepartmentType::OPD, 'level' => 2, 'parent_id' => $this->dinas->id, 'can_view_children_data' => true]);

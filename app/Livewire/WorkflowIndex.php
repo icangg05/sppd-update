@@ -86,7 +86,7 @@ class WorkflowIndex extends Component
       ->paginate(25)
       ->onEachSide(1);
 
-    $roleLabels = Role::pluck('label', 'name')->all();
+    $roleLabels = Role::pluck('label', 'name')->all() + \App\Services\SppdWorkflowService::EXTERNAL_STEP_ROLES;
 
     return view('livewire.workflows.index', compact('workflows', 'roleLabels'))
       ->title('Workflow SPPD');

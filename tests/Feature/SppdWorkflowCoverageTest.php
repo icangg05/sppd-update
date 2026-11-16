@@ -30,6 +30,7 @@ class SppdWorkflowCoverageTest extends TestCase
         'kecamatan'   => ['staf', 'kasubid_kasubag', 'sekretaris_opd', 'sekcam', 'kepala_opd', 'camat'],
         'kelurahan'   => ['staf', 'kasubid_kasubag', 'sekretaris_opd', 'kepala_opd', 'lurah'],
         'puskesmas'   => ['staf', 'kasubid_kasubag', 'kepala_opd', 'kapus'],
+        'rumah_sakit' => ['staf', 'kasubid_kasubag', 'kabid_irban_kabag', 'sekretaris_opd', 'kepala_opd'],
         'setda'       => self::SETDA,
         'asisten'     => self::SETDA,
         'bagian'      => self::SETDA,
@@ -106,8 +107,8 @@ class SppdWorkflowCoverageTest extends TestCase
             $this->assertSame(1, $steps->where('signs_sppd', true)->count(), "{$workflow->name}: penanda tangan SPPD");
 
             foreach ($steps as $step) {
-                // Tingkat persetujuan terendah Kabid/Irban/Kabag.
-                $this->assertContains($step['role'], SppdWorkflowService::APPROVER_ROLES, "{$workflow->name}: {$step['role']}");
+                // Tingkat persetujuan terendah Kabid/Irban/Kabag; tahap eksternal (Kepala Dinas Kesehatan) juga sah.
+                $this->assertContains($step['role'], [...SppdWorkflowService::APPROVER_ROLES, ...array_keys(SppdWorkflowService::EXTERNAL_STEP_ROLES)], "{$workflow->name}: {$step['role']}");
                 // Semua tahap wajib: tidak ada lagi tahap yang bisa dilewati.
                 $this->assertArrayNotHasKey('optional', $step, "{$workflow->name}: tahap opsional");
             }

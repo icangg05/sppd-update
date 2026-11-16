@@ -29,8 +29,7 @@ class TravelReport extends Component
 
   public function mount(SppdRequest $sppd): void
   {
-    $this->authorizeSppdAccess($sppd);
-    abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Halaman ini belum dapat diakses karena pengajuan SPPD belum disetujui sepenuhnya.');
+    $this->authorizeCostMenu($sppd);
 
     $this->sppd = $sppd;
     // Default hari ini, tapi tidak sebelum perjalanan selesai (tanggal kembali).
@@ -46,7 +45,7 @@ class TravelReport extends Component
 
   public function canManage(): bool
   {
-    return Auth::user()->hasAnyRole(['admin_opd', 'super_admin']);
+    return Auth::user()->canManageCosts();
   }
 
   public function save(AppSettings $settings): void

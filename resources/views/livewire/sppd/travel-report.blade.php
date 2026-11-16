@@ -1,5 +1,5 @@
 @php
-  $isAdmin = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
+  $isAdmin = auth()->user()->canManageCosts();
   $hasFile = (bool) $sppd->report?->report_file;
   $hasPhoto = (bool) $sppd->report?->documentation_file;
   $doneCount = ($hasFile ? 1 : 0) + ($hasPhoto ? 1 : 0);

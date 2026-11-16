@@ -505,29 +505,19 @@ class SppdShow extends Component
 
     $cleanMsg = $rawError;
 
-    // Bersihkan prefix common
-    if (preg_match('/(?:Provider request failed:|Provider second request failed:)\s*(.*)/is', $rawError, $matches)) {
-      $cleanMsg = trim($matches[1]);
-    }
+    // Pesan provider bisa terbungkus berlapis, mis.
+    //   Provider request failed: {"error":"Provider request failed: {\"error\":\"Passphrase anda salah\",...}"}
+    // Buka lapis demi lapis (buang prefix, ambil "error"/"message" dari JSON) sampai tersisa pesan aslinya.
+    for ($depth = 0; $depth < 5; $depth++) {
+      $stripped = trim(preg_replace('/^.*?Provider (?:second )?request failed:\s*/is', '', $cleanMsg, 1));
+      $decoded = json_decode($stripped, true);
+      $inner = is_array($decoded) ? ($decoded['error'] ?? $decoded['message'] ?? null) : null;
 
-    // Coba decode JSON jika payload-nya berupa JSON string
-    $decoded = json_decode($cleanMsg, true);
-    if (is_array($decoded)) {
-      if (isset($decoded['error'])) {
-        $cleanMsg = $decoded['error'];
-      } elseif (isset($decoded['message'])) {
-        $cleanMsg = $decoded['message'];
+      if (! is_string($inner) || $inner === '') {
+        $cleanMsg = $stripped;
+        break;
       }
-
-      // Kadang-kadang nested JSON
-      $nestedDecoded = json_decode($cleanMsg, true);
-      if (is_array($nestedDecoded)) {
-        if (isset($nestedDecoded['error'])) {
-          $cleanMsg = $nestedDecoded['error'];
-        } elseif (isset($nestedDecoded['message'])) {
-          $cleanMsg = $nestedDecoded['message'];
-        }
-      }
+      $cleanMsg = $inner;
     }
 
     // Bersihkan lagi jika masih ada string JSON sisa

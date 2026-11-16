@@ -31,15 +31,15 @@ enum SppdDomain: string
     };
   }
 
-  /** Perjalanan dalam daerah hanya dihitung pada hari kerja: Sabtu & Minggu dilewati. */
-  public function skipsWeekends(): bool
+  /** Perjalanan dalam daerah tidak menghitung hari Minggu (Sabtu tetap dihitung). */
+  public function skipsSundays(): bool
   {
     return $this === self::DALAM_DAERAH;
   }
 
   /**
    * Lama perjalanan dalam hari, termasuk hari berangkat dan kembali. Dalam daerah hanya
-   * menghitung Senin–Jumat: Rabu s/d Selasa berikutnya = 5 hari.
+   * menghitung Senin–Sabtu: Rabu s/d Selasa berikutnya = 6 hari.
    */
   public function travelDays(CarbonInterface $start, CarbonInterface $end): int
   {
@@ -49,13 +49,13 @@ enum SppdDomain: string
       return 0;
     }
 
-    if (! $this->skipsWeekends()) {
+    if (! $this->skipsSundays()) {
       return (int) $start->diffInDays($end) + 1;
     }
 
     $days = 0;
     for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
-      $days += $day->isWeekend() ? 0 : 1;
+      $days += $day->isSunday() ? 0 : 1;
     }
 
     return $days;

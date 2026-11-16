@@ -35,6 +35,17 @@ class SppdWorkflowService
   public const CITY_WIDE_ROLES = ['sekda', 'walikota', 'wakil_walikota'];
 
   /**
+   * Role tahap yang pejabatnya dicari di instansi lain, bukan instansi pemohon:
+   * "<role dasar>@<tipe unit akar>". Mis. Kadis Kesehatan pada alur Direktur RSUD ke luar
+   * daerah, yang juga punya tahap Kepala OPD (Direktur) — nama tahap harus tetap unik karena
+   * form Buat SPPD memakai role sebagai kunci tahap. Tidak bisa dilengkapi/diganti dari form
+   * Buat SPPD; pejabatnya diatur di Data Pegawai instansi tersebut.
+   */
+  public const EXTERNAL_STEP_ROLES = [
+    'kepala_opd@dinkes' => 'Kepala Dinas Kesehatan',
+  ];
+
+  /**
    * Role yang bisa dijabat beberapa orang di satu instansi: pejabat tunggal yang
    * tercatat di unit induk yang datar belum tentu atasan pemohon, jadi dikonfirmasi.
    */
@@ -172,7 +183,7 @@ class SppdWorkflowService
       $approver = $resolved['approver'];
       $approvals[] = [
         'approver_id' => $approver->id,
-        'role_label'  => $this->getApproverLabel($approver, $step['role']),
+        'role_label'  => $this->getApproverLabel($approver, $step['role'], $pelaksana->department_id),
         'step_order'  => $stepOrder++,
         'status'      => 'pending',
         'signs_spt'   => $step['signs_spt'],
@@ -234,7 +245,7 @@ class SppdWorkflowService
       $simulatedSteps[] = [
         'index'         => $index,
         'role'          => $step['role'],
-        'role_label'    => $this->getApproverLabel($approver ?? new User(), $step['role']),
+        'role_label'    => $this->getApproverLabel($approver ?? new User(), $step['role'], $pelaksana->department_id),
         'approver_id'   => $approver?->id,
         'approver_name' => match ($resolved['status']) {
           'found'  => $approver->name,
@@ -289,6 +300,15 @@ class SppdWorkflowService
   public function resolveStep(string $roleName, User $applicant): array
   {
     $roles = $this->getRoleSynonyms($roleName);
+
+    // Tahap eksternal: pejabatnya di unit akar instansi lain (role kepala satu per unit),
+    // jadi rantai atasan dan unit kerja pemohon tidak ditelusuri.
+    if ($this->isExternalStep($roleName)) {
+      $root = $this->externalInstansi($roleName);
+      $holder = $root ? $this->holders($roles, [$root->id])->first() : null;
+
+      return $holder ? $this->resolution('found', $holder) : $this->resolution('not_found');
+    }
 
     foreach ($this->supervisorChain($applicant)['links'] as $link) {
       if ($link['user']->roles->whereIn('name', $roles)->isNotEmpty()) {
@@ -475,7 +495,7 @@ class SppdWorkflowService
         'id'         => $u->id,
         'name'       => $u->name,
         'nip'        => $u->nip,
-        'role_label' => $this->roleLabel($this->approverRoleOf($u) ?? 'staf'),
+        'role_label' => $this->roleLabelIn($this->approverRoleOf($u) ?? 'staf', $u->department_id),
         'unit'       => $u->department?->name,
         'position'   => $u->position?->name,
       ])
@@ -571,7 +591,7 @@ class SppdWorkflowService
    */
   public function chooseStepApprover(User $pelaksana, ?string $destination, string $role, int $approverId): User
   {
-    $label = $this->roleLabel($role);
+    $label = $this->roleLabelIn($role, $pelaksana->department_id);
     $steps = $this->simulateApprovals($pelaksana, $destination);
     $position = collect($steps)->search(fn (array $s) => $s['role'] === $role
       && ($s['status'] === 'choose' || ($s['status'] === 'found' && $this->isReassignable($role))));
@@ -660,7 +680,31 @@ class SppdWorkflowService
   /** Role yang bisa dijabat beberapa orang sehingga pejabat tahapnya bisa dipilih ulang. */
   public function isReassignable(string $role): bool
   {
-    return ! $this->isUniquePerUnit($role) && ! in_array($role, self::CITY_WIDE_ROLES, true);
+    return ! $this->isExternalStep($role)
+      && ! $this->isUniquePerUnit($role)
+      && ! in_array($role, self::CITY_WIDE_ROLES, true);
+  }
+
+  /** Tahap yang pejabatnya dicari di instansi lain (lihat EXTERNAL_STEP_ROLES). */
+  public function isExternalStep(string $role): bool
+  {
+    return array_key_exists($role, self::EXTERNAL_STEP_ROLES);
+  }
+
+  /** Role pengguna sebenarnya di balik role tahap ("kepala_opd@dinkes" → "kepala_opd"). */
+  public static function baseRole(string $role): string
+  {
+    return explode('@', $role, 2)[0];
+  }
+
+  /** Unit akar instansi tempat pejabat tahap eksternal dicari, mis. Dinas Kesehatan. */
+  public function externalInstansi(string $role): ?Department
+  {
+    if (! $this->isExternalStep($role)) {
+      return null;
+    }
+
+    return Department::where('type', explode('@', $role, 2)[1])->whereNull('parent_id')->orderBy('id')->first();
   }
 
   /**
@@ -818,6 +862,11 @@ class SppdWorkflowService
    */
   public function officialPoolRoot(string $role, User $pelaksana): ?Department
   {
+    // Pejabat tahap eksternal diatur di Data Pegawai instansinya, bukan dari pengajuan SPPD.
+    if ($this->isExternalStep($role)) {
+      return null;
+    }
+
     if (in_array($role, self::CITY_WIDE_ROLES, true)) {
       return Department::where('type', DepartmentType::SETDA)->whereNull('parent_id')->orderBy('id')->first();
     }
@@ -924,7 +973,7 @@ class SppdWorkflowService
    */
   public function appointOfficial(User $actor, User $pelaksana, ?string $destination, string $role, int $candidateId, ?int $positionId = null, ?int $replaceId = null): User
   {
-    $label = $this->roleLabel($role);
+    $label = $this->roleLabelIn($role, $pelaksana->department_id);
 
     $outgoing = null;
     if ($replaceId) {
@@ -1174,6 +1223,7 @@ class SppdWorkflowService
    */
   public function getRoleSynonyms(string $role): array
   {
+    $role = self::baseRole($role);
     $synonyms = [
       'kepala_opd'     => ['kepala_opd', 'camat', 'lurah', 'kapus'],
       'sekretaris_opd' => ['sekretaris_opd', 'sekcam'],
@@ -1185,20 +1235,57 @@ class SppdWorkflowService
   /** Label role untuk ditampilkan (mis. "Kabid / Irban / Kabag"). */
   public function roleLabel(string $role): string
   {
-    return Role::where('name', $role)->value('label') ?: ucwords(str_replace('_', ' ', $role));
+    return self::EXTERNAL_STEP_ROLES[$role]
+      ?? (Role::where('name', $role)->value('label') ?: ucwords(str_replace('_', ' ', $role)));
   }
 
-  private function getApproverLabel(User $approver, string $requestedRole): string
+  /** @var array<int, ?Department> zona data per unit kerja (lihat roleLabelIn) */
+  private array $scopeRoots = [];
+
+  /**
+   * Label role menurut instansi pemegangnya: di Rumah Sakit, Kepala OPD tampil
+   * "Direktur" dan Sekretaris OPD "Sekretaris" (DepartmentType::roleTitle).
+   */
+  public function roleLabelIn(string $role, ?int $departmentId): string
   {
+    return $this->titleIn($role, $departmentId) ?? $this->roleLabel($role);
+  }
+
+  /** Sebutan khusus role di zona data unit kerja itu; null bila sama dengan label role. */
+  private function titleIn(string $role, ?int $departmentId): ?string
+  {
+    if (! $departmentId || $this->isExternalStep($role)) {
+      return null;
+    }
+
+    if (! array_key_exists($departmentId, $this->scopeRoots)) {
+      $this->scopeRoots[$departmentId] = Department::find($departmentId)?->getScopeRootDepartment();
+    }
+
+    return $this->scopeRoots[$departmentId]?->type?->roleTitle($role);
+  }
+
+  /**
+   * Label tahap: role pejabat yang terpilih, disebut menurut instansinya. Tahap tanpa
+   * pejabat memakai instansi $fallbackDepartmentId (pemohon).
+   */
+  private function getApproverLabel(User $approver, string $requestedRole, ?int $fallbackDepartmentId = null): string
+  {
+    if ($this->isExternalStep($requestedRole)) {
+      return self::EXTERNAL_STEP_ROLES[$requestedRole];
+    }
+
     // Try to get the actual role label from the user that matched the synonym
     $synonyms = $this->getRoleSynonyms($requestedRole);
     $actualRole = $approver->roles->whereIn('name', $synonyms)->first();
+    $departmentId = $approver->department_id ?? $fallbackDepartmentId;
 
     if ($actualRole) {
-      return $actualRole->label ?? ucwords(str_replace('_', ' ', $actualRole->name));
+      return $this->titleIn($actualRole->name, $departmentId)
+        ?? $actualRole->label ?? ucwords(str_replace('_', ' ', $actualRole->name));
     }
 
-    return $this->roleLabel($requestedRole);
+    return $this->roleLabelIn($requestedRole, $departmentId);
   }
 
   /** @return array{status: string, approver: ?User, candidates: Collection<int, User>} */
@@ -1222,7 +1309,11 @@ class SppdWorkflowService
   {
     Log::warning("Could not resolve approver for role '{$stepRole}' ({$status}) for SPPD {$sppd->id}");
 
-    $label = $this->roleLabel($stepRole);
+    $label = $this->roleLabelIn($stepRole, $sppd->user?->department_id);
+    if ($this->isExternalStep($stepRole)) {
+      throw new \Exception("Gagal Mengajukan: Pejabat {$label} belum terdaftar. Hubungi Admin instansi tersebut atau Super Admin untuk melengkapinya di Data Pegawai.");
+    }
+
     throw new \Exception($status === 'choose'
       ? "Gagal Mengajukan: Pejabat {$label} belum dipilih. Pilih pejabatnya pada Tahap 1 (pratinjau alur) terlebih dahulu."
       : "Gagal Mengajukan: Pejabat dengan jabatan '{$label}' tidak ditemukan di unit kerja Anda atau unit kerja induk. Harap hubungi Admin untuk melengkapi data Pejabat di bidang Anda terlebih dahulu agar alur pengajuan tidak terputus.");

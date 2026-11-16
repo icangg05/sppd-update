@@ -514,7 +514,13 @@ class UsersIndex extends Component
       ->orderBy('label')
       ->get(['id', 'name', 'label']);
 
-    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole', 'soleAdminIds'))
+    // Unit acuan sebutan role di filter: unit yang difilter Super Admin, atau unit admin
+    // sendiri (mis. di Rumah Sakit, Kepala OPD tampil "Direktur").
+    $roleContext = auth()->user()->hasRole('super_admin')
+      ? ($this->department_id !== '' ? Department::find($this->department_id) : null)
+      : auth()->user()->department;
+
+    return view('livewire.users-index', compact('users', 'departments', 'deptDepthMap', 'partaiList', 'availableRoles', 'activePosition', 'activeRank', 'activeRole', 'soleAdminIds', 'roleContext'))
       ->title($this->listLabels()['title']);
   }
 }

@@ -70,21 +70,28 @@
                 @endif
               </td>
 
-              <td data-label="Label" class="py-2.5 px-4 font-semibold text-slate-800">
-                {{ $role->label ?? '-' }}
+              <td data-label="Label" class="py-2.5 px-4">
+                <span class="font-semibold text-slate-800">{{ $role->label ?? '-' }}</span>
+                @if ($role->note)
+                  <p class="mt-0.5 max-w-xs whitespace-normal text-[11px] leading-snug text-slate-500">
+                    <i class="fa-solid fa-circle-info mr-0.5 text-[10px] text-slate-400" aria-hidden="true"></i>{{ $role->note }}
+                  </p>
+                @endif
               </td>
 
               <td data-label="Permissions" class="py-2.5 px-4">
-                @if ($role->permissions->count() > 0)
+                {{-- Hanya permission yang berfungsi (App\Support\PermissionCatalog), dengan labelnya. --}}
+                @php $permLabels = \App\Support\PermissionCatalog::labelsFor($role->permissions->pluck('name')); @endphp
+                @if (count($permLabels) > 0)
                   <div class="flex flex-wrap gap-1">
-                    @foreach ($role->permissions->take(5) as $perm)
+                    @foreach (array_slice($permLabels, 0, 5) as $permLabel)
                       <span class="inline-flex items-center rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-bold text-violet-700 border border-violet-100">
-                        {{ $perm->name }}
+                        {{ $permLabel }}
                       </span>
                     @endforeach
-                    @if ($role->permissions->count() > 5)
+                    @if (count($permLabels) > 5)
                       <span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 border border-slate-200">
-                        +{{ $role->permissions->count() - 5 }} lainnya
+                        +{{ count($permLabels) - 5 }} lainnya
                       </span>
                     @endif
                   </div>

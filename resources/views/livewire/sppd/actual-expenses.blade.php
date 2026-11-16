@@ -3,7 +3,7 @@
     use Vinkla\Hashids\Facades\Hashids;
     $grandTotal = $sppd->actualExpenses->sum('amount');
     $filledCount = $people->filter(fn ($p) => $sppd->actualExpenses->where('user_id', $p['id'])->count() > 0)->count();
-    $canManage = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
+    $canManage = auth()->user()->canManageCosts();
     // Tombol ikon kecil per item, sama dengan tombol aksi tabel di halaman lain (Edit kuning, Hapus merah).
     $iconBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition-colors focus:outline-none focus-visible:ring-2';
 @endphp

@@ -104,6 +104,7 @@
 								<span class="min-w-0 leading-tight">
 									<span class="line-clamp-2 text-[11px] font-bold uppercase tracking-wide {{ $roleClass }}">{{ $step['role_label'] }}</span>
 									<span class="line-clamp-2 text-sm font-semibold {{ $nameClass }}" title="{{ $step['approver_name'] }}">{{ $step['approver_name'] }}</span>
+									<x-sppd.signer-badge :spt="$step['signs_spt'] ?? false" :sppd="$step['signs_sppd'] ?? false" class="mt-0.5" />
 								</span>
 							</div>
 
@@ -132,14 +133,15 @@
 				</h3>
 			</div>
 			<div class="p-5">
+				@php $pointHint = 'Untuk poin-poin, tulis satu poin per baris, diawali tanda - atau nomor (1. 2. 3.).'; @endphp
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<x-form.textarea wire:model="purpose" label="Perihal (Maksud Perjalanan Dinas)" rows="4" required
 							placeholder="Contoh: Melaksanakan koordinasi terkait kerja sama media di Pemprov DKI Jakarta" />
-					<x-form.textarea wire:model="problem" label="Persoalan" rows="4"
+					<x-form.textarea wire:model="problem" label="Persoalan" rows="4" :hint="$pointHint"
 							placeholder="Contoh: Belum ada kesepakatan teknis publikasi antara dinas dan mitra media" />
-					<x-form.textarea wire:model="facts" label="Fakta yang mempengaruhi" rows="4"
+					<x-form.textarea wire:model="facts" label="Fakta yang mempengaruhi" rows="4" :hint="$pointHint"
 							placeholder="Contoh: Surat undangan Nomor 005/… tanggal 12 Juli 2026 dan target publikasi triwulan III" />
-					<x-form.textarea wire:model="analysis" label="Analisis" rows="4"
+					<x-form.textarea wire:model="analysis" label="Analisis" rows="4" :hint="$pointHint"
 							placeholder="Contoh: Koordinasi langsung diperlukan agar materi publikasi selesai sebelum batas waktu" />
 				</div>
 			</div>
@@ -206,7 +208,7 @@
 					<div wire:key="travel-dates-{{ md5(json_encode($blockedDates)) }}">
 						{{-- live: daftar calon pengikut menyesuaikan bentrok tanggal begitu rentang dipilih. --}}
 						<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required live
-							:skipWeekends="\App\Enums\SppdDomain::tryFrom($domain)?->skipsWeekends() ?? false"
+							:skipSundays="\App\Enums\SppdDomain::tryFrom($domain)?->skipsSundays() ?? false"
 							:blocked="$blockedDates" />
 						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari). --}}
 						@if ($otherTrips->isNotEmpty())
@@ -566,8 +568,10 @@
 
 	{{-- MODAL KONFIRMASI --}}
 	@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
-	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-primary-600 text-base" maxWidth="max-w-3xl" :closeable="false">
-		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+	{{-- Inspektorat: modal lebih lebar & kolom pegawai lebih besar, karena tiap nama berdampingan
+	     dengan pilihan jabatan perjalanan; nama tidak dipotong. --}}
+	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-primary-600 text-base" :maxWidth="$isInspektorat ? 'max-w-5xl' : 'max-w-3xl'" :closeable="false">
+		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 {{ $isInspektorat ? 'md:grid-cols-[2fr_3fr]' : 'md:grid-cols-2' }}">
 
 			{{-- Kolom Kiri: Anggaran Tersedia --}}
 			<div class="rounded border border-slate-200 bg-slate-50/50 overflow-hidden">
@@ -634,35 +638,61 @@
 			<div class="space-y-3.5 text-sm text-slate-600">
 				<div>
 					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pegawai Pelaksana:</span>
-					<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
-						<i class="fa-solid fa-user text-primary-600 mr-1.5"></i> {{ $pelaksana->name }}
-					</p>
+					@if ($isInspektorat)
+						{{-- Pelaksana Inspektorat juga diberi jabatan perjalanan, sama seperti pengikut. --}}
+						<div class="mt-1 flex items-center justify-between gap-2 rounded border border-slate-200/60 bg-slate-50 px-2.5 py-1.5">
+							<span class="min-w-0 break-words font-bold text-slate-800">
+								<i class="fa-solid fa-user text-primary-600 mr-1.5"></i>{{ $pelaksana->name }}
+							</span>
+							<select wire:model="travel_position"
+								class="rounded border {{ $errors->has('travel_position') ? 'border-rose-400' : 'border-slate-300' }} bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none shrink-0"
+								required>
+								<option value="">— Pilih Jabatan —</option>
+								@foreach (\App\Models\SppdFollower::TRAVEL_POSITIONS as $jabatan)
+									<option value="{{ $jabatan }}">{{ $jabatan }}</option>
+								@endforeach
+							</select>
+						</div>
+						@error('travel_position')
+							<span class="mt-1 block text-xs text-rose-600">{{ $message }}</span>
+						@enderror
+					@else
+						<p class="font-bold text-slate-800 mt-1 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200/60">
+							<i class="fa-solid fa-user text-primary-600 mr-1.5"></i> {{ $pelaksana->name }}
+						</p>
+					@endif
 				</div>
 				<div>
 					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Pengikut Dinas:</span>
-					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 max-h-64 overflow-y-auto">
+					{{-- Inspektorat tanpa batas tinggi: semua pengikut terlihat (body modal yang di-scroll),
+					     agar tidak ada pilihan jabatan yang terlewat di bawah area scroll. --}}
+					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 {{ $isInspektorat ? '' : 'max-h-64 overflow-y-auto' }}">
 						@if ($isInspektorat)
 							@forelse ($followers as $fId)
-								@php $folUser = $selectedFollowerUsers->firstWhere('id', $fId); @endphp
+								@php
+									$folUser = $selectedFollowerUsers->firstWhere('id', $fId);
+									$positionKey = 'follower_positions.' . $fId;
+								@endphp
 								@if ($folUser)
-									<div class="px-3 py-2 bg-white flex items-center justify-between gap-2">
-										{{-- Nama panjang terpotong: tooltip menampilkan nama lengkap. --}}
-										<span class="min-w-0 text-xs font-semibold text-slate-700 truncate" title="{{ $folUser->name }}">
-											<i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i>{{ $folUser->name }}
-										</span>
-										<select wire:model="follower_positions.{{ $fId }}"
-											class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none shrink-0"
-											required>
-											<option value="">— Pilih Jabatan —</option>
-											{{-- Urut dari jabatan tertinggi; urutan yang sama dipakai di SPT. --}}
-											@foreach (\App\Models\SppdFollower::TRAVEL_POSITIONS as $jabatan)
-												<option value="{{ $jabatan }}">{{ $jabatan }}</option>
-											@endforeach
-										</select>
+									<div wire:key="confirm-follower-{{ $fId }}" class="px-3 py-2 bg-white">
+										<div class="flex items-center justify-between gap-2">
+											<span class="min-w-0 break-words text-xs font-semibold text-slate-700">
+												<i class="fa-solid fa-caret-right text-primary-600 mr-1.5"></i>{{ $folUser->name }}
+											</span>
+											<select wire:model="{{ $positionKey }}"
+												class="rounded border {{ $errors->has($positionKey) ? 'border-rose-400' : 'border-slate-300' }} bg-white px-2 py-1 text-xs text-slate-700 focus:border-primary-500 focus:outline-none shrink-0"
+												required>
+												<option value="">— Pilih Jabatan —</option>
+												{{-- Urut dari jabatan tertinggi; urutan yang sama dipakai di SPT. --}}
+												@foreach (\App\Models\SppdFollower::TRAVEL_POSITIONS as $jabatan)
+													<option value="{{ $jabatan }}">{{ $jabatan }}</option>
+												@endforeach
+											</select>
+										</div>
+										@error($positionKey)
+											<span class="mt-1 block text-right text-xs text-rose-600">{{ $message }}</span>
+										@enderror
 									</div>
-									@error('follower_positions.' . $fId)
-										<span class="text-xs text-rose-600 px-3 pb-1 block">{{ $message }}</span>
-									@enderror
 								@endif
 							@empty
 								<div class="px-3 py-2.5 text-xs text-slate-500 italic bg-white"><i class="fa-solid fa-user-minus mr-1"></i> Tidak ada pengikut</div>
@@ -678,6 +708,11 @@
 							@endforelse
 						@endif
 					</div>
+					@if ($isInspektorat)
+						<p class="mt-1.5 text-xs text-slate-500">
+							<i class="fa-solid fa-arrow-down-short-wide mr-0.5"></i> Urutan nama di SPT mengikuti jabatan ini, dari Penanggung Jawab sampai Admin Tim.
+						</p>
+					@endif
 				</div>
 				@if ($sppd_id)
 					<p class="text-xs bg-amber-50 border border-amber-200 rounded p-2 text-amber-800">

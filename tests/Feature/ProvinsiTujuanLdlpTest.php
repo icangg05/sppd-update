@@ -27,6 +27,7 @@ class ProvinsiTujuanLdlpTest extends TestCase
         Province::create(['name' => 'Sulawesi Selatan']);
 
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web'], ['label' => 'Super Admin']);
+        $this->grantDefaultPermissions();
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super_admin');
         $this->actingAs($superAdmin);

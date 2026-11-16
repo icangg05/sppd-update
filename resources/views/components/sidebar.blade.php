@@ -22,7 +22,7 @@
 			<div class="overflow-hidden leading-tight">
 				<p class="truncate text-sm font-semibold text-slate-200" title="{{ auth()->user()->username ?? '-' }}">
 					{{ auth()->user()->username ?? '-' }}</p>
-				<p class="truncate text-xs text-slate-500">{{ auth()->user()->roles->first()?->label ?? 'Undefined role' }}</p>
+				<p class="truncate text-xs text-slate-500">{{ auth()->user()->primaryRoleLabel('Undefined role') }}</p>
 			</div>
 		</div>
 	</div>
@@ -37,7 +37,13 @@
 			<span>Beranda</span>
 		</a>
 
-		@php $sppdActive = request()->routeIs('sppd.*'); @endphp
+		@php
+			// Pengguna di luar grup Pengaturan (mis. Kasubid/Kasubag) melihat Cek Dokumen TTE di grup ini;
+			// Super Admin & Admin OPD melihatnya di grup Dokumen & Log.
+			$hasSettingsMenu = auth()->user()->hasAnyRole(['super_admin', 'admin_opd']);
+			$verifyInSppdMenu = ! $hasSettingsMenu && auth()->user()->can('document.verify');
+			$sppdActive = request()->routeIs('sppd.*') || ($verifyInSppdMenu && request()->routeIs('verify.index'));
+		@endphp
 		<div class="space-y-1" x-data="{ open: true }">
 			<button type="button" @click="open = !open"
 				class="flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-sm font-medium transition-colors {{ $sppdActive ? 'bg-slate-800/60 text-white' : 'text-slate-100 hover:bg-slate-800/60' }}">
@@ -71,6 +77,14 @@
 					<span class="flex w-4 justify-center"><i class="fa-solid fa-calendar-days fa-fw"></i></span>
 					<span>Kalender</span>
 				</a>
+
+				@if ($verifyInSppdMenu)
+					<a href="{{ route('verify.index') }}" wire:navigate.hover
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('verify.index') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-file-shield fa-fw"></i></span>
+						<span>Cek Dokumen TTE</span>
+					</a>
+				@endif
 			</div>
 		</div>
 
@@ -98,7 +112,7 @@
 			</a>
 		@endif
 
-		@if (auth()->user()->hasAnyRole(['super_admin', 'admin_opd']))
+		@if ($hasSettingsMenu)
 		<div class="px-3 py-1.5 pt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Pengaturan</div>
 
 		@if (auth()->user()->hasRole('super_admin'))
@@ -333,11 +347,13 @@
 
 			<div x-show="open" x-collapse class="space-y-1 py-1 pl-4 pr-1">
 				{{-- Cek keaslian & status TTE dokumen (target QR code) --}}
-				<a href="{{ route('verify.index') }}" wire:navigate.hover
-					class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('verify.index', 'verify.document') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
-					<span class="flex w-4 justify-center"><i class="fa-solid fa-file-shield fa-fw"></i></span>
-					<span>Cek Dokumen TTE</span>
-				</a>
+				@can('document.verify')
+					<a href="{{ route('verify.index') }}" wire:navigate.hover
+						class="flex items-center gap-2.5 rounded px-3 py-1.5 text-xs font-medium transition-colors {{ request()->routeIs('verify.index', 'verify.document') ? 'bg-primary-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+						<span class="flex w-4 justify-center"><i class="fa-solid fa-file-shield fa-fw"></i></span>
+						<span>Cek Dokumen TTE</span>
+					</a>
+				@endcan
 
 				{{-- Logs: super_admin (semua data) & admin_opd (data unit kerjanya) --}}
 				<a href="{{ route('master.logs.index') }}" wire:navigate.hover

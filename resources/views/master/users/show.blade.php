@@ -82,7 +82,7 @@
 						<div class="mt-2 flex flex-wrap items-center justify-center gap-2">
 							<x-ui.badge color="blue">
 								<i class="fa-solid fa-shield-halved mr-1.5 text-[10px]"></i>
-								{{ $user->roles->first()?->label ?? 'Pegawai' }}
+								{{ $user->primaryRoleLabel('Pegawai') }}
 							</x-ui.badge>
 							@if ($user->is_active)
 								<span
@@ -276,7 +276,10 @@
 								<div class="group flex flex-col justify-between gap-4 rounded border border-slate-200 bg-slate-50 p-4 leading-relaxed transition-colors hover:border-primary-200 hover:bg-white sm:flex-row sm:items-center">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
-											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
+											{{-- Nomor dokumen hanya dipakai Inspektorat. --}}
+											@if ($trip->showsDocumentNumber())
+												<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?: 'Belum memiliki nomor seri' }}</span>
+											@endif
 											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
 											</x-ui.badge>
@@ -320,7 +323,10 @@
 								<div class="group flex flex-col justify-between gap-4 rounded border border-slate-200 bg-slate-50 p-4 leading-relaxed transition-colors hover:border-primary-200 hover:bg-white sm:flex-row sm:items-center">
 									<div class="space-y-1">
 										<div class="flex items-center gap-2 flex-wrap">
-											<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?? 'Belum memiliki nomor seri' }}</span>
+											{{-- Nomor dokumen hanya dipakai Inspektorat. --}}
+											@if ($trip->showsDocumentNumber())
+												<span class="text-xs font-mono font-bold text-slate-600">{{ $trip->document_number ?: 'Belum memiliki nomor seri' }}</span>
+											@endif
 											<x-ui.badge :status="$trip->status->value" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
 												{{ $trip->status->label() }}
 											</x-ui.badge>

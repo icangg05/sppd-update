@@ -23,9 +23,11 @@ class DashboardController extends Controller
     $user = Auth::user();
 
     // Tentukan archetype dashboard berdasarkan kewenangan (otomatis utk role baru).
+    // Pembuat SPPD (mis. Kasubid/Kasubag) memantau seluruh SPPD unit kerjanya seperti admin.
     $archetype = match (true) {
       $user->hasAnyRole(['super_admin', 'admin_opd']) => 'admin',
       $user->can('sppd.approve')                      => 'leadership',
+      $user->can('sppd.create')                       => 'admin',
       default                                          => 'requester',
     };
 

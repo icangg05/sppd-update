@@ -1,5 +1,5 @@
 @php
-    $canManage = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
+    $canManage = auth()->user()->canManageCosts();
     $canPrint = $hasActualExpenses && $hasCostDetails && $hasBendahara;
     $receipts = $sppd->advanceReceipts->where('amount', '>', 0);
     $rampungReason = 'Lengkapi pengeluaran riil, rincian biaya, dan bendahara pengeluaran terlebih dahulu';

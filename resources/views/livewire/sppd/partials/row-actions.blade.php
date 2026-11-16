@@ -15,7 +15,10 @@
 @endphp
 
 {{-- Baris 1: Lihat & Hapus berdampingan; baris berikutnya aksi lanjutan selebar kolom. --}}
-@php $canDelete = auth()->user()->hasAnyRole(['super_admin', 'admin_opd']); @endphp
+@php
+	$canDelete = auth()->user()->can('sppd.delete');
+	$canCreate = auth()->user()->can('sppd.create');
+@endphp
 <div class="{{ $wrapperClass ?? 'flex w-[168px] flex-col gap-1' }}">
 	<div class="grid gap-[inherit] {{ $canDelete ? 'grid-cols-2' : 'grid-cols-1' }}">
 		<a href="{{ $isApprovalMode ? route('sppd.show', ['sppd' => $sppd, 'from' => 'approval']) : route('sppd.show', $sppd) }}"
@@ -25,8 +28,8 @@
 			<span>Lihat</span>
 		</a>
 
-		{{-- Hapus apa pun statusnya (Super Admin, atau Admin OPD untuk SPPD di lingkupnya;
-		     daftar Admin OPD sudah dibatasi lingkupnya). Dikonfirmasi lewat modal hitung mundur. --}}
+		{{-- Hapus apa pun statusnya (permission sppd.delete; daftar sudah dibatasi lingkup unit kerja).
+		     Dikonfirmasi lewat modal hitung mundur. --}}
 		@if ($canDelete)
 			<button type="button" wire:click="confirmDelete({{ $sppd->id }})"
 				title="{{ $sppd->status->value === 'in_progress' ? 'Batalkan & hapus pengajuan' : 'Hapus SPPD' }}"
@@ -37,7 +40,7 @@
 		@endif
 	</div>
 
-	@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && auth()->user()->hasAnyRole(['admin_opd', 'super_admin']))
+	@if ($sppd->status->value === 'in_progress' && $sppd->revision_note && $canCreate)
 		<a href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}" wire:navigate
 			class="inline-flex items-center justify-center gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-700 shadow-2xs transition hover:bg-amber-100 w-full text-center">
 			<i class="fa-solid fa-pen-to-square text-[10px] text-amber-600"></i>
@@ -45,20 +48,21 @@
 		</a>
 	@endif
 
-	@if (in_array($sppd->status->value, ['approved', 'completed']))
+	@if (in_array($sppd->status->value, ['approved', 'completed']) && auth()->user()->canOpenCostMenu())
 		<a href="{{ route('sppd.next', $sppd) }}" wire:navigate
 			class="inline-flex items-center justify-center gap-1.5 rounded bg-primary-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-2xs transition hover:bg-primary-700 w-full text-center">
 			<span>Selanjutnya</span>
 			<i class="fa-solid fa-arrow-right text-[10px]"></i>
 		</a>
+	@endif
 
-		@if (auth()->user()->hasAnyRole(['admin_opd', 'super_admin']) && $allGreen)
-			<button type="button" wire:click="startSppdLanjutan({{ $sppd->id }})" wire:loading.attr="disabled"
-				class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-				<i class="fa-solid fa-plus text-[10px]" wire:loading.remove wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
-				<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
-				<span>SPPD Lanjutan</span>
-			</button>
-		@endif
+	{{-- $allGreen hanya true untuk SPPD yang sudah disetujui/selesai. --}}
+	@if ($canCreate && $allGreen)
+		<button type="button" wire:click="startSppdLanjutan({{ $sppd->id }})" wire:loading.attr="disabled"
+			class="inline-flex items-center justify-center gap-1.5 rounded bg-emerald-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-2xs transition hover:bg-emerald-700 w-full text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+			<i class="fa-solid fa-plus text-[10px]" wire:loading.remove wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
+			<i class="fa-solid fa-circle-notch fa-spin text-[10px]" wire:loading wire:target="startSppdLanjutan({{ $sppd->id }})"></i>
+			<span>SPPD Lanjutan</span>
+		</button>
 	@endif
 </div>

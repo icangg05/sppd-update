@@ -147,7 +147,8 @@ class WorkflowForm extends Component
         'supervisor_role.*' => ['exclude_unless:supervisor_mode,specific', Rule::in(SppdWorkflowService::APPROVER_ROLES)],
         'steps'             => ['required', 'array', 'min:1'],
         // Tingkat persetujuan terendah Kabid/Irban/Kabag: Staf & Kasubag tidak menyetujui.
-        'steps.*.role'      => ['required', 'string', Rule::in(SppdWorkflowService::APPROVER_ROLES)],
+        // Termasuk role tahap eksternal (mis. Kepala Dinas Kesehatan), lihat EXTERNAL_STEP_ROLES.
+        'steps.*.role'      => ['required', 'string', Rule::in([...SppdWorkflowService::APPROVER_ROLES, ...array_keys(SppdWorkflowService::EXTERNAL_STEP_ROLES)])],
       ], [
         'department_type.required' => 'Centang minimal satu tipe instansi.',
         'applicant_role.required'  => 'Centang minimal satu peran pemohon.',
@@ -203,11 +204,16 @@ class WorkflowForm extends Component
 
   public function render()
   {
+    // Alur khusus satu tipe instansi memakai sebutan role tipe itu (Rumah Sakit: Kepala OPD = Direktur).
+    $onlyType = count($this->department_type) === 1 ? DepartmentType::tryFrom((string) array_values($this->department_type)[0]) : null;
+
     return view('livewire.workflows.form', [
+      'roleLabelOf'     => fn ($role) => $onlyType?->roleTitle($role->name) ?? $role->label ?? $role->name,
       'departmentTypes' => DepartmentType::cases(),
       'domains'         => SppdDomain::cases(),
       'roles'           => Role::orderBy('name')->get(),
       'approverRoles'   => Role::whereIn('name', SppdWorkflowService::APPROVER_ROLES)->orderBy('name')->get(),
+      'externalStepRoles' => SppdWorkflowService::EXTERNAL_STEP_ROLES,
     ])->title($this->isEdit ? 'Edit Workflow SPPD' : 'Tambah Workflow SPPD');
   }
 }

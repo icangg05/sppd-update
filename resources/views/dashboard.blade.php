@@ -21,7 +21,7 @@
           <span
             class="inline-flex items-center gap-1.5 rounded bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700 ring-1 ring-inset ring-primary-600/15">
             <i class="fa-solid fa-user-shield text-[10px]"></i>
-            {{ auth()->user()->roles->first()?->label ?? 'Pengguna' }}
+            {{ auth()->user()->primaryRoleLabel('Pengguna') }}
           </span>
           <h2 class="text-2xl font-bold tracking-tight text-balance text-slate-800">
             Dashboard SPPD {{ auth()->user()->department?->name ?? 'Sistem' }}

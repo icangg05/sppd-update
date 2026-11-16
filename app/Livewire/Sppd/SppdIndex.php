@@ -61,9 +61,10 @@ class SppdIndex extends Component
 
   private const SESSION_KEY = 'sppd.index.filters';
 
-  public static function jabatanLabels(): array
+  /** Label tab jabatan; Kepala OPD mengikuti sebutan tipe instansi (Rumah Sakit: "Direktur"). */
+  public static function jabatanLabels(?DepartmentType $type = null): array
   {
-    return [
+    $labels = [
       ''              => 'Semua Jabatan',
       'walikota'      => 'Walikota & Wakil',
       'kepala_opd'    => 'Kepala OPD',
@@ -77,6 +78,12 @@ class SppdIndex extends Component
       'staff_dprd'    => 'Staff DPRD',
       'sekwan'        => 'Sekwan',
     ];
+
+    if ($title = $type?->roleTitle('kepala_opd')) {
+      $labels['kepala_opd'] = $title;
+    }
+
+    return $labels;
   }
 
   /**
@@ -134,8 +141,20 @@ class SppdIndex extends Component
     return $this->filter === 'approval';
   }
 
+  /**
+   * Halaman Menunggu Persetujuan (?filter=approval) hanya untuk pemegang permission
+   * sppd.approve — tidak cukup menyembunyikan menunya, URL-nya bisa dibuka manual.
+   * Dipanggil di mount dan render karena filter adalah properti #[Url] yang bisa diubah klien.
+   */
+  private function authorizeApprovalMode(): void
+  {
+    abort_if($this->isApprovalMode() && ! Auth::user()->can('sppd.approve'), 403, 'Anda tidak memiliki akses ke menu Menunggu Persetujuan.');
+  }
+
   public function mount(): void
   {
+    $this->authorizeApprovalMode();
+
     if ($this->isApprovalMode()) {
       return;
     }
@@ -153,7 +172,13 @@ class SppdIndex extends Component
 
   public function activeFilterLabel(): string
   {
-    return self::jabatanLabels()[$this->jabatan] ?? 'Semua Jabatan';
+    return $this->currentJabatanLabels()[$this->jabatan] ?? 'Semua Jabatan';
+  }
+
+  /** Super Admin melihat semua jenis instansi, jadi memakai label umum. */
+  protected function currentJabatanLabels(): array
+  {
+    return self::jabatanLabels(Auth::user()->hasRole('super_admin') ? null : $this->rootDepartmentType());
   }
 
   protected function persistFilters(): void
@@ -275,8 +300,8 @@ class SppdIndex extends Component
   }
 
   /**
-   * SPPD boleh dihapus (apa pun statusnya): Super Admin semua, Admin OPD hanya
-   * SPPD pegawai dalam lingkup unit kerjanya.
+   * SPPD boleh dihapus (apa pun statusnya): Super Admin semua, pemegang permission
+   * sppd.delete hanya SPPD pegawai dalam lingkup unit kerjanya.
    */
   private function canDelete(SppdRequest $sppd): bool
   {
@@ -284,7 +309,7 @@ class SppdIndex extends Component
     if ($user->hasRole('super_admin')) {
       return true;
     }
-    if (! $user->hasRole('admin_opd')) {
+    if (! $user->can('sppd.delete')) {
       return false;
     }
 
@@ -341,6 +366,7 @@ class SppdIndex extends Component
   public function render()
   {
     $query = SppdRequest::with(['user.department', 'category', 'budget.department', 'report', 'actualExpenses', 'costDetails']);
+    $this->authorizeApprovalMode();
     $isApprovalMode = $this->isApprovalMode();
 
     if ($isApprovalMode) {
@@ -457,7 +483,7 @@ class SppdIndex extends Component
 
     // Super admin memakai select-search (semua jabatan), selain itu tab sesuai jenis OPD.
     $isSuperAdmin = Auth::user()->hasRole('super_admin');
-    $jabatanLabels = self::jabatanLabels();
+    $jabatanLabels = $this->currentJabatanLabels();
     $jabatanTabs = $this->currentJabatanTabs();
     $jabatanOptions = collect($jabatanLabels)
       ->map(fn($label, $value) => ['value' => $value, 'label' => $label])
@@ -540,7 +566,7 @@ class SppdIndex extends Component
    */
   public function startSppdLanjutan(int $sppdId): void
   {
-    abort_unless(Auth::user()->hasAnyRole(['admin_opd', 'super_admin']), 403, 'Aksi ini tidak diizinkan.');
+    abort_unless(Auth::user()->can('sppd.create'), 403, 'Aksi ini tidak diizinkan.');
 
     $this->errorMessage = null;
 

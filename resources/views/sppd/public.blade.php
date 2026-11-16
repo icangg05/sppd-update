@@ -95,6 +95,9 @@
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Pelaksana</dt>
 					<dd class="{{ $value }}">{{ $sppd->user->name }}</dd>
+					@if ($sppd->travel_position)
+						<dd class="text-xs text-slate-500">{{ $sppd->travel_position }}</dd>
+					@endif
 					<dd class="font-mono text-xs text-slate-500">{{ $sppd->user->nip ?? '-' }}</dd>
 				</div>
 				<div class="{{ $fieldCell }}">
@@ -136,7 +139,7 @@
 					@foreach ($narratives as $title => $text)
 						<div class="px-5 py-2.5">
 							<dt class="{{ $label }}">{{ $title }}</dt>
-							<dd class="mt-1 max-w-[75ch] whitespace-pre-line text-sm font-medium leading-relaxed text-slate-800">{{ $text }}</dd>
+							<dd class="mt-1 max-w-[75ch] text-sm font-medium leading-relaxed text-slate-800"><x-ui.narrative :text="$text" /></dd>
 						</div>
 					@endforeach
 				</dl>
@@ -206,7 +209,7 @@
 					@foreach ($sppd->followers as $f)
 						<li class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5">
 							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-slate-100 text-[11px] font-bold text-slate-600">
-								{{ strtoupper(substr($f->user->name, 0, 1)) }}
+								{{ mb_strtoupper(mb_substr(trim($f->user->name), 0, 1)) }}
 							</span>
 							<span class="leading-tight">
 								<span class="block text-sm font-semibold text-slate-800">{{ $f->user->name }}</span>

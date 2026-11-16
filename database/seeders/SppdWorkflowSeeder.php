@@ -18,6 +18,9 @@ use Illuminate\Database\Seeder;
  *  - SPT Kepala Perangkat Daerah & Sekwan ke luar daerah, serta SPT seluruh
  *    perjalanan luar negeri, ditandatangani Wali Kota setelah diverifikasi Sekda.
  *  - SPT Pimpinan & Anggota DPRD ditandatangani Pimpinan DPRD.
+ *  - Rumah Sakit: Sekretaris → Direktur (role Kepala OPD). Direktur ke luar daerah
+ *    lanjut ke Kepala Dinas Kesehatan (tahap eksternal, lihat
+ *    SppdWorkflowService::EXTERNAL_STEP_ROLES) yang menandatangani SPT.
  *  - Tingkat persetujuan terendah Kabid/Irban/Kabag. Staf yang atasan langsungnya
  *    bukan Kabid (mis. staf Sekretariat di bawah Sekretaris) memakai alur tanpa
  *    tahap Kabid: alur dipecah per atasan langsung (lihat byAtasan).
@@ -28,6 +31,7 @@ class SppdWorkflowSeeder extends Seeder
   private const OPD       = ['opd', 'dinkes', 'sekretariat'];
   private const WILAYAH   = ['kecamatan', 'kelurahan'];
   private const PUSKESMAS = ['puskesmas'];
+  private const RUMAH_SAKIT = ['rumah_sakit'];
   private const SETDA     = ['setda', 'asisten', 'bagian', 'subbagian'];
   private const DPRD      = ['dprd'];
 
@@ -171,6 +175,57 @@ class SppdWorkflowSeeder extends Seeder
         'applicant_role'  => ['kepala_opd', 'kapus'],
         'destination'     => [...self::LUAR_DAERAH, ...self::LUAR_NEGERI],
         'steps'           => [self::step('kepala_opd', sppd: true), ...$keWalikota],
+      ],
+
+      // ── Rumah Sakit (tanpa jenjang Kabid; Direktur memakai role Kepala OPD) ──
+      [
+        'name'            => 'Staf, Kasubag & Kabid Rumah Sakit',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['staf', 'kasubid_kasubag', 'kabid_irban_kabag'],
+        'destination'     => self::NON_LN,
+        'steps'           => [self::step('sekretaris_opd'), self::step('kepala_opd', spt: true, sppd: true)],
+      ],
+      [
+        'name'            => 'Staf, Kasubag & Kabid Rumah Sakit — Luar Negeri',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['staf', 'kasubid_kasubag', 'kabid_irban_kabag'],
+        'destination'     => self::LUAR_NEGERI,
+        'steps'           => [self::step('sekretaris_opd'), self::step('kepala_opd', sppd: true), ...$keWalikota],
+      ],
+      [
+        'name'            => 'Sekretaris Rumah Sakit',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['sekretaris_opd'],
+        'destination'     => self::NON_LN,
+        'steps'           => [self::step('kepala_opd', spt: true, sppd: true)],
+      ],
+      [
+        'name'            => 'Sekretaris Rumah Sakit — Luar Negeri',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['sekretaris_opd'],
+        'destination'     => self::LUAR_NEGERI,
+        'steps'           => [self::step('kepala_opd', sppd: true), ...$keWalikota],
+      ],
+      [
+        'name'            => 'Direktur Rumah Sakit — Dalam Daerah',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['kepala_opd'],
+        'destination'     => self::DALAM_DAERAH,
+        'steps'           => [self::step('sekretaris_opd'), self::step('kepala_opd', spt: true, sppd: true)],
+      ],
+      [
+        'name'            => 'Direktur Rumah Sakit — Luar Daerah',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['kepala_opd'],
+        'destination'     => self::LUAR_DAERAH,
+        'steps'           => [self::step('sekretaris_opd'), self::step('kepala_opd', sppd: true), self::step('kepala_opd@dinkes', spt: true)],
+      ],
+      [
+        'name'            => 'Direktur Rumah Sakit — Luar Negeri',
+        'department_type' => self::RUMAH_SAKIT,
+        'applicant_role'  => ['kepala_opd'],
+        'destination'     => self::LUAR_NEGERI,
+        'steps'           => [self::step('sekretaris_opd'), self::step('kepala_opd', sppd: true), self::step('kepala_opd@dinkes'), ...$keWalikota],
       ],
 
       // ── Sekretariat Daerah ──────────────────────────────────────────────

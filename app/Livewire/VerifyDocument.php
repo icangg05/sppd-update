@@ -23,7 +23,7 @@ use Livewire\WithFileUploads;
  *    di-encode pada QR dokumen menampilkan hasil cek berbasis catatan internal,
  *    plus tombol verifikasi ke BSrE atas berkas tersimpan.
  *
- * Hanya dapat diakses saat login oleh super_admin & admin_opd.
+ * Hanya dapat diakses saat login oleh pemegang permission document.verify.
  */
 #[Layout('layouts.app')]
 class VerifyDocument extends Component
@@ -63,7 +63,7 @@ class VerifyDocument extends Component
 
   public function mount(?string $type = null, ?SppdRequest $sppd = null, ?string $hash = null): void
   {
-    abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
+    abort_unless(auth()->user()->can('document.verify'), 403);
 
     // Mode target QR — parameter lengkap dari URL.
     if ($type && $sppd && $hash) {
@@ -120,15 +120,6 @@ class VerifyDocument extends Component
       false   => $this->toastError($result['summary'] ?? 'Dokumen tidak valid.', 'Dokumen Tidak Valid'),
       default => $this->toastInfo($result['summary'] ?? 'Verifikasi selesai.', 'Verifikasi BSrE'),
     };
-  }
-
-  /**
-   * Kosongkan berkas & hasil untuk memulai pengecekan baru.
-   */
-  public function resetUpload(): void
-  {
-    $this->reset(['file', 'checked', 'bsreResult']);
-    $this->resetValidation();
   }
 
   /**

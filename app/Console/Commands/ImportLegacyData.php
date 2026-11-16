@@ -522,14 +522,15 @@ class ImportLegacyData extends Command
   /** Buat username unik dari nama (slug), hindari bentrok dengan yang sudah dipakai. */
   private function uniqueUsername(string $name, array &$used): string
   {
-    $base = Str::slug($name, '_');
+    // Huruf kecil, angka, dan titik (lihat UsernameGenerator::PATTERN), mis. "budi.santoso".
+    $base = trim(preg_replace('/[^a-z0-9]+/', '.', Str::lower(Str::ascii($name))), '.');
     if ($base === '') $base = 'dprd';
     $base = substr($base, 0, 40);
 
     $candidate = $base;
     $i = 1;
     while (isset($used[$candidate])) {
-      $candidate = $base . '_' . (++$i);
+      $candidate = $base . (++$i);
     }
     $used[$candidate] = true;
     return $candidate;

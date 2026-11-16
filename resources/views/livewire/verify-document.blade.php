@@ -48,9 +48,12 @@
           Verifikasi ke BSrE
         </x-ui.button>
 
+        {{-- Langsung membuka pemilih berkas. Hasil lama tetap tampil sampai berkas baru
+             dipilih (updatedFile membersihkannya), jadi batal memilih tidak menghapus apa pun. --}}
         @if ($checked)
-          <button type="button" wire:click="resetUpload"
-            class="rounded border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40">
+          <button type="button" onclick="document.getElementById('verify-file').click()"
+            class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40">
+            <i class="fa-solid fa-folder-open text-[11px] text-slate-500"></i>
             Cek dokumen lain
           </button>
         @endif

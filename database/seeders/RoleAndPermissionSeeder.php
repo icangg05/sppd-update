@@ -8,273 +8,115 @@ use Spatie\Permission\Models\Role;
 
 class RoleAndPermissionSeeder extends Seeder
 {
+  public const PERMISSIONS = [
+    // SPPD Management
+    'sppd.create',
+    'sppd.view',
+    'sppd.view_all',
+    'sppd.edit',
+    'sppd.delete',
+    'sppd.approve',
+    'sppd.sign',
+
+    // Menu Selanjutnya: dokumen & biaya perjalanan (lihat App\Support\PermissionCatalog)
+    'cost.view',
+    'cost.manage',
+
+    // Cek Dokumen TTE
+    'document.verify',
+
+    // User Management
+    'user.create',
+    'user.view',
+    'user.edit',
+    'user.delete',
+
+    // Department Management
+    'department.create',
+    'department.view',
+    'department.edit',
+    'department.delete',
+
+    // Budget Management
+    'budget.create',
+    'budget.view',
+    'budget.edit',
+    'budget.delete',
+
+    // Report Management
+    'report.create',
+    'report.view',
+    'report.verify',
+
+    // Settings
+    'setting.manage',
+  ];
+
+  /** Hak akses pejabat penyetuju (tanpa TTE). */
+  private const APPROVER = ['sppd.view', 'sppd.view_all', 'sppd.approve', 'cost.view', 'report.view'];
+
+  /** Hak akses pejabat penyetuju yang juga menandatangani TTE. */
+  private const SIGNER = [...self::APPROVER, 'sppd.sign'];
+
+  /**
+   * Permission bawaan per role ('*' = semua). Super Admin dapat mengubahnya di
+   * menu Role & Permission; seeder hanya menambah, tidak mencabut.
+   *
+   * Pembuatan SPPD & pengelolaan biaya dipegang Kasubid/Kasubag. Admin OPD masih
+   * memegangnya selama masa peralihan sampai Super Admin mencabutnya.
+   *
+   * @var array<string, array{label: string, permissions: string|array<int, string>}>
+   */
+  public const ROLES = [
+    'super_admin' => ['label' => 'Super Admin', 'permissions' => '*'],
+    'admin_opd' => ['label' => 'Admin OPD', 'permissions' => [
+      'sppd.create', 'sppd.view', 'sppd.view_all', 'sppd.edit', 'sppd.delete',
+      'cost.view', 'cost.manage', 'document.verify',
+      'user.view', 'user.create', 'user.edit', 'user.delete',
+      'budget.view', 'budget.create', 'budget.edit', 'budget.delete',
+      'report.view',
+    ]],
+    'kepala_opd' => ['label' => 'Kepala OPD', 'permissions' => self::SIGNER,
+      'note' => 'Di unit kerja Rumah Sakit, role ini disebut Direktur (Direktur RSUD memakai role ini).'],
+    'sekretaris_opd' => ['label' => 'Sekretaris OPD', 'permissions' => self::APPROVER,
+      'note' => 'Di unit kerja Rumah Sakit, role ini disebut Sekretaris (Sekretaris RSUD memakai role ini).'],
+    // Kasubid/Kasubag tidak pernah menjadi tahap alur persetujuan (lihat WorkflowForm),
+    // jadi tanpa sppd.approve; perannya membuat SPPD & mengelola biaya perjalanan.
+    'kasubid_kasubag' => ['label' => 'Kasubid / Kasubag', 'permissions' => [
+      'sppd.create', 'sppd.view', 'sppd.view_all', 'sppd.delete',
+      'cost.view', 'cost.manage', 'document.verify',
+      'report.view',
+    ]],
+    'kabid_irban_kabag' => ['label' => 'Kabid / Irban / Kabag', 'permissions' => self::APPROVER],
+    'pimpinan_dprd' => ['label' => 'Pimpinan DPRD', 'permissions' => self::SIGNER],
+    'asisten' => ['label' => 'Asisten', 'permissions' => self::APPROVER],
+    'sekda' => ['label' => 'Sekda', 'permissions' => self::SIGNER],
+    'walikota' => ['label' => 'Walikota', 'permissions' => self::SIGNER],
+    'wakil_walikota' => ['label' => 'Wakil Walikota', 'permissions' => self::SIGNER],
+    'sekwan' => ['label' => 'Sekwan', 'permissions' => self::APPROVER],
+    'camat' => ['label' => 'Camat', 'permissions' => self::SIGNER],
+    'sekcam' => ['label' => 'Sekcam', 'permissions' => self::SIGNER],
+    'lurah' => ['label' => 'Lurah', 'permissions' => self::SIGNER],
+    'kapus' => ['label' => 'Kepala Puskesmas', 'permissions' => self::SIGNER],
+    'anggota_dprd' => ['label' => 'Anggota DPRD', 'permissions' => ['sppd.view', 'cost.view', 'report.create', 'report.view']],
+    'staf' => ['label' => 'Staf', 'permissions' => ['sppd.view', 'sppd.edit', 'cost.view', 'report.create', 'report.view']],
+  ];
+
   public function run(): void
   {
     // Reset cached roles and permissions
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-    // ──────────────────────────────────────────────
-    // Permissions
-    // ──────────────────────────────────────────────
-
-    $permissions = [
-      // SPPD Management
-      'sppd.create',
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.edit',
-      'sppd.delete',
-      'sppd.approve',
-      'sppd.sign',
-
-      // User Management
-      'user.create',
-      'user.view',
-      'user.edit',
-      'user.delete',
-
-      // Department Management
-      'department.create',
-      'department.view',
-      'department.edit',
-      'department.delete',
-
-      // Budget Management
-      'budget.create',
-      'budget.view',
-      'budget.edit',
-      'budget.delete',
-
-      // Report Management
-      'report.create',
-      'report.view',
-      'report.verify',
-
-      // Settings
-      'setting.manage',
-    ];
-
-    foreach ($permissions as $permission) {
+    foreach (self::PERMISSIONS as $permission) {
       Permission::findOrCreate($permission);
     }
 
-
-    // ──────────────────────────────────────────────
-    // Roles
-    // ──────────────────────────────────────────────
-
-    // Super Admin — akses semua
-    Role::firstOrCreate(
-      ['name' => 'super_admin'],
-      ['label' => 'Super Admin', 'guard_name' => 'web']
-    )->givePermissionTo(Permission::all());
-
-    // Admin OPD
-    Role::firstOrCreate(
-      ['name' => 'admin_opd'],
-      ['label' => 'Admin OPD', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.create',
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.edit',
-      'sppd.delete',
-      'user.view',
-      'user.create',
-      'user.edit',
-      'user.delete',
-      'budget.view',
-      'budget.create',
-      'budget.edit',
-      'budget.delete',
-      'report.view',
-    ]);
-
-    // Kepala OPD
-    Role::firstOrCreate(
-      ['name' => 'kepala_opd'],
-      ['label' => 'Kepala OPD', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Sekretaris Dinas
-    Role::firstOrCreate(
-      ['name' => 'sekretaris_opd'],
-      ['label' => 'Sekretaris OPD', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'report.view',
-    ]);
-
-    // Kasubid / Kasubag
-    Role::firstOrCreate(
-      ['name' => 'kasubid_kasubag'],
-      ['label' => 'Kasubid / Kasubag', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'report.view',
-    ]);
-
-    // Kabid / Irban / Kabag
-    Role::firstOrCreate(
-      ['name' => 'kabid_irban_kabag'],
-      ['label' => 'Kabid / Irban / Kabag', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'report.view',
-    ]);
-
-    // Pimpinan DPRD
-    Role::firstOrCreate(
-      ['name' => 'pimpinan_dprd'],
-      ['label' => 'Pimpinan DPRD', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Asisten
-    Role::firstOrCreate(
-      ['name' => 'asisten'],
-      ['label' => 'Asisten', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'report.view',
-    ]);
-
-    // Sekda
-    Role::firstOrCreate(
-      ['name' => 'sekda'],
-      ['label' => 'Sekda', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Walikota
-    Role::firstOrCreate(
-      ['name' => 'walikota'],
-      ['label' => 'Walikota', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Wakil Walikota
-    Role::firstOrCreate(
-      ['name' => 'wakil_walikota'],
-      ['label' => 'Wakil Walikota', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Sekwan (Sekretaris Dewan)
-    Role::firstOrCreate(
-      ['name' => 'sekwan'],
-      ['label' => 'Sekwan', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'report.view',
-    ]);
-
-    // Camat
-    Role::firstOrCreate(
-      ['name' => 'camat'],
-      ['label' => 'Camat', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Sekcam
-    Role::firstOrCreate(
-      ['name' => 'sekcam'],
-      ['label' => 'Sekcam', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Lurah
-    Role::firstOrCreate(
-      ['name' => 'lurah'],
-      ['label' => 'Lurah', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Kepala Puskesmas
-    Role::firstOrCreate(
-      ['name' => 'kapus'],
-      ['label' => 'Kepala Puskesmas', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.view',
-      'sppd.view_all',
-      'sppd.approve',
-      'sppd.sign',
-      'report.view',
-    ]);
-
-    // Anggota DPRD
-    Role::firstOrCreate(
-      ['name' => 'anggota_dprd'],
-      ['label' => 'Anggota DPRD', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.create',
-      'sppd.view',
-      'report.create',
-      'report.view',
-    ]);
-
-    //  Staf — pengguna biasa
-    Role::firstOrCreate(
-      ['name' => 'staf'],
-      ['label' => 'Staf', 'guard_name' => 'web']
-    )->givePermissionTo([
-      'sppd.create',
-      'sppd.view',
-      'sppd.edit',
-      'report.create',
-      'report.view',
-    ]);
+    foreach (self::ROLES as $name => $role) {
+      Role::firstOrCreate(
+        ['name' => $name],
+        ['label' => $role['label'], 'note' => $role['note'] ?? null, 'guard_name' => 'web']
+      )->givePermissionTo(self::permissionsFor($name));
+    }
 
     // ──────────────────────────────────────────────
     // Warna badge per role (token Tailwind, lihat App\Support\BadgeColor)
@@ -305,5 +147,13 @@ class RoleAndPermissionSeeder extends Seeder
     foreach ($roleColors as $name => $color) {
       Role::where('name', $name)->update(['color' => $color]);
     }
+  }
+
+  /** @return array<int, string> */
+  public static function permissionsFor(string $role): array
+  {
+    $permissions = self::ROLES[$role]['permissions'] ?? [];
+
+    return $permissions === '*' ? self::PERMISSIONS : $permissions;
   }
 }

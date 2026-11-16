@@ -37,6 +37,7 @@ class SupervisorChainTest extends TestCase
         foreach (['super_admin', 'admin_opd', 'staf', 'kasubid_kasubag', 'kabid_irban_kabag', 'sekretaris_opd', 'kepala_opd', 'asisten', 'sekda', 'walikota', 'sekwan'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
+        $this->grantDefaultPermissions();
         $this->seed(SppdWorkflowSeeder::class);
         $this->service = app(SppdWorkflowService::class);
 
@@ -185,6 +186,7 @@ class SupervisorChainTest extends TestCase
     public function test_wakil_walikota_memilih_kabag_di_sub_unit_sebagai_tahap_alur(): void
     {
         Role::firstOrCreate(['name' => 'wakil_walikota', 'guard_name' => 'web'], ['label' => 'wakil_walikota']);
+        $this->grantDefaultPermissions();
         $this->mulaiDariKabag('wakil_walikota');
         // Kabag di unit induk tidak boleh menutup Kabag yang tercatat di sub-unit.
         $this->user('kabid_irban_kabag', $this->setda);

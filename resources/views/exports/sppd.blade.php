@@ -216,7 +216,8 @@
 					<td rowspan="3" style="width: 1%; text-align: center; vertical-align: top;">3.</td>
 					<td style="width: 46%; border-bottom: none;">
 						a. &nbsp;Pangkat dan Golongan ruang gaji<br>
-						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;menurut PP No.30 Tahun 2015
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;menurut PP No. 5 Tahun 2024<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dan PP No. 11 Tahun 2024
 					</td>
 					<td style="width: 54%; border-bottom: none;">
 						a. &nbsp;{{ $user->rank ? $user->rank->name . ' - ' . $user->rank->group : '-' }}
@@ -226,7 +227,7 @@
 					<td style="border-top: none; border-bottom: none;">b. &nbsp;Jabatan / Instansi</td>
 					<td style="border-top: none; border-bottom: none;">
 						b. <span style="text-transform: uppercase">
-							{{ $user->isDprdMember() ? (\App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? $user->dprd_jabatan ?? 'ANGGOTA DPRD') : ($pdfData['is_follower'] && $pdfData['travel_position'] ? $pdfData['travel_position'] : $user->position->name ?? ($user->roles->first()->name ?? '-')) }}</span>
+							{{ $user->isDprdMember() ? (\App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? $user->dprd_jabatan ?? 'ANGGOTA DPRD') : ($pdfData['travel_position'] ?: $user->position->name ?? ($user->roles->first()->name ?? '-')) }}</span>
 					</td>
 				</tr>
 				<tr>

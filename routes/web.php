@@ -131,8 +131,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/sppd/{sppd}/stream/pengeluaran-riil', [SppdController::class, 'streamPengeluaranRiil'])->name('sppd.stream.pengeluaran-riil');
     Route::get('/sppd/{sppd}/stream/rincian-biaya', [SppdController::class, 'streamRincianBiaya'])->name('sppd.stream.rincian-biaya');
 
-    // Cek / verifikasi keaslian dokumen TTE (unggah berkas) — super_admin & admin_opd.
-    Route::middleware('role:super_admin|admin_opd')->group(function () {
+    // Cek / verifikasi keaslian dokumen TTE (unggah berkas) — permission document.verify.
+    Route::middleware('permission:document.verify')->group(function () {
         Route::get('/verify', \App\Livewire\VerifyDocument::class)->name('verify.index');
         // Pratinjau inline berkas unggahan (agar tidak memicu unduhan).
         Route::get('/verify/preview', [\App\Http\Controllers\DocumentPreviewController::class, 'tempUpload'])->name('verify.preview');

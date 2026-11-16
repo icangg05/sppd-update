@@ -5,34 +5,53 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// x-digits: field hanya menerima angka (NIP/NIK). Karakter lain dari ketikan, tempelan, atau
+// Directive penyaring isian: karakter yang tidak lolos `clean` dari ketikan, tempelan, atau
 // keyboard HP dibuang, lalu event input dipicu ulang agar wire:model menerima nilai bersih.
-document.addEventListener("alpine:init", () => {
-  window.Alpine.directive("digits", (el) => {
-    const max = () => (el.maxLength > 0 ? el.maxLength : Infinity);
-    const commit = (value, caret) => {
-      el.value = value;
-      el.setSelectionRange(caret, caret);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    };
+// - x-digits   : hanya angka (NIP/NIK).
+// - x-username : huruf kecil a-z, angka, dan titik; huruf besar otomatis dikecilkan, titik di
+//                awal/berurutan dibuang (titik di akhir ditolak validasi server).
+const sanitizingDirective = (clean) => (el) => {
+  const max = () => (el.maxLength > 0 ? el.maxLength : Infinity);
+  const commit = (value, caret) => {
+    el.value = value;
+    el.setSelectionRange(caret, caret);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const sanitize = () => {
+    if (clean(el.value) === el.value) return;
+    const caret = clean(el.value.slice(0, el.selectionStart ?? el.value.length)).length;
+    const value = clean(el.value).slice(0, max());
+    commit(value, Math.min(caret, value.length));
+  };
 
-    el.addEventListener("input", () => {
-      if (!/\D/.test(el.value)) return;
-      const caret = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, "").length;
-      const value = el.value.replace(/\D/g, "").slice(0, max());
-      commit(value, Math.min(caret, value.length));
-    });
+  // Saat keyboard HP masih menyusun kata (composition), nilai jangan diubah dulu agar teks
+  // tidak terduplikasi; dibersihkan begitu susunan selesai.
+  el.addEventListener("input", (e) => e.isComposing || sanitize());
+  el.addEventListener("compositionend", sanitize);
 
-    // Tempelan dibersihkan sebelum masuk, agar maxlength tidak memotong digit dari NIP berspasi.
-    el.addEventListener("paste", (e) => {
-      e.preventDefault();
-      const text = (e.clipboardData?.getData("text") ?? "").replace(/\D/g, "");
-      const start = el.selectionStart ?? el.value.length;
-      const end = el.selectionEnd ?? start;
-      const value = (el.value.slice(0, start) + text + el.value.slice(end)).slice(0, max());
-      commit(value, Math.min(start + text.length, value.length));
-    });
+  // Tempelan dibersihkan sebelum masuk, agar maxlength tidak memotong isi dari teks berspasi.
+  el.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const text = clean(e.clipboardData?.getData("text") ?? "");
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    const value = (el.value.slice(0, start) + text + el.value.slice(end)).slice(0, max());
+    commit(value, Math.min(start + text.length, value.length));
   });
+};
+
+document.addEventListener("alpine:init", () => {
+  window.Alpine.directive("digits", sanitizingDirective((v) => v.replace(/\D/g, "")));
+  window.Alpine.directive(
+    "username",
+    sanitizingDirective((v) =>
+      v
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, "")
+        .replace(/\.{2,}/g, ".")
+        .replace(/^\./, "")
+    )
+  );
 });
 
 // Deteksi jaringan untuk mode aplikasi (PWA terpasang / standalone).

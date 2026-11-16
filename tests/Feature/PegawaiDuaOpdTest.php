@@ -41,6 +41,7 @@ class PegawaiDuaOpdTest extends TestCase
         parent::setUp();
 
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web'], ['label' => 'Super Admin']);
+        $this->grantDefaultPermissions();
 
         $this->opdA = $this->dept('Dinas Sosial', DepartmentType::OPD);
         $this->opdB = $this->dept('Dinas Pendidikan', DepartmentType::OPD);

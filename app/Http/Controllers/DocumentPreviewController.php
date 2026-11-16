@@ -16,7 +16,7 @@ class DocumentPreviewController extends Controller
    */
   public function tempUpload(Request $request)
   {
-    abort_unless($request->user()?->hasAnyRole(['super_admin', 'admin_opd']), 403);
+    abort_unless($request->user()?->can('document.verify'), 403);
 
     // Hanya nama berkas (cegah path traversal).
     $filename = basename((string) $request->query('file'));

@@ -59,11 +59,11 @@ class UserController extends Controller
 
     $search = request('search_trip');
 
-    $tripsAsPelaksanaQuery = \App\Models\SppdRequest::with(['budget', 'category', 'destinations.province', 'destinations.regency'])
+    $tripsAsPelaksanaQuery = \App\Models\SppdRequest::with(['user.department', 'budget', 'category', 'destinations.province', 'destinations.regency'])
       ->where('user_id', $user->id)
       ->orderBy('start_date', 'desc');
 
-    $tripsAsFollowerQuery = \App\Models\SppdRequest::with(['user', 'budget', 'category', 'destinations.province', 'destinations.regency'])
+    $tripsAsFollowerQuery = \App\Models\SppdRequest::with(['user.department', 'budget', 'category', 'destinations.province', 'destinations.regency'])
       ->whereHas('followers', function ($q) use ($user) {
         $q->where('user_id', $user->id);
       })

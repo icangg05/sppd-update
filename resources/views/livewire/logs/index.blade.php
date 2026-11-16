@@ -75,7 +75,7 @@
           @php
             // Label kolom yang dapat dibaca untuk diff perubahan.
             $fieldLabels = [
-              'status' => 'Status', 'document_number' => 'No. Dokumen', 'purpose' => 'Maksud',
+              'status' => 'Status', 'document_number' => 'No. Dokumen', 'travel_position' => 'Jabatan Pelaksana', 'purpose' => 'Maksud',
               'start_date' => 'Tgl Mulai', 'end_date' => 'Tgl Selesai', 'departure_place' => 'Tempat Berangkat',
               'transport_type' => 'Jenis Transportasi', 'transport_name' => 'Nama Transportasi',
               'domain' => 'Wilayah', 'urgency' => 'Urgensi', 'budget_id' => 'Anggaran',

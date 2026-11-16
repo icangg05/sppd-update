@@ -7,7 +7,7 @@ use App\Models\User;
 /**
  * Membuat username yang ringkas, rapi, & mudah diingat dari Nama Lengkap.
  *
- * Format: "depan.belakang" (mis. "Ikrar Anggara Sakra" -> "ikrar.sakra").
+ * Format: "depan.belakang" (mis. "Ikrar Anggara Sakra" -> "ikrar.sakra"), sesuai PATTERN.
  * Gelar/titel (S.T., M.M., Dr., dst.) dibuang lebih dulu. Bila sudah dipakai,
  * cukup ditambah angka mulai dari 2 (ikrar.sakra2, ikrar.sakra3, ...).
  *
@@ -15,6 +15,16 @@ use App\Models\User;
  */
 class UsernameGenerator
 {
+  /**
+   * Aturan username baru: huruf kecil a-z, angka, dan titik (titik tidak di awal/akhir
+   * dan tidak berurutan). Username lama yang bersimbol lain (mis. "@Israfil", "DPRD_01")
+   * sengaja dibiarkan & tetap bisa login; aturan ini hanya ditegakkan saat akun dibuat
+   * atau username diubah. Padanan sisi browser: directive x-username di resources/js/app.js.
+   */
+  public const PATTERN = '/^[a-z0-9]+(\.[a-z0-9]+)*$/';
+
+  public const INVALID_MESSAGE = 'Username hanya boleh huruf kecil (a-z), angka, dan titik; titik tidak boleh di awal, di akhir, atau berurutan.';
+
   /**
    * Username unik untuk sebuah nama. $excludeUserId mengabaikan baris user
    * tertentu saat cek ketersediaan (mis. saat user mengubah datanya sendiri).

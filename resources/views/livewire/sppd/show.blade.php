@@ -19,9 +19,10 @@
 		$backUrl = $from === 'approval'
 		    ? route('sppd.index', ['filter' => 'approval'])
 		    : route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters()));
-		$canManage = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
-		// Halaman detail pegawai hanya bisa dibuka Super Admin & Admin OPD.
-		$canOpenUsers = $canManage;
+		$canEdit = auth()->user()->can('sppd.create');
+		$canCancel = auth()->user()->can('sppd.delete');
+		// Halaman detail pegawai hanya bisa dibuka Super Admin & Admin OPD (rute master.*).
+		$canOpenUsers = auth()->user()->hasAnyRole(['admin_opd', 'super_admin']);
 		$isInProgress = $sppd->status->value === 'in_progress';
 		$dateRange = $sppd->start_date->isSameDay($sppd->end_date)
 		    ? $sppd->start_date->translatedFormat('d M Y')
@@ -51,6 +52,8 @@
 					</span>
 					<span class="inline-flex items-center gap-1.5">
 						<i class="fa-regular fa-calendar text-xs text-slate-400"></i>{{ $dateRange }}
+						<span class="text-slate-400">·</span>
+						<span>{{ $sppd->duration_days }} hari</span>
 					</span>
 					{{-- Nomor dokumen hanya dipakai Inspektorat (diinput di form SPPD). --}}
 					@if ($sppd->showsDocumentNumber())
@@ -62,14 +65,14 @@
 			</div>
 
 			<div class="flex flex-wrap items-center gap-2">
-				@if ($isInProgress && $sppd->revision_note && $canManage)
+				@if ($isInProgress && $sppd->revision_note && $canEdit)
 					<a href="{{ route('sppd.create.details', ['sppd_id' => $sppd->id]) }}" wire:navigate
 						class="inline-flex items-center gap-2 rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 shadow-2xs transition-colors hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1">
 						<i class="fa-solid fa-pen-to-square text-xs"></i> Edit Perbaikan
 					</a>
 				@endif
 
-				@if ($isInProgress && $canManage)
+				@if ($isInProgress && $canCancel)
 					<button type="button" @click="showCancelModal = true"
 						class="inline-flex items-center gap-2 rounded border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 shadow-2xs transition-colors hover:bg-rose-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1">
 						<i class="fa-solid fa-trash-can text-xs"></i> Batalkan Pengajuan
@@ -120,7 +123,7 @@
 					</span>
 				</button>
 
-				@if (in_array($sppd->status->value, ['approved', 'completed']))
+				@if (in_array($sppd->status->value, ['approved', 'completed']) && auth()->user()->canOpenCostMenu())
 					<a href="{{ route('sppd.next', ['sppd' => $sppd, 'from' => 'show']) }}" wire:navigate
 						class="group inline-flex items-center gap-2 rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-primary-700 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
 						Selanjutnya
@@ -181,6 +184,9 @@
 							@else
 								<span class="text-sm font-semibold text-slate-800">{{ $sppd->user->name }}</span>
 							@endif
+							@if ($sppd->travel_position)
+								<span class="block text-xs text-slate-500">{{ $sppd->travel_position }}</span>
+							@endif
 							<span class="block font-mono text-xs text-slate-500">{{ $sppd->user->nip ?? '-' }}</span>
 						</dd>
 					</div>
@@ -232,7 +238,7 @@
 						@foreach ($narratives as $title => $text)
 							<div class="px-5 py-2.5">
 								<dt class="{{ $label }}">{{ $title }}</dt>
-								<dd class="mt-1 max-w-[75ch] whitespace-pre-line text-sm leading-relaxed font-medium text-slate-800">{{ $text }}</dd>
+								<dd class="mt-1 max-w-[75ch] text-sm leading-relaxed font-medium text-slate-800"><x-ui.narrative :text="$text" /></dd>
 							</div>
 						@endforeach
 					</dl>
@@ -347,7 +353,7 @@
 								<{{ $followerTag }} @if ($canOpenUsers) href="{{ route('master.users.show', $f->user) }}#riwayat-pengikut" wire:navigate title="Lihat riwayat perjalanan {{ $f->user->name }}" @endif
 									class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5 {{ $canOpenUsers ? 'transition-colors hover:border-slate-300 hover:bg-slate-50' : '' }}">
 									<span class="flex size-6 shrink-0 items-center justify-center rounded bg-slate-100 text-[11px] font-bold text-slate-600">
-										{{ strtoupper(substr($f->user->name, 0, 1)) }}
+										{{ mb_strtoupper(mb_substr(trim($f->user->name), 0, 1)) }}
 									</span>
 									<span class="leading-tight">
 										<span class="block text-sm font-semibold text-slate-800">{{ $f->user->name }}</span>
@@ -404,7 +410,7 @@
 									<div class="min-w-0 leading-tight {{ $displayStatus === 'skipped' ? 'opacity-50' : '' }}">
 										<p class="text-xs font-medium text-slate-500">{{ $ap->role_label }}</p>
 										<p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $ap->approver->name }}</p>
-										<div class="mt-1.5">
+										<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 											@if ($displayStatus === 'skipped')
 												<span
 													class="inline-block rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">Tidak
@@ -420,6 +426,7 @@
 													@endif
 												</x-ui.badge>
 											@endif
+											<x-sppd.signer-badge :spt="$ap->signs_spt" :sppd="$ap->signs_sppd" />
 										</div>
 										@if ($ap->notes)
 											<p class="mt-2 rounded border border-slate-100 bg-slate-50 p-2 text-xs italic text-slate-600">
@@ -812,7 +819,7 @@
 	</x-ui.modal>
 
 	{{-- Modal Batalkan Pengajuan: tidak bisa ditutup dengan klik luar/Esc, wajib pilih tombol. --}}
-	@if ($isInProgress && $canManage)
+	@if ($isInProgress && $canCancel)
 		<x-ui.modal show="showCancelModal" :closeable="false" title="Batalkan Pengajuan SPPD"
 			description="Pengajuan yang dibatalkan tidak dapat dikembalikan" icon="fa-solid fa-trash-can text-rose-600">
 			<form id="cancel-sppd-form" action="{{ route('sppd.destroy', $sppd) }}" method="POST">

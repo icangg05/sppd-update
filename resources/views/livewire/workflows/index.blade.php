@@ -60,6 +60,11 @@
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700 text-xs">
           @forelse($workflows as $i => $w)
+            @php
+              // Alur khusus satu tipe instansi memakai sebutan role tipe itu (Rumah Sakit: Kepala OPD = Direktur).
+              $onlyType = count($w->department_type ?? []) === 1 ? \App\Enums\DepartmentType::tryFrom($w->department_type[0]) : null;
+              $labelOf = fn (string $role) => $onlyType?->roleTitle($role) ?? $roleLabels[$role] ?? ucwords(str_replace('_', ' ', $role));
+            @endphp
             <tr wire:key="workflow-{{ $w->id }}" class="hover:bg-slate-50/50 transition-colors">
               <td class="stack-hide py-2.5 px-3 text-center text-slate-500 font-medium">
                 {{ $workflows->firstItem() + $i }}.
@@ -93,7 +98,7 @@
                         @foreach ($w->applicant_role as $role)
                           <span
                             class="inline-flex items-center rounded bg-primary-50 px-1 py-0.5 text-[9px] font-bold text-primary-700 border border-primary-100/70">
-                            {{ $roleLabels[$role] ?? $role }}
+                            {{ $labelOf($role) }}
                           </span>
                         @endforeach
                       </div>
@@ -108,7 +113,7 @@
                         @foreach ($w->supervisor_role as $role)
                           <span
                             class="inline-flex items-center rounded bg-amber-50 px-1 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200">
-                            {{ $roleLabels[$role] ?? $role }}
+                            {{ $labelOf($role) }}
                           </span>
                         @endforeach
                       </div>
@@ -144,7 +149,7 @@
                       $roleName = is_array($step) ? $step['role'] ?? '' : $step;
                       $signsSpt = is_array($step) ? (bool) ($step['signs_spt'] ?? false) : false;
                       $signsSppd = is_array($step) ? (bool) ($step['signs_sppd'] ?? false) : false;
-                      $roleLabel = $roleLabels[$roleName] ?? ucwords(str_replace('_', ' ', $roleName));
+                      $roleLabel = $labelOf($roleName);
                     @endphp
                     <div
                       class="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 font-medium shadow-sm">

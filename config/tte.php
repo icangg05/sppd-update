@@ -18,7 +18,13 @@ return [
       'driver'     => 'local_proxy',
       'endpoint'   => env('E_SIGN_API_ENDPOINT', 'http://103.85.5.99'),
       'basic_auth' => env('E_SIGN_AUTH_BASIC', 'ZXNwcGQ6TUEzNDVnRmJCR0hUTWRkeDdlVXI='),
-      'timeout'    => (int) env('E_SIGN_TIMEOUT', 90),
+      'timeout'    => (int) env('E_SIGN_TIMEOUT', 60),
+      // Pengulangan otomatis bila provider mengalami gangguan sesaat (502/503/504,
+      // koneksi gagal). Passphrase salah dan timeout tidak diulang. Percobaan ke-n
+      // menunggu n × retry_delay_ms. Batas waktu job TTE menyesuaikan nilai ini.
+      // Nilai tetap (bukan dari .env); ubah di sini bila perlu.
+      'retries'        => 2,
+      'retry_delay_ms' => 5000,
     ],
 
     'bssn' => [

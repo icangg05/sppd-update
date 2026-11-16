@@ -11,8 +11,8 @@
     'wrapperClass' => '',
     // Kirim rentang ke server begitu dipilih (mis. agar daftar lain ikut menyesuaikan).
     'live' => false,
-    // Sabtu & Minggu tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung.
-    'skipWeekends' => false,
+    // Hari Minggu tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung.
+    'skipSundays' => false,
     // Rentang yang sudah terpakai: [['start' => Y-m-d, 'end' => Y-m-d, 'label' => ...], ...].
     // Tanggalnya tidak bisa dipilih, dan rentang baru tidak bisa melompatinya.
     'blocked' => [],
@@ -35,7 +35,7 @@
             open: false,
             start: @if ($live) @entangle($start).live @else @entangle($start) @endif,
             end: @if ($live) @entangle($end).live @else @entangle($end) @endif,
-            skipWeekends: @js((bool) $skipWeekends),
+            skipSundays: @js((bool) $skipSundays),
             blocked: @js(array_values($blocked)),
             // Tanggal awal yang sudah diklik, menunggu klik tanggal akhir.
             draft: null,
@@ -76,18 +76,17 @@
                 const s = this.parse(this.start);
                 const e = this.parse(this.end || this.start);
                 const total = Math.round((Date.UTC(e.y, e.m, e.d) - Date.UTC(s.y, s.m, s.d)) / 86400000) + 1;
-                if (!this.skipWeekends) return total;
+                if (!this.skipSundays) return total;
                 let count = 0;
                 for (let i = 0; i < total; i++) {
                     const dow = new Date(Date.UTC(s.y, s.m, s.d + i)).getUTCDay();
-                    if (dow !== 0 && dow !== 6) count++;
+                    if (dow !== 0) count++;
                 }
                 return count;
             },
-            isWeekend(iso) {
+            isSunday(iso) {
                 const p = this.parse(iso);
-                const dow = new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay();
-                return dow === 0 || dow === 6;
+                return new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay() === 0;
             },
             blockOf(iso) {
                 return this.blocked.find((b) => iso >= b.start && iso <= b.end) ?? null;
@@ -98,7 +97,7 @@
                 return this.blocked.map((b) => b.start).filter((s) => s > this.draft).sort()[0] ?? null;
             },
             isOff(iso) {
-                return (this.skipWeekends && this.isWeekend(iso))
+                return (this.skipSundays && this.isSunday(iso))
                     || this.blockOf(iso) !== null
                     || (this.limit !== null && iso >= this.limit);
             },
@@ -139,6 +138,9 @@
             },
             bandClass(iso) {
                 if (!this.from || this.from === this.to) return '';
+                // Hari Minggu yang tidak dihitung berada di luar pita (Minggu selalu kolom terakhir,
+                // jadi pita cukup berhenti di Sabtu).
+                if (this.skipSundays && this.isSunday(iso)) return '';
                 if (iso > this.from && iso < this.to) return 'bg-primary-50';
                 if (iso === this.from) return 'bg-linear-to-r from-transparent from-50% to-primary-50 to-50%';
                 if (iso === this.to) return 'bg-linear-to-l from-transparent from-50% to-primary-50 to-50%';
@@ -146,13 +148,13 @@
             },
             dayClass(cell) {
                 const iso = cell.iso;
-                // Tanggal terpakai SPPD lain: merah dicoret.
-                if (this.blockOf(iso)) return 'bg-rose-50 text-rose-400 line-through cursor-not-allowed';
-                // Akhir pekan di rentang tetap tampak di dalam pita, tetapi pudar karena tidak dihitung.
-                if (this.isOff(iso)) {
-                    const muted = iso > this.from && iso < this.to ? 'text-slate-400 line-through' : 'text-slate-300';
-                    return muted + ' cursor-not-allowed';
-                }
+                // Tanggal terpakai SPPD lain: kuning dicoret. Sengaja bukan merah, karena merah
+                // sudah berarti hari Minggu (tanggal merah).
+                if (this.blockOf(iso)) return 'bg-amber-100 text-amber-700 line-through cursor-not-allowed';
+                // Hari Minggu tidak dihitung: selalu merah pudar tanpa latar, termasuk yang berada
+                // di tengah rentang, agar jelas tidak ikut terhitung.
+                if (this.skipSundays && this.isSunday(iso)) return 'text-rose-300 cursor-not-allowed';
+                if (this.isOff(iso)) return 'text-slate-300 cursor-not-allowed';
                 if (iso === this.from || (iso === this.to && !this.draft)) return 'bg-primary-600 font-semibold text-white hover:bg-primary-700';
                 if (iso === this.to) return 'bg-primary-100 font-semibold text-primary-800';
                 if (iso > this.from && iso < this.to) return 'text-primary-800 hover:bg-primary-100';
@@ -246,7 +248,7 @@
             <i class="fa-regular fa-calendar text-xs text-slate-500"></i>
             <span class="min-w-0 flex-1 truncate text-left" :class="summary ? 'text-slate-800' : 'text-slate-500'"
                 x-text="summary || @js($placeholder)"></span>
-            <span x-show="days > 0" x-cloak x-text="days + (skipWeekends ? ' hari kerja' : ' hari')"
+            <span x-show="days > 0" x-cloak x-text="days + ' hari'"
                 class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600"></span>
         </button>
 
@@ -310,10 +312,13 @@
                         <span>Klik <strong class="font-semibold text-slate-800">tanggal kembali</strong>. Klik tanggal yang sama untuk perjalanan satu hari.</span>
                     </template>
                     <template x-if="blocked.length">
-                        <span class="mt-0.5 block text-rose-600">Tanggal merah sudah terpakai SPPD lain dan tidak bisa dipilih.</span>
+                        <span class="mt-1 flex items-center gap-1.5 text-slate-500">
+                            <span aria-hidden="true" class="inline-flex h-4 min-w-5 shrink-0 items-center justify-center rounded-sm bg-amber-100 px-1 text-[10px] font-semibold text-amber-700 line-through">12</span>
+                            Terpakai SPPD lain, tidak bisa dipilih.
+                        </span>
                     </template>
-                    <template x-if="skipWeekends">
-                        <span class="mt-0.5 block text-slate-500">Sabtu &amp; Minggu tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat atau kembali.</span>
+                    <template x-if="skipSundays">
+                        <span class="mt-0.5 block text-slate-500">Hari Minggu tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat atau kembali.</span>
                     </template>
                 </div>
             </div>

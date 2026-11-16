@@ -71,6 +71,11 @@
 						placeholder="contoh: Kepala Bagian" />
 				</div>
 
+				{{-- Catatan: tampil di daftar role. --}}
+				<x-form.textarea wire:model="note" name="note" label="Catatan" rows="2"
+					placeholder="contoh: Di unit kerja Rumah Sakit, role ini disebut Direktur."
+					hint="Opsional. Tampil di daftar role, agar pengguna tahu kegunaannya." />
+
 				{{-- Warna Badge --}}
 				@php
 					$swatch = [
@@ -119,7 +124,7 @@
 				<div class="space-y-2">
 					<div class="flex items-center justify-between">
 						<label class="block text-xs font-semibold text-slate-600">Permissions</label>
-						@if ($permissions->count() > 0)
+						@if ($permissionGroups->isNotEmpty())
 							<div class="flex items-center gap-2">
 								<button type="button" wire:click="toggleAll(true)"
 									class="text-[11px] text-violet-600 hover:underline font-medium">Pilih Semua</button>
@@ -130,11 +135,26 @@
 						@endif
 					</div>
 
-					@if ($permissions->count() > 0)
-						<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 rounded border border-slate-200 bg-slate-50 p-3">
-							@foreach ($permissions as $perm)
-								<x-form.checkbox wire:model="selectedPermissions" :value="$perm->name" :label="$perm->name"
-									wrapper-class="min-w-0" />
+					@if ($permissionGroups->isNotEmpty())
+						<div class="space-y-4 rounded border border-slate-200 bg-slate-50 p-3">
+							@foreach ($permissionGroups as $group => $items)
+								<div class="space-y-2">
+									<p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ $group }}</p>
+									<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+										@foreach ($items as $perm)
+											<x-form.checkbox wire:model="selectedPermissions" :value="$perm['name']" :label="$perm['label']"
+												:hint="$perm['description']" wrapper-class="min-w-0" />
+										@endforeach
+									</div>
+									@if (in_array('cost.manage', array_column($items, 'name'), true))
+										{{-- Kelola biaya hanya berlaku di dalam menu Selanjutnya (User::canManageCosts). --}}
+										<p x-cloak x-show="($wire.selectedPermissions || []).includes('cost.manage') && ! ($wire.selectedPermissions || []).includes('cost.view')"
+											class="flex items-start gap-1.5 rounded border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
+											<i class="fa-solid fa-triangle-exclamation mt-0.5 text-[10px]" aria-hidden="true"></i>
+											<span>Kelola biaya perjalanan tidak berfungsi tanpa <strong>Buka menu Selanjutnya</strong>. Centang keduanya agar role ini bisa mengelola biaya.</span>
+										</p>
+									@endif
+								</div>
 							@endforeach
 						</div>
 					@else
