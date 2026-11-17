@@ -12,6 +12,26 @@ return [
 
   'default_provider' => env('E_SIGN_PROVIDER', 'local_proxy'),
 
+  /*
+  |--------------------------------------------------------------------------
+  | Simulasi TTE (TTE Testing)
+  |--------------------------------------------------------------------------
+  | Untuk pengujian tanpa akses BSrE. Bila aktif, permintaan tanda tangan dan
+  | verifikasi dokumen hasil simulasi tidak dikirim ke BSrE, tetapi alurnya sama
+  | (queue, dua permintaan untuk SPPD, error passphrase salah). Label "TTE Testing"
+  | tampil di aplikasi dan di footer dokumen yang ditandatangani.
+  |
+  | WAJIB false di server produksi: dokumen simulasi bukan tanda tangan elektronik sah.
+  | Hanya `enabled` yang dibaca dari .env; nilai lain tetap, ubah di sini bila perlu.
+  */
+  'simulation' => [
+    'enabled'    => (bool) env('TTE_SIMULATION', false),
+    // Passphrase yang dianggap benar; selain ini ditolak seperti BSrE ("Passphrase anda salah").
+    'passphrase' => 'tte-testing',
+    // Lama satu permintaan tanda tangan (ms), meniru waktu tunggu BSrE.
+    'delay_ms'   => 1500,
+  ],
+
   'providers' => [
     'local_proxy' => [
       'name'       => 'Local Proxy',

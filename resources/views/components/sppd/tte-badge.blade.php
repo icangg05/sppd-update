@@ -1,12 +1,17 @@
 @props([
     // Status tanda tangan: signed | processing | rejected | null (belum diproses).
     'status' => null,
+    // Ditandatangani simulasi (TTE Testing), bukan BSrE.
+    'testing' => false,
 ])
 
 {{-- Badge status TTE dokumen, dipakai di halaman detail SPPD, Kelola SPT, dan Kelola SPPD. --}}
 @if ($status === 'signed')
     <span {{ $attributes->merge(['class' => 'inline-flex shrink-0 items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700']) }}>
         <i class="fa-solid fa-check text-[10px]"></i> Sudah TTE
+        @if ($testing)
+            <span class="rounded-sm bg-rose-600 px-1 text-[9px] uppercase tracking-wide text-white">Testing</span>
+        @endif
     </span>
 @elseif ($status === 'processing')
     <span {{ $attributes->merge(['class' => 'inline-flex shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800']) }}>

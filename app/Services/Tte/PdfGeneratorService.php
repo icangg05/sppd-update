@@ -6,6 +6,7 @@ use App\Enums\SignatureDocumentType;
 use App\Helpers\QrSimulator;
 use App\Models\SppdDigitalSignature;
 use App\Models\SppdRequest;
+use App\Support\SppdPdf;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -38,13 +39,10 @@ class PdfGeneratorService
             $viewData = $this->buildSppdData($sppd, $documentType);
         }
 
-        $pdf = Pdf::loadView($viewData['view'], $viewData['data']);
-
-        if ($documentType !== SignatureDocumentType::SPT->value) {
-            $pdf->setPaper([0, 0, 935.43, 684.45]);
-        } else {
-            $pdf->setPaper('f4', 'portrait');
-        }
+        // Dokumen SPPD lewat SppdPdf agar kotak tanda tangan II-V mengisi sisa halaman.
+        $pdf = $viewData['view'] === SppdPdf::VIEW
+            ? SppdPdf::make($viewData['data'])
+            : Pdf::loadView($viewData['view'], $viewData['data'])->setPaper('f4', 'portrait');
 
         return $pdf->output();
     }
@@ -99,7 +97,9 @@ class PdfGeneratorService
             // Jabatan perjalanan (Inspektorat dalam daerah): milik pelaksana di SPPD-nya, atau milik
             // pengikut. Luar daerah memakai jabatan struktural.
             'travel_position' => $sppd->usesTravelPositions() ? ($isMain ? $sppd->travel_position : $followerRecord?->travel_position) : null,
-            'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
+            'letterhead_url' => $targetUser->department?->getInheritedLetterhead(),
+            // Footer berlabel "TTE TESTING" bila ditandatangani simulasi, bukan BSrE.
+            'tte_testing' => SimulatedSignService::enabled(),
         ];
 
         // QR mengarah ke halaman publik (read-only) detail SPPD.
@@ -142,7 +142,9 @@ class PdfGeneratorService
             'duration' => $duration,
             'letterhead_url' => $isDprd
                 ? $sppd->user->department?->getInheritedLetterheadSecond()
-                : $sppd->user->department?->getInheritedLetterhead()
+                : $sppd->user->department?->getInheritedLetterhead(),
+            // Footer berlabel "TTE TESTING" bila ditandatangani simulasi, bukan BSrE.
+            'tte_testing' => SimulatedSignService::enabled(),
         ];
 
         // QR mengarah ke halaman publik (read-only) detail SPPD.

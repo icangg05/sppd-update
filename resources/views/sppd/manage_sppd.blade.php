@@ -69,7 +69,7 @@
 									<x-ui.badge :color="$person['role'] === 'Pelaksana' ? 'cyan' : 'slate'">{{ $person['role'] }}</x-ui.badge>
 								</td>
 								<td data-label="Status TTE" class="stack-block px-4 py-3">
-									<x-sppd.tte-badge :status="$status" />
+									<x-sppd.tte-badge :status="$status" :testing="(bool) $person['signature']?->isSimulated()" />
 									@if ($status === 'signed')
 										<span class="mt-1 block text-xs text-slate-500">
 											{{ $person['signature']->signer?->name }}{{ $person['signature']->signed_at ? ' · ' . $person['signature']->signed_at->translatedFormat('d M Y H:i') . ' WITA' : '' }}

@@ -31,7 +31,7 @@ class SendTteSignRequestJob implements ShouldQueue
   public int $tries = 1;
   public int $timeout;
 
-  public function __construct(SppdDigitalSignature $signature, string $passphrase, ?string $notes = null)
+  public function __construct(SppdDigitalSignature $signature, #[\SensitiveParameter] string $passphrase, ?string $notes = null)
   {
     $this->signature = $signature;
     $this->passphrase = Crypt::encryptString($passphrase);

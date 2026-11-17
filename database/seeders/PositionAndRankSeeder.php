@@ -39,8 +39,8 @@ class PositionAndRankSeeder extends Seeder
     // ── Jabatan ──
     // Scope menentukan batas jumlah pemangku jabatan:
     //   SYSTEM     => hanya satu di seluruh sistem (mis. Walikota, Sekda)
-    //   DEPARTMENT => hanya satu per OPD / unit kerja (mis. Kepala Dinas, Camat)
-    //   NONE       => boleh banyak (mis. Staf, Fungsional Umum)
+    //   DEPARTMENT => hanya satu per OPD / unit kerja (Pimpinan & Sekretaris, mis. Kepala Dinas, Camat)
+    //   NONE       => boleh banyak (mis. Kabid, Kasi, Staf, Fungsional Umum)
     $positions = [
       ['name' => 'Walikota', 'scope' => PositionScope::SYSTEM],
       ['name' => 'Wakil Walikota', 'scope' => PositionScope::SYSTEM],
@@ -51,10 +51,10 @@ class PositionAndRankSeeder extends Seeder
       ['name' => 'Staf Ahli', 'scope' => PositionScope::NONE],
       ['name' => 'Kepala Dinas', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Sekretaris Dinas', 'scope' => PositionScope::DEPARTMENT],
-      ['name' => 'Kepala Bagian', 'scope' => PositionScope::DEPARTMENT],
-      ['name' => 'Kepala Bidang', 'scope' => PositionScope::DEPARTMENT],
-      ['name' => 'Kepala Seksi', 'scope' => PositionScope::DEPARTMENT],
-      ['name' => 'Kepala Sub Bagian', 'scope' => PositionScope::DEPARTMENT],
+      ['name' => 'Kepala Bagian', 'scope' => PositionScope::NONE],
+      ['name' => 'Kepala Bidang', 'scope' => PositionScope::NONE],
+      ['name' => 'Kepala Seksi', 'scope' => PositionScope::NONE],
+      ['name' => 'Kepala Sub Bagian', 'scope' => PositionScope::NONE],
       ['name' => 'Camat', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Sekretaris Camat', 'scope' => PositionScope::DEPARTMENT],
       ['name' => 'Lurah', 'scope' => PositionScope::DEPARTMENT],
@@ -405,7 +405,9 @@ class PositionAndRankSeeder extends Seeder
 
       $scope = match (true) {
         str_starts_with($name, 'Asisten ') && ! str_starts_with($name, 'Asisten Apoteker') => PositionScope::SYSTEM,
-        str_starts_with($name, 'Kepala ') || str_starts_with($name, 'Kepasi ') => PositionScope::DEPARTMENT,
+        // Kabid & Kasi boleh banyak pemangku; kepala lainnya (pimpinan unit) tetap satu per OPD.
+        (str_starts_with($name, 'Kepala ') || str_starts_with($name, 'Kepasi '))
+          && ! in_array(Position::guessDefaultRole($name), ['kabid_irban_kabag', 'kasubid_kasubag'], true) => PositionScope::DEPARTMENT,
         in_array($name, $departmentJabatan, true) => PositionScope::DEPARTMENT,
         default => PositionScope::NONE,
       };

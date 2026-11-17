@@ -73,10 +73,12 @@
 						<span class="font-mono font-semibold text-white" x-text="docs.length"></span> dokumen berhasil ditandatangani secara elektronik.
 					</p>
 
-					{{-- Dokumen yang ditandatangani, muncul beruntun. --}}
-					<ul class="tte-rise mt-5 w-full divide-y divide-white/10 rounded-lg bg-slate-900/55 text-left ring-1 ring-white/10" style="--delay: 1.2s">
+					{{-- Dokumen yang ditandatangani, muncul beruntun. Tinggi dibatasi (±4 baris) dan bisa
+					     digulir agar SPPD dengan banyak pengikut tidak memenuhi layar; jeda kemunculan
+					     dibatasi pada baris yang terlihat agar tombol Lanjutkan tidak ikut tertunda. --}}
+					<ul class="tte-rise scrollbar-dark mt-5 max-h-[min(15rem,40vh)] w-full divide-y divide-white/10 overflow-y-auto overscroll-contain rounded-lg bg-slate-900/55 text-left ring-1 ring-white/10" style="--delay: 1.2s">
 						<template x-for="(doc, i) in docs" :key="i">
-							<li class="tte-rise flex items-center gap-3 px-4 py-2.5" :style="`--delay: ${1.25 + i * 0.09}s`">
+							<li class="tte-rise flex items-center gap-3 px-4 py-2.5" :style="`--delay: ${1.25 + Math.min(i, 5) * 0.09}s`">
 								<span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/40">
 									<i class="fa-solid fa-check text-[10px]"></i>
 								</span>
@@ -88,13 +90,13 @@
 						</template>
 					</ul>
 
-					<p class="tte-rise mt-4 text-pretty text-xs text-slate-300" :style="`--delay: ${1.35 + docs.length * 0.09}s`">
+					<p class="tte-rise mt-4 text-pretty text-xs text-slate-300" :style="`--delay: ${1.35 + Math.min(docs.length, 6) * 0.09}s`">
 						<span x-text="final ? 'Seluruh tahap persetujuan selesai. SPPD telah disetujui.' : 'SPPD diteruskan ke tahap persetujuan berikutnya.'"></span>
 						<span class="mt-0.5 block font-mono text-slate-300" x-text="time"></span>
 					</p>
 
 					<x-ui.button variant="secondary" id="tte-done-button" @click="close()" class="tte-rise mt-5 min-w-40 justify-center"
-						::style="`--delay: ${1.45 + docs.length * 0.09}s`">
+						::style="`--delay: ${1.45 + Math.min(docs.length, 6) * 0.09}s`">
 						Lanjutkan
 					</x-ui.button>
 				</div>

@@ -3,7 +3,7 @@
 <div class="px-5 py-3">
     <div class="flex items-center justify-between gap-3">
         <span class="text-xs font-medium text-slate-500">{{ $label }}</span>
-        <x-sppd.tte-badge :status="$sig?->status->value" />
+        <x-sppd.tte-badge :status="$sig?->status->value" :testing="(bool) $sig?->isSimulated()" />
     </div>
     <p class="mt-0.5 break-words text-sm font-semibold text-slate-800">{{ $name }}</p>
     @if ($sig?->status->value === 'signed' && $sig->signed_at)

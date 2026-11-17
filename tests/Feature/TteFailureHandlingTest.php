@@ -130,6 +130,19 @@ class TteFailureHandlingTest extends TestCase
         $this->assertStringStartsWith('%PDF', file_get_contents($path));
     }
 
+    public function test_view_spt_dprd_tetap_terbentuk_tanpa_data_participants(): void
+    {
+        $anggota = $this->dprdUser('anggota_dprd', ['name' => 'Anggota Biasa', 'dprd_jabatan' => DprdJabatan::KOMISI_3->value]);
+        $sppd = $this->sppdFor($anggota);
+
+        $build = new \ReflectionMethod(PdfGeneratorService::class, 'buildSptData');
+        $data = $build->invoke(app(PdfGeneratorService::class), $sppd->fresh());
+        unset($data['data']['participants']);
+
+        // Pemanggil lama yang tidak mengirim $participants tidak lagi menggagalkan TTE.
+        $this->assertStringContainsString('Anggota Biasa', view($data['view'], $data['data'])->render());
+    }
+
     public function test_staf_sekretariat_dprd_bukan_anggota_memakai_spt_biasa_seperti_pratinjau(): void
     {
         $staf = $this->dprdUser('staf');
@@ -206,6 +219,25 @@ class TteFailureHandlingTest extends TestCase
 
         \Illuminate\Support\Facades\Log::shouldHaveReceived('error')
             ->withArgs(fn ($message, $context = []) => ! str_contains(json_encode($context), 'rahasia'));
+    }
+
+    public function test_passphrase_tidak_tertulis_di_stack_trace_saat_draft_gagal(): void
+    {
+        // Exception dibuat di dalam generateDraft() agar jejaknya melewati SignatureService::sign().
+        $this->mock(PdfGeneratorService::class)
+            ->shouldReceive('generateDraft')
+            ->andReturnUsing(fn () => throw new \RuntimeException('Draft gagal'));
+
+        $signature = $this->signature($this->sppdFor($this->opdUser()));
+
+        try {
+            app(SignatureService::class)->sign($signature, 'rahasia');
+            $this->fail('Exception seharusnya dilempar.');
+        } catch (\RuntimeException $e) {
+            // Jejak ini yang tersimpan di failed_jobs bila job gagal.
+            $this->assertStringContainsString('SignatureService->sign(', $e->getTraceAsString());
+            $this->assertStringNotContainsString('rahasia', $e->getTraceAsString());
+        }
     }
 
     // ── 3. Batas waktu ──────────────────────────────────────────────────────

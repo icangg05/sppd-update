@@ -4,6 +4,36 @@ SPPD Kota Kendari => Laravel 13
 cloudflared tunnel --url http://localhost:8004
 ===================================================
 
+# ⚠️ PENTING: Memperbarui kode di server
+
+Kode aplikasi disalin ke dalam image Docker. Container `app`, `queue`, dan `scheduler`
+masing-masing menjalankan salinan kode dari image saat container itu dibuat. Jadi **ketiganya
+harus dibuat ulang** setiap kali kode diperbarui.
+
+Bila hanya `app` yang dibuat ulang, halaman web memakai kode baru tetapi worker `queue` tetap
+memakai kode lama. Akibatnya TTE gagal walaupun kodenya sudah benar, misalnya
+`Undefined variable $participants (View: .../exports/spt_dprd.blade.php)`.
+
+```bash
+cd /path/ke/sppd-update
+git pull                                                            # atau salin kode baru
+docker compose build                                                # build semua service
+# backup database dulu, lalu migrasi memakai image baru
+docker compose run --rm --no-deps app php artisan migrate --force
+docker compose up -d --remove-orphans                               # buat ulang app, queue, scheduler
+docker exec sppd_update_app php artisan optimize:clear
+docker exec sppd_update_app php artisan optimize
+```
+
+Cek: waktu `Created` ketiga container harus sesudah build terakhir.
+
+```bash
+docker inspect -f '{{.Name}} {{.Created}}' sppd_update_app sppd_update_queue sppd_update_scheduler
+```
+
+Jangan memakai `docker compose up -d --build app` (hanya service `app`) atau `docker restart`:
+keduanya tidak memperbarui kode di container `queue` dan `scheduler`.
+
 # ⚠️ PENTING: Notifikasi Telegram (pengganti WhatsApp)
 
 Notifikasi SPPD dan verifikasi akun berjalan lewat bot Telegram. Tanpa langkah di bawah,

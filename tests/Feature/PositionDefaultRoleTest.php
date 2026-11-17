@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\DepartmentType;
 use App\Enums\PositionScope;
+use App\Enums\PositionTier;
 use App\Livewire\PositionFormModal;
 use App\Livewire\PositionIndex;
 use App\Livewire\UserForm;
@@ -107,8 +108,33 @@ class PositionDefaultRoleTest extends TestCase
         $position = Position::where('name', 'Kepala Bidang Pengawasan')->firstOrFail();
         $this->assertSame('kabid_irban_kabag', $position->default_role);
         $this->assertSame(40, $position->level);
-        $this->assertSame(PositionScope::DEPARTMENT, $position->uniqueness_scope);
+        $this->assertSame(PositionScope::NONE, $position->uniqueness_scope);
         $this->assertSame($admin->id, $position->created_by);
+    }
+
+    public function test_hanya_pimpinan_dan_sekretaris_yang_satu_pemangku_per_opd(): void
+    {
+        $this->assertSame(PositionScope::DEPARTMENT, PositionTier::PIMPINAN->scope());
+        $this->assertSame(PositionScope::DEPARTMENT, PositionTier::SEKRETARIS->scope());
+        $this->assertSame(PositionScope::NONE, PositionTier::KABID->scope());
+        $this->assertSame(PositionScope::NONE, PositionTier::KASI->scope());
+        $this->assertSame(PositionScope::NONE, PositionTier::STAF->scope());
+
+        $department = $this->makeDepartment('Dinas Pemadam Kebakaran');
+        $kasi = Position::create([
+            'name' => 'Kepala Seksi Pemadaman', 'default_role' => 'kasubid_kasubag',
+            'uniqueness_scope' => PositionTier::KASI->scope()->value,
+        ]);
+        $kadis = Position::create([
+            'name' => 'Kepala Dinas', 'default_role' => 'kepala_opd',
+            'uniqueness_scope' => PositionTier::PIMPINAN->scope()->value,
+        ]);
+        User::factory()->create(['department_id' => $department->id, 'position_id' => $kasi->id, 'is_active' => true]);
+        User::factory()->create(['department_id' => $department->id, 'position_id' => $kadis->id, 'is_active' => true]);
+
+        // Jabatan Kasi boleh dipangku pegawai lain di OPD yang sama; Kepala Dinas tidak.
+        $this->assertNull($kasi->conflictingHolder($department->id));
+        $this->assertNotNull($kadis->conflictingHolder($department->id));
     }
 
     public function test_nama_jabatan_duplikat_ditolak(): void
@@ -495,7 +521,7 @@ class PositionDefaultRoleTest extends TestCase
 
         $kasi = Position::where('name', 'Kepala Seksi Irigasi')->firstOrFail();
         $this->assertSame('kasubid_kasubag', $kasi->default_role);
-        $this->assertSame(PositionScope::DEPARTMENT, $kasi->uniqueness_scope);
+        $this->assertSame(PositionScope::NONE, $kasi->uniqueness_scope);
         $this->assertSame(45, $kasi->level);
 
         // Ganti tingkat saat edit: level otomatis menyesuaikan selama belum diubah manual.

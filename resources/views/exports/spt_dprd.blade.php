@@ -131,7 +131,8 @@
 						</tr>
 					</thead>
 					<tbody>
-						@foreach ($participants as $index => $participant)
+						{{-- Fallback bila pemanggil lupa mengirim $participants (mis. draft TTE sebelum 16 Nov 2026). --}}
+						@foreach ($participants ?? $sppd->sptDprdParticipants() as $index => $participant)
 							<tr>
 								<td style="text-align: center;">{{ $index + 1 }}.</td>
 								<td>{{ $participant['name'] }}</td>
@@ -230,7 +231,7 @@
 		</div>
 		<div style="border-top: 1px solid #d1d5db; margin: 4px 0;"></div>
 		<div style="font-style: italic; margin-top: 5px; text-align: right;">
-			Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
+			@include('exports.partials.tte-footer-note')
 		</div>
 	</footer>
 

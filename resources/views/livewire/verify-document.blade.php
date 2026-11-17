@@ -167,6 +167,9 @@
           <div class="mx-6 mb-6 rounded border border-emerald-100 bg-emerald-50/60 p-4">
             <p class="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-600">
               <i class="fa-solid fa-pen-nib"></i> Tanda Tangan Elektronik
+              @if ($signature->isSimulated())
+                <x-sppd.tte-chip :testing="true" class="tracking-normal" />
+              @endif
             </p>
             <dl class="space-y-2 text-sm">
               @if ($signature->signer)

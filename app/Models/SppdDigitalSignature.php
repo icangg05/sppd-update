@@ -61,6 +61,12 @@ class SppdDigitalSignature extends Model
     ]);
   }
 
+  /** Ditandatangani lewat simulasi TTE (TTE Testing), bukan BSrE. */
+  public function isSimulated(): bool
+  {
+    return $this->provider_name === \App\Services\Tte\SimulatedSignService::PROVIDER;
+  }
+
   public function markError(string $message): void
   {
     $this->update([

@@ -25,24 +25,40 @@
 
 				{{-- Impersonasi: hanya super_admin, tidak untuk dirinya sendiri, dan tidak untuk Tenaga Mitra (tanpa akun login). --}}
 				@if (auth()->user()->hasRole('super_admin') && $user->id !== auth()->id() && ! $user->isTenagaMitra())
+					{{-- Akun nonaktif & diblokir ditolak di rute impersonasi (sama seperti login asli), jadi tautan tidak dibuat. --}}
 					@php
-						$impersonateUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
-							'users.impersonate',
-							now()->addMinutes(5),
-							[
-								'user' => $user,
-								'by' => auth()->id(),
-								'nonce' => \Illuminate\Support\Str::uuid()->toString(),
-							],
-						);
+						[$loginUnavailableIcon, $loginUnavailableReason] = match (true) {
+							! $user->is_active => ['fa-user-slash', 'Akun ini nonaktif. Aktifkan terlebih dahulu melalui menu Data Pegawai.'],
+							$user->isLoginBlocked() => ['fa-user-lock', 'Akun ini sedang diblokir. Buka blokirnya terlebih dahulu melalui menu Data Pegawai.'],
+							default => [null, null],
+						};
 					@endphp
-					<button type="button" x-data="{ copied: false }"
-						@click="navigator.clipboard.writeText(@js($impersonateUrl)); copied = true; setTimeout(() => copied = false, 2000)"
-						title="Salin tautan, lalu buka di jendela incognito untuk masuk sebagai {{ $user->name }} tanpa mengganggu sesi Anda."
-						class="inline-flex shrink-0 items-center gap-2 rounded bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-2xs transition hover:bg-indigo-700 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-1">
-						<i class="fa-solid" :class="copied ? 'fa-check' : 'fa-user-secret'"></i>
-						<span x-text="copied ? 'Tautan login tersalin' : 'Salin tautan login sebagai pengguna'"></span>
-					</button>
+					@if ($loginUnavailableReason)
+						<span class="shrink-0" title="{{ $loginUnavailableReason }}">
+							<x-ui.button variant="secondary" disabled>
+								<x-slot name="icon"><i class="fa-solid {{ $loginUnavailableIcon }} text-xs"></i></x-slot>
+								Salin Tautan Login
+							</x-ui.button>
+						</span>
+					@else
+						@php
+							$impersonateUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+								'users.impersonate',
+								now()->addMinutes(5),
+								[
+									'user' => $user,
+									'by' => auth()->id(),
+									'nonce' => \Illuminate\Support\Str::uuid()->toString(),
+								],
+							);
+						@endphp
+						<x-ui.button variant="secondary" class="shrink-0" x-data="{ copied: false }"
+							x-on:click="navigator.clipboard.writeText({{ \Illuminate\Support\Js::from($impersonateUrl) }}); copied = true; setTimeout(() => copied = false, 2000)"
+							title="Salin tautan login sebagai {{ $user->name }}, lalu buka di jendela incognito agar sesi Anda tidak terganggu.">
+							<x-slot name="icon"><i class="fa-solid text-xs" :class="copied ? 'fa-check text-emerald-600' : 'fa-user-secret'"></i></x-slot>
+							<span x-text="copied ? 'Tautan Tersalin' : 'Salin Tautan Login'">Salin Tautan Login</span>
+						</x-ui.button>
+					@endif
 				@endif
 
 				<x-ui.button href="{{ route('master.users.edit', array_filter(['user' => $user, 'type' => request('type')])) }}"

@@ -11,7 +11,13 @@ class AuthController extends Controller
 
   public function logout(Request $request)
   {
-    Auth::logout();
+    // Sesi impersonasi: jangan ganti remember_token pemilik akun, agar perangkatnya
+    // sendiri yang memakai "Ingat saya" tidak ikut keluar.
+    if ($request->session()->has(UserController::IMPERSONATOR_SESSION_KEY)) {
+      Auth::logoutCurrentDevice();
+    } else {
+      Auth::logout();
+    }
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 

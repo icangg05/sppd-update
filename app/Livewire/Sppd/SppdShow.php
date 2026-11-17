@@ -327,7 +327,7 @@ class SppdShow extends Component
             'status'           => SignatureStatus::PROCESSING,
             'error_message'    => null,
             'signed_file_path' => null,
-            'provider_name'    => config('tte.default_provider'),
+            'provider_name'    => \App\Services\Tte\SimulatedSignService::activeProviderName(),
           ],
           $doc['coords']
         )

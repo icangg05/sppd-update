@@ -356,29 +356,34 @@
   /* darker medium gray */
 }
 
-/* Scrollbar sidebar: menyatu dengan latar gelap slate-900 (override scrollbar
-   global yang bertema terang). Track transparan, thumb tipis & halus. */
-#sidebar-nav {
+/* Scrollbar untuk latar gelap (sidebar slate-900, daftar dokumen animasi TTE selesai):
+   override scrollbar global yang bertema terang. Track transparan, thumb tipis & halus. */
+#sidebar-nav,
+.scrollbar-dark {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
 }
 
-#sidebar-nav::-webkit-scrollbar {
+#sidebar-nav::-webkit-scrollbar,
+.scrollbar-dark::-webkit-scrollbar {
   width: 6px;
 }
 
-#sidebar-nav::-webkit-scrollbar-track {
+#sidebar-nav::-webkit-scrollbar-track,
+.scrollbar-dark::-webkit-scrollbar-track {
   background: transparent;
 }
 
-#sidebar-nav::-webkit-scrollbar-thumb {
+#sidebar-nav::-webkit-scrollbar-thumb,
+.scrollbar-dark::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.3);
   /* slate-400 transparan */
   border-radius: var(--radius);
   transition: background 0.15s ease-in-out;
 }
 
-#sidebar-nav::-webkit-scrollbar-thumb:hover {
+#sidebar-nav::-webkit-scrollbar-thumb:hover,
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.55);
 }
 

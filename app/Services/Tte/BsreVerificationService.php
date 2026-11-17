@@ -29,9 +29,17 @@ class BsreVerificationService
   }
 
   /**
-   * Apakah verifikasi aktif & kredensial untuk mode auth-nya tersedia.
+   * Apakah verifikasi tersedia: simulasi TTE aktif, atau BSrE aktif & kredensial tersedia.
    */
   public function isEnabled(): bool
+  {
+    return SimulatedSignService::enabled() || $this->bsreEnabled();
+  }
+
+  /**
+   * Apakah verifikasi BSrE aktif & kredensial untuk mode auth-nya tersedia.
+   */
+  protected function bsreEnabled(): bool
   {
     if (! ($this->config['enabled'] ?? false) || empty($this->config['endpoint'])) {
       return false;
@@ -54,9 +62,14 @@ class BsreVerificationService
    */
   public function verify(string $pdfBinary, string $filename = 'document.pdf'): array
   {
+    // Dokumen hasil TTE Testing diperiksa simulasi; dokumen lain tetap ke BSrE.
+    if (SimulatedSignService::enabled() && SimulatedSignService::isSimulatedPdf($pdfBinary)) {
+      return app(SimulatedSignService::class)->verify($pdfBinary, $filename);
+    }
+
     $base = [
       'ok' => false,
-      'available' => $this->isEnabled(),
+      'available' => $this->bsreEnabled(),
       'summary' => null,
       'valid' => null,
       'document_name' => null,
@@ -67,7 +80,7 @@ class BsreVerificationService
       'raw' => null,
     ];
 
-    if (! $this->isEnabled()) {
+    if (! $this->bsreEnabled()) {
       return array_merge($base, ['error' => 'Verifikasi dokumen belum dikonfigurasi.']);
     }
 

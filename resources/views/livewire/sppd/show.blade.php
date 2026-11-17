@@ -547,6 +547,13 @@
 											dokumen.</p>
 									</div>
 								@endif
+								@if (\App\Services\Tte\SimulatedSignService::enabled())
+									<div class="mb-4 rounded border border-rose-200 bg-rose-50 p-3">
+										<p class="text-xs font-bold text-rose-800"><i class="fa-solid fa-flask mr-1"></i> TTE Testing</p>
+										<p class="mt-1 text-xs text-rose-700">Tanda tangan disimulasikan dan tidak dikirim ke BSrE. Passphrase uji:
+											<span class="font-mono font-bold">{{ \App\Services\Tte\SimulatedSignService::passphrase() }}</span></p>
+									</div>
+								@endif
 							@endif
 
 							@if ($errors->has('passphrase') || $errors->has('approveNotes'))
@@ -676,8 +683,7 @@
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sptSig->signed_file_path) }}" target="_blank"
 					class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
 					<i class="fa-solid fa-file-pdf"></i>
-					<span>SPT <span
-							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">TTE</span></span>
+					<span>SPT <x-sppd.tte-chip :testing="$sptSig->isSimulated()" /></span>
 				</a>
 			@else
 				<a href="{{ route('sppd.stream.spt', $sppd) }}" target="_blank"
@@ -696,8 +702,7 @@
 				<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdPelaksanaSig->signed_file_path) }}" target="_blank"
 					class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
 					<i class="fa-solid fa-file-lines"></i>
-					<span>SPPD Pelaksana <span
-							class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">TTE</span></span>
+					<span>SPPD Pelaksana <x-sppd.tte-chip :testing="$sppdPelaksanaSig->isSimulated()" /></span>
 				</a>
 			@else
 				<a
@@ -725,8 +730,7 @@
 								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
 									class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
 									<i class="fa-solid fa-user-group"></i>
-									<span>SPPD {{ $follower->user->name }} <span
-											class="ml-1 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">TTE</span></span>
+									<span>SPPD {{ $follower->user->name }} <x-sppd.tte-chip :testing="$sppdFollowerSig->isSimulated()" /></span>
 								</a>
 							@else
 								<a
@@ -778,6 +782,9 @@
 				<span class="mt-2 block rounded border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-800">
 					<i class="fa-solid fa-file-signature mr-1"></i>
 					Proses tanda tangan elektronik (TTE) akan dijalankan setelah konfirmasi.
+					@if (\App\Services\Tte\SimulatedSignService::enabled())
+						<span class="font-bold text-rose-700">Mode TTE Testing: disimulasikan, tanpa BSrE.</span>
+					@endif
 				</span>
 			@endif
 		</p>

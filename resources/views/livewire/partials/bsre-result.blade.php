@@ -23,9 +23,15 @@
         <h2 class="text-lg font-bold {{ $bsreValid === true ? 'text-emerald-700' : ($bsreValid === false ? 'text-rose-700' : 'text-slate-700') }}">
           {{ $result['summary'] ?? 'Hasil Verifikasi BSrE' }}
         </h2>
-        <p class="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-500">
-          <i class="fa-solid fa-certificate text-primary-500"></i> Diverifikasi langsung oleh BSrE
-        </p>
+        @if ($result['simulated'] ?? false)
+          <p class="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-rose-600">
+            <i class="fa-solid fa-flask"></i> TTE Testing · Simulasi, bukan verifikasi BSrE
+          </p>
+        @else
+          <p class="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-500">
+            <i class="fa-solid fa-certificate text-primary-500"></i> Diverifikasi langsung oleh BSrE
+          </p>
+        @endif
       </div>
     </div>
 

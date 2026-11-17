@@ -20,8 +20,12 @@ class SignatureService
     $this->provider     = $this->resolveProvider();
   }
 
-  public function sign(SppdDigitalSignature $signature, string $passphrase): bool|array
+  public function sign(SppdDigitalSignature $signature, #[\SensitiveParameter] string $passphrase): bool|array
   {
+    // Provider yang benar-benar dipakai (mis. simulasi diaktifkan setelah TTE diajukan);
+    // ikut tersimpan oleh update()/markError() berikutnya, baik berhasil maupun gagal.
+    $signature->provider_name = $this->providerName();
+
     $draftFile = $this->pdfGenerator->generateDraft($signature);
     // Link QR yang dikirim ke provider TTE: arahkan ke halaman publik (read-only)
     // detail SPPD, konsisten dengan QR yang dirender pada dokumen.
@@ -142,6 +146,10 @@ class SignatureService
    */
   public function logTteActivity(SppdDigitalSignature $signature, string $event, string $description): void
   {
+    if ($signature->provider_name === SimulatedSignService::PROVIDER) {
+      $description .= ' (TTE Testing)';
+    }
+
     $docLabel = SignatureDocumentType::tryFrom($signature->document_type)?->label() ?? strtoupper($signature->document_type);
 
     activity('tte')
@@ -150,6 +158,7 @@ class SignatureService
       ->event($event)
       ->withProperties([
         'signature_id'      => $signature->id,
+        'provider'          => $signature->provider_name,
         'document_type'     => $docLabel,
         'document_number'   => $signature->sppdRequest->document_number,
         'signer'            => $signature->signer?->name,
@@ -243,8 +252,19 @@ class SignatureService
     return $relativePath;
   }
 
+  protected function providerName(): string
+  {
+    return $this->provider instanceof SimulatedSignService
+      ? SimulatedSignService::PROVIDER
+      : (string) config('tte.default_provider');
+  }
+
   protected function resolveProvider(): SignatureProviderInterface
   {
+    if (SimulatedSignService::enabled()) {
+      return new SimulatedSignService();
+    }
+
     $provider = config('tte.default_provider');
 
     return match ($provider) {

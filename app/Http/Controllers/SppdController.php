@@ -23,6 +23,7 @@ use App\Models\SppdRequest;
 use App\Models\SppdWorkflow;
 use App\Models\User;
 use App\Services\SppdWorkflowService;
+use App\Support\SppdPdf;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -529,13 +530,12 @@ class SppdController extends Controller
       $pdfData['qr_image'] = QrSimulator::generate($sppd->publicUrl(), 50);
     }
 
-    return Pdf::loadView('exports.sppd', [
+    return SppdPdf::make([
       'sppd' => $sppd,
       'user' => $targetUser,
       'is_main' => $isMain,
       'pdfData' => $pdfData,
-    ])->setPaper([0, 0, 935.43, 684.45])
-      ->stream('SPPD-' . Str::slug($targetUser->name) . '.pdf');
+    ])->stream('SPPD-' . Str::slug($targetUser->name) . '.pdf');
   }
 
   public function destroy(SppdRequest $sppd)

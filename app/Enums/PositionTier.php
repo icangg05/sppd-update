@@ -65,13 +65,16 @@ enum PositionTier: string
   }
 
   /**
-   * Jabatan struktural hanya boleh satu pemangku per OPD; staf boleh banyak.
+   * Hanya Pimpinan & Sekretaris yang dibatasi satu pemangku per OPD. Kabid & Kasi
+   * boleh banyak: tahapnya dicari lewat atasan langsung pemohon (users.atasan_id),
+   * bukan dari pemangku tunggal jabatan, dan role-nya pun tidak dibatasi
+   * (config role_uniqueness).
    */
   public function scope(): PositionScope
   {
     return match ($this) {
-      self::STAF, self::TENAGA_MITRA, self::LAINNYA => PositionScope::NONE,
-      default => PositionScope::DEPARTMENT,
+      self::PIMPINAN, self::SEKRETARIS => PositionScope::DEPARTMENT,
+      default => PositionScope::NONE,
     };
   }
 

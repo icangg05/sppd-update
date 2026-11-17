@@ -151,7 +151,11 @@
 <body>
 	<div class="container">
 		<!-- FRONT PAGE (LEFT COLUMN) -->
+		{{-- Render ukur App\Support\SppdPdf hanya butuh halaman belakang; halaman depan
+		     (kop surat dsb.) dilewati agar lebih cepat. Kedua kolom float sehingga posisi
+		     halaman belakang tidak bergantung pada isi halaman depan. --}}
 		<div class="left-column">
+			@if (empty($measureBackOnly))
 			<div class="header-container"
 				style="{{ !empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/') ? 'border-bottom: none; margin-bottom: 0;' : 'border-bottom: 2px solid #000; padding-bottom: 3px; margin-bottom: 8px;' }}">
 				@if (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
@@ -344,34 +348,39 @@
 					</table>
 				</div>
 			</div>
+			@endif
 		</div>
 
 		<!-- BACK PAGE (RIGHT COLUMN) -->
 		<div class="right-column">
 			<table class="back-table">
 				<!-- Baris I -->
+				{{-- Kolom label/titik dua/isian dibuat tetap (sama dengan baris II-V). Tanpa itu,
+				     jabatan panjang (colspan) melebarkan kolom label dan tanggal ikut patah baris. --}}
 				<tr>
 					<td></td>
 					<td>
-						<table class="table-right">
+						<table class="table-right" style="width: 100%;">
 							<tr>
 								<td style="width: 14px;">I.</td>
-								<td style="width: 100%;">Berangkat dari <br>(Tempat Kedudukan)</td>
-								<td>: Kendari</td>
+								<td style="width: 96px;">Berangkat dari <br>(Tempat Kedudukan)</td>
+								<td style="width: 6px;">:</td>
+								<td>Kendari</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
 								<td>Pada Tanggal</td>
-								<td>: {{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}</td>
+								<td>:</td>
+								<td>{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }}</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
-								<td colspan="2" style="text-transform: uppercase; padding: 3px 0;">
+								<td colspan="3" style="text-transform: uppercase; padding: 3px 0;">
 									{{ $pdfData['approver_role'] }}</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '25px' }} 0;">
+								<td colspan="3" style="padding: {{ $pdfData['is_approved'] && $pdfData['qr_image'] ? '2px' : '25px' }} 0;">
 									@if ($pdfData['is_approved'] && $pdfData['qr_image'])
 										<img src="{{ $pdfData['qr_image'] }}">
 									@endif
@@ -379,13 +388,13 @@
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
-								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
+								<td colspan="3" style="text-decoration: underline; font-weight: bold;">
 									{{ $pdfData['approver_name'] }}</td>
 							</tr>
 							@if ($pdfData['approver_nip'])
 								<tr>
 									<td style="width: 14px;"></td>
-									<td colspan="2">
+									<td colspan="3">
 										NIP. {{ $pdfData['approver_nip'] }}</td>
 								</tr>
 							@endif
@@ -396,7 +405,13 @@
 				<!-- Baris II - V (Dinamis berdasarkan destinasi, maks 4 tujuan) -->
 				{{-- Perjalanan dalam daerah: dari tempat kedudukan (I) langsung berakhir di
 				     tempat kedudukan (VI), jadi baris II-V dikosongkan (template saja). --}}
-				@php $isDalamDaerah = $sppd->domain === \App\Enums\SppdDomain::DALAM_DAERAH; @endphp
+				{{-- Tinggi kotak tanda tangan II-V diisi App\Support\SppdPdf agar tabel mengisi sisa
+				     ruang sampai di atas footer (jabatan 1 baris atau lebih). 92px = nilai aman bila
+				     view dirender langsung tanpa pengukuran. --}}
+				@php
+					$isDalamDaerah = $sppd->domain === \App\Enums\SppdDomain::DALAM_DAERAH;
+					$signBoxHeight = $signBoxHeight ?? 92;
+				@endphp
 				@for ($i = 2; $i <= 5; $i++)
 					@php
 						$destIndex = $i - 2; // index 0 = destinasi pertama (untuk baris II)
@@ -406,11 +421,11 @@
 					{{-- Titik dua punya kolom sendiri agar isian yang panjang (mis. "Kota, Negara")
 					     turun baris tetap sejajar dengan awal teks, bukan di bawah titik dua. --}}
 					<tr>
-						<td style="height: 100px; position: relative;">
+						<td style="height: {{ $signBoxHeight }}px; position: relative;">
 							<table class="table-right">
 								<tr>
 									<td style="width: 14px;">{{ $toRoman($i) }}.</td>
-									<td style="width: 90px;">Tiba di</td>
+									<td style="width: 96px;">Tiba di</td>
 									<td style="width: 6px;">:</td>
 									<td>{{ $dest?->place_name ?? '' }}</td>
 								</tr>
@@ -438,11 +453,11 @@
 								</tr>
 							</table>
 						</td>
-						<td style="height: 100px; position: relative;">
+						<td style="height: {{ $signBoxHeight }}px; position: relative;">
 							<table class="table-right">
 								<tr>
 									<td style="width: 14px;"></td>
-									<td style="width: 90px;">Berangkat dari</td>
+									<td style="width: 96px;">Berangkat dari</td>
 									<td style="width: 6px;">:</td>
 									<td>{{ $dest?->place_name ?? '' }}</td>
 								</tr>
@@ -476,81 +491,61 @@
 				@endfor
 
 				<!-- Baris VI -->
+				{{-- Dipecah dua baris tabel tanpa garis di antaranya: bagian atas (Tiba di | Telah
+				     diperiksa) lalu blok tanda tangan. Dengan begitu blok tanda tangan kiri dan kanan
+				     selalu mulai di ketinggian yang sama, sehingga nama tetap sejajar walau nama
+				     jabatan lebih dari satu baris. --}}
 				<tr>
-					<td>
-						<table class="table-right">
+					<td style="border-bottom-style: hidden;">
+						<table class="table-right" style="width: 100%;">
 							<tr>
 								<td style="width: 14px;">VI.</td>
-								<td style="width: 100%;">Tiba di <br>(Tempat Kedudukan)</td>
-								<td>: Kendari</td>
+								<td style="width: 96px;">Tiba di <br>(Tempat Kedudukan)</td>
+								<td style="width: 6px;">:</td>
+								<td>Kendari</td>
 							</tr>
 							<tr>
 								<td style="width: 14px;"></td>
 								<td>Pada Tanggal</td>
-								<td>: {{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}</td>
+								<td>:</td>
+								<td>{{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}</td>
 							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: 15px 0 0 0;">
-									Pejabat yang memberi perintah<br>
-									<span style="text-transform: uppercase;">
-										{{ $pdfData['approver_role'] }}
-									</span>
-								</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: 25px 0;"></td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
-									{{ $pdfData['approver_name'] }}</td>
-							</tr>
-							@if ($pdfData['approver_nip'])
-								<tr>
-									<td style="width: 14px;"></td>
-									<td colspan="2">
-										NIP. {{ $pdfData['approver_nip'] }}</td>
-								</tr>
-							@endif
 						</table>
 					</td>
-					<td>
-						<table class="table-right">
-							<tr>
-								<td style="width: 100%; text-align: justify;" colspan="2">
-									Telah diperiksa dengan keterangan bahwa perjalanan tersebut di atas telah benar dilakukan atas perintahnya
-									semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
-								</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: 3px 0;">
-									Pejabat yang memberi perintah<br>
-									<span style="text-transform: uppercase;">
-										{{ $pdfData['approver_role'] }}
-									</span>
-								</td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="padding: 25px 0;"></td>
-							</tr>
-							<tr>
-								<td style="width: 14px;"></td>
-								<td colspan="2" style="text-decoration: underline; font-weight: bold;">
-									{{ $pdfData['approver_name'] }}</td>
-							</tr>
-							@if ($pdfData['approver_nip'])
+					<td style="border-bottom-style: hidden; text-align: justify;">
+						Telah diperiksa dengan keterangan bahwa perjalanan tersebut di atas telah benar dilakukan atas perintahnya
+						semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
+					</td>
+				</tr>
+				<tr>
+					@for ($side = 0; $side < 2; $side++)
+						<td>
+							<table class="table-right" style="width: 100%;">
 								<tr>
 									<td style="width: 14px;"></td>
-									<td colspan="2">
-										NIP. {{ $pdfData['approver_nip'] }}</td>
+									<td style="padding: 6px 0 0 0;">
+										Pejabat yang memberi perintah<br>
+										<span style="text-transform: uppercase;">{{ $pdfData['approver_role'] }}</span>
+									</td>
 								</tr>
-							@endif
-						</table>
-					</td>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td style="padding: 25px 0;"></td>
+								</tr>
+								<tr>
+									<td style="width: 14px;"></td>
+									<td style="text-decoration: underline; font-weight: bold;">
+										{{ $pdfData['approver_name'] }}</td>
+								</tr>
+								@if ($pdfData['approver_nip'])
+									<tr>
+										<td style="width: 14px;"></td>
+										<td>NIP. {{ $pdfData['approver_nip'] }}</td>
+									</tr>
+								@endif
+							</table>
+						</td>
+					@endfor
 				</tr>
 
 				<!-- Baris VII -->
@@ -591,6 +586,8 @@
 					</td>
 				</tr>
 			</table>
+			{{-- Penanda akhir tabel belakang; posisinya diukur App\Support\SppdPdf. --}}
+			<div id="sppd-back-end"></div>
 		</div>
 		<div class="clear"></div>
 	</div>
@@ -600,12 +597,12 @@
 	<footer style="position: fixed; bottom: -8px; left: 0; right: 0; width: 100%; font-size: 8pt; color: #6b7280; font-family: Arial, Helvetica, sans-serif;">
 		<div style="border-top: 1px solid #d1d5db; margin: 0 0 5px 0"></div>
 		<table style="width: 100%; font-style: italic;">
-			<tr>Tidak Mener
+			<tr>
 				<td style="text-align: left;">
 					Tidak Menerima Gratifikasi Dalam Bentuk Apapun Selama Pelaksanaan Tugas
 				</td>
 				<td style="text-align: right;">
-					Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
+					@include('exports.partials.tte-footer-note')
 				</td>
 			</tr>
 		</table>

@@ -36,7 +36,7 @@ class LocalProxySignService implements SignatureProviderInterface
     public function requestSign(
         string $filePath,
         string $nik,
-        string $passphrase,
+        #[\SensitiveParameter] string $passphrase,
         int $page,
         int $xAxis,
         int $yAxis,

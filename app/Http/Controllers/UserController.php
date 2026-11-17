@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
+  /** Kunci sesi berisi id super_admin pelaku impersonasi. */
+  public const IMPERSONATOR_SESSION_KEY = 'impersonator_id';
+
   public function create()
   {
     return view('master.users.create');
@@ -21,34 +25,49 @@ class UserController extends Controller
    * Pengamanan berlapis:
    *  - Signature (middleware `signed`) mencegah pemalsuan & memberi masa berlaku singkat.
    *  - Nonce sekali-pakai mencegah tautan diputar ulang bila bocor (referrer/riwayat).
-   *  - Akun nonaktif ditolak, konsisten dengan aturan login normal.
+   *  - Akun nonaktif & akun yang diblokir ditolak, sama seperti login normal.
    *  - Tenaga Mitra ditolak: datanya hanya untuk pengikut perjalanan, tanpa akun login.
    *  - Setiap penggunaan dicatat ke activity log lengkap dengan pelaku (super_admin).
+   *
+   * Hasilnya harus sama persis dengan login asli, jadi sesi dimulai dari nol seperti
+   * logout lalu login: pengguna yang masih masuk di browser ini dikeluarkan (termasuk
+   * cookie "Ingat saya"-nya) dan seluruh data sesinya dibuang. Tanpa itu, data sesi
+   * pengguna sebelumnya ikut terbawa, mis. filter Jabatan/Tahun Daftar SPPD yang
+   * menyembunyikan SPPD sehingga hak akses terlihat tidak berfungsi.
    */
-  public function impersonate(User $user)
+  public function impersonate(Request $request, User $user)
   {
     abort_if(! $user->is_active, 403, 'Akun tidak aktif tidak dapat diakses.');
+    abort_if($user->isLoginBlocked(), 403, 'Akun ini sedang diblokir. Buka blokirnya terlebih dahulu.');
     abort_if($user->isTenagaMitra(), 403, 'Tenaga Mitra tidak memiliki akun login.');
 
     // Sekali pakai: tandai nonce agar tautan yang sama tidak bisa dipakai dua kali.
     // TTL lebih panjang dari masa berlaku tautan agar tidak bisa diputar ulang.
-    $nonce = (string) request('nonce');
+    $nonce = (string) $request->query('nonce');
     if ($nonce === '' || ! Cache::add("impersonate_used:{$nonce}", true, now()->addMinutes(15))) {
       abort(403, 'Tautan masuk sebagai pengguna sudah tidak berlaku.');
     }
 
     // Pelaku (super_admin) diambil dari parameter bertanda-tangan — tidak bisa
     // dipalsukan karena ikut dihitung dalam signature.
-    $initiator = User::find((int) request('by'));
+    $initiator = User::find((int) $request->query('by'));
+
+    // logoutCurrentDevice(), bukan logout(): logout() mengganti remember_token pemilik
+    // akun sehingga perangkatnya sendiri yang memakai "Ingat saya" ikut keluar.
+    if (Auth::check()) {
+      Auth::logoutCurrentDevice();
+    }
+    $request->session()->invalidate();
 
     Auth::login($user);
-    request()->session()->regenerate();
-    session(['impersonator_id' => $initiator?->id]);
+    $request->session()->regenerate();
+    // Penanda sesi impersonasi; dipakai saat logout (lihat AuthController::logout).
+    $request->session()->put(self::IMPERSONATOR_SESSION_KEY, $initiator?->id);
 
     activity('impersonation')
       ->performedOn($user)
       ->causedBy($initiator)
-      ->withProperties(['ip' => request()->ip(), 'user_agent' => request()->userAgent()])
+      ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
       ->log("Masuk sebagai {$user->name} melalui impersonasi");
 
     return redirect()->route('dashboard')

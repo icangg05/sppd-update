@@ -308,7 +308,7 @@
 		</div>
 		<div style="border-top: 1px solid #d1d5db; margin: 4px 0"></div>
 		<div style="font-style: italic; margin-top: 5px; text-align: right;">
-			Dokumen ini ditandatangani secara elektronik menggunakan Layanan BSrE
+			@include('exports.partials.tte-footer-note')
 		</div>
 	</footer>
 </body>

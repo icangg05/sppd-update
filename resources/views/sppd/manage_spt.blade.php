@@ -30,7 +30,7 @@
 				</div>
 				<div class="bg-white px-5 py-3">
 					<dt class="text-xs font-medium text-slate-500">Status TTE</dt>
-					<dd class="mt-1"><x-sppd.tte-badge :status="$sptStatus" /></dd>
+					<dd class="mt-1"><x-sppd.tte-badge :status="$sptStatus" :testing="(bool) $sptSignature?->isSimulated()" /></dd>
 					@if ($sptStatus === 'rejected' && $sptSignature->error_message)
 						<dd class="mt-1 text-xs text-rose-700">{{ $sptSignature->error_message }}</dd>
 					@endif
