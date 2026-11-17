@@ -5,8 +5,10 @@
     @if ($show)
       <form wire:submit="save" class="space-y-4">
         <x-form.input id="position-form-name" label="Nama Jabatan" wire:model.live.debounce.500ms="name" required
-          placeholder="Contoh: Kepala Bidang Pengawasan" />
+          :placeholder="$isTenagaMitra ? 'Contoh: Dosen Universitas Halu Oleo' : 'Contoh: Kepala Bidang Pengawasan'" />
 
+        {{-- Jabatan Tenaga Mitra cukup nama: tanpa tingkat jabatan (role selalu Tenaga Mitra) dan level. --}}
+        @unless ($isTenagaMitra)
         <fieldset class="space-y-2">
           <legend class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
             Tingkat Jabatan <span class="text-rose-500">*</span>
@@ -58,8 +60,9 @@
               akhir pegawai menyesuaikan alur SPPD di unit kerjanya, misalnya Kabid di Dinas tetap Staf.</p>
           @endunless
         </fieldset>
+        @endunless
 
-        @if ($this->isSuperAdmin())
+        @if ($this->isSuperAdmin() && ! $isTenagaMitra)
           <x-form.input id="position-form-level" type="number" label="Level" wire:model.live.debounce.500ms="level"
             required min="0" max="9999"
             hint="Terisi otomatis dari tingkat jabatan dan bisa diubah. Angka lebih kecil berarti jabatan lebih tinggi, misalnya Walikota 1, Kepala OPD 20, dan Staf 1000. Dipakai untuk mengurutkan nama pengikut di dokumen SPT." />

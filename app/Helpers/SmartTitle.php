@@ -7,7 +7,8 @@ namespace App\Helpers;
  *
  * Menangani:
  * - Kata hubung & kata depan tetap huruf kecil
- * - Akronim / singkatan tetap HURUF BESAR semua
+ * - Akronim / singkatan tetap HURUF BESAR semua: yang ada di daftar, maupun yang
+ *   diketik pengguna dengan huruf besar (mis. PDIP, HMI, II)
  * - Kata biasa diawali huruf kapital
  */
 class SmartTitle
@@ -49,6 +50,13 @@ class SmartTitle
         'DPRD', 'DPR', 'MPR', 'DPD', 'KPU', 'KPK', 'BPK', 'MA',
         'MK', 'BUMN', 'BUMD', 'BPBD', 'BPKAD', 'BAPPEDA', 'BKPSDM',
         'SKPD', 'OPD', 'ASN', 'PNS', 'PPPK', 'TNI', 'POLRI',
+        'UPTD', 'UPT', 'BLUD', 'APBD', 'DPA', 'PPTK', 'BPJS', 'PKK',
+
+        // Kesehatan & pendidikan
+        'RSUD', 'RSIA', 'IGD', 'ICU', 'PAUD', 'TK',
+
+        // Dokumen SPPD
+        'SPPD', 'SPT', 'TTE',
 
         // Jabatan & gelar
         'RT', 'RW', 'SD', 'SMP', 'SMA', 'SMK',
@@ -67,13 +75,21 @@ class SmartTitle
      * @param string $string Teks yang akan dikonversi
      * @return string Teks dengan kapitalisasi yang benar
      *
+     * Kata yang diketik HURUF BESAR semua dianggap singkatan dan dibiarkan, karena
+     * singkatan nama organisasi tidak mungkin didaftar semuanya. Pengecualiannya bila
+     * seluruh teks diketik huruf besar (Caps Lock): teks dirapikan seperti biasa dan
+     * hanya akronim di daftar yang tetap huruf besar.
+     *
      * @example
      *   SmartTitle::convert('anggota dprd dan dewan perwakilan')
      *   // → "Anggota DPRD dan Dewan Perwakilan"
+     *   SmartTitle::convert('kader PDIP')
+     *   // → "Kader PDIP"
      */
     public static function convert(string $string): string
     {
         $acronymMap = self::buildAcronymMap();
+        $allCaps    = ! preg_match('/\p{Ll}/u', $string);
 
         $words     = preg_split('/(\s+)/', trim($string), -1, PREG_SPLIT_DELIM_CAPTURE);
         $result    = [];
@@ -90,6 +106,7 @@ class SmartTitle
 
             $result[] = match (true) {
                 isset($acronymMap[$lower])          => $acronymMap[$lower],       // Akronim → HURUF BESAR
+                ! $allCaps && self::isTypedAcronym($part) => $part,               // Diketik huruf besar → biarkan
                 $wordIndex === 0                    => ucfirst($lower),            // Kata pertama → Kapital
                 in_array($lower, self::$lowercase)  => $lower,                    // Kata hubung → kecil
                 default                             => ucfirst($lower),            // Kata biasa → Kapital
@@ -170,6 +187,13 @@ class SmartTitle
                 self::$lowercase[] = strtolower($item);
             }
         }
+    }
+
+    /** Kata yang diketik huruf besar semua (minimal dua huruf), mis. PDIP, (RSUD), II. */
+    private static function isTypedAcronym(string $word): bool
+    {
+        return preg_match('/\p{Lu}.*\p{Lu}/u', $word) === 1
+            && preg_match('/\p{Ll}/u', $word) === 0;
     }
 
     /**

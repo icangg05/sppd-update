@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\SppdDomain;
 use App\Models\Budget;
 use App\Models\Department;
+use App\Models\Position;
 use App\Models\Rank;
 use App\Models\SppdDestination;
 use App\Models\SppdFollower;
@@ -12,6 +13,7 @@ use App\Models\SppdRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SppdDocumentTextTest extends TestCase
@@ -68,33 +70,72 @@ class SppdDocumentTextTest extends TestCase
         );
     }
 
-    public function test_spt_tanpa_pangkat_mencetak_strip(): void
+    public function test_spt_tanpa_pangkat_tidak_mencetak_barisnya(): void
     {
         $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
         $pdfData = ['approver_nip' => '197001012000011002'] + $this->pdfData();
 
         $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $pdfData])->render());
-        $this->assertStringContainsString('Pangkat/Golongan : - NIP', $spt);
-        $this->assertStringContainsString('- NIP. 197001012000011002', $spt);
+        $this->assertStringNotContainsString('Pangkat/Golongan', $spt);
+        $this->assertStringNotContainsString(' - NIP', $spt);
         $this->assertStringNotContainsString('Gol.', $spt);
+        $this->assertStringContainsString('NIP. 197001012000011002', $spt);
 
         $dprd = $this->text(view('exports.spt_dprd', ['sppd' => $sppd, 'pdfData' => $pdfData, 'participants' => collect()])->render());
-        $this->assertStringContainsString('- NIP. 197001012000011002', $dprd);
+        $this->assertStringNotContainsString(' - NIP', $dprd);
         $this->assertStringNotContainsString('Gol.', $dprd);
+        $this->assertStringContainsString('NIP. 197001012000011002', $dprd);
     }
 
-    public function test_spt_peserta_tanpa_nip_tetap_mencetak_pangkat_dan_nip_strip(): void
+    public function test_spt_peserta_tanpa_nip_atau_pangkat_tidak_mencetak_barisnya(): void
     {
         $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
         $sppd->user->nip = null;
         $pengikut = new User(['name' => 'Sari', 'nip' => '']);
         $pengikut->setRelation('rank', new Rank(['name' => 'Penata', 'group' => 'III/c']));
-        $sppd->setRelation('followers', collect([(new SppdFollower(['travel_position' => 'Anggota']))->setRelation('user', $pengikut)]));
+        $pengikut->setRelation('position', new Position(['name' => 'Pranata Komputer']));
+        $sppd->setRelation('followers', collect([(new SppdFollower())->setRelation('user', $pengikut)]));
 
         $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $this->pdfData()])->render());
 
-        $this->assertStringContainsString('Nama : Budi Pangkat/Golongan : - NIP : - Jabatan', $spt);
-        $this->assertStringContainsString('Nama : Sari Pangkat/Golongan : Penata, Gol. III/c NIP : - Jabatan : Anggota', $spt);
+        // Budi tanpa pangkat & NIP: langsung ke Jabatan. Sari berpangkat tanpa NIP: baris NIP saja yang hilang.
+        $this->assertStringContainsString('Nama : Budi Jabatan', $spt);
+        $this->assertStringContainsString('Nama : Sari Pangkat/Golongan : Penata, Gol. III/c Jabatan : Pranata Komputer', $spt);
+        $this->assertStringNotContainsString('NIP : -', $spt);
+        $this->assertStringNotContainsString('Pangkat/Golongan : -', $spt);
+    }
+
+    public function test_pegawai_tanpa_jabatan_dicetak_dengan_label_role(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
+        $sppd->user->setRelation('position', null);
+        $sppd->user->setRelation('roles', collect([new Role(['name' => 'kabid_irban_kabag', 'label' => 'Kabid / Irban / Kabag'])]));
+
+        $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $this->pdfData()])->render());
+        $sppdDoc = $this->text(view('exports.sppd', [
+            'sppd' => $sppd,
+            'user' => $sppd->user,
+            'is_main' => true,
+            'pdfData' => $this->pdfData() + ['is_follower' => false, 'travel_position' => null],
+        ])->render());
+
+        $this->assertStringContainsString('Jabatan : Kabid / Irban / Kabag', $spt);
+        $this->assertStringContainsString('b. Kabid / Irban / Kabag', $sppdDoc);
+        $this->assertStringNotContainsString('kabid_irban_kabag', $spt . $sppdDoc);
+    }
+
+    public function test_label_jabatan_mendahulukan_nama_jabatan(): void
+    {
+        $user = new User(['name' => 'Sari']);
+        $user->setRelation('roles', collect([new Role(['name' => 'staf', 'label' => 'Staf'])]));
+        $user->setRelation('position', new Position(['name' => 'Pranata Komputer']));
+        $this->assertSame('Pranata Komputer', $user->jabatanLabel());
+
+        $user->setRelation('position', null);
+        $this->assertSame('Staf', $user->jabatanLabel());
+
+        $user->setRelation('roles', collect());
+        $this->assertSame('-', $user->jabatanLabel());
     }
 
     public function test_spt_dengan_pangkat_tetap_lengkap(): void
@@ -111,8 +152,8 @@ class SppdDocumentTextTest extends TestCase
 
     public function test_pangkat_golongan_hanya_mencetak_bagian_yang_ada(): void
     {
-        $this->assertSame('-', Rank::pangkatGolongan(null, null));
-        $this->assertSame('-', Rank::pangkatGolongan('', ' '));
+        $this->assertNull(Rank::pangkatGolongan(null, null));
+        $this->assertNull(Rank::pangkatGolongan('', ' '));
         $this->assertSame('Penata', Rank::pangkatGolongan('Penata', null));
         $this->assertSame('Gol. III/c', Rank::pangkatGolongan(null, 'III/c'));
     }
@@ -141,5 +182,36 @@ class SppdDocumentTextTest extends TestCase
         // Nama tempat tidak dipaksa HURUF BESAR, dan titik dua di kolom terpisah agar sejajar.
         $this->assertDoesNotMatchRegularExpression('/<td[^>]*uppercase[^>]*>\s*Tokyo, Jepang/', $html);
         $this->assertMatchesRegularExpression('/<td[^>]*>:<\/td>\s*<td[^>]*>Tokyo, Jepang<\/td>/', $html);
+    }
+
+    /**
+     * Tanda tangan dan tembusan SPT satu paket page-break-inside: avoid, sehingga tembusan tidak
+     * pernah tertinggal sendirian di halaman terakhir. Kalimat "Demikian" sengaja di luar paket.
+     */
+    public function test_tanda_tangan_dan_tembusan_spt_satu_paket_yang_tidak_terpotong(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);
+        $pdfData = ['approver_nip' => '197001012000011002'] + $this->pdfData();
+
+        $cases = [
+            'exports.spt' => [['NIP. 197001012000011002', 'Tembusan Yth:'], 'Demikian'],
+            'exports.spt_dprd' => [['NIP. 197001012000011002', 'Tembusan Yth:'], 'Demikian'],
+        ];
+
+        foreach ($cases as $view => [$expected, $outside]) {
+            $html = view($view, ['sppd' => $sppd, 'pdfData' => $pdfData, 'participants' => collect()])->render();
+            $this->assertMatchesRegularExpression('/\.closing-block\s*\{[^}]*page-break-inside:\s*avoid/', $html, $view);
+
+            $dom = new \DOMDocument();
+            @$dom->loadHTML($html);
+            $blocks = (new \DOMXPath($dom))->query('//div[@class="closing-block"]');
+            $this->assertSame(1, $blocks->length, $view);
+
+            $closing = $this->text($blocks->item(0)->textContent);
+            foreach ($expected as $part) {
+                $this->assertStringContainsString($part, $closing, "{$view}: \"{$part}\" harus di dalam paket penutup");
+            }
+            $this->assertStringNotContainsString($outside, $closing, "{$view}: \"{$outside}\" di luar paket penutup");
+        }
     }
 }

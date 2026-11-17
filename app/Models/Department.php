@@ -189,6 +189,22 @@ class Department extends Model
    */
   public function usesManualNumbering(): bool
   {
+    return $this->isInspektorat();
+  }
+
+  /**
+   * Hanya SPPD Inspektorat yang boleh bertanggal bentrok dengan SPPD lain: pegawainya bisa
+   * mendadak diperintah bertugas di tempat lain saat masih dalam perjalanan. Instansi lain
+   * tetap ditolak bila tanggalnya bentrok (lihat SppdRequest::clashingForUsers).
+   */
+  public function allowsClashingTrips(): bool
+  {
+    return $this->isInspektorat();
+  }
+
+  /** Inspektorat dikenali dari namanya. */
+  public function isInspektorat(): bool
+  {
     return str_contains(strtolower($this->name ?? ''), 'inspektorat');
   }
 

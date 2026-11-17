@@ -23,8 +23,8 @@
 					Kembali
 				</x-ui.button>
 
-				{{-- Impersonasi: hanya super_admin, dan tidak untuk dirinya sendiri. --}}
-				@if (auth()->user()->hasRole('super_admin') && $user->id !== auth()->id())
+				{{-- Impersonasi: hanya super_admin, tidak untuk dirinya sendiri, dan tidak untuk Tenaga Mitra (tanpa akun login). --}}
+				@if (auth()->user()->hasRole('super_admin') && $user->id !== auth()->id() && ! $user->isTenagaMitra())
 					@php
 						$impersonateUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
 							'users.impersonate',
@@ -103,8 +103,8 @@
 							@endif
 						</div>
 
-						{{-- Alert NIK --}}
-						@if (!$user->nik)
+						{{-- Alert NIK (dibutuhkan untuk TTE; Tenaga Mitra tidak pernah menandatangani) --}}
+						@if (!$user->nik && ! $user->isTenagaMitra())
 							<div class="mt-4 flex w-full items-start gap-2.5 rounded border border-amber-200 bg-amber-50/70 p-3 text-left">
 								<i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-sm text-amber-600"></i>
 								<p class="text-[11px] font-medium leading-relaxed text-amber-800">
@@ -146,35 +146,42 @@
 								{{ $user->nik ?? 'Belum Diatur' }}</p>
 						</div>
 
-						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Username</label>
-							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-solid fa-at mr-1.5 text-slate-500"></i>{{ $user->username }}</p>
-						</div>
+						@if ($user->isTenagaMitra())
+							<div class="space-y-1 sm:col-span-2">
+								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Akun Login</label>
+								<p class="text-sm font-medium text-slate-500">Tidak ada. Tenaga Mitra hanya dicatat sebagai pengikut perjalanan dinas.</p>
+							</div>
+						@else
+							<div class="space-y-1">
+								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Username</label>
+								<p class="text-sm font-medium text-slate-800"><i
+										class="fa-solid fa-at mr-1.5 text-slate-500"></i>{{ $user->username }}</p>
+							</div>
 
-						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alamat Email</label>
-							<p class="text-sm font-medium text-slate-800"><i
-									class="fa-regular fa-envelope mr-1.5 text-slate-500"></i>{{ $user->email ?? '-' }}</p>
-						</div>
+							<div class="space-y-1">
+								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alamat Email</label>
+								<p class="text-sm font-medium text-slate-800"><i
+										class="fa-regular fa-envelope mr-1.5 text-slate-500"></i>{{ $user->email ?? '-' }}</p>
+							</div>
 
-						<div class="space-y-1">
-							<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notifikasi Telegram</label>
-							@if ($user->telegram_chat_id)
-								<x-ui.badge color="sky">
-									<i class="fa-brands fa-telegram mr-1.5"></i>
-									Terhubung{{ $user->telegram_username ? ' · @' . $user->telegram_username : '' }}
-									@unless ($user->telegram_notify)
-										(dinonaktifkan pengguna)
-									@endunless
-								</x-ui.badge>
-							@else
-								<x-ui.badge color="slate">
-									<i class="fa-brands fa-telegram mr-1.5"></i>
-									Belum terhubung
-								</x-ui.badge>
-							@endif
-						</div>
+							<div class="space-y-1">
+								<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notifikasi Telegram</label>
+								@if ($user->telegram_chat_id)
+									<x-ui.badge color="sky">
+										<i class="fa-brands fa-telegram mr-1.5"></i>
+										Terhubung{{ $user->telegram_username ? ' · @' . $user->telegram_username : '' }}
+										@unless ($user->telegram_notify)
+											(dinonaktifkan pengguna)
+										@endunless
+									</x-ui.badge>
+								@else
+									<x-ui.badge color="slate">
+										<i class="fa-brands fa-telegram mr-1.5"></i>
+										Belum terhubung
+									</x-ui.badge>
+								@endif
+							</div>
+						@endif
 
 						<div class="sm:col-span-2 my-2">
 							<hr class="border-slate-100">

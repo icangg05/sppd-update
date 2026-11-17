@@ -17,28 +17,19 @@
 
 {{-- Charts: Trend + Distribusi Status --}}
 <div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
-  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-blue-400 bg-white shadow-sm lg:col-span-2">
-    <div class="flex items-center justify-between border-b border-slate-100 p-4">
-      <div>
-        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="fa-solid fa-chart-line text-emerald-500"></i> Tren Perjalanan Disetujui
-        </h3>
-        <p class="mt-0.5 text-xs text-slate-500">Per minggu, 12 minggu terakhir</p>
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
+    <x-dashboard.panel-header title="Tren Perjalanan Disetujui" subtitle="Per minggu, 12 minggu terakhir"
+      icon="fa-chart-line" tone="emerald">
+      <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+        <span class="size-2.5 rounded bg-emerald-500"></span> Disetujui
       </div>
-      <div class="flex gap-4 text-xs font-medium text-slate-600">
-        <div class="flex items-center gap-1.5"><span class="size-2.5 rounded bg-emerald-500"></span> Disetujui</div>
-      </div>
-    </div>
+    </x-dashboard.panel-header>
     <div class="relative h-60 w-full p-4"><canvas id="trendChart"></canvas></div>
   </div>
 
-  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-emerald-400 bg-white shadow-sm">
-    <div class="border-b border-slate-100 p-4">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-chart-pie text-emerald-500"></i> Distribusi Status
-      </h3>
-      <p class="mt-0.5 text-xs text-slate-500">Sebaran status SPPD (lingkup Anda)</p>
-    </div>
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+    <x-dashboard.panel-header title="Distribusi Status" subtitle="Sebaran status SPPD (lingkup Anda)"
+      icon="fa-chart-pie" tone="primary" />
     <div class="relative h-40 w-full p-4"><canvas id="statusDonutChart"></canvas></div>
     <div class="mt-2 grid grid-cols-1 gap-2 px-5 pb-4">
       @foreach ($statusDistribution as $item)
@@ -59,13 +50,9 @@
 {{-- Pemakaian anggaran per OPD (super_admin) + SPPD terbaru --}}
 <div class="dash-enter grid grid-cols-1 gap-5 @if ($topByUsage->count() > 1) lg:grid-cols-2 @endif">
   @if ($topByUsage->count() > 1)
-    <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-primary-400 bg-white shadow-sm">
-      <div class="border-b border-slate-100 p-4">
-        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="fa-solid fa-building-columns text-primary-500"></i> Pemakaian Anggaran per OPD
-        </h3>
-        <p class="mt-0.5 text-xs text-slate-500">6 OPD dengan persentase realisasi tertinggi</p>
-      </div>
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+      <x-dashboard.panel-header title="Pemakaian Anggaran per OPD" subtitle="6 OPD dengan persentase realisasi tertinggi"
+        icon="fa-building-columns" tone="primary" />
       <div class="flex flex-col gap-4 p-4">
         @foreach ($topByUsage as $opd)
           <div class="space-y-1.5">
@@ -88,24 +75,16 @@
 
 {{-- Antrean persetujuan (bila admin juga approver) --}}
 @if ($pendingApprovals->isNotEmpty())
-  <div class="dash-enter rounded border border-l-2 border-slate-200 border-l-amber-400 bg-white shadow-sm">
-    <div class="border-b border-slate-100 p-4">
-      <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
-        <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
+  <div class="dash-enter overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+    <x-dashboard.panel-header title="Menunggu Persetujuan Anda" icon="fa-clipboard-check" tone="amber">
+      <x-slot:badge>
         <span class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
-      </h3>
-    </div>
-    <div class="divide-y divide-slate-100">
+      </x-slot:badge>
+    </x-dashboard.panel-header>
+    {{-- Pemisah antar-item: lihat x-dashboard.sppd-row. --}}
+    <div class="flex flex-col divide-y divide-slate-200">
       @foreach ($pendingApprovals as $appr)
-        @php $urgency = $appr->sppdRequest->urgency ?? 'Biasa'; @endphp
-        <a wire:navigate href="{{ route('sppd.show', $appr->sppdRequest) }}"
-          class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50">
-          <span class="flex min-w-0 items-center gap-2">
-            <x-ui.badge :color="$urgency === 'Segera' ? 'rose' : 'slate'" class="shrink-0">{{ $urgency }}</x-ui.badge>
-            <span class="line-clamp-1 font-medium text-slate-700">{{ $appr->sppdRequest->purpose }}</span>
-          </span>
-          <span class="shrink-0 text-xs text-slate-500">{{ $appr->sppdRequest->user->name }}</span>
-        </a>
+        <x-dashboard.sppd-row :sppd="$appr->sppdRequest" />
       @endforeach
     </div>
   </div>

@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use App\Models\Position;
+use App\Models\User;
 
 /**
  * Tingkat jabatan dalam bahasa awam — dipakai Admin OPD saat menambah jabatan
@@ -16,6 +17,9 @@ enum PositionTier: string
   case KABID = 'kabid';
   case KASI = 'kasi';
   case STAF = 'staf';
+  // Jabatan Tenaga Mitra (pengikut dari luar OPD): tanpa tingkat, hanya dibuat dari
+  // mode Tenaga Mitra di form pegawai.
+  case TENAGA_MITRA = 'tenaga_mitra';
   case LAINNYA = 'lainnya';
 
   public function label(): string
@@ -26,6 +30,7 @@ enum PositionTier: string
       self::KABID => 'Kepala Bidang / Bagian / Irban',
       self::KASI => 'Kepala Seksi / Sub Bagian / Sub Bidang',
       self::STAF => 'Staf / Pelaksana / Fungsional',
+      self::TENAGA_MITRA => 'Tenaga Mitra',
       self::LAINNYA => 'Lainnya',
     };
   }
@@ -38,6 +43,7 @@ enum PositionTier: string
       self::KABID => 'Pejabat eselon III di bawah Sekretaris',
       self::KASI => 'Pejabat eselon IV',
       self::STAF => 'Analis, pranata, bendahara, pengadministrasi, dll.',
+      self::TENAGA_MITRA => 'Pengikut perjalanan dari luar OPD, tanpa tingkat jabatan',
       self::LAINNYA => 'Tidak yakin, role diatur Super Admin',
     };
   }
@@ -53,6 +59,7 @@ enum PositionTier: string
       self::KABID => 'kabid_irban_kabag',
       self::KASI => 'kasubid_kasubag',
       self::STAF => 'staf',
+      self::TENAGA_MITRA => User::TENAGA_MITRA_ROLE,
       self::LAINNYA => null,
     };
   }
@@ -63,7 +70,7 @@ enum PositionTier: string
   public function scope(): PositionScope
   {
     return match ($this) {
-      self::STAF, self::LAINNYA => PositionScope::NONE,
+      self::STAF, self::TENAGA_MITRA, self::LAINNYA => PositionScope::NONE,
       default => PositionScope::DEPARTMENT,
     };
   }
@@ -71,12 +78,16 @@ enum PositionTier: string
   /**
    * Tingkat yang bisa dipilih di form jabatan. Lainnya tidak ditawarkan; hanya
    * dipertahankan untuk jabatan khusus yang sudah ada (Walikota, Sekda, dst.).
+   * Tenaga Mitra juga tidak ditawarkan: jabatannya hanya dibuat dari mode Tenaga Mitra.
    *
    * @return self[]
    */
   public static function selectable(): array
   {
-    return array_values(array_filter(self::cases(), fn (self $tier) => $tier !== self::LAINNYA));
+    return array_values(array_filter(
+      self::cases(),
+      fn (self $tier) => ! in_array($tier, [self::LAINNYA, self::TENAGA_MITRA], true),
+    ));
   }
 
   public static function fromRole(?string $role): self

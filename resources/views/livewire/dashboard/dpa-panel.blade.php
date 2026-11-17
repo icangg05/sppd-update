@@ -6,20 +6,20 @@
     subtitle="Pagu, realisasi, dan sisa anggaran tahun anggaran berjalan" />
 
   {{-- Per program / kegiatan --}}
-  <div class="rounded border border-slate-200 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-slate-100 p-4">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <i class="fa-solid fa-list-ul text-primary-500"></i> Rincian per Program / Kegiatan
-      </h3>
+  <div class="overflow-hidden rounded border border-slate-200 bg-white shadow-sm">
+    <x-dashboard.panel-header title="Rincian per Program / Kegiatan" icon="fa-list-ul" tone="primary">
       <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{{ count($items) }} item</span>
-    </div>
+    </x-dashboard.panel-header>
 
-    {{-- Tinggi dibatasi (~5 baris terlihat), sisanya bisa di-scroll. --}}
+    {{-- Tinggi dibatasi (~5 baris terlihat), sisanya bisa di-scroll.
+         Batas antar-item: ubin nomor di kiri sebagai jangkar tiap baris,
+         zebra zinc-100, dan garis pembatas slate-200 (sama dengan
+         x-dashboard.sppd-row). --}}
     <div class="max-h-104 divide-y divide-slate-200 overflow-y-auto">
       @forelse ($items as $item)
-        <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col gap-3 px-4 py-3.5 transition-colors even:bg-zinc-100 hover:bg-primary-50 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 flex-1 items-start gap-3">
-            <span class="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 font-mono text-[11px] font-bold text-slate-500">{{ $loop->iteration }}</span>
+            <span class="inline-flex size-9 shrink-0 items-center justify-center rounded border border-slate-200 bg-white font-mono text-sm font-bold text-slate-600">{{ $loop->iteration }}</span>
             <div class="min-w-0 flex-1">
               <p class="line-clamp-1 text-sm font-semibold text-slate-800" title="{{ $item['name'] }}">{{ $item['name'] }}</p>
               @if ($showDepartment && ! empty($item['department']))
@@ -65,7 +65,7 @@
 
     {{-- Hanya role yang berhak akses halaman anggaran yang melihat tautan ini. --}}
     @if (count($items) && auth()->user()->hasAnyRole(['super_admin', 'admin_opd']))
-      <div class="border-t border-slate-100 p-3">
+      <div class="border-t border-slate-200 p-3">
         <a href="{{ route('master.budgets.index') }}" wire:navigate
           class="flex items-center justify-center gap-2 rounded px-3 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-50">
           <span>Lihat lainnya</span>

@@ -474,8 +474,14 @@ class SppdIndex extends Component
       });
     }
 
+    // Inspektorat menomori sendiri surat tugasnya: daftarnya urut nomor (tanggal SPT terbaru,
+    // lalu nomor terbesar) agar nomor tampil berurutan.
+    if (Auth::user()->department?->usesManualNumbering()) {
+      $query->orderByDocumentNumber();
+    }
+
     // Urut tanggal perjalanan terbaru (kolom Tanggal); tanggal sama → pengajuan terbaru dulu.
-    $sppds = $query->orderByDesc('start_date')->latest()->paginate(15)->onEachSide(1);
+    $sppds = $query->orderByDesc('start_date')->latest()->paginate(20)->onEachSide(1);
     $domains = SppdDomain::cases();
     $title = $isApprovalMode ? 'Persetujuan' : 'Daftar SPPD';
 

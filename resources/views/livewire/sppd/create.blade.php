@@ -341,7 +341,7 @@
 					@endif
 
 					{{-- SPPD aktif pelaksana tidak menghalangi pengajuan baru: hanya acuan agar tanggal
-					     perjalanan di Tahap 2 tidak bentrok. --}}
+					     perjalanan di Tahap 2 tidak bentrok (tidak tampil untuk Inspektorat). --}}
 					@if ($activeTrips->isNotEmpty())
 						<x-ui.alert id="active-trips" class="mt-4.5" variant="info" icon="fa-calendar-days"
 							:title="$selectedUser->name . ' memiliki ' . $activeTrips->count() . ' SPPD aktif'">

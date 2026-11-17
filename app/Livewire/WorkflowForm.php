@@ -6,6 +6,7 @@ use App\Enums\DepartmentType;
 use App\Enums\SppdDomain;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdWorkflow;
+use App\Models\User;
 use App\Services\SppdWorkflowService;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -138,7 +139,7 @@ class WorkflowForm extends Component
         'department_type'   => ['required', 'array', 'min:1'],
         'department_type.*' => [Rule::enum(DepartmentType::class)],
         'applicant_role'    => ['required', 'array', 'min:1'],
-        'applicant_role.*'  => [Rule::exists('roles', 'name')],
+        'applicant_role.*'  => [Rule::exists('roles', 'name'), Rule::notIn([User::TENAGA_MITRA_ROLE])],
         'destination'       => ['required', 'array', 'min:1'],
         'destination.*'     => [Rule::enum(SppdDomain::class)],
         // Atasan langsung: "tidak dibedakan" dipilih eksplisit; bila dibedakan, centang minimal satu.
@@ -211,7 +212,8 @@ class WorkflowForm extends Component
       'roleLabelOf'     => fn ($role) => $onlyType?->roleTitle($role->name) ?? $role->label ?? $role->name,
       'departmentTypes' => DepartmentType::cases(),
       'domains'         => SppdDomain::cases(),
-      'roles'           => Role::orderBy('name')->get(),
+      // Tenaga Mitra tidak pernah menjadi pelaksana, jadi bukan role pemohon alur.
+      'roles'           => Role::where('name', '!=', User::TENAGA_MITRA_ROLE)->orderBy('name')->get(),
       'approverRoles'   => Role::whereIn('name', SppdWorkflowService::APPROVER_ROLES)->orderBy('name')->get(),
       'externalStepRoles' => SppdWorkflowService::EXTERNAL_STEP_ROLES,
     ])->title($this->isEdit ? 'Edit Workflow SPPD' : 'Tambah Workflow SPPD');

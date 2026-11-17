@@ -20,4 +20,10 @@ return [
     // Imbuhan wilayah untuk jabatan pimpinan DPRD pada dokumen, mis. jadi
     // "Ketua DPRD Kota Kendari". Kosongkan ('') untuk menonaktifkan.
     'dprd_region' => env('SPPD_DPRD_REGION', 'Kota Kendari'),
+
+    // Domain aplikasi SPPD lama (CodeIgniter). Dokumen lama ber-TTE memuat QR ke
+    // https://sppd.kendarikota.go.id/telaah/... (mis. telaah/history/detail?telaah_id=...),
+    // padahal aplikasi lama sudah pindah domain. Semua permintaan /telaah/* dialihkan
+    // ke domain ini dengan path & query yang sama. Kosongkan ('') untuk menonaktifkan.
+    'legacy_url' => env('SPPD_LEGACY_URL', 'https://sppd-old.kendarikota.go.id'),
 ];

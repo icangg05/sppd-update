@@ -133,10 +133,15 @@ class KepalaDaerahMenuTest extends TestCase
             ->assertSet('department_id', $this->setda->id);
         $this->assertEqualsCanonicalizing([$posWalikota->id, $posWakil->id], $form->viewData('positions')->pluck('id')->all());
 
-        // Tambah dari menu Pegawai: jabatan Walikota/Wakil disembunyikan.
+        // Tambah dari menu Pegawai: jabatan Walikota/Wakil tetap bisa ditemukan, tetapi redup di
+        // urutan terakhir (diatur di menunya sendiri) dan tidak bisa dipilih.
         $form = Livewire::withQueryParams([])->actingAs($this->adminSetda)->test(UserForm::class)
             ->assertSet('listType', '');
-        $this->assertSame([$posStaf->id], $form->viewData('positions')->pluck('id')->all());
+        $positions = $form->viewData('positions');
+        $this->assertSame($posStaf->id, $positions->first()->id);
+        $this->assertSame([$posStaf->id], $positions->whereNull('unavailableReason')->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$posWalikota->id, $posWakil->id], $positions->whereNotNull('unavailableReason')->pluck('id')->all());
+        $form->call('selectPosition', $posWalikota->id)->assertSet('position_id', '');
 
         // Edit Walikota tanpa parameter URL tetap kembali ke menu Walikota.
         Livewire::withQueryParams([])->actingAs($this->adminSetda)

@@ -18,7 +18,7 @@ class Login extends Component
 
   public string $username = '';
   public string $password = '';
-  public bool $remember = false;
+  public bool $remember   = false;
 
   /** Token dari widget Cloudflare Turnstile. */
   public string $turnstileToken = '';

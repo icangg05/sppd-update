@@ -92,9 +92,6 @@ class PositionIndex extends Component
     $this->deletingId      = $position->id;
     $this->deletingName    = $position->name;
     $this->showDeleteModal = true;
-
-    // Mulai hitung mundur 10 detik sebelum tombol Hapus aktif.
-    $this->dispatch('position-delete-countdown');
   }
 
   public function closeDeleteModal(): void

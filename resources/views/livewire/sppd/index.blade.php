@@ -209,12 +209,13 @@
 								{{ $sppd->purpose }}
 							</p>
 
-							<p class="mt-0.5 truncate text-xs text-slate-500">
+							<p class="mt-0.5 text-xs text-slate-500">
 								{{ $sppd->category?->name }}
-								{{-- Nomor dokumen hanya dipakai Inspektorat. --}}
+								{{-- Nomor dokumen hanya dipakai Inspektorat; tampil utuh dalam satu baris (tidak dipotong),
+								     pindah ke baris berikutnya bila tidak muat di samping kategori. --}}
 								@if ($sppd->showsDocumentNumber())
 									·
-									<span class="font-mono text-slate-500">
+									<span class="whitespace-nowrap font-mono text-slate-600">
 										{{ $sppd->document_number ?: 'Belum bernomor' }}
 									</span>
 								@endif
@@ -302,8 +303,8 @@
 					{{-- Maksud --}}
 					<div>
 						<p class="line-clamp-2 text-sm font-medium leading-snug text-slate-700" title="{{ $sppd->purpose }}">{{ $sppd->purpose }}</p>
-						<p class="mt-1 truncate text-xs text-slate-500">
-							{{ $sppd->category?->name }}@if ($sppd->showsDocumentNumber()) · <span class="font-mono">{{ $sppd->document_number ?: 'Belum bernomor' }}</span>@endif
+						<p class="mt-1 text-xs text-slate-500">
+							{{ $sppd->category?->name }}@if ($sppd->showsDocumentNumber()) · <span class="whitespace-nowrap font-mono text-slate-600">{{ $sppd->document_number ?: 'Belum bernomor' }}</span>@endif
 						</p>
 					</div>
 

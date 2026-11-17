@@ -24,6 +24,7 @@ use Tests\TestCase;
  * Pegawai yang bertugas di dua OPD: satu akun per OPD, dikenali dari NIP yang sama.
  * SPPD baru boleh dibuat walau masih ada SPPD aktif, asal tanggalnya tidak bentrok
  * dengan SPPD lain miliknya di OPD mana pun (SPT/SPPD dibuat jauh hari karena TTE lama).
+ * Pengecualian: SPPD Inspektorat boleh bentrok (pegawainya bisa mendadak dipindah tugas).
  */
 class PegawaiDuaOpdTest extends TestCase
 {
@@ -231,6 +232,20 @@ class PegawaiDuaOpdTest extends TestCase
             ->assertDontSee('Pegawai sedang bertugas');
     }
 
+    public function test_inspektorat_tidak_menampilkan_sppd_aktif_di_tahap_1(): void
+    {
+        $inspektorat = $this->dept('Inspektorat', DepartmentType::OPD);
+        $auditor = User::factory()->create(['department_id' => $inspektorat->id, 'name' => 'Auditor']);
+        $sppd = $this->sppd($auditor, 30, 32, SppdStatus::APPROVED);
+        $this->masukSuperAdmin();
+
+        Livewire::test(SppdCreate::class)
+            ->call('selectUser', $auditor->id)
+            ->assertViewHas('activeTrips', fn ($trips) => $trips->isEmpty())
+            ->assertDontSee('SPPD aktif')
+            ->assertDontSee($sppd->periodLabel());
+    }
+
     public function test_pesan_bentrok_menyebut_instansi_periode_dan_status(): void
     {
         $bidang = $this->dept('Bidang Rehabilitasi', DepartmentType::BAGIAN, $this->opdA);
@@ -336,6 +351,59 @@ class PegawaiDuaOpdTest extends TestCase
 
         $this->assertSame($this->hari(50), $sppdB->fresh()->start_date->format('Y-m-d'));
         $this->assertSame(1, $sppdB->followers()->count());
+    }
+
+    public function test_sppd_inspektorat_tidak_ditolak_walau_tanggal_bentrok(): void
+    {
+        $inspektorat = $this->dept('Inspektorat', DepartmentType::OPD);
+        $auditor = User::factory()->create(['department_id' => $inspektorat->id, 'name' => 'Auditor']);
+        $lain = $this->sppd($auditor, 30, 32, SppdStatus::APPROVED);
+        // Pengikut dari OPD lain yang juga sedang bertugas di tanggal itu.
+        $this->sppd($this->akunA, 30, 32, SppdStatus::APPROVED);
+        $sppd = $this->sppd($auditor, 40, 41);
+
+        $this->formSppd($sppd)
+            ->assertViewHas('blockedDates', [])
+            ->set('followers', [$this->akunA->id])
+            ->set('start_date', $this->hari(31))
+            ->set('end_date', $this->hari(33))
+            ->assertViewHas('blockedDates', [])
+            ->assertViewHas('busyFollowers', [])
+            ->assertViewHas('clashingTripIds', [])
+            // Daftar SPPD lain (pelaksana & calon pengikut) hanya acuan menghindari bentrok: tidak tampil.
+            ->assertViewHas('otherTrips', fn ($trips) => $trips->isEmpty())
+            ->assertViewHas('followerTrips', [])
+            ->assertDontSee('SPPD lain Auditor')
+            ->assertDontSeeHtml('</i> SPPD lain:')
+            ->assertDontSee($lain->periodLabel(true))
+            ->assertDontSee('(bentrok)')
+            ->assertDontSee('Bentrok: bertugas')
+            ->set('travel_position', 'Ketua Tim')
+            ->set("follower_positions.{$this->akunA->id}", 'Anggota')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertSame($this->hari(31), $sppd->fresh()->start_date->format('Y-m-d'));
+        $this->assertSame(1, $sppd->followers()->count());
+    }
+
+    public function test_opd_lain_tetap_ditolak_walau_pengikutnya_pegawai_inspektorat(): void
+    {
+        $inspektorat = $this->dept('Inspektorat', DepartmentType::OPD);
+        $auditor = User::factory()->create(['department_id' => $inspektorat->id, 'name' => 'Auditor']);
+        $this->sppd($auditor, 30, 32, SppdStatus::APPROVED);
+        $sppd = $this->sppd($this->akunA, 40, 41);
+
+        $this->formSppd($sppd)
+            ->set('followers', [$auditor->id])
+            ->set('start_date', $this->hari(31))
+            ->set('end_date', $this->hari(31))
+            ->assertViewHas('busyFollowers', fn (array $busy) => isset($busy[$auditor->id]))
+            ->call('submit')
+            ->assertDispatched('toast', type: 'error', title: 'Gagal Mengajukan');
+
+        $this->assertSame($this->hari(40), $sppd->fresh()->start_date->format('Y-m-d'));
+        $this->assertSame(0, $sppd->followers()->count());
     }
 
     public function test_kalender_menonaktifkan_tanggal_terpakai_pelaksana_dan_pengikut(): void

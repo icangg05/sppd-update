@@ -10,6 +10,7 @@ use App\Models\SppdCategory;
 use App\Models\SppdRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -52,6 +53,29 @@ class SppdPublicPageTest extends TestCase
             ->assertSee('Rapat koordinasi')
             ->assertSee('Kode QR halaman publik SPPD ini')
             ->assertSee('<svg', false);
+    }
+
+    public function test_dokumen_pendukung_tampil_bila_ada(): void
+    {
+        $this->withoutVite();
+        $sppd = $this->sppd();
+        $sppd->update(['attachment' => 'dokumen-pendukung/Undangan Rapat.pdf']);
+
+        $this->get($sppd->publicUrl())
+            ->assertOk()
+            ->assertSee('Dokumen pendukung')
+            ->assertSee('Undangan Rapat.pdf')
+            ->assertSee(Storage::url('dokumen-pendukung/Undangan Rapat.pdf'), false);
+    }
+
+    public function test_dokumen_pendukung_disembunyikan_bila_kosong(): void
+    {
+        $this->withoutVite();
+        $sppd = $this->sppd();
+
+        $this->get($sppd->publicUrl())
+            ->assertOk()
+            ->assertDontSee('Dokumen pendukung');
     }
 
     public function test_token_salah_ditolak(): void

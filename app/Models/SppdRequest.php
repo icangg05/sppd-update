@@ -11,6 +11,7 @@ use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Services\SppdWorkflowService;
 use App\Support\NarrativeText;
+use App\Support\Nip;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -239,8 +240,10 @@ class SppdRequest extends Model
     /**
      * Urutan cetak peserta SPT: jabatan perjalanan tertinggi dulu (Inspektorat, lihat
      * SppdFollower::TRAVEL_POSITIONS), lalu jabatan struktural tertinggi (level kecil),
-     * lalu golongan tertinggi; sisanya tetap sesuai urutan input. Berlaku untuk objek apa
-     * pun yang punya `travel_position` dan `user` (SppdFollower, atau baris sptParticipants).
+     * lalu golongan tertinggi, lalu senioritas dari NIP seperti Daftar Urut Kepangkatan
+     * (TMT lebih awal, lalu lebih tua; lihat Nip::seniorityKey). Sisanya sesuai urutan input.
+     * Berlaku untuk objek apa pun yang punya `travel_position` dan `user` (SppdFollower, atau
+     * baris sptParticipants).
      *
      * @return list<\Closure>
      */
@@ -252,6 +255,7 @@ class SppdRequest extends Model
             fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
                 <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
             fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
+            fn ($a, $b) => Nip::seniorityKey($a->user?->nip) <=> Nip::seniorityKey($b->user?->nip),
         ];
     }
 
@@ -262,32 +266,37 @@ class SppdRequest extends Model
     }
 
     /**
-     * Peserta SPT (pelaksana + pengikut) sesuai urutan cetak. Bila pelaksana punya jabatan
-     * perjalanan (Inspektorat), pelaksana ikut diurutkan bersama pengikut menurut jabatan itu
-     * (pelaksana didahulukan bila setara). Tanpa jabatan perjalanan, pelaksana tetap nomor 1.
+     * Jabatan perjalanan (Inspektorat) hanya berlaku di SPPD dalam daerah; luar daerah memakai
+     * alur normal, jadi jabatan itu tidak dipakai untuk urutan maupun dicetak
+     * (lihat SppdDomain::usesTravelPositions).
+     */
+    public function usesTravelPositions(): bool
+    {
+        return ($this->domain ?? SppdDomain::DALAM_DAERAH)->usesTravelPositions();
+    }
+
+    /**
+     * Peserta SPT (pelaksana + pengikut) sesuai urutan cetak. Pelaksana ikut diurutkan bersama
+     * pengikut, tidak otomatis nomor 1 (keputusan user 2026-11-17): jabatan perjalanan (hanya
+     * Inspektorat dalam daerah), lalu tingkat jabatan, lalu golongan tertinggi, lalu senioritas
+     * NIP (sptOrder). Bila tetap setara (mis. sama-sama tanpa NIP), pelaksana didahulukan karena
+     * pengurutannya stabil.
      *
      * @return Collection<int, object{user: User, travel_position: ?string, is_pelaksana: bool}>
      */
     public function sptParticipants(): Collection
     {
+        $usesTravelPositions = $this->usesTravelPositions();
         $row = fn (?User $user, ?string $travelPosition, bool $isPelaksana) => (object) [
             'user' => $user,
-            'travel_position' => blank($travelPosition) ? null : $travelPosition,
+            'travel_position' => $usesTravelPositions && filled($travelPosition) ? $travelPosition : null,
             'is_pelaksana' => $isPelaksana,
         ];
 
         $pelaksana = $row($this->user, $this->travel_position, true);
+        $followers = $this->followers->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false));
 
-        if ($pelaksana->travel_position === null) {
-            return collect([$pelaksana])
-                ->concat($this->followersForSpt()->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false)))
-                ->values();
-        }
-
-        return collect([$pelaksana])
-            ->concat($this->followers->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false)))
-            ->sortBy(self::sptOrder())
-            ->values();
+        return collect([$pelaksana])->concat($followers)->sortBy(self::sptOrder())->values();
     }
 
     public function approvals(): HasMany
@@ -401,6 +410,18 @@ class SppdRequest extends Model
     public function scopeScheduled(Builder $query): Builder
     {
         return $query->where('status', '!=', SppdStatus::REJECTED);
+    }
+
+    /**
+     * Urutan nomor surat tugas Inspektorat: tanggal SPT terbaru, lalu nomor urut terbesar.
+     * Nomor urut adalah bagian kedua nomor (384 pada "090 / 384 / ST / INSP. / 2026") dan
+     * dibandingkan sebagai angka agar 99 tidak tampil di atas 100. SPPD yang belum bernomor
+     * ada di bawah yang bernomor pada tanggal SPT yang sama.
+     */
+    public function scopeOrderByDocumentNumber(Builder $query): Builder
+    {
+        return $query->orderByDesc('spt_date')
+            ->orderByRaw("CAST(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(document_number, '/', 2), '/', -1)) AS UNSIGNED) DESC");
     }
 
     /** SPPD terjadwal (lihat scopeScheduled) yang periodenya beririsan dengan $start s/d $end (inklusif). */
@@ -669,7 +690,7 @@ class SppdRequest extends Model
         $makeRow = function (User $u, ?string $travelPosition = null): array {
             $jabatan = $u->isDprdMember()
                 ? (DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->label(true) ?? $u->dprd_jabatan ?? 'ANGGOTA DPRD')
-                : ($travelPosition ?? ($u->position->name ?? ($u->roles->first()->name ?? '-')));
+                : ($travelPosition ?? $u->jabatanLabel());
 
             return [
                 'name' => $u->name,

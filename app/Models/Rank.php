@@ -43,14 +43,14 @@ class Rank extends Model
   }
 
   /**
-   * Teks Pangkat/Golongan pada dokumen, mis. "Penata, Gol. III/c". Bagian yang
-   * kosong tidak dicetak; bila keduanya kosong hasilnya "-".
+   * Teks Pangkat/Golongan pada dokumen SPT, mis. "Penata, Gol. III/c". Bagian yang
+   * kosong tidak dicetak; bila keduanya kosong hasilnya null dan barisnya tidak dicetak.
    */
-  public static function pangkatGolongan(?string $name, ?string $group): string
+  public static function pangkatGolongan(?string $name, ?string $group): ?string
   {
     $parts = array_filter([trim((string) $name), filled($group) ? 'Gol. ' . trim($group) : '']);
 
-    return $parts === [] ? '-' : implode(', ', $parts);
+    return $parts === [] ? null : implode(', ', $parts);
   }
 
   /**

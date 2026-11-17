@@ -84,3 +84,19 @@ if (config('activity_log.pruning.enabled')) {
         ->name('weekly-activity-log-prune')
         ->withoutOverlapping();
 }
+
+/*
+|--------------------------------------------------------------------------
+| Pemangkasan failed_jobs Mingguan
+|--------------------------------------------------------------------------
+|
+| Tiap baris failed_jobs menyimpan payload + stack trace lengkap (±15–50 KB),
+| dan tabel ini tidak pernah dibersihkan otomatis. Job gagal yang lebih tua
+| dari 30 hari (720 jam) dihapus; yang lebih baru tetap ada untuk diperiksa
+| atau di-retry. Minggu 04:30: setelah backup (03:00), sebelum prune log.
+|
+*/
+Schedule::command('queue:prune-failed --hours=720')
+    ->weeklyOn(0, '04:30')
+    ->name('weekly-failed-jobs-prune')
+    ->withoutOverlapping();

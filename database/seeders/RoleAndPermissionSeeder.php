@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -100,6 +101,9 @@ class RoleAndPermissionSeeder extends Seeder
     'kapus' => ['label' => 'Kepala Puskesmas', 'permissions' => self::SIGNER],
     'anggota_dprd' => ['label' => 'Anggota DPRD', 'permissions' => ['sppd.view', 'cost.view', 'report.create', 'report.view']],
     'staf' => ['label' => 'Staf', 'permissions' => ['sppd.view', 'sppd.edit', 'cost.view', 'report.create', 'report.view']],
+    // Tenaga Mitra hanya pengikut perjalanan dan tidak punya akun login, jadi tanpa permission.
+    User::TENAGA_MITRA_ROLE => ['label' => 'Tenaga Mitra', 'permissions' => [],
+      'note' => 'Orang dari luar OPD yang hanya menjadi pengikut perjalanan dinas, tanpa akun login. Diberikan lewat mode Tenaga Mitra di form Tambah Pegawai, tidak bisa menjadi pelaksana.'],
   ];
 
   public function run(): void
@@ -142,6 +146,9 @@ class RoleAndPermissionSeeder extends Seeder
       'lurah'             => 'sky',
       'kapus'             => 'purple',
       'staf'              => 'slate',
+      // Amber juga dipakai Wakil Walikota, yang dikelola di menunya sendiri dan tidak pernah
+      // tampil di daftar Pegawai bersama Tenaga Mitra.
+      User::TENAGA_MITRA_ROLE => 'amber',
     ];
 
     foreach ($roleColors as $name => $color) {

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,16 @@ class User extends Authenticatable
 
   /** Role Kepala Daerah (Walikota & Wakil Walikota) — dikelola di menu tersendiri, bukan di daftar Pegawai. */
   public const KEPALA_DAERAH_ROLES = ['walikota', 'wakil_walikota'];
+
+  /**
+   * Role Tenaga Mitra — satu-satunya penanda orang dari luar OPD (mis. akademisi) yang hanya
+   * diikutkan sebagai pengikut perjalanan dinas (tidak pernah pelaksana) dan tidak punya akun
+   * login. Diberikan lewat mode Tenaga Mitra di form Tambah Pegawai.
+   */
+  public const TENAGA_MITRA_ROLE = 'tenaga_mitra';
+
+  /** Pesan penolakan bila Tenaga Mitra hendak dijadikan pelaksana SPPD. */
+  public const TENAGA_MITRA_NOT_PELAKSANA = 'Tenaga Mitra hanya dapat diikutkan sebagai pengikut perjalanan, tidak sebagai pelaksana.';
 
   /** Prefiks kunci sesi untuk cache hasil usesDefaultPassword() per pengguna. */
   private const DEFAULT_PASSWORD_SESSION_KEY = 'uses_default_password.';
@@ -203,12 +214,30 @@ class User extends Authenticatable
     return $this->hasRole(self::KEPALA_DAERAH_ROLES);
   }
 
+  /** Tenaga Mitra: hanya pengikut perjalanan, tanpa akun login. */
+  public function isTenagaMitra(): bool
+  {
+    return $this->hasRole(self::TENAGA_MITRA_ROLE);
+  }
+
+  /** Pegawai selain Tenaga Mitra — untuk daftar pelaksana, PPTK, dan pejabat lain. */
+  public function scopeExceptTenagaMitra(Builder $query): Builder
+  {
+    return $query->whereDoesntHave('roles', fn ($r) => $r->where('name', self::TENAGA_MITRA_ROLE));
+  }
+
   /** Label role utama untuk ditampilkan, menurut sebutan instansinya (Kepala OPD di Rumah Sakit = "Direktur"). */
   public function primaryRoleLabel(string $fallback = 'Tanpa Role'): string
   {
     $role = $this->roles->first();
 
     return $role ? $this->roleLabelFor($role) : $fallback;
+  }
+
+  /** Jabatan untuk dokumen cetak: nama jabatannya, atau label role bila jabatan belum diisi. */
+  public function jabatanLabel(string $fallback = '-'): string
+  {
+    return $this->position?->name ?? $this->primaryRoleLabel($fallback);
   }
 
   /**

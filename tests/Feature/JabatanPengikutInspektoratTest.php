@@ -20,8 +20,9 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Pelaksana & pengikut SPPD Inspektorat diberi jabatan perjalanan (susunan tim pengawasan
- * APIP); di SPT mereka tercetak dari jabatan tertinggi, lalu golongan tertinggi.
+ * Pelaksana & pengikut SPPD Inspektorat dalam daerah diberi jabatan perjalanan (susunan tim
+ * pengawasan APIP); di SPT mereka tercetak dari jabatan tertinggi, lalu golongan tertinggi.
+ * Inspektorat luar daerah memakai alur normal seperti OPD lain, tanpa jabatan perjalanan.
  */
 class JabatanPengikutInspektoratTest extends TestCase
 {
@@ -75,17 +76,106 @@ class JabatanPengikutInspektoratTest extends TestCase
         );
     }
 
-    public function test_tanpa_jabatan_pelaksana_tetap_nomor_satu(): void
+    public function test_pelaksana_tanpa_jabatan_perjalanan_ikut_diurutkan(): void
     {
+        // Data lama: pelaksana belum punya jabatan perjalanan, jadi diurutkan seperti jabatan tak dikenal.
         $sppd = $this->sppdWithTeam(null, 'III/a', [
             ['Anggota', 'Anggota', 'III/c'],
             ['Ketua', 'Ketua Tim', 'IV/a'],
         ]);
 
         $this->assertSame(
-            ['Pelaksana', 'Ketua', 'Anggota'],
+            ['Ketua', 'Anggota', 'Pelaksana'],
             $sppd->sptParticipants()->map(fn ($p) => $p->user->name)->all(),
         );
+    }
+
+    public function test_spt_luar_daerah_inspektorat_memakai_alur_normal(): void
+    {
+        foreach (['lddp', 'ldlp', 'luar_negeri'] as $domain) {
+            // Jabatan perjalanan yang terlanjur tersimpan diabaikan: urutan & cetakan seperti OPD lain.
+            $sppd = $this->sppdWithTeam('Ketua Tim', 'III/a', [
+                ['Auditor', 'Penanggung Jawab', 'III/c'],
+                ['Inspektur', 'Anggota', 'IV/c', 1],
+                ['Irban IV/a', 'Admin Tim', 'IV/a', 3],
+                ['Irban IV/b', null, 'IV/b', 3],
+            ], domain: $domain, department: 'Inspektorat', levelPelaksana: 3);
+
+            // Pelaksana ikut diurutkan bersama pengikut: struktur jabatan, lalu golongan.
+            $this->assertSame(
+                ['Inspektur', 'Irban IV/b', 'Irban IV/a', 'Pelaksana', 'Auditor'],
+                $sppd->sptParticipants()->map(fn ($p) => $p->user->name)->all(),
+                $domain,
+            );
+            $this->assertSame([null], $sppd->sptParticipants()->pluck('travel_position')->unique()->values()->all());
+            $this->assertFalse($sppd->usesTravelPositions());
+        }
+    }
+
+    public function test_spt_opd_lain_pelaksana_ikut_diurutkan_dan_didahulukan_bila_setara(): void
+    {
+        $sppd = $this->sppdWithTeam(null, 'III/a', [
+            ['Staf', null, 'III/c'],
+            ['Kepala', null, 'IV/c', 1],
+            ['Setara pelaksana', null, 'III/a', 5],
+        ], domain: 'lddp', department: 'Dinas Perhubungan', levelPelaksana: 5);
+
+        $this->assertSame(
+            ['Kepala', 'Pelaksana', 'Setara pelaksana', 'Staf'],
+            $sppd->sptParticipants()->map(fn ($p) => $p->user->name)->all(),
+        );
+        $this->assertSame(
+            [false, true, false, false],
+            $sppd->sptParticipants()->map(fn ($p) => $p->is_pelaksana)->all(),
+        );
+    }
+
+    public function test_peserta_setara_diurutkan_dari_masa_kerja_lalu_usia_menurut_nip(): void
+    {
+        $user = function (string $name, ?string $nip): User {
+            $user = new User(['name' => $name, 'nip' => $nip]);
+            $user->setRelation('position', null);
+            $user->setRelation('rank', new Rank(['group' => 'III/d']));
+
+            return $user;
+        };
+
+        // Semua setara jabatan & golongan; pelaksana tidak otomatis didahulukan bila NIP-nya lebih junior.
+        $sppd = (new SppdRequest(['domain' => 'lddp']))
+            ->setRelation('user', $user('Pelaksana TMT 2015', '199001012015031001'))
+            ->setRelation('followers', new Collection(array_map(
+                fn (User $u) => (new SppdFollower())->setRelation('user', $u),
+                [
+                    $user('Tanpa NIP', null),
+                    $user('TMT 2005 lahir 1980', '198001012005011001'),
+                    $user('PPPK 2015', '198501012015211001'),
+                    $user('TMT 2005 lahir 1975', '197501012005011002'),
+                    $user('NIP rusak', '19680101'),
+                ],
+            )));
+
+        $this->assertSame(
+            ['TMT 2005 lahir 1975', 'TMT 2005 lahir 1980', 'Pelaksana TMT 2015', 'PPPK 2015', 'Tanpa NIP', 'NIP rusak'],
+            $sppd->sptParticipants()->map(fn ($p) => $p->user->name)->all(),
+        );
+    }
+
+    public function test_luar_daerah_tanpa_pilihan_jabatan_perjalanan(): void
+    {
+        [$sppd, $pengikut] = $this->sppdInspektorat('lddp');
+
+        $this->form($sppd)
+            ->assertDontSee('Pengendali Teknis')
+            ->assertDontSee('Urutan nama di SPT mengikuti jabatan ini')
+            ->set('followers', [$pengikut->id])
+            // Nilai lama yang tertinggal di state tidak ikut tersimpan.
+            ->set("follower_positions.{$pengikut->id}", 'Ketua Tim')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertNull($sppd->fresh()->travel_position);
+        $this->assertSame(1, $sppd->followers()->count());
+        $this->assertNull($sppd->followers()->value('travel_position'));
     }
 
     public function test_peringkat_jabatan_perjalanan(): void
@@ -164,27 +254,39 @@ class JabatanPengikutInspektoratTest extends TestCase
         $this->form($sppd)->assertSet('travel_position', 'Ketua Tim');
     }
 
-    /** SPPD (tanpa DB) berisi pelaksana & pengikut dengan jabatan perjalanan dan golongan. */
-    private function sppdWithTeam(?string $jabatanPelaksana, string $golonganPelaksana, array $team): SppdRequest
-    {
-        $user = function (string $name, string $group): User {
+    /**
+     * SPPD (tanpa DB) berisi pelaksana & pengikut dengan jabatan perjalanan dan golongan.
+     * Tiap anggota tim: [nama, jabatan perjalanan, golongan, level jabatan struktural (opsional)].
+     */
+    private function sppdWithTeam(
+        ?string $jabatanPelaksana,
+        string $golonganPelaksana,
+        array $team,
+        string $domain = 'dalam_daerah',
+        string $department = 'Inspektorat',
+        ?int $levelPelaksana = null,
+    ): SppdRequest {
+        $user = function (string $name, string $group, ?int $level = null): User {
             $user = new User(['name' => $name]);
-            $user->setRelation('position', null);
+            $user->setRelation('position', $level === null ? null : new Position(['level' => $level]));
             $user->setRelation('rank', new Rank(['group' => $group]));
 
             return $user;
         };
 
-        return (new SppdRequest(['travel_position' => $jabatanPelaksana]))
-            ->setRelation('user', $user('Pelaksana', $golonganPelaksana))
+        $pelaksana = $user('Pelaksana', $golonganPelaksana, $levelPelaksana);
+        $pelaksana->setRelation('department', new Department(['name' => $department]));
+
+        return (new SppdRequest(['travel_position' => $jabatanPelaksana, 'domain' => $domain]))
+            ->setRelation('user', $pelaksana)
             ->setRelation('followers', new Collection(array_map(
-                fn (array $f) => (new SppdFollower(['travel_position' => $f[1]]))->setRelation('user', $user($f[0], $f[2])),
+                fn (array $f) => (new SppdFollower(['travel_position' => $f[1]]))->setRelation('user', $user($f[0], $f[2], $f[3] ?? null)),
                 $team,
             )));
     }
 
     /** SPPD pelaksana Inspektorat yang sedang diperbaiki, plus satu calon pengikut. */
-    private function sppdInspektorat(): array
+    private function sppdInspektorat(string $domain = 'dalam_daerah'): array
     {
         $inspektorat = Department::create(['name' => 'Inspektorat Daerah', 'type' => DepartmentType::OPD, 'level' => 1]);
         $pelaksana = User::factory()->create(['department_id' => $inspektorat->id]);
@@ -200,7 +302,7 @@ class JabatanPengikutInspektoratTest extends TestCase
             'purpose' => 'Pemeriksaan reguler',
             'start_date' => today()->addDays(40),
             'end_date' => today()->addDays(41),
-            'domain' => 'lddp',
+            'domain' => $domain,
             'status' => SppdStatus::IN_PROGRESS,
         ]);
 

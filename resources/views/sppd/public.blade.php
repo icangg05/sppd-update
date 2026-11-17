@@ -151,6 +151,27 @@
 					<p class="mt-1 max-w-[75ch] rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-900">{{ $sppd->notes }}</p>
 				</div>
 			@endif
+
+			{{-- Dokumen pendukung (undangan/lampiran), sama seperti halaman Detail Perjalanan.
+			     Halaman ini tanpa galeri (tanpa JS), jadi gambar pun dibuka di tab baru. --}}
+			@if ($sppd->attachment)
+				@php
+					$attachmentUrl = \Illuminate\Support\Facades\Storage::url($sppd->attachment);
+					$attachmentName = basename($sppd->attachment);
+				@endphp
+				<div class="flex items-center gap-3 border-t border-slate-200 px-5 py-3">
+					<i class="fa-solid {{ $sppd->attachmentIsImage() ? 'fa-file-image' : 'fa-paperclip' }} text-sm text-slate-400"></i>
+					<div class="min-w-0 flex-1">
+						<p class="{{ $label }}">Dokumen pendukung</p>
+						<p class="truncate text-sm font-medium text-slate-800" title="{{ $attachmentName }}">{{ $attachmentName }}</p>
+					</div>
+					<a href="{{ $attachmentUrl }}" target="_blank" rel="noopener"
+						class="inline-flex shrink-0 items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1">
+						<i class="fa-solid {{ $sppd->attachmentIsImage() ? 'fa-eye' : 'fa-arrow-up-right-from-square' }} text-[10px] text-slate-500"></i>
+						{{ $sppd->attachmentIsImage() ? 'Lihat' : 'Buka' }}
+					</a>
+				</div>
+			@endif
 		</section>
 
 		{{-- Pembebanan Anggaran (tanpa pagu/realisasi) --}}

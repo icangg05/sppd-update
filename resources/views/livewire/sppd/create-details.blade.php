@@ -16,18 +16,29 @@
 				<h1 class="text-xl font-bold tracking-tight text-slate-800">Detail Perjalanan Dinas</h1>
 				<p class="mt-1 text-xs text-slate-500">Isi detail & lengkapi data pengajuan.</p>
 			</div>
-			{{-- Edit Perbaikan kembali ke Daftar SPPD (asal tombolnya); pengajuan baru ke Tahap 1. --}}
-			@if ($sppd_id)
-				<x-ui.button :href="route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters()))" wire:navigate variant="secondary">
-					<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
-					Kembali ke Daftar SPPD
-				</x-ui.button>
-			@else
-				<x-ui.button :href="route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain])" wire:navigate variant="secondary">
-					<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
-					Kembali ke Tahap 1
-				</x-ui.button>
-			@endif
+			<div class="flex flex-wrap items-center gap-2">
+				{{-- Khusus APP_ENV local/development: isi seluruh formulir dengan data uji realistis
+				     sesuai domain (lihat SppdDemoData). Tidak dirender di produksi. --}}
+				@if (\App\Support\SppdDemoData::enabled())
+					<x-ui.button variant="warning" wire:click="fillDemoData" wire:target="fillDemoData"
+						title="Mode development: isi semua field dengan data realistis sesuai domain {{ str_replace('_', ' ', $domain) }}">
+						<x-slot name="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></x-slot>
+						Isi Data Uji
+					</x-ui.button>
+				@endif
+				{{-- Edit Perbaikan kembali ke Daftar SPPD (asal tombolnya); pengajuan baru ke Tahap 1. --}}
+				@if ($sppd_id)
+					<x-ui.button :href="route('sppd.index', array_filter(\App\Livewire\Sppd\SppdIndex::savedFilters()))" wire:navigate variant="secondary">
+						<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+						Kembali ke Daftar SPPD
+					</x-ui.button>
+				@else
+					<x-ui.button :href="route('sppd.create', ['user_id' => $pelaksana->getRouteKey(), 'domain' => $domain])" wire:navigate variant="secondary">
+						<x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+						Kembali ke Tahap 1
+					</x-ui.button>
+				@endif
+			</div>
 		</div>
 	</div>
 
@@ -210,7 +221,8 @@
 						<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required live
 							:skipSundays="\App\Enums\SppdDomain::tryFrom($domain)?->skipsSundays() ?? false"
 							:blocked="$blockedDates" />
-						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari). --}}
+						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari).
+						     Kosong untuk SPPD Inspektorat (tidak dicek bentrok). --}}
 						@if ($otherTrips->isNotEmpty())
 							<div id="other-trips" class="mt-1.5 text-xs text-slate-600">
 								<span class="font-semibold">SPPD lain {{ $pelaksana->name }}:</span>
@@ -503,6 +515,9 @@
 											@if ($u->isDprdMember())
 												<span class="block text-[10px] font-semibold text-primary-600 mt-0.5">Anggota DPRD</span>
 											@endif
+											@if ($u->isTenagaMitra())
+												<span class="block text-[10px] font-semibold text-amber-700 mt-0.5">Tenaga Mitra</span>
+											@endif
 										{{-- Hanya yang beririsan dengan tanggal perjalanan terpilih yang dikunci; SPPD lain di
 										     tanggal berbeda cuma keterangan, pegawainya tetap bisa ikut. --}}
 										@if ($isTraveling)
@@ -568,10 +583,10 @@
 
 	{{-- MODAL KONFIRMASI --}}
 	@php $selectedBudget = $budgets->firstWhere('id', $budget_id); @endphp
-	{{-- Inspektorat: modal lebih lebar & kolom pegawai lebih besar, karena tiap nama berdampingan
-	     dengan pilihan jabatan perjalanan; nama tidak dipotong. --}}
-	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-primary-600 text-base" :maxWidth="$isInspektorat ? 'max-w-5xl' : 'max-w-3xl'" :closeable="false">
-		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 {{ $isInspektorat ? 'md:grid-cols-[2fr_3fr]' : 'md:grid-cols-2' }}">
+	{{-- Inspektorat dalam daerah: modal lebih lebar & kolom pegawai lebih besar, karena tiap nama
+	     berdampingan dengan pilihan jabatan perjalanan; nama tidak dipotong. --}}
+	<x-ui.modal show="showConfirm" title="{{ $sppd_id ? 'Konfirmasi Perbaikan SPPD' : 'Konfirmasi Pengajuan' }}" icon="fa-solid fa-circle-question text-primary-600 text-base" :maxWidth="$usesTravelPositions ? 'max-w-5xl' : 'max-w-3xl'" :closeable="false">
+		<div class="py-2 grid grid-cols-1 gap-3 sm:gap-4 {{ $usesTravelPositions ? 'md:grid-cols-[2fr_3fr]' : 'md:grid-cols-2' }}">
 
 			{{-- Kolom Kiri: Anggaran Tersedia --}}
 			<div class="rounded border border-slate-200 bg-slate-50/50 overflow-hidden">
@@ -638,7 +653,7 @@
 			<div class="space-y-3.5 text-sm text-slate-600">
 				<div>
 					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Pegawai Pelaksana:</span>
-					@if ($isInspektorat)
+					@if ($usesTravelPositions)
 						{{-- Pelaksana Inspektorat juga diberi jabatan perjalanan, sama seperti pengikut. --}}
 						<div class="mt-1 flex items-center justify-between gap-2 rounded border border-slate-200/60 bg-slate-50 px-2.5 py-1.5">
 							<span class="min-w-0 break-words font-bold text-slate-800">
@@ -664,10 +679,10 @@
 				</div>
 				<div>
 					<span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Pengikut Dinas:</span>
-					{{-- Inspektorat tanpa batas tinggi: semua pengikut terlihat (body modal yang di-scroll),
+					{{-- Inspektorat dalam daerah tanpa batas tinggi: semua pengikut terlihat (body modal yang di-scroll),
 					     agar tidak ada pilihan jabatan yang terlewat di bawah area scroll. --}}
-					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 {{ $isInspektorat ? '' : 'max-h-64 overflow-y-auto' }}">
-						@if ($isInspektorat)
+					<div class="mt-1 border border-slate-200 rounded divide-y divide-slate-100 bg-slate-50/50 {{ $usesTravelPositions ? '' : 'max-h-64 overflow-y-auto' }}">
+						@if ($usesTravelPositions)
 							@forelse ($followers as $fId)
 								@php
 									$folUser = $selectedFollowerUsers->firstWhere('id', $fId);
@@ -708,7 +723,7 @@
 							@endforelse
 						@endif
 					</div>
-					@if ($isInspektorat)
+					@if ($usesTravelPositions)
 						<p class="mt-1.5 text-xs text-slate-500">
 							<i class="fa-solid fa-arrow-down-short-wide mr-0.5"></i> Urutan nama di SPT mengikuti jabatan ini, dari Penanggung Jawab sampai Admin Tim.
 						</p>

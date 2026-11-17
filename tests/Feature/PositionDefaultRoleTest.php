@@ -410,6 +410,36 @@ class PositionDefaultRoleTest extends TestCase
             ->assertDontSee('Jabatan Bawaan')->assertSee('Jabatan Input Saya')->assertSee('Jabatan Input OPD Lain');
     }
 
+    public function test_singkatan_di_nama_jabatan_tetap_huruf_besar(): void
+    {
+        $admin = $this->makeUser('admin_opd', $this->makeDepartment('Dinas Sosial'));
+
+        foreach (['Kader PDIP', 'kader HMI', 'Direktur RSUD Antero Hamra'] as $name) {
+            Livewire::actingAs($admin)->test(PositionFormModal::class)
+                ->call('open', null, $name)
+                ->call('save')
+                ->assertHasNoErrors();
+        }
+
+        $this->assertNotNull(Position::where('name', 'Kader PDIP')->first());
+        $this->assertNotNull(Position::where('name', 'Kader HMI')->first());
+        $this->assertNotNull(Position::where('name', 'Direktur RSUD Antero Hamra')->first());
+    }
+
+    public function test_hapus_jabatan_tanpa_hitung_mundur(): void
+    {
+        $admin = $this->makeUser('admin_opd', $this->makeDepartment('Dinas Sosial'));
+        $position = Position::create(['name' => 'Kader PDIP', 'created_by' => $admin->id]);
+
+        Livewire::actingAs($admin)->test(PositionIndex::class)
+            ->call('confirmDelete', $position->id)
+            ->assertNotDispatched('position-delete-countdown')
+            ->assertDontSeeHtml('remaining > 0')
+            ->call('delete');
+
+        $this->assertNull(Position::find($position->id));
+    }
+
     public function test_level_jabatan_dan_bobot_golongan(): void
     {
         $this->assertSame(1, Position::levelForRole('walikota'));

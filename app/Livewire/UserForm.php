@@ -8,6 +8,7 @@ use App\Enums\DprdPartai;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Livewire\Concerns\InteractsWithTelegramLink;
 use App\Enums\PositionScope;
+use App\Helpers\SmartTitle;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Rank;
@@ -18,7 +19,9 @@ use App\Services\UsernameGenerator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
@@ -45,8 +48,18 @@ class UserForm extends Component
     'anggota_dprd',
   ];
 
+  // Jabatan yang boleh dipangku Tenaga Mitra: jabatan Tenaga Mitra sendiri dan jabatan staf
+  // (non-struktural), agar nama jabatan yang sudah ada (mis. Bidan) tetap bisa dipakai.
+  private const TENAGA_MITRA_POSITION_ROLES = [User::TENAGA_MITRA_ROLE, 'staf'];
+
   public ?User $user = null;
   public bool $isEdit = false;
+
+  // Mode Tenaga Mitra: orang dari luar OPD (mis. akademisi) yang hanya menjadi pengikut perjalanan,
+  // tanpa akun login. Hanya diubah lewat setTenagaMitra() saat menambah pegawai; saat edit mengikuti
+  // role tersimpan.
+  #[Locked]
+  public bool $tenagaMitra = false;
 
   // Konteks asal: 'dprd' (menu Anggota DPRD) atau 'kepala_daerah' (menu Walikota & Wakil Walikota).
   // Dipakai agar menu sidebar & tombol kembali tetap mengarah ke daftar yang benar.
@@ -66,6 +79,10 @@ class UserForm extends Component
 
   // Pencarian server-side untuk jabatan (agar tidak memuat seluruh data jabatan sekaligus).
   public string $searchPosition = '';
+
+  // Mode Tenaga Mitra: nama jabatan diketik bebas. Bila sama dengan jabatan yang sudah ada,
+  // jabatan itu yang dipakai; bila belum ada, jabatan baru dibuat saat disimpan.
+  public string $jabatanTenagaMitra = '';
 
   // Data khusus Anggota DPRD
   public $dprd_jabatan = '';
@@ -88,6 +105,8 @@ class UserForm extends Component
       $this->rank_id = $user->rank_id;
       $this->position_id = $user->position_id;
       $this->role = $user->roles->first()?->name ?? '';
+      $this->tenagaMitra = $user->isTenagaMitra();
+      $this->jabatanTenagaMitra = $this->tenagaMitra ? ($user->position?->name ?? '') : '';
       $this->dprd_jabatan = $user->dprd_jabatan ?? '';
       $this->partai = $user->partai ?? '';
       $this->fillTelegramState($user->telegram_chat_id, $user->telegram_username);
@@ -176,12 +195,31 @@ class UserForm extends Component
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',
-      'role' => ['required', 'string', $this->selectableRoleRule(), $this->uniqueRoleRule()],
+      // Role Tenaga Mitra hanya diberikan lewat mode Tenaga Mitra, tidak lewat pilihan role.
+      'role' => array_filter([
+        'required', 'string',
+        $this->tenagaMitra ? null : 'not_in:' . User::TENAGA_MITRA_ROLE,
+        $this->selectableRoleRule(), $this->uniqueRoleRule(),
+      ]),
     ];
 
     // Validasi: jabatan struktural yang dibatasi (Walikota, Sekda, Kepala OPD, dst.)
     // hanya boleh dipangku satu orang — sesuai scope-nya (sistem / per OPD).
     $rules['position_id'] = ['nullable', 'exists:positions,id', $this->uniquePositionRule()];
+
+    // Jabatan Walikota & Wakil hanya diisi lewat menunya sendiri, dan menu itu hanya untuk keduanya.
+    if (! $this->tenagaMitra) {
+      $rules['position_id'][] = $this->kepalaDaerahPositionRule();
+    }
+
+    // Tenaga Mitra: tanpa akun login (username, email, password tidak disimpan), dan wajib berjabatan
+    // (dokumen SPT mencetak nama jabatannya). Jabatan diketik; position_id diturunkan dari namanya
+    // (lihat resolveJabatanTenagaMitra).
+    if ($this->tenagaMitra) {
+      unset($rules['username'], $rules['email'], $rules['password']);
+      $rules['jabatanTenagaMitra'] = ['required', 'string', 'max:255', $this->tenagaMitraJabatanNameRule()];
+      $rules['position_id'] = ['nullable', 'exists:positions,id', $this->tenagaMitraPositionRule()];
+    }
 
     if ($this->isDprdMember()) {
       $jabatanValues = implode(',', array_column(DprdJabatan::cases(), 'value'));
@@ -201,6 +239,43 @@ class UserForm extends Component
       $this->department_id ? (int) $this->department_id : null,
       $this->isEdit ? $this->user->id : null,
     );
+  }
+
+  /**
+   * Aturan: jabatan Walikota & Wakil Walikota hanya dipilih di menu Walikota & Wakil Walikota,
+   * dan menu itu hanya untuk kedua jabatan tersebut. Daftar jabatan di form menampilkan semua
+   * jabatan, jadi batas ini ditegakkan di sini.
+   */
+  protected function kepalaDaerahPositionRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      $position = $value ? Position::find($value) : null;
+      if ($position && ($reason = $this->positionUnavailableReason($position))) {
+        $fail("Jabatan {$position->name}: {$reason}.");
+      }
+    };
+  }
+
+  /** Aturan: Tenaga Mitra tidak memangku jabatan struktural (pimpinan, sekretaris, kabid, dst.). */
+  protected function tenagaMitraPositionRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      $position = $value ? Position::find($value) : null;
+      if ($position && ! in_array($position->default_role, self::TENAGA_MITRA_POSITION_ROLES, true)) {
+        $fail("Jabatan {$position->name} adalah jabatan struktural. Gunakan nama jabatan lain.");
+      }
+    };
+  }
+
+  /** Aturan: nama jabatan Tenaga Mitra tidak boleh sama dengan jabatan struktural yang sudah terdaftar. */
+  protected function tenagaMitraJabatanNameRule(): \Closure
+  {
+    return function (string $attribute, $value, \Closure $fail) {
+      $existing = $this->matchingJabatanTenagaMitra();
+      if ($existing && ! $this->isTenagaMitraPosition($existing)) {
+        $fail("Jabatan {$existing->name} sudah terdaftar sebagai jabatan struktural sehingga tidak bisa dipakai Tenaga Mitra. Gunakan nama jabatan lain.");
+      }
+    };
   }
 
   /**
@@ -312,6 +387,8 @@ class UserForm extends Component
   {
     return [
       'username.regex' => UsernameGenerator::INVALID_MESSAGE,
+      'role.not_in' => 'Role Tenaga Mitra hanya diberikan lewat mode Tenaga Mitra.',
+      'jabatanTenagaMitra.required' => 'Jabatan wajib diisi untuk Tenaga Mitra.',
     ];
   }
 
@@ -328,6 +405,7 @@ class UserForm extends Component
       'nik' => 'NIK',
       'department_id' => 'instansi / unit kerja',
       'position_id' => 'jabatan',
+      'jabatanTenagaMitra' => 'jabatan',
       'dprd_jabatan' => 'jabatan DPRD',
       'partai' => 'partai / fraksi',
     ];
@@ -373,18 +451,136 @@ class UserForm extends Component
     return $this->listType === 'dprd';
   }
 
+  /** Mode Tenaga Mitra tersedia di form Pegawai biasa (semua unit kerja), bukan di menu DPRD / Walikota. */
+  public function canUseTenagaMitraMode(): bool
+  {
+    return ! $this->isDprdContext() && ! $this->isKepalaDaerahContext();
+  }
+
   /**
-   * Role tidak dipilih manual: bila field terkunci role mengikuti jabatan, dan Anggota DPRD
-   * selalu mengikuti Jabatan DPRD (Ketua DPRD ⟹ Pimpinan DPRD, selain itu Anggota DPRD).
+   * Alasan jabatan tidak bisa dipilih di form ini (null = bisa dipilih). Daftar jabatan tetap
+   * menampilkannya (diredupkan beserta alasannya) agar jelas jabatan itu ada di sistem.
+   */
+  private function positionUnavailableReason(Position $position): ?string
+  {
+    $kepalaDaerah = in_array($position->default_role, User::KEPALA_DAERAH_ROLES, true);
+
+    return match (true) {
+      $this->tenagaMitra => $this->isTenagaMitraPosition($position) ? null : 'jabatan struktural, tidak untuk Tenaga Mitra',
+      $this->isKepalaDaerahContext() => $kepalaDaerah ? null : 'menu ini hanya untuk Walikota dan Wakil Walikota',
+      default => $kepalaDaerah ? 'diatur di menu Walikota & Wakil Walikota' : null,
+    };
+  }
+
+  /** Nama jabatan untuk pencarian: huruf kecil tanpa spasi, agar "walikota" menemukan "Wali Kota". */
+  private static function compactName(string $name): string
+  {
+    return str_replace(' ', '', mb_strtolower(trim($name)));
+  }
+
+  /** Jabatan yang namanya memuat $term (tanpa membedakan huruf besar/kecil dan spasi). */
+  private static function wherePositionNameLike($query, string $term)
+  {
+    return $query->whereRaw("REPLACE(LOWER(name), ' ', '') LIKE ?", ['%' . self::compactName($term) . '%']);
+  }
+
+  /**
+   * Pilih mode pegawai (Pegawai / Tenaga Mitra). Hanya saat menambah: pegawai yang sudah
+   * tersimpan tidak berpindah mode, karena riwayat SPPD & jabatannya mengikuti mode lama.
+   */
+  public function setTenagaMitra(bool $on): void
+  {
+    if ($this->isEdit) {
+      return;
+    }
+
+    $on = $on && $this->canUseTenagaMitraMode();
+    if ($on === $this->tenagaMitra) {
+      return;
+    }
+
+    $this->tenagaMitra = $on;
+
+    // Daftar jabatan tiap mode berbeda, jadi pilihan sebelumnya dikosongkan.
+    $this->position_id = '';
+    $this->searchPosition = '';
+    $this->jabatanTenagaMitra = '';
+    $this->role = match (true) {
+      $on => User::TENAGA_MITRA_ROLE,
+      auth()->user()->hasRole('super_admin') => '',
+      default => $this->roleFollowingPosition(),
+    };
+    $this->resetValidation();
+  }
+
+  /** Nama jabatan Tenaga Mitra dirapikan spasinya (spasi ganda dan di awal/akhir dibuang). */
+  private function normalizedJabatanTenagaMitra(): string
+  {
+    return trim(preg_replace('/\s+/u', ' ', $this->jabatanTenagaMitra));
+  }
+
+  /** Jabatan terdaftar yang namanya sama (tanpa membedakan huruf besar/kecil dan spasi), bila ada. */
+  private function matchingJabatanTenagaMitra(): ?Position
+  {
+    $name = $this->normalizedJabatanTenagaMitra();
+    if ($name === '') {
+      return null;
+    }
+
+    return Position::findByName($name)
+      ?? Position::whereRaw("REPLACE(LOWER(name), ' ', '') = ?", [self::compactName($name)])->first();
+  }
+
+  private function isTenagaMitraPosition(Position $position): bool
+  {
+    return in_array($position->default_role, self::TENAGA_MITRA_POSITION_ROLES, true);
+  }
+
+  /** position_id mengikuti nama yang diketik: jabatan Tenaga Mitra/staf bernama sama, atau kosong (jabatan baru). */
+  private function resolveJabatanTenagaMitra(): void
+  {
+    $match = $this->matchingJabatanTenagaMitra();
+    $this->position_id = $match && $this->isTenagaMitraPosition($match) ? $match->id : '';
+  }
+
+  public function updatedJabatanTenagaMitra(): void
+  {
+    $this->resolveJabatanTenagaMitra();
+    $this->resetErrorBag(['jabatanTenagaMitra', 'position_id']);
+  }
+
+  /** Saran jabatan dipilih: namanya mengisi field jabatan. */
+  public function pickJabatanTenagaMitra(int $id): void
+  {
+    $position = Position::whereIn('default_role', self::TENAGA_MITRA_POSITION_ROLES)->find($id);
+    if (! $position) {
+      return;
+    }
+
+    $this->jabatanTenagaMitra = $position->name;
+    $this->position_id = $position->id;
+    $this->resetErrorBag(['jabatanTenagaMitra', 'position_id']);
+  }
+
+  /**
+   * Role tidak dipilih manual: Tenaga Mitra selalu ber-role Tenaga Mitra, bila field terkunci
+   * role mengikuti jabatan, dan Anggota DPRD selalu mengikuti Jabatan DPRD (Ketua DPRD ⟹
+   * Pimpinan DPRD, selain itu Anggota DPRD).
    */
   private function roleIsAutomatic(): bool
   {
-    return ! $this->canEditRole() || $this->isDprdContext();
+    return $this->tenagaMitra || ! $this->canEditRole() || $this->isDprdContext();
   }
 
   public function selectPosition($id): void
   {
-    $this->position_id = (int) $id;
+    // Jabatan yang tampil redup (lihat positionUnavailableReason) tidak bisa dipilih.
+    $position = Position::find($id);
+    if (! $position || $this->positionUnavailableReason($position)) {
+      return;
+    }
+
+    $this->position_id = $position->id;
     $this->applyPositionRole();
   }
 
@@ -394,8 +590,8 @@ class UserForm extends Component
    */
   private function applyPositionRole(): void
   {
-    // Bila field terkunci, role diturunkan otomatis (lihat roleFollowingPosition()).
-    if (! $this->canEditRole()) {
+    // Bila field terkunci atau mode Tenaga Mitra, role diturunkan otomatis (lihat roleFollowingPosition()).
+    if ($this->tenagaMitra || ! $this->canEditRole()) {
       return;
     }
 
@@ -456,7 +652,9 @@ class UserForm extends Component
         fn ($c) => $c->whereNotIn('name', User::KEPALA_DAERAH_ROLES),
       )
       // Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
-      ->when(! ($this->isEdit && $this->user->hasRole('super_admin')), fn ($c) => $c->where('name', '!=', 'super_admin'));
+      ->when(! ($this->isEdit && $this->user->hasRole('super_admin')), fn ($c) => $c->where('name', '!=', 'super_admin'))
+      // Tenaga Mitra hanya diberikan lewat mode Tenaga Mitra.
+      ->where('name', '!=', User::TENAGA_MITRA_ROLE);
 
     if (auth()->user()->hasRole('super_admin')) {
       return $roles;
@@ -488,6 +686,10 @@ class UserForm extends Component
    */
   private function roleFollowingPosition(): string
   {
+    if ($this->tenagaMitra) {
+      return User::TENAGA_MITRA_ROLE;
+    }
+
     $original = $this->originalRole();
 
     // Kewenangan operasional (Super Admin / Admin OPD) tidak berubah mengikuti jabatan.
@@ -553,6 +755,19 @@ class UserForm extends Component
       $this->role = $this->roleFollowingPosition();
     }
 
+    // Tenaga Mitra hanya menyimpan nama, NIP, NIK, dan jabatan, tanpa akun login. Isian lain
+    // yang mungkin tersisa dari mode Pegawai dibuang.
+    if ($this->tenagaMitra) {
+      $this->username = '';
+      $this->email = '';
+      $this->password = '';
+      $this->rank_id = '';
+
+      // Jabatan ditentukan dari nama yang diketik, bukan dari position_id kiriman form.
+      $this->jabatanTenagaMitra = $this->normalizedJabatanTenagaMitra();
+      $this->resolveJabatanTenagaMitra();
+    }
+
     // Spasi di awal/akhir (sering ikut saat menempel teks) dibuang sebelum divalidasi; input
     // Livewire tidak melewati middleware TrimStrings. Password sengaja tidak di-trim.
     $this->name = trim((string) $this->name);
@@ -588,9 +803,24 @@ class UserForm extends Component
       }
     }
 
+    // Tenaga Mitra dengan nama jabatan yang belum terdaftar: jabatan baru dibuat (tanpa tingkat).
+    $newPosition = null;
+    if ($this->tenagaMitra && ! $this->position_id) {
+      $newPosition = Position::create([
+        'name' => SmartTitle::convert($this->jabatanTenagaMitra),
+        'default_role' => User::TENAGA_MITRA_ROLE,
+        'uniqueness_scope' => PositionScope::NONE->value,
+        'level' => Position::levelForRole(User::TENAGA_MITRA_ROLE),
+        'created_by' => $currentUser->id,
+      ]);
+      $this->position_id = $newPosition->id;
+      $this->jabatanTenagaMitra = $newPosition->name;
+    }
+    $newPositionNote = $newPosition ? " Jabatan baru \"{$newPosition->name}\" ikut ditambahkan." : '';
+
     $data = [
       'name' => $this->name,
-      'username' => $this->username,
+      'username' => $this->tenagaMitra ? null : $this->username,
       'email' => $this->email ?: null,
       'nip' => $this->nip ?: null,
       'nik' => $this->nik ?: null,
@@ -618,7 +848,12 @@ class UserForm extends Component
       $data['partai'] = null;
     }
 
-    if (!empty($this->password)) {
+    if ($this->tenagaMitra) {
+      // Tanpa akun login: kolom password wajib terisi, jadi diisi acak yang tidak pernah diberikan.
+      if (! $this->isEdit) {
+        $data['password'] = Hash::make(Str::random(40));
+      }
+    } elseif (!empty($this->password)) {
       $data['password'] = Hash::make($this->password);
     } elseif (!$this->isEdit) {
       // Pegawai baru tanpa password memakai password default dari config.
@@ -626,16 +861,17 @@ class UserForm extends Component
     }
 
     $typeParam = array_filter(['type' => $this->listType]);
+    $sebutan = $this->tenagaMitra ? 'Tenaga Mitra' : 'Pegawai';
 
     if ($this->isEdit) {
       $this->user->update($data);
       $this->user->syncRoles([$this->role]);
 
-      $this->toastSuccess("Pegawai {$this->user->name} berhasil diperbarui.");
+      $this->toastSuccess("{$sebutan} {$this->user->name} berhasil diperbarui.{$newPositionNote}");
       return;
     } else {
       $data['is_active'] = true;
-      if ($this->telegramLinked) {
+      if ($this->telegramLinked && ! $this->tenagaMitra) {
         $data['telegram_chat_id'] = $this->telegramChatId;
         $data['telegram_username'] = $this->telegramUsername ?: null;
         $data['telegram_linked_at'] = now();
@@ -643,7 +879,9 @@ class UserForm extends Component
       }
       $newUser = User::create($data);
       $newUser->assignRole($this->role);
-      return redirect()->route('master.users.edit', [...$typeParam, 'user' => $newUser])->with('success', "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
+      return redirect()->route('master.users.edit', [...$typeParam, 'user' => $newUser])->with('success', $this->tenagaMitra
+        ? "Tenaga Mitra {$newUser->name} berhasil ditambahkan.{$newPositionNote}"
+        : "Pegawai {$newUser->name} berhasil ditambahkan. Silakan lengkapi data jika diperlukan.");
     }
   }
 
@@ -721,19 +959,21 @@ class UserForm extends Component
 
     // Pencarian jabatan server-side: hanya memuat sebagian data (bukan seluruh jabatan).
     $positionQuery = Position::query();
-    // Menu Walikota & Wakil Walikota: hanya jabatan Walikota / Wakil Walikota. Di form Pegawai
-    // jabatan itu disembunyikan, karena datanya dikelola di menu tersendiri.
     if ($this->isKepalaDaerahContext()) {
+      // Menu Walikota & Wakil Walikota hanya untuk kedua jabatan itu.
       $positionQuery->whereIn('default_role', User::KEPALA_DAERAH_ROLES);
     } else {
-      $positionQuery->where(fn ($q) => $q->whereNull('default_role')->orWhereNotIn('default_role', User::KEPALA_DAERAH_ROLES));
+      // Form Pegawai: semua jabatan bisa ditemukan. Walikota & Wakil (diatur di menunya sendiri)
+      // tampil redup di urutan terakhir beserta alasannya, dan ditolak bila tetap dikirim.
+      $positionQuery->orderByRaw('CASE WHEN default_role IN (?, ?) THEN 1 ELSE 0 END', User::KEPALA_DAERAH_ROLES);
     }
     if (trim($this->searchPosition) !== '') {
-      $positionQuery->where('name', 'like', '%' . trim($this->searchPosition) . '%');
+      self::wherePositionNameLike($positionQuery, $this->searchPosition);
     }
 
     $limit = 25;
-    $positions = $positionQuery->orderBy('level')->limit($limit + 1)->get();
+    $positions = $positionQuery->orderBy('level')->orderBy('name')->limit($limit + 1)->get()
+      ->each(fn (Position $p) => $p->unavailableReason = $this->positionUnavailableReason($p));
     $positionsHasMore = $positions->count() > $limit;
     $positions = $positions->take($limit);
 
@@ -753,9 +993,45 @@ class UserForm extends Component
 
     $departmentTree = $this->getDepartmentTree();
 
+    // Mode Tenaga Mitra: saran jabatan yang cocok dengan nama yang diketik, dan keterangan apakah
+    // namanya jabatan lama atau baru. Semua jabatan ditampilkan: jabatan Tenaga Mitra dulu, lalu
+    // staf, lalu jabatan struktural yang tampil redup karena tidak bisa dipakai Tenaga Mitra.
+    $jabatanSuggestions = collect();
+    $jabatanSuggestionsHasMore = false;
+    $jabatanStatus = null;
+    if ($this->tenagaMitra) {
+      $term = $this->normalizedJabatanTenagaMitra();
+      $suggestionLimit = 10;
+      $jabatanSuggestions = Position::query()
+        ->when($term !== '', fn ($q) => self::wherePositionNameLike($q, $term))
+        ->orderByRaw(
+          'CASE WHEN default_role = ? THEN 0 WHEN default_role = ? THEN 1 ELSE 2 END',
+          self::TENAGA_MITRA_POSITION_ROLES,
+        )
+        ->orderBy('level')
+        ->orderBy('name')
+        ->limit($suggestionLimit + 1)
+        ->get(['id', 'name', 'default_role'])
+        ->each(fn (Position $p) => $p->unavailableReason = $this->positionUnavailableReason($p));
+      $jabatanSuggestionsHasMore = $jabatanSuggestions->count() > $suggestionLimit;
+      $jabatanSuggestions = $jabatanSuggestions->take($suggestionLimit);
+      $jabatanStatus = match (true) {
+        $term === '' => null,
+        (bool) $this->position_id => 'existing',
+        $this->matchingJabatanTenagaMitra() !== null => 'struktural',
+        default => 'new',
+      };
+    }
+
     return view('livewire.user-form', [
+      'jabatanSuggestions' => $jabatanSuggestions,
+      'jabatanSuggestionsHasMore' => $jabatanSuggestionsHasMore,
+      'jabatanStatus' => $jabatanStatus,
+      'jabatanBaru' => $jabatanStatus === 'new' ? SmartTitle::convert($this->normalizedJabatanTenagaMitra()) : null,
       'departmentTree' => $departmentTree,
       'showDepartmentPicker' => ! $this->hasSingleDepartment($departmentTree),
+      // Pemilih mode hanya saat menambah pegawai (bukan di menu DPRD / Walikota).
+      'showModeSwitch' => ! $this->isEdit && $this->canUseTenagaMitraMode(),
       // Unit yang dipimpin pegawai ini (diatur di halaman struktur unit kerja).
       'ranks' => Rank::orderBy('group')->get(),
       'positions' => $positions,

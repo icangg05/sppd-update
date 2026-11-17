@@ -17,35 +17,20 @@
 
 <div class="dash-enter grid grid-cols-1 gap-5 lg:grid-cols-3">
   {{-- Antrean Persetujuan (tugas utama approver — diberi bobot 2/3 lebar) --}}
-  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-amber-400 bg-white shadow-sm lg:col-span-2">
-    <div class="flex items-center justify-between border-b border-slate-100 p-4">
-      <h3 class="flex items-center gap-2 text-base font-bold text-slate-800">
-        <i class="fa-solid fa-clipboard-check text-amber-500"></i> Menunggu Persetujuan Anda
-        @if ($pendingApprovals->isNotEmpty())
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm lg:col-span-2">
+    <x-dashboard.panel-header title="Menunggu Persetujuan Anda" icon="fa-clipboard-check" tone="amber">
+      @if ($pendingApprovals->isNotEmpty())
+        <x-slot:badge>
           <span class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{{ $pendingApprovals->count() }}</span>
-        @endif
-      </h3>
+        </x-slot:badge>
+      @endif
       <a wire:navigate href="{{ route('sppd.index', ['filter' => 'approval']) }}"
         class="text-xs font-medium text-primary-600 hover:underline">Buka Semua</a>
-    </div>
-    <div class="flex max-h-112 flex-col divide-y divide-slate-100 overflow-y-auto">
+    </x-dashboard.panel-header>
+    {{-- Pemisah antar-item: lihat x-dashboard.sppd-row. --}}
+    <div class="flex max-h-112 flex-col divide-y divide-slate-200 overflow-y-auto">
       @forelse ($pendingApprovals as $appr)
-        @php $sppd = $appr->sppdRequest; @endphp
-        @php $urgency = $sppd->urgency ?? 'Biasa'; @endphp
-        <a wire:navigate href="{{ route('sppd.show', $sppd) }}" class="flex flex-col gap-1.5 p-3 transition hover:bg-sky-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
-          <div class="flex min-w-0 items-center gap-2">
-            <x-ui.badge :color="$urgency === 'Segera' ? 'rose' : 'slate'" class="shrink-0">{{ $urgency }}</x-ui.badge>
-            <p class="line-clamp-1 text-sm font-medium text-slate-800">{{ $sppd->purpose }}</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span class="flex items-center gap-1"><i class="fa-regular fa-user"></i> {{ $sppd->user->name ?? '-' }}</span>
-            <span class="text-slate-300">&bull;</span>
-            <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot"></i>
-              {{ $sppd->destinations->first()?->place_name ?? '-' }}</span>
-            <span class="text-slate-300">&bull;</span>
-            <span class="font-mono font-semibold text-slate-700">Rp {{ number_format($sppd->costDetails->sum('total'), 0, ',', '.') }}</span>
-          </div>
-        </a>
+        <x-dashboard.sppd-row :sppd="$appr->sppdRequest" />
       @empty
         <div class="flex flex-col items-center justify-center p-8 text-slate-500">
           <i class="fa-solid fa-mug-hot mb-3 text-3xl text-slate-300"></i>
@@ -58,17 +43,16 @@
   <div class="flex flex-col gap-5">
     {{-- Antrean Tanda Tangan (jika bisa sign) --}}
     @if ($pendingSignatures->isNotEmpty())
-      <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-violet-400 bg-white shadow-sm">
-        <div class="border-b border-slate-100 p-4">
-          <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <i class="fa-solid fa-signature text-violet-500"></i> Menunggu Tanda Tangan
+      <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+        <x-dashboard.panel-header title="Menunggu Tanda Tangan" icon="fa-signature" tone="violet">
+          <x-slot:badge>
             <span class="inline-flex items-center rounded bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">{{ $pendingSignatures->count() }}</span>
-          </h3>
-        </div>
-        <div class="flex max-h-44 flex-col divide-y divide-slate-100 overflow-y-auto">
+          </x-slot:badge>
+        </x-dashboard.panel-header>
+        <div class="flex max-h-44 flex-col divide-y divide-slate-200 overflow-y-auto">
           @foreach ($pendingSignatures as $sig)
             <a wire:navigate href="{{ route('sppd.show', $sig->sppdRequest) }}"
-              class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50">
+              class="flex items-center justify-between gap-3 px-4 py-3 text-sm transition-colors even:bg-zinc-100 hover:bg-primary-50">
               <span class="line-clamp-1 font-medium text-slate-700">{{ $sig->sppdRequest->purpose ?? '-' }}</span>
               <span class="shrink-0 rounded bg-violet-50 px-1.5 py-0.5 text-xs font-bold uppercase text-violet-600">
                 {{ $sig->document_type }}
@@ -80,15 +64,11 @@
     @endif
 
     {{-- Keputusan terakhir --}}
-    <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-slate-300 bg-white shadow-sm">
-      <div class="border-b border-slate-100 p-4">
-        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <i class="fa-solid fa-gavel text-slate-400"></i> Keputusan Terakhir Anda
-        </h3>
-      </div>
-      <div class="flex flex-col divide-y divide-slate-100">
+    <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+      <x-dashboard.panel-header title="Keputusan Terakhir Anda" icon="fa-gavel" tone="slate" />
+      <div class="flex flex-col divide-y divide-slate-200">
         @forelse ($recentDecisions as $dec)
-          <div class="flex items-center justify-between gap-3 p-3 text-sm">
+          <div class="flex items-center justify-between gap-3 px-4 py-3 text-sm even:bg-zinc-100">
             <span class="line-clamp-1 text-slate-700">{{ $dec->sppdRequest->purpose ?? '-' }}</span>
             <x-ui.badge :color="$dec->status->value === 'approved' ? 'emerald' : 'red'" class="shrink-0 uppercase">
               {{ $dec->status->value === 'approved' ? 'Disetujui' : 'Ditolak' }}

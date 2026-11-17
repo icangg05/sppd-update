@@ -78,7 +78,9 @@ class PptkSelector extends Component
   {
     return User::whereIn('department_id', $this->allowedDeptIds())
       ->where('is_active', true)
-      ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']));
+      ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']))
+      // Tenaga Mitra hanya pengikut perjalanan, bukan pejabat.
+      ->exceptTenagaMitra();
   }
 
   public function updatePptk(): void

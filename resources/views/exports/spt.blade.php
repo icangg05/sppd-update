@@ -74,15 +74,26 @@
 			padding-left: 20px;
 		}
 
-		.footer {
-			margin-top: 10px;
-			width: 100%;
-			/* Jaga blok tanda tangan tidak terpotong antar-halaman. */
+		/* Tanda tangan + tembusan satu paket yang tidak boleh terpotong: bila tidak muat, keduanya
+		   pindah bersama ke halaman berikutnya, sehingga tembusan tidak pernah tertinggal sendirian.
+		   Kalimat "Demikian" sengaja di luar paket (pilihan user 2026-11-17); jumlah halaman sama. */
+		.closing-block {
 			page-break-inside: avoid;
 		}
 
+		/* Tabel, bukan float: float di Dompdf tidak stabil saat blok pindah halaman. */
+		.signature-table {
+			width: 100%;
+			margin-top: 10px;
+			border-collapse: collapse;
+		}
+
+		.signature-table td {
+			padding: 0;
+			vertical-align: top;
+		}
+
 		.signature-wrap {
-			float: right;
 			width: 270px;
 			text-align: left;
 		}
@@ -94,10 +105,6 @@
 
 		.uppercase {
 			text-transform: uppercase;
-		}
-
-		.clear {
-			clear: both;
 		}
 
 		footer {
@@ -160,13 +167,14 @@
 		     Dompdf dapat memecah halaman DI ANTARA orang (bukan menendang seluruh
 		     daftar ke halaman berikutnya), sehingga pergantian halaman rapi. --}}
 		@php
-			// Pelaksana + pengikut sesuai urutan cetak (SppdRequest::sptParticipants): di Inspektorat
-			// semuanya diurutkan menurut jabatan perjalanan, selain itu pelaksana tetap nomor 1.
+			// Pelaksana + pengikut sesuai urutan cetak (SppdRequest::sptParticipants): semuanya, termasuk
+			// pelaksana, diurutkan dari jabatan lalu golongan tertinggi. Jabatan yang tercetak: jabatan
+			// perjalanan (Inspektorat dalam daerah) atau jabatan struktural.
 			$peserta = $sppd->sptParticipants()->map(fn ($p) => [
 				'name'    => $p->user->name,
 				'pangkat' => \App\Models\Rank::pangkatGolongan($p->user->rank?->name, $p->user->rank?->group),
 				'nip'     => $p->user->nip,
-				'jabatan' => $p->travel_position ?? ($p->user->position->name ?? ($p->user->roles->first()->name ?? '-')),
+				'jabatan' => $p->travel_position ?? $p->user->jabatanLabel(),
 			])->all();
 		@endphp
 		@foreach ($peserta as $i => $p)
@@ -181,19 +189,23 @@
 							<td style="padding: 0 0; width: 10px">:</td>
 							<td style="padding: 0 0;">{{ $p['name'] }}</td>
 						</tr>
-						{{-- Selalu dicetak; peserta tanpa pangkat/golongan atau NIP (mis. PPPK, non-ASN) mendapat '-'. --}}
-						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">Pangkat/Golongan</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ $p['pangkat'] }}</td>
-						</tr>
-						<tr>
-							<td style="padding: 0 0;"></td>
-							<td style="padding: 0 0;">NIP</td>
-							<td style="padding: 0 0;">:</td>
-							<td style="padding: 0 0;">{{ filled($p['nip']) ? $p['nip'] : '-' }}</td>
-						</tr>
+						{{-- Peserta tanpa pangkat/golongan atau NIP (mis. PPPK, non-ASN, Tenaga Mitra): barisnya tidak dicetak. --}}
+						@if (filled($p['pangkat']))
+							<tr>
+								<td style="padding: 0 0;"></td>
+								<td style="padding: 0 0;">Pangkat/Golongan</td>
+								<td style="padding: 0 0;">:</td>
+								<td style="padding: 0 0;">{{ $p['pangkat'] }}</td>
+							</tr>
+						@endif
+						@if (filled($p['nip']))
+							<tr>
+								<td style="padding: 0 0;"></td>
+								<td style="padding: 0 0;">NIP</td>
+								<td style="padding: 0 0;">:</td>
+								<td style="padding: 0 0;">{{ $p['nip'] }}</td>
+							</tr>
+						@endif
 						<tr>
 							<td style="padding: 0 0;"></td>
 							<td style="padding: 0 0;">Jabatan</td>
@@ -228,57 +240,64 @@
 		</tr>
 	</table>
 
-	<div class="footer">
-		<div class="signature-wrap">
-			@if ($sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD)
-				<div>Ditetapkan di Kendari</div>
-			@endif
-			<div>
-				{{ $sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD ? 'Pada Tanggal :' : 'Kendari,' }}
-				{{ $sppd->spt_date->translatedFormat('d F Y') }}
+	{{-- Tanda tangan + tembusan tidak boleh terpotong (lihat .closing-block). --}}
+	<div class="closing-block">
+		<table class="signature-table">
+			<tr>
+				<td></td>
+				<td class="signature-wrap">
+					@if ($sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD)
+						<div>Ditetapkan di Kendari</div>
+					@endif
+					<div>
+						{{ $sppd->user->department?->getRootDepartment()?->type !== \App\Enums\DepartmentType::DPRD ? 'Pada Tanggal :' : 'Kendari,' }}
+						{{ $sppd->spt_date->translatedFormat('d F Y') }}
+					</div>
+					<div style="margin-top: 10px; text-transform: uppercase;">
+						{{ $pdfData['approver_role'] ?? 'Walikota Kendari' }}
+					</div>
+					@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+						<div style="margin-top: 11px;">
+							<img src="{{ $pdfData['qr_image'] }}">
+						</div>
+					@else
+						<div style="height: 70px;"></div>
+					@endif
+					<p style="margin-top: 3px; line-height: 1.8;">
+						<span style="font-weight: bold; text-decoration: underline;">
+							{{ $pdfData['approver_name'] }}
+						</span>
+						@if ($pdfData['approver_nip'])
+							<br>
+							{{-- Penandatangan tanpa pangkat/golongan: barisnya tidak dicetak. --}}
+							@if ($approverPangkat = \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null))
+								<span>
+									{{ $approverPangkat }} <br>
+								</span>
+							@endif
+							<span>
+								NIP. {{ $pdfData['approver_nip'] }}
+							</span>
+						@endif
+					</p>
+				</td>
+			</tr>
+		</table>
+
+		@php
+			$isDprdDepartment = $sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD;
+			$isAnggotaDprd = $sppd->user->hasRole(['anggota_dprd', 'pimpinan_dprd']);
+		@endphp
+		@if (!($isDprdDepartment && $isAnggotaDprd))
+			<div class="tembusan">
+				<div>Tembusan Yth:</div>
+				<ol class="ordered-list">
+					<li>Kepala Badan Kepegawaian dan Pengembangan SDM Kota Kendari</li>
+					<li>Bagian Organisasi dan Pemberdayaan Aparatur Kota Kendari</li>
+				</ol>
 			</div>
-			<div style="margin-top: 10px; text-transform: uppercase;">
-				{{ $pdfData['approver_role'] ?? 'Walikota Kendari' }}
-			</div>
-			@if ($pdfData['is_approved'] && $pdfData['qr_image'])
-				<div style="margin-top: 11px;">
-					<img src="{{ $pdfData['qr_image'] }}">
-				</div>
-			@else
-				<div style="height: 70px;"></div>
-			@endif
-			<p style="margin-top: 3px; line-height: 1.8;">
-				<span style="font-weight: bold; text-decoration: underline;">
-					{{ $pdfData['approver_name'] }}
-				</span>
-				@if ($pdfData['approver_nip'])
-					<br>
-					<span>
-						{{ \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null) }} <br>
-					</span>
-					<span>
-						NIP. {{ $pdfData['approver_nip'] }}
-					</span>
-				@endif
-			</p>
-		</div>
+		@endif
 	</div>
-
-	<div class="clear"></div>
-
-	@php
-		$isDprdDepartment = $sppd->user->department?->getRootDepartment()?->type === \App\Enums\DepartmentType::DPRD;
-		$isAnggotaDprd = $sppd->user->hasRole(['anggota_dprd', 'pimpinan_dprd']);
-	@endphp
-	@if (!($isDprdDepartment && $isAnggotaDprd))
-		<div class="tembusan">
-			<div>Tembusan Yth:</div>
-			<ol class="ordered-list">
-				<li>Kepala Badan Kepegawaian dan Pengembangan SDM Kota Kendari</li>
-				<li>Bagian Organisasi dan Pemberdayaan Aparatur Kota Kendari</li>
-			</ol>
-		</div>
-	@endif
 
 	{{-- Footer dokumen: gaya lebih halus (abu-abu) khas footer dokumen,
 	     position fixed => diulang Dompdf di SETIAP halaman. --}}

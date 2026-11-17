@@ -59,9 +59,22 @@
 			page-break-inside: avoid;
 		}
 
-		/* Jaga blok tanda tangan tidak terpotong antar-halaman. */
-		.signature-block {
+		/* Tanda tangan + tembusan satu paket yang tidak boleh terpotong: bila tidak muat, keduanya
+		   pindah bersama ke halaman berikutnya, sehingga tembusan tidak pernah tertinggal sendirian.
+		   Kalimat "Demikian" sengaja di luar paket (pilihan user 2026-11-17); jumlah halaman sama. */
+		.closing-block {
 			page-break-inside: avoid;
+		}
+
+		/* Tabel, bukan float: float di Dompdf tidak stabil saat blok pindah halaman. */
+		.signature-table {
+			width: 100%;
+			margin-top: 25px;
+		}
+
+		.signature-table td {
+			padding: 0;
+			vertical-align: top;
 		}
 
 		/* Footer dokumen: gaya lebih halus (abu-abu) khas footer dokumen,
@@ -106,7 +119,7 @@
 					@endforeach
 				</ol>
 				<p style="margin-top: 5px;">
-					Menugaskan Kepada Anggota DPRD Kota Kendari yang tercantum namanya dibawah ini:
+					Menugaskan Kepada Anggota DPRD Kota Kendari yang tercantum namanya di bawah ini:
 				</p>
 				<table class="data-table" style="margin-top: 10px; margin-bottom: 10px;">
 					<thead>
@@ -131,8 +144,8 @@
 			</li>
 
 			<li style="margin-bottom: 15px;">
-				Tujuan Perintah Tugas :<br />
-				{{ $sppd->purpose }}
+				Tujuan Perintah Tugas :
+				<div style="text-align: justify;">{{ $sppd->purpose }}</div>
 			</li>
 
 			<li style="margin-bottom: 15px;">
@@ -160,48 +173,55 @@
 		</ol>
 	</div>
 
-	<div style="line-height: 1.7;">
+	<div style="line-height: 1.7; text-align: justify;">
 		Demikian Surat Perintah Tugas ini diberikan untuk dilaksanakan dengan penuh rasa tanggung jawab dan
-		apabila Surat Perintah Tugas Ini tidak dijalankan sesuai aturan Perundang-Undangan yang berlaku, maka yang
+		apabila Surat Perintah Tugas ini tidak dijalankan sesuai aturan Perundang-Undangan yang berlaku, maka yang
 		bersangkutan dan/atau penerima Surat Perintah Tugas ini yang akan bertanggung jawab.
 	</div>
 
-	<div class="signature-block" style="margin-top: 25px;">
-		<div style="float: right; width: 270px; text-align: left;">
-			<div>Kendari,
-				{{ \Carbon\Carbon::parse($sppd->spt_date)->translatedFormat('d F Y') }}
-			</div>
-			<div style="text-transform: uppercase;">{{ $pdfData['approver_role'] ?? 'KETUA DPRD KOTA KENDARI' }}</div>
-			@if ($pdfData['is_approved'] && $pdfData['qr_image'])
-				<div style="margin-top: 11px;">
-					<img src="{{ $pdfData['qr_image'] }}" style="width: 65px;">
-				</div>
-			@else
-				<div style="height: 70px;"></div>
-			@endif
-			<p style="margin-top: 3px; line-height: 1.8;">
-				<span style="font-weight: bold; text-decoration: underline;">{{ $pdfData['approver_name'] }}</span>
-				@if ($pdfData['approver_nip'])
-					<br>
-					<span>
-						{{ \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null) }} <br>
-					</span>
-					<span>
-						NIP. {{ $pdfData['approver_nip'] }}
-					</span>
-				@endif
-			</p>
+	{{-- Tanda tangan + tembusan tidak boleh terpotong (lihat .closing-block). --}}
+	<div class="closing-block">
+		<table class="signature-table">
+			<tr>
+				<td></td>
+				<td style="width: 270px; text-align: left;">
+					<div>Kendari,
+						{{ \Carbon\Carbon::parse($sppd->spt_date)->translatedFormat('d F Y') }}
+					</div>
+					<div style="text-transform: uppercase;">{{ $pdfData['approver_role'] ?? 'KETUA DPRD KOTA KENDARI' }}</div>
+					@if ($pdfData['is_approved'] && $pdfData['qr_image'])
+						<div style="margin-top: 11px;">
+							<img src="{{ $pdfData['qr_image'] }}" style="width: 65px;">
+						</div>
+					@else
+						<div style="height: 70px;"></div>
+					@endif
+					<p style="margin-top: 3px; line-height: 1.8;">
+						<span style="font-weight: bold; text-decoration: underline;">{{ $pdfData['approver_name'] }}</span>
+						@if ($pdfData['approver_nip'])
+							<br>
+							{{-- Penandatangan tanpa pangkat/golongan: barisnya tidak dicetak. --}}
+							@if ($approverPangkat = \App\Models\Rank::pangkatGolongan($pdfData['approver_rank'] ?? null, $pdfData['approver_group'] ?? null))
+								<span>
+									{{ $approverPangkat }} <br>
+								</span>
+							@endif
+							<span>
+								NIP. {{ $pdfData['approver_nip'] }}
+							</span>
+						@endif
+					</p>
+				</td>
+			</tr>
+		</table>
+
+		<div style="margin-top: 25px; font-size: 10pt;">
+			<div>Tembusan Yth:</div>
+			<ol style="margin: 0; padding-left: 20px;">
+				<li>Walikota Kendari</li>
+				<li>Arsip</li>
+			</ol>
 		</div>
-	</div>
-
-	<div style="clear: both;"></div>
-
-	<div style="margin-top: 25px; font-size: 10pt;">
-		<div>Tembusan Yth:</div>
-		<ol style="margin: 0; padding-left: 20px;">
-			<li>Walikota Kendari</li>
-			<li>Arsip</li>
-		</ol>
 	</div>
 
 	<footer class="footer-note">

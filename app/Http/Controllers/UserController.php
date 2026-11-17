@@ -22,11 +22,13 @@ class UserController extends Controller
    *  - Signature (middleware `signed`) mencegah pemalsuan & memberi masa berlaku singkat.
    *  - Nonce sekali-pakai mencegah tautan diputar ulang bila bocor (referrer/riwayat).
    *  - Akun nonaktif ditolak, konsisten dengan aturan login normal.
+   *  - Tenaga Mitra ditolak: datanya hanya untuk pengikut perjalanan, tanpa akun login.
    *  - Setiap penggunaan dicatat ke activity log lengkap dengan pelaku (super_admin).
    */
   public function impersonate(User $user)
   {
     abort_if(! $user->is_active, 403, 'Akun tidak aktif tidak dapat diakses.');
+    abort_if($user->isTenagaMitra(), 403, 'Tenaga Mitra tidak memiliki akun login.');
 
     // Sekali pakai: tandai nonce agar tautan yang sama tidak bisa dipakai dua kali.
     // TTL lebih panjang dari masa berlaku tautan agar tidak bisa diputar ulang.

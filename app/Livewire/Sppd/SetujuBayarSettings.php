@@ -76,7 +76,9 @@ class SetujuBayarSettings extends Component
   {
     return User::where('is_active', true)
       ->whereIn('department_id', $instansi->getScopedRelatedIds())
-      ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']));
+      ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin_opd', 'super_admin']))
+      // Tenaga Mitra hanya pengikut perjalanan, bukan pejabat.
+      ->exceptTenagaMitra();
   }
 
   /**

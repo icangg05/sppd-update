@@ -114,6 +114,14 @@ class SppdCreate extends Component
       return;
     }
 
+    // Tenaga Mitra hanya pengikut: pilihan dibatalkan, juga bila datang dari URL atau request rekaan.
+    if ($user->isTenagaMitra()) {
+      $this->user_id = null;
+      $this->errorMessage = User::TENAGA_MITRA_NOT_PELAKSANA;
+
+      return;
+    }
+
     $this->userInfo = [
       'name' => $user->name,
       'department' => $user->department?->name ?? 'Tanpa Unit Kerja',
@@ -424,6 +432,8 @@ class SppdCreate extends Component
       'domain' => 'required|in:' . implode(',', SppdDomain::values()),
     ]);
 
+    abort_if((bool) User::find($this->user_id)?->isTenagaMitra(), 403, User::TENAGA_MITRA_NOT_PELAKSANA);
+
     if (! $this->isComplete) {
       return;
     }
@@ -445,7 +455,9 @@ class SppdCreate extends Component
       // Akun administratif (super_admin & admin_opd) bukan pelaksana perjalanan.
       ->whereDoesntHave('roles', function ($q) {
         $q->whereIn('name', ['super_admin', 'admin_opd']);
-      });
+      })
+      // Tenaga Mitra hanya bisa menjadi pengikut.
+      ->exceptTenagaMitra();
 
     // Filter: selain Super Admin hanya melihat pegawai di instansinya + sub-department
     if (! Auth::user()->hasRole('super_admin')) {
@@ -537,8 +549,9 @@ class SppdCreate extends Component
       : [];
 
     // SPPD aktif pelaksana (termasuk sebagai pengikut dan lewat akunnya di OPD lain) sebagai
-    // acuan memilih tanggal yang tidak bentrok di Tahap 2.
-    $activeTrips = $selectedUser
+    // acuan memilih tanggal yang tidak bentrok di Tahap 2. Tidak perlu untuk Inspektorat
+    // karena SPPD-nya tidak dicek bentrok (Department::allowsClashingTrips).
+    $activeTrips = $selectedUser && ! $selectedUser->department?->allowsClashingTrips()
       ? SppdRequest::activeForUsers(collect([$selectedUser]))[$selectedUser->id] ?? collect()
       : collect();
 

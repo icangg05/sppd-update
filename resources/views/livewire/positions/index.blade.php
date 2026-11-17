@@ -221,21 +221,8 @@
   <x-ui.modal show="$wire.showDeleteModal" title="Konfirmasi Hapus Jabatan"
     description="Tindakan ini tidak dapat dibatalkan" icon="fa-solid fa-trash-can text-rose-600"
     :closeable="false">
-    <div class="space-y-4"
-      x-data="{
-        remaining: 10,
-        timer: null,
-        startCountdown() {
-          this.remaining = 10;
-          clearInterval(this.timer);
-          this.timer = setInterval(() => {
-            if (this.remaining > 0) this.remaining--;
-            if (this.remaining <= 0) clearInterval(this.timer);
-          }, 1000);
-        },
-      }"
-      x-on:position-delete-countdown.window="startCountdown()"
-      x-init="if ($wire.showDeleteModal) startCountdown()">
+    {{-- Tanpa hitung mundur: jabatan yang masih dipakai pegawai tetap ditolak saat dihapus. --}}
+    <div class="space-y-4">
       <p class="text-sm text-slate-600">
         Yakin ingin menghapus jabatan
         <span class="font-bold text-slate-800">{{ $deletingName ?? 'ini' }}</span>?
@@ -244,14 +231,9 @@
 
       <div class="flex items-center justify-end gap-2 pt-1">
         <x-ui.button type="button" variant="secondary" wire:click="closeDeleteModal">Tutup</x-ui.button>
-        <x-ui.button type="button" variant="danger" wire:click="delete"
-          x-bind:disabled="remaining > 0"
-          x-bind:class="remaining > 0 ? 'opacity-50 cursor-not-allowed' : ''">
-          <span x-show="remaining > 0"><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="remaining"></span>s</span>
-          <span x-show="remaining <= 0" x-cloak>
-            <span wire:loading.remove wire:target="delete"><i class="fa-solid fa-trash-can"></i> Hapus</span>
-            <span wire:loading wire:target="delete"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
-          </span>
+        <x-ui.button type="button" variant="danger" wire:click="delete" wire:loading.attr="disabled" wire:target="delete">
+          <span wire:loading.remove wire:target="delete"><i class="fa-solid fa-trash-can"></i> Hapus</span>
+          <span wire:loading wire:target="delete"><i class="fa-solid fa-spinner fa-spin"></i> Menghapus...</span>
         </x-ui.button>
       </div>
     </div>

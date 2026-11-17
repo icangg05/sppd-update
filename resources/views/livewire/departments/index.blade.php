@@ -509,13 +509,18 @@
               </button>
               <span x-show="!row.canDrag || matches" class="w-6 shrink-0"></span>
 
-              {{-- Buka/tutup sub-unit --}}
+              {{-- Buka/tutup sub-unit: kotak bertepi agar jelas terlihat bisa diklik (dulu hanya
+                   chevron kecil tanpa tepi dan banyak pengguna tidak menyadarinya). --}}
               <button type="button" x-show="row.children" @click="toggle(row)" :aria-expanded="isOpen(row)"
-                :aria-label="(isOpen(row) ? 'Tutup ' : 'Buka ') + row.name"
-                class="flex h-8 w-6 shrink-0 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
-                <i class="fa-solid fa-chevron-right text-[10px] transition-transform" :class="isOpen(row) && 'rotate-90'"></i>
+                :aria-label="(isOpen(row) ? 'Tutup sub-unit ' : 'Buka sub-unit ') + row.name"
+                :title="isOpen(row) ? 'Tutup sub-unit' : 'Buka sub-unit'"
+                class="mr-1 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded border shadow-2xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                :class="isOpen(row)
+                  ? 'border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100'
+                  : 'border-slate-300 bg-white text-slate-600 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700'">
+                <i class="fa-solid fa-chevron-right text-xs transition-transform" :class="isOpen(row) && 'rotate-90'"></i>
               </button>
-              <span x-show="!row.children" class="flex h-8 w-6 shrink-0 items-center justify-center">
+              <span x-show="!row.children" class="mr-1 flex size-8 shrink-0 items-center justify-center">
                 <i class="fa-solid fa-circle text-[4px] text-slate-300"></i>
               </span>
 
@@ -536,7 +541,13 @@
                     x-text="row.typeLabel" />
                   <span x-show="row.code" class="font-mono text-slate-600" x-text="row.code"></span>
                   <span><i class="fa-solid fa-users mr-1 text-slate-400"></i><span class="font-mono" x-text="row.users"></span> pegawai</span>
-                  <span x-show="row.children"><i class="fa-solid fa-sitemap mr-1 text-slate-400"></i><span class="font-mono" x-text="row.children"></span> sub-unit</span>
+                  {{-- Jumlah sub-unit juga bisa diklik untuk membuka/menutup. --}}
+                  <button type="button" x-show="row.children" @click="toggle(row)" :aria-expanded="isOpen(row)"
+                    class="inline-flex cursor-pointer items-center gap-1 rounded font-medium text-primary-700 transition hover:text-primary-800 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
+                    <i class="fa-solid fa-sitemap text-primary-500"></i>
+                    <span><span class="font-mono" x-text="row.children"></span> sub-unit</span>
+                    <i class="fa-solid fa-chevron-down text-[9px] transition-transform" :class="isOpen(row) && 'rotate-180'"></i>
+                  </button>
                 </div>
               </div>
 

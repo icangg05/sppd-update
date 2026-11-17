@@ -229,7 +229,7 @@ class BudgetIndex extends Component
       $query->where('department_id', $this->department_id);
     }
 
-    $budgets = $query->latest()->paginate(15);
+    $budgets = $query->latest()->paginate(20);
 
     $departments = $user->hasRole('super_admin')
       ? Department::orderBy('name')->get()

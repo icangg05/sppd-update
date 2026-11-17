@@ -96,8 +96,9 @@ class PdfGeneratorService
             'qr_image' => null,
             'duration' => $duration,
             'is_follower' => !$isMain,
-            // Jabatan perjalanan (Inspektorat): milik pelaksana di SPPD-nya, atau milik pengikut.
-            'travel_position' => $isMain ? $sppd->travel_position : $followerRecord?->travel_position,
+            // Jabatan perjalanan (Inspektorat dalam daerah): milik pelaksana di SPPD-nya, atau milik
+            // pengikut. Luar daerah memakai jabatan struktural.
+            'travel_position' => $sppd->usesTravelPositions() ? ($isMain ? $sppd->travel_position : $followerRecord?->travel_position) : null,
             'letterhead_url' => $targetUser->department?->getInheritedLetterhead()
         ];
 

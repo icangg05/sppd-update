@@ -174,7 +174,7 @@
 		<tr>
 			<td class="info-label">Jabatan</td>
 			<td class="info-sep">:</td>
-			<td>{{ $targetUser->position->name ?? ($targetUser->roles->first()->name ?? '-') }}</td>
+			<td>{{ $targetUser->jabatanLabel() }}</td>
 		</tr>
 	</table>
 

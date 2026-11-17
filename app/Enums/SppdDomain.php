@@ -31,6 +31,16 @@ enum SppdDomain: string
     };
   }
 
+  /**
+   * Jabatan perjalanan Inspektorat (Penanggung Jawab s/d Admin Tim) hanya dipakai dalam daerah,
+   * dan peserta SPT disusun menurut jabatan itu. Luar daerah (LDDP, LDLP, luar negeri) memakai
+   * alur normal seperti OPD lain: pelaksana nomor 1, jabatan struktural yang tercetak.
+   */
+  public function usesTravelPositions(): bool
+  {
+    return $this === self::DALAM_DAERAH;
+  }
+
   /** Perjalanan dalam daerah tidak menghitung hari Minggu (Sabtu tetap dihitung). */
   public function skipsSundays(): bool
   {

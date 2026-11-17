@@ -20,25 +20,19 @@
   @include('dashboard.partials._recent-sppd', ['items' => $mySppd, 'title' => 'SPPD Saya'])
 
   {{-- Laporan perjalanan yang perlu dilengkapi --}}
-  <div class="flex flex-col rounded border border-l-2 border-slate-200 border-l-primary-400 bg-white shadow-sm">
-    <div class="flex items-center gap-2.5 border-b border-slate-100 p-4">
-      <div class="flex size-7 shrink-0 items-center justify-center rounded bg-primary-50 text-primary-500">
-        <i class="fa-solid fa-clipboard-list text-xs"></i>
-      </div>
-      <div class="min-w-0">
-        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
-          Laporan Perlu Dilengkapi
-          @if ($needReport->isNotEmpty())
-            <span class="inline-flex items-center rounded bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700">{{ $needReport->count() }}</span>
-          @endif
-        </h3>
-        <p class="mt-0.5 text-xs text-slate-500">SPPD selesai yang laporannya belum dibuat</p>
-      </div>
-    </div>
-    <div class="flex flex-col divide-y divide-slate-100">
+  <div class="flex flex-col rounded border border-slate-200 bg-white shadow-sm">
+    <x-dashboard.panel-header title="Laporan Perlu Dilengkapi" subtitle="SPPD selesai yang laporannya belum dibuat"
+      icon="fa-clipboard-list" tone="primary">
+      @if ($needReport->isNotEmpty())
+        <x-slot:badge>
+          <span class="inline-flex items-center rounded bg-primary-100 px-2 py-0.5 text-xs font-bold text-primary-700">{{ $needReport->count() }}</span>
+        </x-slot:badge>
+      @endif
+    </x-dashboard.panel-header>
+    <div class="flex flex-col divide-y divide-slate-200">
       @forelse ($needReport as $item)
         <a wire:navigate href="{{ route('sppd.report-input', $item) }}"
-          class="flex items-center justify-between gap-3 p-3 text-sm transition hover:bg-slate-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
+          class="flex items-center justify-between gap-3 px-4 py-3 text-sm transition-colors even:bg-zinc-100 hover:bg-primary-50 focus:outline-none focus-visible:bg-primary-50/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
           <div class="min-w-0">
             <p class="line-clamp-1 font-medium text-slate-700">{{ $item->purpose }}</p>
             <p class="text-xs text-slate-500">{{ $item->destinations->first()?->place_name ?? '-' }}</p>

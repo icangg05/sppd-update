@@ -22,6 +22,7 @@ use App\Services\ImageCompressor;
 use App\Services\QueueHealthService;
 use App\Services\SppdWorkflowService;
 use App\Support\DocumentFolder;
+use App\Support\SppdDemoData;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -94,6 +95,9 @@ class SppdCreateDetails extends Component
   // Modal Confirmation Control
   public bool $showConfirmModal = false;
 
+  /** Memo allowsClashingTrips() selama satu request (pelaksana tidak berubah). */
+  private ?bool $allowsClashingTrips = null;
+
   public function mount(): void
   {
     abort_unless(Auth::user()->can('sppd.create'), 403, 'Anda tidak memiliki izin untuk mengisi detail SPPD.');
@@ -159,9 +163,12 @@ class SppdCreateDetails extends Component
         return;
       }
 
+      // Tenaga Mitra hanya pengikut: ditolak sebelum pengecekan alur (yang hanya mengalihkan halaman).
+      abort_if($user->isTenagaMitra(), 403, User::TENAGA_MITRA_NOT_PELAKSANA);
+
       $isInspektorat = (bool) $user->department?->usesManualNumbering();
       if ($isInspektorat) {
-        $this->document_number = '090 / isi_nomor_surat_tugas / ST / INSP./ 2026';
+        $this->document_number = '090 / isi_nomor / ST / INSP./ 2026';
       }
 
       $this->destinations = [$this->emptyDestination()];
@@ -396,11 +403,12 @@ class SppdCreateDetails extends Component
   /**
    * Pesan penolakan bila tanggal perjalanan bentrok dengan SPPD lain milik pelaksana atau
    * pengikut (di OPD mana pun), atau null. SPPD aktif yang tanggalnya tidak bentrok boleh.
+   * SPPD Inspektorat tidak pernah ditolak karena bentrok (lihat allowsClashingTrips).
    */
   private function busyTravelerMessage(): ?string
   {
     $period = $this->travelPeriod();
-    if (! $period) {
+    if (! $period || $this->allowsClashingTrips()) {
       return null;
     }
 
@@ -414,6 +422,15 @@ class SppdCreateDetails extends Component
     }
 
     return null;
+  }
+
+  /**
+   * Pelaksana Inspektorat boleh diberi SPPD bertanggal bentrok dengan SPPD lain, untuk dirinya
+   * maupun pengikutnya (lihat Department::allowsClashingTrips). Instansi lain tetap dicek.
+   */
+  private function allowsClashingTrips(): bool
+  {
+    return $this->allowsClashingTrips ??= (bool) User::with('department')->find($this->user_id)?->department?->allowsClashingTrips();
   }
 
   /** Pelaksana lalu pengikut sesuai urutan dipilih. */
@@ -434,6 +451,10 @@ class SppdCreateDetails extends Component
    */
   private function blockedRanges(): array
   {
+    if ($this->allowsClashingTrips()) {
+      return [];
+    }
+
     $travelers = $this->travelers();
     $trips = SppdRequest::scheduledForUsers($travelers, $this->sppd_id);
 
@@ -507,20 +528,27 @@ class SppdCreateDetails extends Component
     }
 
     $user = User::with('department')->findOrFail($this->user_id);
-    $isInspektorat = (bool) $user->department?->usesManualNumbering();
+    if ($user->isTenagaMitra()) {
+      $this->toastError(User::TENAGA_MITRA_NOT_PELAKSANA, 'Gagal Mengajukan');
+      $this->showConfirmModal = false;
+      return;
+    }
+    $usesTravelPositions = $this->usesTravelPositions($user);
 
-    // Inspektorat: jabatan perjalanan pelaksana & pengikut dipilih di modal ini, jadi modal
-    // tetap terbuka agar pesan error tampil di samping pilihannya dan bisa langsung diperbaiki.
-    if ($isInspektorat && $missing = $this->missingTravelPositions($user)) {
+    // Inspektorat dalam daerah: jabatan perjalanan pelaksana & pengikut dipilih di modal ini, jadi
+    // modal tetap terbuka agar pesan error tampil di samping pilihannya dan bisa langsung diperbaiki.
+    if ($usesTravelPositions && $missing = $this->missingTravelPositions($user)) {
       // Sebut namanya: dengan banyak pengikut, baris yang terlewat bisa saja tidak terlihat di layar.
       $listed = implode(', ', array_slice($missing, 0, 3)) . (count($missing) > 3 ? ', dan ' . (count($missing) - 3) . ' lainnya' : '');
       $this->toastError("Jabatan belum dipilih untuk: {$listed}.", 'Data Belum Lengkap');
       return;
     }
-    $travelPosition = $isInspektorat ? $this->travel_position : null;
+    // Luar daerah (atau OPD lain): alur normal, jabatan perjalanan tidak disimpan.
+    $travelPosition = $usesTravelPositions ? $this->travel_position : null;
+    $followerPositions = $usesTravelPositions ? $this->follower_positions : [];
 
     try {
-      DB::transaction(function () use (&$sppd, $travelPosition) {
+      DB::transaction(function () use (&$sppd, $travelPosition, $followerPositions) {
         if ($this->sppd_id) {
           $sppd = SppdRequest::findOrFail($this->sppd_id);
 
@@ -580,7 +608,7 @@ class SppdCreateDetails extends Component
             foreach ($this->followers as $userId) {
               $sppd->followers()->create([
                 'user_id' => $userId,
-                'travel_position' => $this->follower_positions[$userId] ?? null,
+                'travel_position' => $followerPositions[$userId] ?? null,
               ]);
             }
           }
@@ -656,7 +684,7 @@ class SppdCreateDetails extends Component
             foreach ($this->followers as $userId) {
               $sppd->followers()->create([
                 'user_id' => $userId,
-                'travel_position' => $this->follower_positions[$userId] ?? null,
+                'travel_position' => $followerPositions[$userId] ?? null,
               ]);
             }
           }
@@ -705,6 +733,16 @@ class SppdCreateDetails extends Component
       $this->toastError($e->getMessage());
       $this->showConfirmModal = false;
     }
+  }
+
+  /**
+   * Jabatan perjalanan hanya diminta untuk pelaksana Inspektorat pada perjalanan dalam daerah;
+   * luar daerah memakai alur normal (lihat SppdDomain::usesTravelPositions).
+   */
+  private function usesTravelPositions(User $pelaksana): bool
+  {
+    return (bool) $pelaksana->department?->usesManualNumbering()
+      && SppdDomain::tryFrom($this->domain)?->usesTravelPositions() === true;
   }
 
   /**
@@ -812,38 +850,27 @@ class SppdCreateDetails extends Component
     app(ApproverNotifier::class)->notifyRevision($sppd, $approval);
   }
 
-  public function render()
+  /**
+   * DPA tahun berjalan yang bisa dibebani. Mengikuti zona data OPD pelaksana, bukan department
+   * akun yang login: akun admin OPD induk bisa mengakses banyak department, sehingga scoping
+   * harus berdasarkan root zona pelaksana yang dipilih.
+   */
+  private function budgetQuery(User $pelaksana): \Illuminate\Database\Eloquent\Builder
   {
-    $pelaksana = User::with('department')->findOrFail($this->user_id);
-
-    // Security check
-    if (! Auth::user()->hasRole('super_admin')) {
-      $dept = Auth::user()->department;
-      if ($dept) {
-        $allowedIds = $dept->getScopedRelatedIds();
-        if (! $allowedIds->contains($pelaksana->department_id)) {
-          abort(403, 'Unauthorized action.');
-        }
-      } elseif ($pelaksana->department_id !== Auth::user()->department_id) {
-        abort(403, 'Unauthorized action.');
-      }
-    }
-
-    // Budget query — DPA mengikuti zona data OPD pelaksana, bukan department
-    // akun yang login. Akun admin OPD induk bisa mengakses banyak department,
-    // sehingga scoping harus berdasarkan root zona pelaksana yang dipilih.
-    $budgetQuery = Budget::with('department')->where('year', now()->year);
+    $query = Budget::with('department')->where('year', now()->year);
     $pelaksanaDept = $pelaksana->department;
     if ($pelaksanaDept) {
-      $budgetQuery->whereIn('department_id', $pelaksanaDept->getScopeRootDepartment()->getScopedRelatedIds());
+      $query->whereIn('department_id', $pelaksanaDept->getScopeRootDepartment()->getScopedRelatedIds());
     } else {
-      $budgetQuery->where('department_id', $pelaksana->department_id);
+      $query->where('department_id', $pelaksana->department_id);
     }
-    $budgets = $budgetQuery->get();
 
-    $categories = SppdCategory::all();
+    return $query;
+  }
 
-    // Followers candidate query
+  /** Calon pengikut: pegawai aktif sezona yang bukan akun administratif, sesuai status DPRD pelaksana. */
+  private function followerCandidatesQuery(User $pelaksana): \Illuminate\Database\Eloquent\Builder
+  {
     $userQuery = User::where('is_active', true)
       // Akun administratif (super_admin & admin_opd) bukan pengikut perjalanan.
       ->whereDoesntHave('roles', function ($q) {
@@ -875,6 +902,61 @@ class SppdCreateDetails extends Component
       $userQuery->whereNot($dprdMember);
     }
 
+    return $userQuery;
+  }
+
+  /**
+   * Tombol "Isi Data Uji" (khusus APP_ENV local/development): sekali klik mengisi seluruh
+   * formulir dengan data realistis sesuai domain, memakai data master asli dan tanggal yang
+   * tidak bentrok. Lampiran tidak diisi (opsional).
+   */
+  public function fillDemoData(): void
+  {
+    abort_unless(SppdDemoData::enabled(), 404);
+
+    $pelaksana = User::with('department')->findOrFail($this->user_id);
+    $candidates = $this->followerCandidatesQuery($pelaksana)
+      ->whereKeyNot($pelaksana->id)
+      ->inRandomOrder()
+      ->limit(20)
+      ->get();
+
+    $data = (new SppdDemoData($pelaksana, SppdDomain::from($this->domain)))
+      ->make($this->budgetQuery($pelaksana)->get(), $candidates, ! $this->allowsClashingTrips(), $this->sppd_id);
+
+    foreach ($data as $property => $value) {
+      $this->{$property} = $value;
+    }
+
+    $this->resetValidation();
+  }
+
+  public function render()
+  {
+    $pelaksana = User::with('department')->findOrFail($this->user_id);
+
+    // Tenaga Mitra hanya pengikut, tidak pernah pelaksana.
+    abort_if($pelaksana->isTenagaMitra(), 403, User::TENAGA_MITRA_NOT_PELAKSANA);
+
+    // Security check
+    if (! Auth::user()->hasRole('super_admin')) {
+      $dept = Auth::user()->department;
+      if ($dept) {
+        $allowedIds = $dept->getScopedRelatedIds();
+        if (! $allowedIds->contains($pelaksana->department_id)) {
+          abort(403, 'Unauthorized action.');
+        }
+      } elseif ($pelaksana->department_id !== Auth::user()->department_id) {
+        abort(403, 'Unauthorized action.');
+      }
+    }
+
+    $budgets = $this->budgetQuery($pelaksana)->get();
+
+    $categories = SppdCategory::all();
+
+    $userQuery = $this->followerCandidatesQuery($pelaksana);
+
     // Tampilkan default 100 pegawai; selebihnya dicari lewat pencarian. Selalu
     // dibatasi agar tidak memuat seluruh pegawai se-OPD sekaligus (berat).
     if ($this->searchFollower !== '') {
@@ -895,25 +977,34 @@ class SppdCreateDetails extends Component
     $provinces = Province::orderBy('name')->get();
     $countries = Country::selectOptions();
 
-    // Pegawai yang tanggalnya bentrok dengan SPPD lain, di OPD mana pun, tidak bisa dipilih sebagai pengikut.
+    // Pegawai yang tanggalnya bentrok dengan SPPD lain, di OPD mana pun, tidak bisa dipilih sebagai
+    // pengikut, kecuali di SPPD Inspektorat (bentrok tanggal tidak berlaku).
     $period = $this->travelPeriod();
-    $busyFollowers = $period ? SppdRequest::clashingForUsers($users, $period[0], $period[1], $this->sppd_id) : [];
+    $checksClash = $period && ! $this->allowsClashingTrips();
+    $busyFollowers = $checksClash ? SppdRequest::clashingForUsers($users, $period[0], $period[1], $this->sppd_id) : [];
 
     // SPPD aktif lain tiap calon pengikut yang tidak bentrok: hanya keterangan, tetap bisa dipilih.
-    $followerTrips = SppdRequest::activeForUsers($users, $this->sppd_id);
+    // Keterangan ini & SPPD lain pelaksana (di bawah) hanya acuan menghindari bentrok, jadi
+    // tidak ditampilkan di SPPD Inspektorat yang tidak dicek bentrok.
+    $allowsClashingTrips = $this->allowsClashingTrips();
+    $followerTrips = $allowsClashingTrips ? [] : SppdRequest::activeForUsers($users, $this->sppd_id);
 
     // Tanggal yang terpakai SPPD lain pelaksana/pengikut: dinonaktifkan di kalender.
     $blockedDates = $this->blockedRanges();
 
     // SPPD aktif lain milik pelaksana: acuan memilih tanggal yang tidak bentrok.
-    $otherTrips = SppdRequest::activeForUsers(collect([$pelaksana]), $this->sppd_id)[$pelaksana->id] ?? collect();
-    $clashingTripIds = $period
+    $otherTrips = $allowsClashingTrips
+      ? collect()
+      : SppdRequest::activeForUsers(collect([$pelaksana]), $this->sppd_id)[$pelaksana->id] ?? collect();
+    // Penanda "(bentrok)" merah hanya bila bentrok memang ditolak (bukan SPPD Inspektorat).
+    $clashingTripIds = $checksClash
       ? $otherTrips->filter(fn (SppdRequest $trip) => $trip->start_date->lte($period[1]) && $trip->end_date->gte($period[0]))->pluck('id')->all()
       : [];
 
     $steps = $this->workflowSteps($pelaksana);
 
     $isInspektorat = (bool) $pelaksana->department?->usesManualNumbering();
+    $usesTravelPositions = $this->usesTravelPositions($pelaksana);
 
     // Edit Perbaikan: catatan revisi ditampilkan di atas form.
     $editingSppd = $this->sppd_id ? SppdRequest::with(['reviser', 'approvals'])->find($this->sppd_id) : null;
@@ -933,6 +1024,7 @@ class SppdCreateDetails extends Component
       'clashingTripIds',
       'blockedDates',
       'isInspektorat',
+      'usesTravelPositions',
       'editingSppd'
     ))->title('Detail Perjalanan Dinas');
   }

@@ -218,7 +218,7 @@ class DashboardController extends Controller
 
     // Urut Segera dulu (join ke sppd_requests), lalu terbaru. Diurut di SQL
     // sebelum take(5) agar SPPD Segera tetap muncul walau bukan yang terbaru.
-    $pendingApprovals = SppdApproval::with(['sppdRequest.user'])
+    $pendingApprovals = SppdApproval::with(['sppdRequest.user', 'sppdRequest.destinations.regency', 'sppdRequest.costDetails'])
       ->where('sppd_approvals.approver_id', $user->id)
       ->where('sppd_approvals.status', ApprovalStatus::PENDING)
       ->join('sppd_requests', 'sppd_requests.id', '=', 'sppd_approvals.sppd_request_id')

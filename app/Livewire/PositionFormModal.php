@@ -7,6 +7,7 @@ use App\Enums\PositionTier;
 use App\Helpers\SmartTitle;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\Position;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
@@ -22,7 +23,8 @@ use Spatie\Permission\Models\Role;
  * Dibuka lewat event `open-position-form` dan mengirim `position-saved`
  * setelah berhasil disimpan. Dari wizard Lengkapi/Ganti Pejabat, event membawa
  * `role` tahap: tingkat jabatan dikunci ke role itu agar jabatan barunya sah
- * untuk tahap tersebut (termasuk role khusus seperti Sekda/Walikota).
+ * untuk tahap tersebut (termasuk role khusus seperti Sekda/Walikota). Jabatan Tenaga Mitra
+ * (role tenaga_mitra, dibuat otomatis dari form pegawai) cukup diedit namanya, tanpa tingkat.
  */
 class PositionFormModal extends Component
 {
@@ -95,6 +97,16 @@ class PositionFormModal extends Component
     return auth()->user()->hasRole('super_admin');
   }
 
+  /**
+   * Jabatan Tenaga Mitra — baru dari mode Tenaga Mitra di form pegawai, atau yang sedang
+   * diedit: cukup nama jabatan, tanpa pilihan tingkat & level, dan tingkatnya tidak berganti.
+   */
+  public function isTenagaMitraPosition(): bool
+  {
+    return $this->fixedRole === User::TENAGA_MITRA_ROLE
+      || ($this->editingId && $this->originalTier === PositionTier::TENAGA_MITRA->value);
+  }
+
   public function updatedName(): void
   {
     if (! $this->editingId && ! $this->tierTouched) {
@@ -106,6 +118,12 @@ class PositionFormModal extends Component
   {
     if ($this->fixedRole) {
       $this->tier = PositionTier::fromRole($this->fixedRole)->value;
+
+      return;
+    }
+
+    if ($this->isTenagaMitraPosition()) {
+      $this->tier = PositionTier::TENAGA_MITRA->value;
 
       return;
     }
@@ -158,11 +176,17 @@ class PositionFormModal extends Component
 
     $isSuperAdmin = $this->isSuperAdmin();
 
-    // Lainnya hanya sah untuk jabatan khusus yang sudah ada (tingkat tidak diganti)
-    // atau tingkat terkunci dari wizard alur (mis. Sekda); jabatan baru wajib bertingkat.
+    // Jabatan Tenaga Mitra yang diedit tetap bertingkat Tenaga Mitra (pilihannya tidak ditampilkan).
+    if ($this->isTenagaMitraPosition() && ! $this->fixedRole) {
+      $this->tier = PositionTier::TENAGA_MITRA->value;
+    }
+
+    // Lainnya & Tenaga Mitra hanya sah untuk jabatan yang sudah ada (tingkat tidak diganti)
+    // atau tingkat terkunci dari pemanggil (wizard alur, mode Tenaga Mitra di form pegawai);
+    // jabatan baru wajib memakai salah satu tingkat yang ditawarkan.
     $tierRule = Rule::enum(PositionTier::class);
     if (! $this->fixedRole && $this->tierChanged()) {
-      $tierRule->except(PositionTier::LAINNYA);
+      $tierRule->only(PositionTier::selectable());
     }
 
     $rules = [
@@ -243,6 +267,7 @@ class PositionFormModal extends Component
     $fixedTier = $this->fixedRole ? PositionTier::fromRole($this->fixedRole) : null;
 
     return view('livewire.position-form-modal', [
+      'isTenagaMitra' => $this->isTenagaMitraPosition(),
       'tiers'        => PositionTier::selectable(),
       'summaryRole'  => $summaryRole,
       'summaryScope' => $scope,

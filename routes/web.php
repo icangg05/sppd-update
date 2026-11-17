@@ -49,6 +49,12 @@ Route::get('/verify/{type}/{sppd}/{hash}', [SppdController::class, 'publicVerify
     ->whereIn('type', ['sppd', 'spt'])
     ->name('verify.document');
 
+// Tautan aplikasi SPPD lama (QR dokumen lama ber-TTE, mis. /telaah/history/detail?telaah_id=...)
+// dialihkan ke domain aplikasi lama — lihat config('sppd.legacy_url').
+Route::get('/telaah/{path?}', \App\Http\Controllers\LegacySppdRedirectController::class)
+    ->where('path', '.*')
+    ->name('legacy.redirect');
+
 // Impersonasi: super_admin masuk sebagai pegawai lain lewat tautan bertanda-tangan
 // (signed URL, kedaluwarsa singkat). Sengaja di luar middleware auth/role agar bisa
 // dibuka di jendela incognito — sesi super_admin di tab utama tetap utuh.

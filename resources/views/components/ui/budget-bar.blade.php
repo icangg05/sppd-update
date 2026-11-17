@@ -19,7 +19,7 @@
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'w-full overflow-hidden rounded-full bg-slate-100 ' . $height]) }}
+<div {{ $attributes->merge(['class' => 'w-full overflow-hidden rounded-full bg-slate-200 ' . $height]) }}
     role="progressbar" aria-valuenow="{{ round($pct) }}" aria-valuemin="0" aria-valuemax="100"
     aria-label="Penggunaan anggaran {{ number_format($pct, 1, ',', '.') }}%, {{ $level }}">
     <div class="{{ $bar }} {{ $height }} rounded transition-all duration-500 motion-reduce:transition-none"
