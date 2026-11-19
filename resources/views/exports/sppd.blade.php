@@ -1,4 +1,7 @@
 @php
+	// Data pegawai yang dicetak: beku sejak SPPD disetujui (lihat SppdRequest::personFor).
+	$person = $sppd->personFor($user);
+
 	// Membuat closure untuk mengubah angka menjadi romawi
 	$toRoman = function ($number) {
 	    $map = [
@@ -214,7 +217,7 @@
 				<tr>
 					<td style="width: 1%; text-align: center;">2.</td>
 					<td>Nama Pegawai yang diperintahkan</td>
-					<td>{{ $user->name }}</td>
+					<td>{{ $person->name }}</td>
 				</tr>
 				<tr>
 					<td rowspan="3" style="width: 1%; text-align: center; vertical-align: top;">3.</td>
@@ -224,14 +227,14 @@
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dan PP No. 11 Tahun 2024
 					</td>
 					<td style="width: 54%; border-bottom: none;">
-						a. &nbsp;{{ $user->rank ? $user->rank->name . ' - ' . $user->rank->group : '-' }}
+						a. &nbsp;{{ filled($person->rankName) || filled($person->rankGroup) ? $person->rankName . ' - ' . $person->rankGroup : '-' }}
 					</td>
 				</tr>
 				<tr>
 					<td style="border-top: none; border-bottom: none;">b. &nbsp;Jabatan / Instansi</td>
 					<td style="border-top: none; border-bottom: none;">
 						b. <span style="text-transform: uppercase">
-							{{ $user->isDprdMember() ? (\App\Enums\DprdJabatan::tryFrom($user->dprd_jabatan ?? '')?->label(true) ?? $user->dprd_jabatan ?? 'ANGGOTA DPRD') : ($pdfData['travel_position'] ?: $user->jabatanLabel()) }}</span>
+							{{ $person->isDprdMember() ? $person->dprdJabatanLabel() : ($pdfData['travel_position'] ?: $person->jabatanLabel()) }}</span>
 					</td>
 				</tr>
 				<tr>

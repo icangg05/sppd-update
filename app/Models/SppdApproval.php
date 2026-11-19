@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApprovalStatus;
+use App\Support\PersonSnapshot;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ class SppdApproval extends Model
   protected $fillable = [
     'sppd_request_id',
     'approver_id',
+    'approver_snapshot',
     'role_label',
     'step_order',
     'status',
@@ -26,6 +28,7 @@ class SppdApproval extends Model
     return [
       'step_order' => 'integer',
       'status'     => ApprovalStatus::class,
+      'approver_snapshot' => 'array',
       'acted_at'   => 'datetime',
       'signs_spt'  => 'boolean',
       'signs_sppd' => 'boolean',
@@ -40,6 +43,21 @@ class SppdApproval extends Model
   public function approver(): BelongsTo
   {
     return $this->belongsTo(User::class, 'approver_id');
+  }
+
+  /**
+   * Nama/NIP/pangkat/jabatan penyetuju seperti saat tahap ini bertindak (dibekukan di approve()
+   * & reject()), atau data akunnya saat ini bila belum bertindak.
+   */
+  public function signer(): ?PersonSnapshot
+  {
+    return PersonSnapshot::resolve($this->approver_snapshot, $this->approver);
+  }
+
+  /** Data penyetuju saat ini untuk dibekukan ke approver_snapshot. */
+  private function currentSnapshot(): ?array
+  {
+    return $this->approver ? PersonSnapshot::fromUser($this->approver)->toArray() : null;
   }
 
   /**
@@ -67,6 +85,7 @@ class SppdApproval extends Model
       'status'   => ApprovalStatus::APPROVED,
       'acted_at' => now(),
       'notes'    => $notes,
+      'approver_snapshot' => $this->currentSnapshot(),
     ]);
   }
 
@@ -79,6 +98,7 @@ class SppdApproval extends Model
       'status'   => ApprovalStatus::REJECTED,
       'acted_at' => now(),
       'notes'    => $notes,
+      'approver_snapshot' => $this->currentSnapshot(),
     ]);
   }
 }

@@ -42,11 +42,11 @@ enum SppdDomain: string
   }
 
   /**
-   * Perjalanan dalam daerah tidak menghitung hari Minggu. Hari Sabtu ikut tidak dihitung bila
-   * instansi pelaksana tidak menghitung Sabtu (Pengaturan Aplikasi, per tipe instansi; lihat
-   * Department::countsSaturdayOnTrips).
+   * Perjalanan dalam daerah: hari Sabtu dan Minggu dihitung atau tidak dipilih per SPPD oleh
+   * pembuatnya (centang di form, disimpan di counts_saturday/counts_sunday). Domain lain selalu
+   * menghitung semua hari.
    */
-  public function skipsSundays(): bool
+  public function hasWeekendChoice(): bool
   {
     return $this === self::DALAM_DAERAH;
   }
@@ -57,25 +57,29 @@ enum SppdDomain: string
    *
    * @return list<int>
    */
-  public function offDays(bool $countsSaturday = true): array
+  public function offDays(bool $countsSaturday = true, bool $countsSunday = false): array
   {
-    if (! $this->skipsSundays()) {
+    if (! $this->hasWeekendChoice()) {
       return [];
     }
 
-    return $countsSaturday ? [CarbonInterface::SUNDAY] : [CarbonInterface::SATURDAY, CarbonInterface::SUNDAY];
+    return array_values(array_filter([
+      $countsSaturday ? null : CarbonInterface::SATURDAY,
+      $countsSunday ? null : CarbonInterface::SUNDAY,
+    ], fn ($day) => $day !== null));
   }
 
-  public function isOffDay(CarbonInterface $date, bool $countsSaturday = true): bool
+  public function isOffDay(CarbonInterface $date, bool $countsSaturday = true, bool $countsSunday = false): bool
   {
-    return in_array($date->dayOfWeek, $this->offDays($countsSaturday), true);
+    return in_array($date->dayOfWeek, $this->offDays($countsSaturday, $countsSunday), true);
   }
 
   /**
    * Lama perjalanan dalam hari, termasuk hari berangkat dan kembali. Dalam daerah tidak menghitung
-   * hari libur (offDays): Rabu s/d Selasa berikutnya = 6 hari bila Sabtu dihitung, 5 hari bila tidak.
+   * hari yang tidak dicentang (offDays): Rabu s/d Selasa berikutnya = 7 hari bila Sabtu & Minggu
+   * dihitung, 6 bila hanya Sabtu, 5 bila keduanya tidak.
    */
-  public function travelDays(CarbonInterface $start, CarbonInterface $end, bool $countsSaturday = true): int
+  public function travelDays(CarbonInterface $start, CarbonInterface $end, bool $countsSaturday = true, bool $countsSunday = false): int
   {
     $start = $start->copy()->startOfDay();
     $end = $end->copy()->startOfDay();
@@ -83,7 +87,7 @@ enum SppdDomain: string
       return 0;
     }
 
-    $offDays = $this->offDays($countsSaturday);
+    $offDays = $this->offDays($countsSaturday, $countsSunday);
     if ($offDays === []) {
       return (int) $start->diffInDays($end) + 1;
     }

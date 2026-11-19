@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PersonSnapshot;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -36,9 +37,15 @@ class SppdFollower extends Model
   protected $fillable = [
     'sppd_request_id',
     'user_id',
+    'snapshot',
     'notes',
     'travel_position',
   ];
+
+  protected function casts(): array
+  {
+    return ['snapshot' => 'array'];
+  }
 
   public function sppdRequest(): BelongsTo
   {
@@ -48,5 +55,11 @@ class SppdFollower extends Model
   public function user(): BelongsTo
   {
     return $this->belongsTo(User::class);
+  }
+
+  /** Nama/NIP/pangkat/jabatan pengikut saat SPPD disetujui, atau data akunnya bila belum disetujui. */
+  public function person(): PersonSnapshot
+  {
+    return PersonSnapshot::resolve($this->snapshot, $this->user) ?? new PersonSnapshot(null, null, null, null, null, null, [], null, null);
   }
 }

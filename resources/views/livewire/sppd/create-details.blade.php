@@ -212,14 +212,39 @@
 								]" />
 						</div>
 					@endif
-					<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required
+					{{-- Kolom kiri: tempat berangkat, lalu (dalam daerah) lokasi tujuan yang hanya satu isian,
+					     mengisi ruang di samping tanggal & centang hari. Luar daerah: lokasi tujuan berbaris-baris,
+					     jadi tetap selebar penuh di bawah grid. --}}
+					<div class="space-y-4">
+						<x-form.input type="text" wire:model="departure_place" label="Tempat Berangkat" required
 							placeholder="Contoh: Kantor Dinas Kominfo Kendari" />
+						@if ($domain === 'dalam_daerah')
+							<div id="dalam-daerah-fields">
+								<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
+									Lokasi Tujuan Perjalanan <span class="text-rose-500">*</span>
+								</label>
+								<div class="flex flex-col gap-2">
+									<div
+										class="inline-flex items-center gap-1.5 rounded bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 w-fit">
+										<i class="fa-solid fa-location-dot text-slate-500"></i>
+										Lokasi Basis: <span class="font-bold text-slate-700">Kota Kendari, Sulawesi Tenggara</span>
+									</div>
+									<input type="text" wire:model="destinations.0.address_only"
+										class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
+										required placeholder="Sebutkan instansi/tempat tujuan spesifik (misal: Kantor Gubernur, Kecamatan Poasia)">
+									@error('destinations.0.address_only') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+								</div>
+							</div>
+						@endif
+					</div>
+					{{-- Satu kolom grid: field tanggal + centang Sabtu/Minggu di bawahnya. --}}
+					<div>
 					{{-- Alpine kalender hanya membaca tanggal terpakai saat dibuat: key berganti ketika daftarnya
 					     berubah (mis. pengikut dicentang) agar kalender dibuat ulang dengan data baru. --}}
 					<div wire:key="travel-dates-{{ md5(json_encode([$blockedDates, $offDays])) }}">
 						{{-- live: daftar calon pengikut menyesuaikan bentrok tanggal begitu rentang dipilih.
-						     offDays: dalam daerah tidak menghitung Minggu, juga Sabtu bila instansi pelaksana
-						     tidak menghitung Sabtu (Pengaturan Aplikasi). --}}
+						     offDays: dalam daerah, Sabtu/Minggu yang tidak dicentang di bawah (key ikut berganti,
+						     jadi kalender & jumlah hari langsung menyesuaikan centang). --}}
 						<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required live
 							:offDays="$offDays" :blocked="$blockedDates" />
 						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari).
@@ -235,27 +260,27 @@
 							</div>
 						@endif
 					</div>
+					{{-- Dalam daerah: pembuat SPPD memilih sendiri apakah Sabtu/Minggu dihitung (kebiasaan OPD
+					     berbeda-beda). Sabtu awalnya tercentang untuk Puskesmas & Rumah Sakit. --}}
+					@if (\App\Enums\SppdDomain::tryFrom($domain)?->hasWeekendChoice())
+						<div class="mt-2">
+							<div class="flex flex-wrap gap-2">
+								<x-form.checkbox wire:model.live="counts_saturday" label="Hitung hari Sabtu" size="sm" :show-error="false" />
+								<x-form.checkbox wire:model.live="counts_sunday" label="Hitung hari Minggu" size="sm" :show-error="false" />
+							</div>
+							<p class="mt-1 text-xs text-slate-500">Hari yang tidak dicentang tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat/kembali.</p>
+						</div>
+					@endif
+					</div>
 				</div>
 
-				{{-- Lokasi tujuan perjalanan --}}
+				{{-- Lokasi tujuan luar daerah / luar negeri (beberapa baris). Dalam daerah ada di kolom kiri atas. --}}
+				@if ($domain !== 'dalam_daerah')
 				<div>
 					<label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">
 						Lokasi Tujuan Perjalanan <span class="text-rose-500">*</span>
 					</label>
 
-					@if ($domain === 'dalam_daerah')
-						<div id="dalam-daerah-fields" class="flex flex-col gap-2">
-							<div
-								class="inline-flex items-center gap-1.5 rounded bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 w-fit">
-								<i class="fa-solid fa-location-dot text-slate-500"></i>
-								Lokasi Basis: <span class="font-bold text-slate-700">Kota Kendari, Sulawesi Tenggara</span>
-							</div>
-							<input type="text" wire:model="destinations.0.address_only"
-								class="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 shadow-2xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
-								required placeholder="Sebutkan instansi/tempat tujuan spesifik (misal: Kantor Gubernur, Kecamatan Poasia)">
-							@error('destinations.0.address_only') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
-						</div>
-					@else
 						<div id="multi-dest-fields">
 							@php $isLuarNegeri = $domain === 'luar_negeri'; @endphp
 							<div id="dest-wrap" class="space-y-2.5">
@@ -348,8 +373,8 @@
 								@endif
 							</div>
 						</div>
-					@endif
 				</div>
+				@endif
 			</div>
 		</div>
 

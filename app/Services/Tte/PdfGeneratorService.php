@@ -80,16 +80,8 @@ class PdfGeneratorService
 
         $sppdApproval = $this->resolveSppdApproval($sppd, $targetUser);
 
-        $approver = $sppdApproval?->approver;
-        $approverRole = $approver?->position_name ?? $approver?->position?->name ?? $sppdApproval?->role_label ?? 'Kepala Dinas';
-
-        $pdfData = [
-            'approver_name' => $approver?->name ?? '................................',
-            'approver_role' => $approverRole,
-            'approver_nip' => $approver?->nip ?? null,
-            'approver_rank' => $approver?->rank?->name ?? '',
-            'approver_group' => $approver?->rank?->group ?? '',
-            'is_walikota' => false,
+        // Sama dengan pratinjau (SppdController::streamSppd), lihat SppdRequest::signerPdfData.
+        $pdfData = SppdRequest::signerPdfData($sppdApproval, 'sppd') + [
             'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,
@@ -119,22 +111,13 @@ class PdfGeneratorService
     protected function buildSptData(SppdRequest $sppd): array
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-        $sptApproval = $sppd->sptApproval();
         $duration = $sppd->durationInDays();
-
-        $approver = $sptApproval?->approver;
-        $approverRole = SppdRequest::sptSignerTitle($sptApproval);
 
         // Syarat format DPRD harus sama dengan pratinjau SPT (SppdController::streamSpt).
         $isDprd = $sppd->usesDprdSptFormat();
 
-        $pdfData = [
-            'approver_name' => $approver?->name ?? '................................',
-            'approver_role' => $approverRole,
-            'approver_nip' => $approver?->nip ?? null,
-            'approver_rank' => $approver?->rank?->name ?? '',
-            'approver_group' => $approver?->rank?->group ?? '',
-            'is_walikota' => $approver && $approver->hasRole('walikota'),
+        // Sama dengan pratinjau (SppdController::streamSpt), lihat SppdRequest::signerPdfData.
+        $pdfData = SppdRequest::signerPdfData($sppd->sptApproval(), 'spt') + [
             'is_approved' => true, // Force true during TTE draft generation
             'qr_image' => null,
             'duration' => $duration,

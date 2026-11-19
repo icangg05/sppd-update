@@ -97,6 +97,8 @@
 </head>
 
 <body>
+	{{-- Data pegawai yang dicetak: beku sejak SPPD disetujui (lihat SppdRequest::personFor). --}}
+	@php $person = $sppd->personFor($targetUser); @endphp
 	<!-- QR Code — scan untuk membuka kembali halaman ini -->
 	<div style="position: absolute; top: -1.5cm; right: -1cm">
 		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
@@ -205,11 +207,11 @@
 				<div style="height: 55px;"></div>
 				<p>
 					<span style="font-weight: bold; text-decoration: underline;">
-						{{ $targetUser->name }}
+						{{ $person->name }}
 					</span>
 					<br>
-					@if ($targetUser->nip)
-						NIP. {{ $targetUser->nip }}
+					@if ($person->nip)
+						NIP. {{ $person->nip }}
 					@endif
 				</p>
 			</td>

@@ -12,7 +12,7 @@
     // Kirim rentang ke server begitu dipilih (mis. agar daftar lain ikut menyesuaikan).
     'live' => false,
     // Hari yang tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung, sebagai
-    // nomor hari (0 = Minggu ... 6 = Sabtu), mis. [0] atau [6, 0]. Lihat SppdDomain::offDays.
+    // nomor hari (0 = Minggu ... 6 = Sabtu), mis. [0], [6], atau [6, 0]. Lihat SppdDomain::offDays.
     'offDays' => [],
     // Rentang yang sudah terpakai: [['start' => Y-m-d, 'end' => Y-m-d, 'label' => ...], ...].
     // Tanggalnya tidak bisa dipilih, dan rentang baru tidak bisa melompatinya.
@@ -85,13 +85,15 @@
                 }
                 return count;
             },
-            // Hari yang tidak dihitung (Minggu, juga Sabtu bila diatur).
+            // Hari yang tidak dihitung (Sabtu/Minggu yang tidak dicentang).
             isOffDay(iso) {
                 const p = this.parse(iso);
                 return this.offDays.includes(new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay());
             },
             get offDaysText() {
-                return this.offDays.includes(6) ? 'Hari Sabtu dan Minggu' : 'Hari Minggu';
+                const sat = this.offDays.includes(6);
+                const sun = this.offDays.includes(0);
+                return sat && sun ? 'Hari Sabtu dan Minggu' : (sat ? 'Hari Sabtu' : 'Hari Minggu');
             },
             blockOf(iso) {
                 return this.blocked.find((b) => iso >= b.start && iso <= b.end) ?? null;
@@ -143,8 +145,9 @@
             },
             bandClass(iso) {
                 if (!this.from || this.from === this.to) return '';
-                // Hari yang tidak dihitung berada di luar pita (Sabtu/Minggu selalu kolom terakhir,
-                // jadi pita cukup berhenti sebelumnya).
+                // Hari yang tidak dihitung berada di luar pita. Sabtu/Minggu ada di kolom terakhir, jadi
+                // pita berhenti sebelumnya; bila hanya Sabtu yang tidak dihitung, pita terputus di Sabtu
+                // (penanda hari itu tidak terhitung).
                 if (this.isOffDay(iso)) return '';
                 if (iso > this.from && iso < this.to) return 'bg-primary-50';
                 if (iso === this.from) return 'bg-linear-to-r from-transparent from-50% to-primary-50 to-50%';

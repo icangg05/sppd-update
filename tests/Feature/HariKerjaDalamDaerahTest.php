@@ -18,8 +18,9 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Perjalanan dinas dalam daerah tidak menghitung hari Minggu: 6 hari mulai Rabu
- * = Rabu, Kamis, Jumat, Sabtu, lalu lompat ke Senin, Selasa. Domain lain menghitung semua hari.
+ * Aturan bawaan perjalanan dinas dalam daerah (SPPD lama tanpa pilihan centang): Sabtu dihitung,
+ * Minggu tidak. 6 hari mulai Rabu = Rabu, Kamis, Jumat, Sabtu, lalu lompat ke Senin, Selasa. Domain
+ * lain menghitung semua hari. Pilihan centang per SPPD diuji di AkhirPekanDalamDaerahTest.
  */
 class HariKerjaDalamDaerahTest extends TestCase
 {
@@ -48,7 +49,7 @@ class HariKerjaDalamDaerahTest extends TestCase
     {
         foreach ([SppdDomain::LDDP, SppdDomain::LDLP, SppdDomain::LUAR_NEGERI] as $domain) {
             $this->assertSame(7, $this->hari($domain, '2026-11-11', '2026-11-17'), $domain->value);
-            $this->assertFalse($domain->skipsSundays());
+            $this->assertFalse($domain->hasWeekendChoice());
         }
     }
 

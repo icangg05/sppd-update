@@ -26,7 +26,7 @@ class SppdPublicPageTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function sppd(): SppdRequest
+    private function sppd(SppdStatus $status = SppdStatus::APPROVED): SppdRequest
     {
         $dinas = Department::create(['name' => 'Dinas Perhubungan', 'type' => DepartmentType::OPD, 'level' => 1]);
         $staf = User::factory()->create(['department_id' => $dinas->id, 'name' => 'Budi Staf']);
@@ -42,7 +42,7 @@ class SppdPublicPageTest extends TestCase
             'start_date' => today(),
             'end_date' => today(),
             'domain' => 'dalam_daerah',
-            'status' => SppdStatus::APPROVED,
+            'status' => $status,
         ]);
     }
 
@@ -67,7 +67,9 @@ class SppdPublicPageTest extends TestCase
         foreach (['staf' => 'Staf', 'anggota_dprd' => 'Anggota DPRD'] as $name => $label) {
             Role::firstOrCreate(['name' => $name, 'guard_name' => 'web'], ['label' => $label]);
         }
-        $sppd = $this->sppd();
+        // SPPD yang masih berjalan mengikuti profil pelaksana; yang sudah disetujui memakai data
+        // beku saat disetujui (lihat SnapshotPenandatanganTest).
+        $sppd = $this->sppd(SppdStatus::IN_PROGRESS);
         $pelaksana = $sppd->user;
         $pelaksana->assignRole('staf');
         $pelaksana->update([

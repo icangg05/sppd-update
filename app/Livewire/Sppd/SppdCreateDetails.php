@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -54,6 +55,13 @@ class SppdCreateDetails extends Component
 
   public string $start_date;
   public string $end_date;
+  /**
+   * Dalam daerah: hari Sabtu/Minggu ikut dihitung sebagai lama perjalanan? Dipilih pembuat SPPD.
+   * Awalnya Sabtu tercentang untuk Puskesmas & Rumah Sakit (DepartmentType::checksSaturdayByDefault),
+   * Minggu selalu kosong. Hari yang tidak dicentang tidak bisa jadi tanggal berangkat/kembali.
+   */
+  public bool $counts_saturday = false;
+  public bool $counts_sunday = false;
   public string $transport_type = '';
   public string $transport_name = '';
   /** Pilihan dropdown kendaraan; OTHER_TRANSPORT membuka isian manual `transport_name`. */
@@ -128,6 +136,8 @@ class SppdCreateDetails extends Component
       $this->sppd_date = $sppd->sppd_date ? $sppd->sppd_date->format('Y-m-d') : '';
       $this->document_number = $sppd->document_number;
       $this->travel_position = $sppd->travel_position ?? '';
+      $this->counts_saturday = $sppd->countsSaturday();
+      $this->counts_sunday = $sppd->countsSunday();
 
       $this->followers = $sppd->followers->pluck('user_id')->toArray();
       $this->follower_positions = $sppd->followers->pluck('travel_position', 'user_id')->toArray();
@@ -166,6 +176,9 @@ class SppdCreateDetails extends Component
 
       // Tenaga Mitra hanya pengikut: ditolak sebelum pengecekan alur (yang hanya mengalihkan halaman).
       abort_if($user->isTenagaMitra(), 403, User::TENAGA_MITRA_NOT_PELAKSANA);
+
+      $this->counts_saturday = $user->department?->type?->checksSaturdayByDefault() ?? false;
+      $this->counts_sunday = false;
 
       $isInspektorat = (bool) $user->department?->usesManualNumbering();
       if ($isInspektorat) {
@@ -486,27 +499,18 @@ class SppdCreateDetails extends Component
     return $start && $end && $end->gte($start) ? [$start, $end] : null;
   }
 
-  /**
-   * Lama perjalanan dalam daerah menghitung hari Sabtu? Menurut tipe unit kerja pelaksana saat
-   * ini (Pengaturan Aplikasi); dicatat ke SPPD saat disimpan (SppdRequest::countsSaturday).
-   */
-  private function countsSaturday(): bool
-  {
-    return User::with('department')->find($this->user_id)?->department?->countsSaturdayOnTrips() ?? true;
-  }
-
-  /** Hari yang tidak dihitung (0 = Minggu, 6 = Sabtu): dinonaktifkan di kalender. */
+  /** Hari yang tidak dihitung (0 = Minggu, 6 = Sabtu) menurut centang: dinonaktifkan di kalender. */
   private function offDays(): array
   {
-    return SppdDomain::tryFrom($this->domain)?->offDays($this->countsSaturday()) ?? [];
+    return SppdDomain::tryFrom($this->domain)?->offDays($this->counts_saturday, $this->counts_sunday) ?? [];
   }
 
-  /** Dalam daerah tidak menghitung hari Minggu (dan Sabtu, bila diatur), jadi tidak boleh berangkat/kembali di hari itu. */
+  /** Dalam daerah, Sabtu/Minggu yang tidak dicentang tidak dihitung, jadi tidak boleh jadi hari berangkat/kembali. */
   private function workdayRule(string $moment): \Closure
   {
     return function (string $attribute, mixed $value, \Closure $fail) use ($moment) {
       $domain = SppdDomain::tryFrom($this->domain);
-      if (! $domain?->skipsSundays()) {
+      if (! $domain?->hasWeekendChoice()) {
         return;
       }
 
@@ -516,15 +520,39 @@ class SppdCreateDetails extends Component
         return; // Format tanggal sudah ditangani aturan 'date'.
       }
 
-      $countsSaturday = $this->countsSaturday();
-      if (! $domain->isOffDay($date, $countsSaturday)) {
+      if (! $domain->isOffDay($date, $this->counts_saturday, $this->counts_sunday)) {
         return;
       }
 
-      $fail($countsSaturday
-        ? "Perjalanan dalam daerah tidak bisa {$moment} pada hari Minggu, karena hari Minggu tidak dihitung. Pilih hari Senin–Sabtu."
-        : "Perjalanan dalam daerah tidak bisa {$moment} pada hari " . ($date->isSaturday() ? 'Sabtu' : 'Minggu') . ", karena hari Sabtu dan Minggu tidak dihitung untuk instansi ini. Pilih hari Senin–Jumat.");
+      $day = $date->isSaturday() ? 'Sabtu' : 'Minggu';
+      $fail("Perjalanan dalam daerah tidak bisa {$moment} pada hari {$day}, karena hari {$day} tidak dihitung. Centang \"Hitung hari {$day}\" atau pilih hari lain.");
     };
+  }
+
+  /** Centang Sabtu/Minggu diubah setelah tanggal dipilih: periksa ulang tanggalnya saat itu juga. */
+  public function updatedCountsSaturday(): void
+  {
+    $this->revalidateTravelDates();
+  }
+
+  public function updatedCountsSunday(): void
+  {
+    $this->revalidateTravelDates();
+  }
+
+  private function revalidateTravelDates(): void
+  {
+    $this->resetValidation(['start_date', 'end_date']);
+    $validator = Validator::make(
+      ['start_date' => $this->start_date, 'end_date' => $this->end_date],
+      [
+        'start_date' => ['nullable', 'date', $this->workdayRule('berangkat')],
+        'end_date' => ['nullable', 'date', $this->workdayRule('kembali')],
+      ],
+    );
+    foreach ($validator->errors()->messages() as $field => $messages) {
+      $this->addError($field, $messages[0]);
+    }
   }
 
   public function submit()
@@ -568,14 +596,16 @@ class SppdCreateDetails extends Component
     // Luar daerah (atau OPD lain): alur normal, jabatan perjalanan tidak disimpan.
     $travelPosition = $usesTravelPositions ? $this->travel_position : null;
     $followerPositions = $usesTravelPositions ? $this->follower_positions : [];
-    // Aturan Sabtu saat ini ikut dicatat, agar lama hari di dokumen tidak berubah bila pengaturannya diubah.
-    $countsSaturday = $user->department?->countsSaturdayOnTrips() ?? true;
+    // Pilihan Sabtu/Minggu disimpan per SPPD; domain selain dalam daerah menghitung semua hari.
+    $weekendChoice = SppdDomain::tryFrom($this->domain)?->hasWeekendChoice() ?? false;
+    $countsSaturday = $weekendChoice ? $this->counts_saturday : null;
+    $countsSunday = $weekendChoice ? $this->counts_sunday : null;
     // PPTK, KPA, Bendahara tersimpan untuk pelaksana (dipilih di Portal Dokumen SPPD sebelumnya) dicatat
     // ke SPPD. Yang belum dipilih tidak ikut, jadi isi SPPD yang sudah ada (mis. saat perbaikan) tidak terhapus.
     $financeAttributes = app(SppdFinanceOfficials::class)->attributesFor($user);
 
     try {
-      DB::transaction(function () use (&$sppd, $travelPosition, $followerPositions, $countsSaturday, $financeAttributes) {
+      DB::transaction(function () use (&$sppd, $travelPosition, $followerPositions, $countsSaturday, $countsSunday, $financeAttributes) {
         if ($this->sppd_id) {
           $sppd = SppdRequest::findOrFail($this->sppd_id);
 
@@ -613,6 +643,7 @@ class SppdCreateDetails extends Component
             'departure_place' => $this->departure_place,
             'domain' => $this->domain,
             'counts_saturday' => $countsSaturday,
+            'counts_sunday' => $countsSunday,
             'urgency' => $this->urgency,
             'sppd_date' => $this->sppd_date,
             'spt_date' => $this->spt_date,
@@ -697,6 +728,7 @@ class SppdCreateDetails extends Component
             'departure_place' => $this->departure_place,
             'domain' => $this->domain,
             'counts_saturday' => $countsSaturday,
+            'counts_sunday' => $countsSunday,
             'urgency' => $this->urgency,
             'sppd_date' => $this->sppd_date,
             'spt_date' => $this->spt_date,
@@ -950,7 +982,7 @@ class SppdCreateDetails extends Component
       ->limit(20)
       ->get();
 
-    $data = (new SppdDemoData($pelaksana, SppdDomain::from($this->domain)))
+    $data = (new SppdDemoData($pelaksana, SppdDomain::from($this->domain), $this->counts_saturday, $this->counts_sunday))
       ->make($this->budgetQuery($pelaksana)->get(), $candidates, ! $this->allowsClashingTrips(), $this->sppd_id);
 
     foreach ($data as $property => $value) {
@@ -1038,8 +1070,8 @@ class SppdCreateDetails extends Component
     // Edit Perbaikan: catatan revisi ditampilkan di atas form.
     $editingSppd = $this->sppd_id ? SppdRequest::with(['reviser', 'approvals'])->find($this->sppd_id) : null;
 
-    // Hari yang tidak dihitung & tidak bisa dipilih di kalender (dalam daerah: Minggu, Sabtu bila diatur).
-    $offDays = SppdDomain::tryFrom($this->domain)?->offDays($pelaksana->department?->countsSaturdayOnTrips() ?? true) ?? [];
+    // Hari yang tidak dihitung & tidak bisa dipilih di kalender (dalam daerah: Sabtu/Minggu yang tidak dicentang).
+    $offDays = $this->offDays();
 
     return view('livewire.sppd.create-details', compact(
       'pelaksana',

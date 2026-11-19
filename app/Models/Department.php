@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\DepartmentType;
-use App\Services\AppSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -194,16 +193,6 @@ class Department extends Model
   public function allowsClashingTrips(): bool
   {
     return $this->isInspektorat();
-  }
-
-  /**
-   * Perjalanan dinas dalam daerah pegawai unit ini menghitung hari Sabtu? Diatur Super Admin per
-   * tipe instansi di Pengaturan Aplikasi, menurut tipe unit kerja ini sendiri (sama seperti
-   * pemilihan alur persetujuan), jadi Bagian dan Sub Bagian di Setda dicentang masing-masing.
-   */
-  public function countsSaturdayOnTrips(): bool
-  {
-    return in_array($this->type?->value, app(AppSettings::class)->saturdayTripTypes(), true);
   }
 
   /** Inspektorat dikenali dari namanya. */

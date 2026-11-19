@@ -1,172 +1,24 @@
 ---
 name: use-components
-description: Pastikan view Blade/Livewire konsisten memakai komponen yang sudah ada (button, badge, modal, input, select, textarea, checkbox, radio, file) — bukan HTML mentah. Pakai saat membuat/mengubah file .blade.php, atau saat diminta mengaudit konsistensi komponen UI.
+description: Katalog komponen Blade project (x-ui.button/badge/alert/modal, x-form.input/select/textarea/checkbox/radio/file/image-crop). Pakai saat menambah atau mengganti tombol, field form, badge, alert, atau modal di file .blade.php, atau saat diminta mengaudit konsistensi komponen. Tidak perlu untuk edit teks, tata letak, atau logika Blade saja.
 ---
 
-# Konsistensi Komponen UI
+# Komponen UI
 
-Project ini sudah punya komponen Blade reusable. **Jangan menulis `<button>`, `<input>`,
-`<span class="badge">`, `<select>`, dll. mentah** kalau sudah ada komponennya. Selalu
-pakai komponen di bawah ini supaya gaya konsisten dan styling terpusat di satu tempat.
+Pakai komponen di bawah, bukan `<button>`, `<input>`, `<select>`, `<textarea>`, atau badge mentah. Variasi lewat prop/variant; `class` hanya untuk spacing/lebar. Varian baru yang berulang ditambahkan ke komponennya, bukan di-hardcode di pemakaian. Indentasi 2 spasi, jangan jalankan Pint.
 
-## Aturan
+## UI — `resources/views/components/ui/`
+- `<x-ui.button>`: `variant` primary (default) | secondary (Reset/Batal/Kembali: border slate + bg putih) | success | warning | danger | ghost | danger-ghost (hapus/reset sekunder) | dark (Filter/Cari) | violet. `type` default `button`. `href` → link `wire:navigate`; URL dengan lebih dari satu query param wajib `:href="route(...)"`. Slot `icon`. Disabled: satu komponen dengan `:disabled="..."`, bukan dua tombol lewat `@if/@else`.
+- `<x-ui.badge>`: `status` (draft, in_progress, approved, rejected, completed, pending, revision, signed, verified, returned) atau `bg` + `text` (kelas Tailwind).
+- `<x-ui.alert>`: `variant` danger (default, memblokir) | warning (sementara) | info | success; `title` = kalimat masalahnya, bukan "PERINGATAN"; `icon` fa-*; slot `actions`. Teks tebal: `<strong class="font-semibold">` tanpa warna.
+- `<x-ui.modal>`: `show` (ekspresi Alpine), `title`, `description`, `icon`, `maxWidth` (default `max-w-md`), `closeable` (default true).
 
-1. Sebelum menulis elemen UI di file `.blade.php`, cek dulu apakah ada komponen yang
-   cocok di daftar di bawah. Kalau ada, **wajib pakai komponen itu**.
-2. Pakai **prop/variant yang sudah disediakan** untuk variasi (mis. warna tombol lewat
-   `variant`, bukan menimpa dengan `class` Tailwind manual).
-3. `class` hanya untuk penyesuaian tambahan (spacing/lebar), bukan untuk mengganti
-   identitas visual komponen.
-4. Kalau butuh varian baru yang berulang (mis. warna badge baru), **tambahkan ke
-   komponennya**, jangan hardcode di pemakaian.
-5. Tetap ikuti gaya project: indentasi 2 spasi, jangan jalankan Pint.
+## Form — `resources/views/components/form/`
+Semua sudah menangani label, `required`, `hint`, `@error`, dan `old()`. Prop umum: `name`, `label`, `id`, `required`, `hint`, `class`, `wrapperClass`. Di Livewire pakai `wire:model="prop"` tanpa `name`.
+- `input`: `type`, `value`, `placeholder`, `labelClass`, `icon` (fa-* di kiri), `loadingTarget` (spinner di kanan). Field search juga pakai ini.
+- `textarea`: `rows`, `value`, `placeholder` · `select`: `disabled`, opsi lewat slot · `checkbox`: `value`, `checked`, `size` (`md` | `sm` ringkas) · `radio`: `value`, `checked` · `file`: `accept` · `image-crop`: `ratios`, `title`, `tipTitle`, `tip`, `maxDimension`, `maxKb`.
 
-## Katalog Komponen
+## Boleh tetap HTML mentah
+Tema warna lain yang disengaja (form laporan emerald, role-form violet, modal approval di sppd/show biru); adornment di dalam field (chevron kustom, toggle mata passphrase, input yang menyatu dengan tombol); repeater inline tanpa label (baris tujuan `destinations.*`, kartu pengikut); tombol icon-only di baris tabel dan chrome UI (sidebar, header, tab, filter chip). Tombol berlabel di filter bar tetap `<x-ui.button>`.
 
-### `<x-ui.button>` — `resources/views/components/ui/button.blade.php`
-Tombol / link. Render `<a wire:navigate>` jika ada `href`, selain itu `<button>`.
-- `variant`: `primary` (default), `secondary`, `success`, `warning`, `danger`, `ghost`, `danger-ghost`, `dark`, `violet`
-  - `danger-ghost` = teks merah tanpa latar, untuk aksi hapus/reset sekunder (mis. "Hapus pengaturan" di footer modal).
-  - `dark` = tombol slate-800 (dipakai untuk tombol Filter/Cari di filter bar).
-  - `secondary` = tombol netral berbingkai (border slate + bg putih) — **ini untuk tombol
-    Reset, Batal, Kembali, dan aksi sekunder lain**. Kalau menemukan `<button>` mentah
-    dengan `border-slate-300 bg-white text-slate-700`, itu = `variant="secondary"`.
-- `type`: default `button` (mis. `submit`, `reset`)
-- `href`: bila diisi → jadi link navigasi. URL yang punya query string lebih dari satu
-  parameter (`?a=1&b=2`) **wajib** lewat binding `:href="route(...)"`, bukan
-  `href="{{ route(...) }}"`: bentuk kedua di-escape dua kali (`&amp;amp;`) sehingga
-  parameter setelah `&` hilang.
-- slot `icon` opsional untuk ikon di kiri teks
-- `wire:click`, `@click`, dll. diteruskan otomatis lewat atribut.
-- **State disabled**: jangan bikin dua `<button>` (satu enabled, satu `disabled`) via
-  `@if/@else`. Pakai **satu** komponen dengan `:disabled="<kondisi>"` — komponen sudah
-  punya style `disabled:opacity-60 disabled:cursor-not-allowed`. Gunakan `:disabled`
-  (binding), **bukan** `@disabled(...)`, karena atribut diteruskan lewat `$attributes`.
-
-```blade
-<x-ui.button variant="success" type="submit">Simpan</x-ui.button>
-<x-ui.button variant="secondary" href="{{ route('sppd.index') }}">Batal</x-ui.button>
-<x-ui.button variant="dark" type="submit">Filter</x-ui.button>
-
-{{-- Tombol Reset dengan ikon + state disabled — SATU komponen, bukan @if/@else --}}
-<x-ui.button variant="secondary" wire:click="resetFilters" :disabled="!$hasActiveFilters">
-  <x-slot:icon><i class="fa-solid fa-rotate-left text-xs text-slate-500"></i></x-slot:icon>
-  Reset
-</x-ui.button>
-```
-JANGAN: `<button class="bg-cyan-600 text-white ...">`, atau dua cabang
-`@if(...)<button>...@else<button disabled>...@endif` untuk satu tombol yang sama.
-
-### `<x-ui.badge>` — `resources/views/components/ui/badge.blade.php`
-Label status. Dua mode:
-- **Mode status** — prop `status` memetakan ke kelas CSS `badge-{status}` di `app.css`
-  (`draft`, `in_progress`, `approved`, `rejected`, `completed`, `pending`, `revision`,
-  `signed`, `verified`, `returned`). Pakai ini untuk badge status SPPD/approval.
-- **Mode warna** — prop `bg` + `text` (kelas Tailwind) untuk warna ad-hoc.
-
-```blade
-<x-ui.badge :status="$sppd->status->value" class="px-2.5 py-1 text-xs uppercase">{{ $sppd->status->label() }}</x-ui.badge>
-<x-ui.badge bg="bg-emerald-100" text="text-emerald-700">Disetujui</x-ui.badge>
-```
-JANGAN: `<span class="badge-{{ $status }} ...">` atau `<span class="badge bg-... text-...">`
-
-### `<x-ui.alert>` — `resources/views/components/ui/alert.blade.php`
-Kotak peringatan / info di dalam halaman. Tint solid + ikon + teks pekat sewarna
-(tanpa gradien, tanpa stripe kiri). Props: `variant` (`danger` default, `warning`,
-`info`, `success`), `title` (opsional, kalimat yang menjelaskan masalahnya — bukan
-"PERINGATAN"), `icon` (kelas `fa-*`, default per varian). Slot `actions` opsional
-di kanan (mis. tombol tutup).
-- `danger` = memblokir (alur belum ada, data wajib kurang); `warning` = sementara
-  (pegawai sedang bertugas, menunggu proses).
-- Teks tebal di dalamnya cukup `<strong class="font-semibold">` — jangan beri warna
-  abu (`text-slate-*`), biar mewarisi warna alert.
-
-```blade
-<x-ui.alert title="Pejabat alur belum lengkap">
-  Lengkapi lewat tombol pada tahap yang masih kosong.
-</x-ui.alert>
-<x-ui.alert variant="warning" icon="fa-user-clock" title="Pegawai sedang bertugas">...</x-ui.alert>
-```
-JANGAN: `<div class="... bg-linear-to-br from-red-50 via-white to-white ...">` untuk alert.
-
-### `<x-ui.modal>` — `resources/views/components/ui/modal.blade.php`
-Modal Alpine.js. Props: `show` (ekspresi Alpine), `title`, `description`, `icon`
-(`fa-*` atau SVG), `maxWidth` (default `max-w-md`), `closeable` (default `true`).
-
-```blade
-<x-ui.modal show="openModal" title="Konfirmasi" icon="fa-solid fa-trash">
-  ...isi...
-</x-ui.modal>
-```
-
-## Komponen Form — `resources/views/components/form/*`
-
-Semua field form **wajib** lewat komponen ini (sudah menangani label, `required`,
-`hint`, `@error`, dan `old()`). Prop umum yang ada di hampir semua: `name`, `label`,
-`id`, `required`, `hint`, `class`, `wrapperClass`.
-
-**Mendukung dua mode binding:**
-- Form POST biasa → pakai `name="..."` (otomatis isi `value` dari `old()` & key `@error`).
-- Form Livewire → pakai `wire:model="prop"` (tanpa `name`). Komponen otomatis
-  mendeteksi `wire:model*`, tidak menimpa `value`, dan memakai nama property untuk
-  `id` & `@error`. Contoh: `<x-form.input wire:model="start_date" type="date" label="Tanggal" required />`.
-
-- `<x-form.input>` — props tambahan: `type` (default `text`), `value`, `placeholder`, `labelClass`,
-  `icon` (kelas `fa-*` untuk ikon kiri, mis. search), `loadingTarget` (nama property →
-  spinner `wire:loading` di kanan). Jadi **field search pun wajib komponen ini**:
-  `<x-form.input wire:model.live.debounce.300ms="search" icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1" placeholder="Cari..." />`
-- `<x-form.textarea>` — props tambahan: `rows` (default 3), `value`, `placeholder`
-- `<x-form.select>` — props tambahan: `disabled`; `<option>` lewat slot
-- `<x-form.checkbox>` — props tambahan: `value` (default `1`), `checked`
-- `<x-form.radio>` — props tambahan: `value`, `checked`
-- `<x-form.file>` — props tambahan: `accept` (default `.pdf,.docx,.jpg,.jpeg,.png`)
-- `<x-form.image-crop>` — input gambar yang **di-crop dulu di browser** (modal Cropper.js) lalu
-  diunggah ke properti Livewire. Pakai `wire:model="prop"` seperti biasa (hanya dibaca untuk nama
-  properti). Props tambahan: `ratios` (label => rasio, `null` = bebas; default `['Bebas' => null]`),
-  `title` (judul modal), `tipTitle` + `tip` (saran cara crop di atas area crop), `maxDimension` (default batas kop surat 2480 px), `maxKb` (default batas
-  unggah gambar di Pengaturan). Contoh: kop surat di form Unit Kerja.
-
-```blade
-<x-form.input name="tujuan" label="Tujuan" required />
-<x-form.select name="status" label="Status">
-  <option value="draft">Draft</option>
-</x-form.select>
-```
-JANGAN: `<input class="w-full rounded border ...">` atau bikin label/`@error` manual.
-
-## Cara mengaudit (saat diminta cek konsistensi)
-
-Cari elemen mentah yang seharusnya pakai komponen, lalu ganti:
-
-```bash
-# tombol & badge mentah
-grep -rn '<button\|class="badge"\|class="[^"]*badge' resources/views --include=*.blade.php
-# field form mentah
-grep -rn '<input\|<select\|<textarea' resources/views --include=*.blade.php
-```
-
-Abaikan match yang ada di dalam file komponen itu sendiri
-(`resources/views/components/ui/*` dan `resources/views/components/form/*`) — di situ
-HTML mentah memang wajar. Untuk setiap match lain, ganti ke `<x-ui.*>` / `<x-form.*>`
-yang sesuai dan laporkan perubahannya.
-
-## Pengecualian yang WAJAR (jangan dipaksa migrasi)
-
-Komponen memakai tema **cyan** + bentuk/label standar. Biarkan elemen mentah bila:
-- **Tema warna berbeda** yang disengaja — mis. form laporan (emerald), role-form
-  (violet), modal approval di `sppd/show` (biru). Memaksa ke komponen mengubah warna.
-  (Untuk tombol, tema emerald/danger/dark sudah ada variant-nya; pakai itu.)
-- **Ada adornment di dalam field** — chevron kustom di select, toggle mata pada
-  passphrase, atau input yang menyatu inline dengan tombol.
-  **BUKAN pengecualian lagi:** ikon search di kiri + spinner loading di kanan — `x-form.input`
-  sudah punya prop `icon` & `loadingTarget`, jadi field search **wajib** pakai komponen.
-- **Repeater inline compact tanpa label** — mis. baris tujuan (`destinations.*`),
-  kartu checkbox pengikut.
-- **Tombol icon-only di baris tabel** (edit/hapus) dan chrome UI (sidebar, header,
-  tab, filter chip) — itu pola tersendiri, bukan tombol berlabel.
-  **BUKAN pengecualian:** tombol **berlabel** di dalam filter bar (mis. Reset, Cari,
-  Filter) — walau letaknya di area filter, itu tombol aksi biasa dan **wajib**
-  `<x-ui.button>`. "Filter chip" = badge kecil yang bisa diklik, bukan tombol berteks.
-
-Setelah migrasi, jalankan `docker exec sppd_update_app php artisan view:cache` lalu
-`view:clear` untuk memastikan semua blade tetap ter-compile.
+Audit konsistensi seluruh view: baca `audit.md` di folder ini.

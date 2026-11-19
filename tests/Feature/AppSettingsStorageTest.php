@@ -24,7 +24,7 @@ class AppSettingsStorageTest extends TestCase
         Storage::fake('local')->put('data/json/data.json', json_encode([
             ['key' => 'survey_url', 'value' => 'https://survei.example/embed', 'description' => 'Deskripsi lama'],
             ['key' => 'upload_max_image_mb', 'value' => 7, 'description' => ''],
-            ['key' => AppSettings::SATURDAY_TRIP_TYPES, 'value' => ['puskesmas', 'rumah_sakit'], 'description' => ''],
+            ['key' => 'daftar_contoh', 'value' => ['puskesmas', 'rumah_sakit'], 'description' => ''],
             ['key' => 'catatan_manual', 'value' => ['a' => 1], 'description' => 'Ditambah manual'],
             ['value' => 'tanpa key diabaikan'],
         ]));
@@ -36,7 +36,7 @@ class AppSettingsStorageTest extends TestCase
         $settings = new AppSettings;
         $this->assertSame('https://survei.example/embed', $settings->get('survey_url'));
         $this->assertSame(7 * 1024, $settings->uploadMaxKb(true));
-        $this->assertSame(['puskesmas', 'rumah_sakit'], $settings->saturdayTripTypes());
+        $this->assertSame(['puskesmas', 'rumah_sakit'], $settings->get('daftar_contoh'));
         // Key yang tidak dikenal kode tetap tampil, dengan deskripsinya.
         $this->assertSame(['a' => 1], $settings->all()['catatan_manual']['value']);
         $this->assertSame('Ditambah manual', $settings->all()['catatan_manual']['description']);

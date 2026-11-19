@@ -65,9 +65,12 @@ class SppdDemoData
     ['Tiongkok', 'Beijing', 'Kedutaan Besar Republik Indonesia, Dongzhimenwai Dajie No. 4, Chaoyang'],
   ];
 
+  /** $countsSaturday/$countsSunday = centang Sabtu/Minggu yang sedang dipilih di form (dalam daerah). */
   public function __construct(
     private User $pelaksana,
     private SppdDomain $domain,
+    private bool $countsSaturday = false,
+    private bool $countsSunday = false,
   ) {}
 
   /** Tombol & aksi isi data uji hanya ada di APP_ENV local/development. */
@@ -153,23 +156,22 @@ class SppdDemoData
 
   /**
    * Berangkat 3–14 hari lagi, digeser melewati SPPD lain pelaksana bila bentrok. Dalam daerah
-   * tidak berangkat/kembali pada hari yang tidak dihitung (Minggu, juga Sabtu bila instansi
-   * pelaksana tidak menghitung Sabtu).
+   * tidak berangkat/kembali pada hari yang tidak dihitung (Sabtu/Minggu yang tidak dicentang).
    *
    * @return array{0: Carbon, 1: Carbon}
    */
   private function travelPeriod(int $days, bool $checkClash, ?int $exceptId): array
   {
     $start = now()->startOfDay()->addDays(random_int(3, 14));
-    $countsSaturday = $this->pelaksana->department?->countsSaturdayOnTrips() ?? true;
+    [$sat, $sun] = [$this->countsSaturday, $this->countsSunday];
 
     for ($attempt = 0; $attempt < 60; $attempt++) {
-      while ($this->domain->isOffDay($start, $countsSaturday)) {
+      while ($this->domain->isOffDay($start, $sat, $sun)) {
         $start->addDay();
       }
 
       $end = $start->copy();
-      while ($this->domain->travelDays($start, $end, $countsSaturday) < $days || $this->domain->isOffDay($end, $countsSaturday)) {
+      while ($this->domain->travelDays($start, $end, $sat, $sun) < $days || $this->domain->isOffDay($end, $sat, $sun)) {
         $end->addDay();
       }
 

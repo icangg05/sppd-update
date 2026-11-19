@@ -100,13 +100,15 @@
 </head>
 
 <body>
+	{{-- Data pegawai yang dicetak: beku sejak SPPD disetujui (lihat SppdRequest::personFor). --}}
+	@php $person = $sppd->personFor($targetUser); @endphp
 	<div style="position: absolute; top: -1cm; right: -1.3cm;">
 		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
 	</div>
 
 	<div class="title" style="margin-bottom: 9px;">RINCIAN BIAYA PERJALANAN DINAS</div>
 
-	<div style="font-size: 9pt; text-align: center; margin-bottom: 20px;">An. {{ $targetUser->name }}</div>
+	<div style="font-size: 9pt; text-align: center; margin-bottom: 20px;">An. {{ $person->name }}</div>
 
 	<table class="info-table" style="width: 100%">
 		<tr>
@@ -209,9 +211,9 @@
 				</p>
 				<div style="height: 35px;"></div>
 				<p>
-					<span class="bold" style="text-decoration: underline;">{{ $targetUser->name }}</span>
-					@if ($targetUser->nip)
-						<br />NIP. {{ $targetUser->nip }}
+					<span class="bold" style="text-decoration: underline;">{{ $person->name }}</span>
+					@if ($person->nip)
+						<br />NIP. {{ $person->nip }}
 					@endif
 				</p>
 			</td>

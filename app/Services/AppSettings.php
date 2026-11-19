@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\DepartmentType;
 use App\Models\AppSetting;
 use App\Support\FileSize;
 use Illuminate\Support\Facades\DB;
@@ -27,8 +26,6 @@ class AppSettings
 {
   /** @var array<string, array{key: string, value: mixed, description: string}>|null */
   private ?array $items = null;
-
-  public const SATURDAY_TRIP_TYPES = 'dalam_daerah_sabtu_types';
 
   /**
    * Key yang dikenal kode: label tampilan, deskripsi, nilai awal, dan aturan validasi.
@@ -56,31 +53,7 @@ class AppSettings
         'default'     => 50,
         'rules'       => ['required', 'integer', 'min:1', 'max:100'],
       ],
-      // Awalnya semua tipe dicentang: sama dengan aturan sebelum pengaturan ini ada (Sabtu dihitung).
-      self::SATURDAY_TRIP_TYPES => [
-        'label'       => 'Sabtu Dihitung (Dalam Daerah)',
-        'description' => 'Tipe instansi yang menghitung hari Sabtu pada lama perjalanan dinas dalam daerah, menurut tipe unit kerja pelaksana. Tipe yang tidak dicentang tidak menghitung Sabtu dan tidak bisa berangkat atau kembali pada hari Sabtu. Hari Minggu selalu tidak dihitung, dan perjalanan luar daerah menghitung semua hari. Perubahan hanya berlaku untuk SPPD yang diajukan atau diubah sesudahnya.',
-        'default'     => array_column(DepartmentType::cases(), 'value'),
-        'options'     => collect(DepartmentType::cases())->mapWithKeys(fn (DepartmentType $type) => [$type->value => $type->label()])->all(),
-        'rules'       => ['array'],
-      ],
     ];
-  }
-
-  /**
-   * Tipe instansi (DepartmentType value) yang menghitung hari Sabtu pada perjalanan dalam daerah.
-   * Nilai di file yang bukan daftar memakai nilai awal; tipe yang tidak dikenal diabaikan.
-   *
-   * @return list<string>
-   */
-  public function saturdayTripTypes(): array
-  {
-    $value = $this->get(self::SATURDAY_TRIP_TYPES);
-    $known = array_column(DepartmentType::cases(), 'value');
-
-    return is_array($value)
-      ? array_values(array_intersect($known, $value))
-      : self::definitions()[self::SATURDAY_TRIP_TYPES]['default'];
   }
 
   /**

@@ -63,7 +63,7 @@
 				</div>
 				<p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
 					<span class="inline-flex items-center gap-1.5">
-						<i class="fa-solid fa-user text-xs text-slate-400"></i>{{ $sppd->user->name }}
+						<i class="fa-solid fa-user text-xs text-slate-400"></i>{{ $sppd->pelaksana()->name }}
 					</span>
 					<span class="inline-flex items-center gap-1.5">
 						<i class="fa-regular fa-calendar text-xs text-slate-400"></i>{{ $dateRange }}
@@ -121,15 +121,17 @@
 			{{-- Berpasangan dua kolom (jumlah sel genap agar tidak ada sel kosong): pelaksana–kepada,
 			     tanggal pelaksanaan–kategori, domain–sifat, pembuat–instansi. Tanggal pengajuan sengaja
 			     tidak ditampilkan di halaman publik. --}}
+			{{-- Data pelaksana/pengikut beku sejak SPPD disetujui (lihat PersonSnapshot). --}}
+			@php $pelaksana = $sppd->pelaksana(); @endphp
 			<dl class="{{ $fieldGrid }}">
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Pelaksana</dt>
-					<dd class="{{ $value }}">{{ $sppd->user->name }}</dd>
+					<dd class="{{ $value }}">{{ $pelaksana->name }}</dd>
 					@if ($sppd->travel_position)
 						<dd class="text-xs text-slate-500">{{ $sppd->travel_position }}</dd>
 					@endif
 					{{-- Satu keterangan saja, prioritas: NIP → jabatan ("Anggota DPRD" bagi anggota DPRD) → label role. --}}
-					<dd @class(['text-xs text-slate-500', 'font-mono' => filled($sppd->user->nip)])>{{ $sppd->user->nipOrJabatanLabel() }}</dd>
+					<dd @class(['text-xs text-slate-500', 'font-mono' => filled($pelaksana->nip)])>{{ $pelaksana->nipOrJabatanLabel() }}</dd>
 				</div>
 				{{-- "Kepada" pada telaah = pejabat penandatangan SPT. --}}
 				<div class="{{ $fieldCell }}">
@@ -145,7 +147,8 @@
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Tanggal pelaksanaan</dt>
 					<dd class="{{ $value }}">{{ $dateRange }}</dd>
-					<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari</dd>
+					{{-- Dalam daerah: pilihan Sabtu/Minggu pembuat SPPD, agar penyetuju bisa mengecek lama harinya. --}}
+					<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari{{ ($weekendNote = $sppd->weekendNote()) ? ' · ' . $weekendNote : '' }}</dd>
 				</div>
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Kategori perjalanan</dt>
@@ -275,10 +278,10 @@
 					@foreach ($sppd->followers as $f)
 						<li class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5">
 							<span class="flex size-6 shrink-0 items-center justify-center rounded bg-slate-100 text-[11px] font-bold text-slate-600">
-								{{ mb_strtoupper(mb_substr(trim($f->user->name), 0, 1)) }}
+								{{ mb_strtoupper(mb_substr(trim($f->person()->name ?? ''), 0, 1)) }}
 							</span>
 							<span class="leading-tight">
-								<span class="block text-sm font-semibold text-slate-800">{{ $f->user->name }}</span>
+								<span class="block text-sm font-semibold text-slate-800">{{ $f->person()->name }}</span>
 								@if ($f->travel_position)
 									<span class="block text-xs text-slate-500">{{ $f->travel_position }}</span>
 								@endif

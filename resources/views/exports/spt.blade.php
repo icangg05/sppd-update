@@ -169,12 +169,13 @@
 		@php
 			// Pelaksana + pengikut sesuai urutan cetak (SppdRequest::sptParticipants): semuanya, termasuk
 			// pelaksana, diurutkan dari jabatan lalu golongan tertinggi. Jabatan yang tercetak: jabatan
-			// perjalanan (Inspektorat dalam daerah) atau jabatan struktural.
+			// perjalanan (Inspektorat dalam daerah) atau jabatan struktural. Data orangnya beku sejak SPPD
+			// disetujui ($p->person), jadi tidak berubah saat pegawai naik/ganti jabatan.
 			$peserta = $sppd->sptParticipants()->map(fn ($p) => [
-				'name'    => $p->user->name,
-				'pangkat' => \App\Models\Rank::pangkatGolongan($p->user->rank?->name, $p->user->rank?->group),
-				'nip'     => $p->user->nip,
-				'jabatan' => $p->travel_position ?? $p->user->jabatanLabel(),
+				'name'    => $p->person->name,
+				'pangkat' => $p->person->pangkatGolongan(),
+				'nip'     => $p->person->nip,
+				'jabatan' => $p->travel_position ?? $p->person->jabatanLabel(),
 			])->all();
 		@endphp
 		@foreach ($peserta as $i => $p)

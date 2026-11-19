@@ -48,7 +48,7 @@
 				</div>
 				<p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
 					<span class="inline-flex items-center gap-1.5">
-						<i class="fa-solid fa-user text-xs text-slate-400"></i>{{ $sppd->user->name }}
+						<i class="fa-solid fa-user text-xs text-slate-400"></i>{{ $sppd->pelaksana()->name }}
 					</span>
 					<span class="inline-flex items-center gap-1.5">
 						<i class="fa-regular fa-calendar text-xs text-slate-400"></i>{{ $dateRange }}
@@ -151,7 +151,7 @@
 			<p class="whitespace-pre-line">{{ $sppd->rejection_note ?: ($rejectedStep?->notes ?: 'Tidak ada alasan yang dicatat.') }}</p>
 			@if ($rejectedStep)
 				<p class="mt-1 text-xs">
-					Ditolak oleh <strong class="font-semibold">{{ $rejectedStep->approver->name }}</strong> ({{ $rejectedStep->role_label }}){{ $rejectedStep->acted_at ? ' pada ' . $rejectedStep->acted_at->translatedFormat('d M Y H:i') . ' WITA' : '' }}.
+					Ditolak oleh <strong class="font-semibold">{{ $rejectedStep->signer()?->name }}</strong> ({{ $rejectedStep->role_label }}){{ $rejectedStep->acted_at ? ' pada ' . $rejectedStep->acted_at->translatedFormat('d M Y H:i') . ' WITA' : '' }}.
 				</p>
 			@endif
 		</x-ui.alert>
@@ -176,25 +176,26 @@
 							@if ($canOpenUsers)
 								{{-- Langsung ke kartu riwayat perjalanan di profil pegawai. --}}
 								<a href="{{ route('master.users.show', $sppd->user) }}#riwayat" wire:navigate
-									title="Lihat riwayat perjalanan {{ $sppd->user->name }}"
+									title="Lihat riwayat perjalanan {{ $sppd->pelaksana()->name }}"
 									class="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 hover:underline">
-									{{ $sppd->user->name }}
+									{{ $sppd->pelaksana()->name }}
 									<i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
 								</a>
 							@else
-								<span class="text-sm font-semibold text-slate-800">{{ $sppd->user->name }}</span>
+								<span class="text-sm font-semibold text-slate-800">{{ $sppd->pelaksana()->name }}</span>
 							@endif
 							@if ($sppd->travel_position)
 								<span class="block text-xs text-slate-500">{{ $sppd->travel_position }}</span>
 							@endif
 							{{-- Satu keterangan saja, prioritas: NIP → jabatan ("Anggota DPRD" bagi anggota DPRD) → label role. --}}
-							<span @class(['block text-xs text-slate-500', 'font-mono' => filled($sppd->user->nip)])>{{ $sppd->user->nipOrJabatanLabel() }}</span>
+							<span @class(['block text-xs text-slate-500', 'font-mono' => filled($sppd->pelaksana()->nip)])>{{ $sppd->pelaksana()->nipOrJabatanLabel() }}</span>
 						</dd>
 					</div>
 					<div class="{{ $fieldCell }}">
 						<dt class="{{ $label }}">Tanggal pelaksanaan</dt>
 						<dd class="{{ $value }}">{{ $dateRange }}</dd>
-						<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari</dd>
+						{{-- Dalam daerah: pilihan Sabtu/Minggu pembuat SPPD, agar penyetuju bisa mengecek lama harinya. --}}
+						<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari{{ ($weekendNote = $sppd->weekendNote()) ? ' · ' . $weekendNote : '' }}</dd>
 					</div>
 					<div class="{{ $fieldCell }}">
 						<dt class="{{ $label }}">Kategori perjalanan</dt>
@@ -351,13 +352,13 @@
 						@foreach ($sppd->followers as $f)
 							@php $followerTag = $canOpenUsers ? 'a' : 'span'; @endphp
 							<li>
-								<{{ $followerTag }} @if ($canOpenUsers) href="{{ route('master.users.show', $f->user) }}#riwayat-pengikut" wire:navigate title="Lihat riwayat perjalanan {{ $f->user->name }}" @endif
+								<{{ $followerTag }} @if ($canOpenUsers) href="{{ route('master.users.show', $f->user) }}#riwayat-pengikut" wire:navigate title="Lihat riwayat perjalanan {{ $f->person()->name }}" @endif
 									class="inline-flex items-center gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5 {{ $canOpenUsers ? 'transition-colors hover:border-slate-300 hover:bg-slate-50' : '' }}">
 									<span class="flex size-6 shrink-0 items-center justify-center rounded bg-slate-100 text-[11px] font-bold text-slate-600">
-										{{ mb_strtoupper(mb_substr(trim($f->user->name), 0, 1)) }}
+										{{ mb_strtoupper(mb_substr(trim($f->person()->name ?? ''), 0, 1)) }}
 									</span>
 									<span class="leading-tight">
-										<span class="block text-sm font-semibold text-slate-800">{{ $f->user->name }}</span>
+										<span class="block text-sm font-semibold text-slate-800">{{ $f->person()->name }}</span>
 										@if ($f->travel_position)
 											<span class="block text-xs text-slate-500">{{ $f->travel_position }}</span>
 										@endif
@@ -410,7 +411,7 @@
 									</span>
 									<div class="min-w-0 leading-tight {{ $displayStatus === 'skipped' ? 'opacity-50' : '' }}">
 										<p class="text-xs font-medium text-slate-500">{{ $ap->role_label }}</p>
-										<p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $ap->approver->name }}</p>
+										<p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $ap->signer()?->name }}</p>
 										<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 											@if ($displayStatus === 'skipped')
 												<span
@@ -638,16 +639,16 @@
 
 				$tteRows = [];
 				if ($showSptStatus) {
-				    $tteRows[] = ['sig' => $sptSig, 'label' => 'Dokumen SPT', 'name' => $sppd->user->name];
+				    $tteRows[] = ['sig' => $sptSig, 'label' => 'Dokumen SPT', 'name' => $sppd->pelaksana()->name];
 				}
 				if ($showSppdStatus) {
-				    $tteRows[] = ['sig' => $sppdSig, 'label' => 'SPPD pelaksana', 'name' => $sppd->user->name];
+				    $tteRows[] = ['sig' => $sppdSig, 'label' => 'SPPD pelaksana', 'name' => $sppd->pelaksana()->name];
 				}
 				foreach ($sppd->followers as $follower) {
 				    $tteRows[] = [
 				        'sig' => $sppd->digitalSignatures->where('document_type', 'sppd_' . $follower->user_id)->first(),
 				        'label' => 'SPPD pengikut',
-				        'name' => $follower->user->name,
+				        'name' => $follower->person()->name,
 				    ];
 				}
 				$tteSignedCount = collect($tteRows)->filter(fn($row) => $row['sig']?->status->value === 'signed')->count();
@@ -727,14 +728,14 @@
 								<a href="{{ \Illuminate\Support\Facades\Storage::url($sppdFollowerSig->signed_file_path) }}" target="_blank"
 									class="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
 									<i class="fa-solid fa-user-group"></i>
-									<span>SPPD {{ $follower->user->name }} <x-sppd.tte-chip :testing="$sppdFollowerSig->isSimulated()" /></span>
+									<span>SPPD {{ $follower->person()->name }} <x-sppd.tte-chip :testing="$sppdFollowerSig->isSimulated()" /></span>
 								</a>
 							@else
 								<a
 									href="{{ route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($follower->user_id)]) }}"
 									target="_blank"
 									class="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
-									<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->user->name }}</span>
+									<i class="fa-solid fa-user-group"></i><span>SPPD {{ $follower->person()->name }}</span>
 								</a>
 							@endif
 						@endforeach
@@ -830,7 +831,7 @@
 				@csrf
 				@method('DELETE')
 				<p class="text-sm text-slate-600">
-					Batalkan dan hapus pengajuan SPPD <span class="font-bold text-slate-800">{{ $sppd->user->name }}</span>
+					Batalkan dan hapus pengajuan SPPD <span class="font-bold text-slate-800">{{ $sppd->pelaksana()->name }}</span>
 					({{ $dateRange }}) secara permanen? Alur persetujuan yang sedang berjalan ikut dihentikan.
 				</p>
 			</form>

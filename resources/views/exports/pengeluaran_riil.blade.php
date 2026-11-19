@@ -114,41 +114,28 @@
 			border-bottom: 3px double #000;
 			padding-bottom: 10px;
 		}
-
-		.logo {
-			width: 80px;
-			height: auto;
-			margin-bottom: 10px;
-		}
 	</style>
 </head>
 
 <body>
+	{{-- Data pegawai yang dicetak: beku sejak SPPD disetujui (lihat SppdRequest::personFor). --}}
+	@php $person = $sppd->personFor($targetUser); @endphp
 	<!-- QR Code — scan untuk verifikasi dokumen -->
 	<div style="position: absolute; top: -1cm; right: -1.8cm">
 		<img src="{{ $pdfData['qr_image'] }}" alt="QR Code">
 	</div>
 
-	<div class="header"
-		style="{{ $pdfData['is_walikota'] || ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/')) ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
-		@if ($sppd->user->department->letterhead && \Illuminate\Support\Str::contains($sppd->user->department->letterhead, '/'))
-			{{-- Utamakan kop surat instansi bila tersedia (termasuk untuk walikota) --}}
-			<img src="{{ storage_path('app/public/' . $sppd->user->department->letterhead) }}"
-				style="width: 100%; height: auto;">
-		@elseif ($pdfData['is_walikota'])
-			<div style="text-align: center; margin-bottom: 10px;">
-				<img src="{{ public_path('img/garuda.png') }}" style="width: 110px; height: auto;">
-			</div>
-			<div style="margin-top: 22px; font-size: 22pt; font-weight: bold; text-transform: uppercase;">WALIKOTA KENDARI</div>
-		@elseif ($sppd->user->department->parent_id == null)
-			{{-- Jika level OPD/Walikota --}}
-			<img src="{{ public_path('img/aruda.png') }}" class="logo">
-			<div style="font-size: 26pt; font-weight: bold;">WALIKOTA KENDARI</div>
+	{{-- Selalu kop instansi (siapa pun penyetujunya); kop Garuda tidak dipakai di dokumen ini. --}}
+	@php
+		$hasLetterhead = !empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/');
+		$rootDepartment = $sppd->user->department?->getRootDepartment();
+	@endphp
+	<div class="header" style="{{ $hasLetterhead ? 'border-bottom: none; padding-bottom: 0;' : '' }}">
+		@if ($hasLetterhead)
+			<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 100%; height: auto;">
 		@else
-			{{-- Jika level dinas --}}
 			<div style="font-size: 14pt; font-weight: bold;">PEMERINTAH KOTA KENDARI</div>
-			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $sppd->user->department->name }}</div>
-			<div style="font-size: 10pt;">{{ $sppd->user->department->address ?? '' }}</div>
+			<div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">{{ $rootDepartment?->name }}</div>
 		@endif
 	</div>
 
@@ -162,19 +149,19 @@
 		<tr>
 			<td class="info-label">Nama</td>
 			<td class="info-sep">:</td>
-			<td>{{ $targetUser->name }}</td>
+			<td>{{ $person->name }}</td>
 		</tr>
-		@if ($targetUser->nip)
+		@if ($person->nip)
 			<tr>
 				<td class="info-label">NIP</td>
 				<td class="info-sep">:</td>
-				<td>{{ $targetUser->nip }}</td>
+				<td>{{ $person->nip }}</td>
 			</tr>
 		@endif
 		<tr>
 			<td class="info-label">Jabatan</td>
 			<td class="info-sep">:</td>
-			<td>{{ $targetUser->jabatanLabel() }}</td>
+			<td>{{ $person->jabatanLabel() }}</td>
 		</tr>
 	</table>
 
@@ -246,9 +233,9 @@
 				<p><br />Yang Melakukan Perjalanan Dinas</p>
 				<div style="height: 50px;"></div>
 				<p>
-					<span class="bold" style="text-decoration: underline;">{{ $targetUser->name }}</span><br />
-					@if ($targetUser->nip)
-						NIP. {{ $targetUser->nip }}
+					<span class="bold" style="text-decoration: underline;">{{ $person->name }}</span><br />
+					@if ($person->nip)
+						NIP. {{ $person->nip }}
 					@endif
 				</p>
 			</td>

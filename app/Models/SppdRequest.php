@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\DepartmentType;
-use App\Enums\DprdJabatan;
 use App\Enums\SignatureStatus;
 use App\Helpers\SmartTitle;
 use App\Enums\SppdDomain;
@@ -12,6 +11,7 @@ use App\Enums\SppdStatus;
 use App\Services\SppdWorkflowService;
 use App\Support\NarrativeText;
 use App\Support\Nip;
+use App\Support\PersonSnapshot;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +31,7 @@ class SppdRequest extends Model
 
     protected $fillable = [
         'user_id',
+        'pelaksana_snapshot',
         'creator_id',
         'pptk_id',
         'budget_id',
@@ -46,6 +47,7 @@ class SppdRequest extends Model
         'departure_place',
         'domain',
         'counts_saturday',
+        'counts_sunday',
         'kpa_id',
         'kpa_label',
         'bendahara_id',
@@ -75,6 +77,8 @@ class SppdRequest extends Model
             'status' => SppdStatus::class,
             'is_secretariat' => 'boolean',
             'counts_saturday' => 'boolean',
+            'counts_sunday' => 'boolean',
+            'pelaksana_snapshot' => 'array',
         ];
     }
 
@@ -92,6 +96,8 @@ class SppdRequest extends Model
                 'transport_type',
                 'transport_name',
                 'domain',
+                'counts_saturday',
+                'counts_sunday',
                 'urgency',
                 'budget_id',
                 'pptk_id',
@@ -130,6 +136,14 @@ class SppdRequest extends Model
 
     protected static function booted(): void
     {
+        // Disetujui penuh: data pelaksana & pengikut dibekukan (lihat freezePeople). Mencakup semua
+        // jalur persetujuan (SppdShow, job TTE) maupun SPPD yang dibuat langsung berstatus disetujui.
+        static::saved(function (SppdRequest $sppd) {
+            if ($sppd->status === SppdStatus::APPROVED && ($sppd->wasRecentlyCreated || $sppd->wasChanged('status'))) {
+                $sppd->freezePeople();
+            }
+        });
+
         static::deleting(function (SppdRequest $sppd) {
             // Delete attachments
             if ($sppd->attachment && Storage::disk('public')->exists($sppd->attachment)) {
@@ -209,6 +223,54 @@ class SppdRequest extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Nama/NIP/pangkat/jabatan pelaksana seperti saat SPPD disetujui (pelaksana_snapshot), atau
+     * data akunnya saat ini bila SPPD belum disetujui.
+     */
+    public function pelaksana(): PersonSnapshot
+    {
+        return PersonSnapshot::resolve($this->pelaksana_snapshot, $this->user)
+            ?? new PersonSnapshot(null, null, null, null, null, null, [], null, null);
+    }
+
+    /**
+     * Data orang yang dituju dokumen (SPPD, kuitansi, pengeluaran riil, rincian biaya): pelaksana
+     * atau salah satu pengikut, beku bila SPPD sudah disetujui. Orang di luar SPPD ini memakai
+     * data akunnya.
+     */
+    public function personFor(User $user): PersonSnapshot
+    {
+        if ($user->id === $this->user_id) {
+            return $this->pelaksana();
+        }
+
+        $follower = $this->followers->firstWhere('user_id', $user->id);
+
+        return $follower ? $follower->person() : PersonSnapshot::fromUser($user);
+    }
+
+    /**
+     * Bekukan data pelaksana & pengikut saat SPPD disetujui penuh, agar dokumen & halamannya tidak
+     * ikut berubah ketika pegawai diganti jabatannya atau profilnya diedit. Disimpan tanpa event
+     * (saveQuietly) agar tidak memicu hook saved lagi maupun log aktivitas.
+     */
+    public function freezePeople(): void
+    {
+        $this->loadMissing(['user', 'followers.user']);
+
+        if ($this->user) {
+            $this->pelaksana_snapshot = PersonSnapshot::fromUser($this->user)->toArray();
+            $this->saveQuietly();
+        }
+
+        foreach ($this->followers as $follower) {
+            if ($follower->user) {
+                $follower->snapshot = PersonSnapshot::fromUser($follower->user)->toArray();
+                $follower->saveQuietly();
+            }
+        }
+    }
+
     /** Pembuat draft */
     public function creator(): BelongsTo
     {
@@ -268,8 +330,8 @@ class SppdRequest extends Model
      * SppdFollower::TRAVEL_POSITIONS), lalu jabatan struktural tertinggi (level kecil),
      * lalu golongan tertinggi, lalu senioritas dari NIP seperti Daftar Urut Kepangkatan
      * (TMT lebih awal, lalu lebih tua; lihat Nip::seniorityKey). Sisanya sesuai urutan input.
-     * Berlaku untuk objek apa pun yang punya `travel_position` dan `user` (SppdFollower, atau
-     * baris sptParticipants).
+     * Berlaku untuk objek apa pun yang punya `travel_position` dan `person` (PersonSnapshot: data
+     * beku bila SPPD sudah disetujui, agar urutan SPT lama tidak berubah saat pegawai naik jabatan).
      *
      * @return list<\Closure>
      */
@@ -278,17 +340,20 @@ class SppdRequest extends Model
         return [
             fn ($a, $b) => SppdFollower::travelPositionRank($a->travel_position)
                 <=> SppdFollower::travelPositionRank($b->travel_position),
-            fn ($a, $b) => ($a->user?->position?->level ?? Position::DEFAULT_LEVEL)
-                <=> ($b->user?->position?->level ?? Position::DEFAULT_LEVEL),
-            fn ($a, $b) => ($b->user?->rank?->weight() ?? 0) <=> ($a->user?->rank?->weight() ?? 0),
-            fn ($a, $b) => Nip::seniorityKey($a->user?->nip) <=> Nip::seniorityKey($b->user?->nip),
+            fn ($a, $b) => $a->person->levelOrDefault() <=> $b->person->levelOrDefault(),
+            fn ($a, $b) => $b->person->rankWeight() <=> $a->person->rankWeight(),
+            fn ($a, $b) => Nip::seniorityKey($a->person->nip) <=> Nip::seniorityKey($b->person->nip),
         ];
     }
 
     /** Pengikut untuk dokumen SPT, diurutkan menurut sptOrder(). */
     public function followersForSpt(): Collection
     {
-        return $this->followers->sortBy(self::sptOrder())->values();
+        return $this->followers
+            ->map(fn (SppdFollower $f) => (object) ['follower' => $f, 'travel_position' => $f->travel_position, 'person' => $f->person()])
+            ->sortBy(self::sptOrder())
+            ->pluck('follower')
+            ->values();
     }
 
     /**
@@ -308,19 +373,22 @@ class SppdRequest extends Model
      * NIP (sptOrder). Bila tetap setara (mis. sama-sama tanpa NIP), pelaksana didahulukan karena
      * pengurutannya stabil.
      *
-     * @return Collection<int, object{user: User, travel_position: ?string, is_pelaksana: bool}>
+     * `person` = data yang dicetak (beku bila SPPD sudah disetujui, lihat PersonSnapshot).
+     *
+     * @return Collection<int, object{user: User, person: PersonSnapshot, travel_position: ?string, is_pelaksana: bool}>
      */
     public function sptParticipants(): Collection
     {
         $usesTravelPositions = $this->usesTravelPositions();
-        $row = fn (?User $user, ?string $travelPosition, bool $isPelaksana) => (object) [
+        $row = fn (?User $user, PersonSnapshot $person, ?string $travelPosition, bool $isPelaksana) => (object) [
             'user' => $user,
+            'person' => $person,
             'travel_position' => $usesTravelPositions && filled($travelPosition) ? $travelPosition : null,
             'is_pelaksana' => $isPelaksana,
         ];
 
-        $pelaksana = $row($this->user, $this->travel_position, true);
-        $followers = $this->followers->map(fn (SppdFollower $f) => $row($f->user, $f->travel_position, false));
+        $pelaksana = $row($this->user, $this->pelaksana(), $this->travel_position, true);
+        $followers = $this->followers->map(fn (SppdFollower $f) => $row($f->user, $f->person(), $f->travel_position, false));
 
         return collect([$pelaksana])->concat($followers)->sortBy(self::sptOrder())->values();
     }
@@ -373,7 +441,7 @@ class SppdRequest extends Model
         $this->approvals()
             ->where('status', ApprovalStatus::APPROVED)
             ->where(fn ($q) => $q->where('signs_spt', true)->orWhere('signs_sppd', true))
-            ->update(['status' => ApprovalStatus::PENDING, 'acted_at' => null, 'notes' => null]);
+            ->update(['status' => ApprovalStatus::PENDING, 'acted_at' => null, 'notes' => null, 'approver_snapshot' => null]);
     }
 
     /**
@@ -387,18 +455,47 @@ class SppdRequest extends Model
             ?? $this->approvals()->reorder('step_order', 'desc')->first();
     }
 
-    /** Jabatan penandatangan SPT seperti yang tercetak di SPT. */
+    /**
+     * Jabatan penandatangan SPT seperti yang tercetak di SPT. Memakai data penyetuju saat tahapnya
+     * bertindak (SppdApproval::signer), jadi tidak berubah setelah pejabatnya diganti.
+     */
     public static function sptSignerTitle(?SppdApproval $approval): string
     {
-        $approver = $approval?->approver;
-        if ($approver && $approver->isDprdMember() && $approver->dprd_jabatan) {
-            return $approver->dprd_jabatan;
+        $signer = $approval?->signer();
+        if ($signer && $signer->isDprdMember() && $signer->dprdJabatan) {
+            return $signer->dprdJabatan;
         }
 
-        return $approver?->position_name
-            ?? $approver?->position?->name
+        return self::sppdSignerTitle($approval);
+    }
+
+    /** Jabatan penandatangan SPPD seperti yang tercetak di SPPD (tanpa jabatan DPRD). */
+    public static function sppdSignerTitle(?SppdApproval $approval): string
+    {
+        return $approval?->signer()?->positionName
             ?? $approval?->role_label
             ?? 'Kepala Dinas';
+    }
+
+    /**
+     * Data penandatangan untuk PDF SPT ('spt') atau SPPD ('sppd'): dipakai bersama oleh pratinjau
+     * (SppdController) dan draft TTE (PdfGeneratorService) agar keduanya selalu sama.
+     *
+     * @return array{approver_name: string, approver_role: string, approver_nip: ?string, approver_rank: string, approver_group: string, is_walikota: bool}
+     */
+    public static function signerPdfData(?SppdApproval $approval, string $document): array
+    {
+        $signer = $approval?->signer();
+
+        return [
+            'approver_name' => $signer?->name ?? '................................',
+            'approver_role' => $document === 'spt' ? self::sptSignerTitle($approval) : self::sppdSignerTitle($approval),
+            'approver_nip' => $signer?->nip,
+            'approver_rank' => $signer?->rankName ?? '',
+            'approver_group' => $signer?->rankGroup ?? '',
+            // Kop Garuda SPT hanya bila Walikota yang menandatangani (SPPD tidak pernah).
+            'is_walikota' => $document === 'spt' && (bool) $signer?->hasRole('walikota'),
+        ];
     }
 
     public function signatureFor(string $documentType): ?SppdDigitalSignature
@@ -618,25 +715,48 @@ class SppdRequest extends Model
     }
 
     /**
-     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung hari Minggu, juga Sabtu bila
-     * instansi pelaksana tidak menghitung Sabtu (lihat SppdDomain::travelDays).
+     * Lama perjalanan dalam hari. Dalam daerah hanya menghitung Sabtu/Minggu yang dicentang
+     * pembuat SPPD (lihat SppdDomain::travelDays); domain lain menghitung semua hari.
      */
     public function durationInDays(): int
     {
         return $this->domain
-            ? $this->domain->travelDays($this->start_date, $this->end_date, $this->countsSaturday())
+            ? $this->domain->travelDays($this->start_date, $this->end_date, $this->countsSaturday(), $this->countsSunday())
             : (int) $this->start_date->diffInDays($this->end_date) + 1;
     }
 
     /**
-     * Apakah lama perjalanan SPPD ini menghitung hari Sabtu. Dicatat saat SPPD diajukan/diubah
-     * (Department::countsSaturdayOnTrips), jadi lama hari di dokumen yang sudah terbit tidak
-     * berubah bila Pengaturan Aplikasi diubah belakangan. SPPD sebelum pengaturan ini (null)
-     * dibuat saat Sabtu masih dihitung untuk semua instansi.
+     * Lama perjalanan dalam daerah menghitung hari Sabtu? Dipilih pembuat SPPD lewat centang di form
+     * (awalnya tercentang untuk Puskesmas & Rumah Sakit, lihat DepartmentType::checksSaturdayByDefault).
+     * Null = SPPD lama, dibuat saat Sabtu masih dihitung.
      */
     public function countsSaturday(): bool
     {
         return $this->counts_saturday ?? true;
+    }
+
+    /** Lama perjalanan dalam daerah menghitung hari Minggu? Dipilih per SPPD; null = SPPD lama (tidak dihitung). */
+    public function countsSunday(): bool
+    {
+        return $this->counts_sunday ?? false;
+    }
+
+    /**
+     * Keterangan hari akhir pekan untuk tampilan (detail & halaman publik) agar penyetuju bisa
+     * mengecek pilihan pembuat SPPD. Null untuk domain selain dalam daerah (semua hari dihitung).
+     */
+    public function weekendNote(): ?string
+    {
+        if (! $this->domain?->hasWeekendChoice()) {
+            return null;
+        }
+
+        return match ([$this->countsSaturday(), $this->countsSunday()]) {
+            [true, true] => 'Sabtu & Minggu dihitung',
+            [true, false] => 'Sabtu dihitung, Minggu tidak',
+            [false, true] => 'Minggu dihitung, Sabtu tidak',
+            default => 'Sabtu & Minggu tidak dihitung',
+        };
     }
 
     /*
@@ -749,20 +869,16 @@ class SppdRequest extends Model
      */
     public function sptDprdParticipants(): Collection
     {
-        $makeRow = function (User $u, ?string $travelPosition = null): array {
-            $jabatan = $u->isDprdMember()
-                ? (DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->label(true) ?? $u->dprd_jabatan ?? 'ANGGOTA DPRD')
-                : ($travelPosition ?? $u->jabatanLabel());
-
+        $makeRow = function (PersonSnapshot $p, ?string $travelPosition = null): array {
             return [
-                'name' => $u->name,
-                'jabatan' => $jabatan,
-                'level' => DprdJabatan::tryFrom($u->dprd_jabatan ?? '')?->level() ?? PHP_INT_MAX,
+                'name' => $p->name,
+                'jabatan' => $p->isDprdMember() ? $p->dprdJabatanLabel() : ($travelPosition ?? $p->jabatanLabel()),
+                'level' => $p->dprdLevel(),
             ];
         };
 
-        return collect([$makeRow($this->user, $this->travel_position)])
-            ->merge($this->followers->map(fn ($f) => $makeRow($f->user, $f->travel_position)))
+        return collect([$makeRow($this->pelaksana(), $this->travel_position)])
+            ->merge($this->followers->map(fn (SppdFollower $f) => $makeRow($f->person(), $f->travel_position)))
             ->sortBy('level')
             ->values();
     }

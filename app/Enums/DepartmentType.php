@@ -32,6 +32,19 @@ enum DepartmentType: string
   }
 
   /**
+   * Centang "Hitung hari Sabtu" sudah tercentang saat membuat SPPD dalam daerah untuk pegawai
+   * unit bertipe ini (Puskesmas & Rumah Sakit bekerja enam hari). Hanya nilai awal: pembuat SPPD
+   * tetap bebas mengubahnya per SPPD (keputusan user 2026-11-19).
+   */
+  public function checksSaturdayByDefault(): bool
+  {
+    return match ($this) {
+      self::PUSKESMAS, self::RUMAH_SAKIT => true,
+      default => false,
+    };
+  }
+
+  /**
    * Sebutan pejabat di tipe instansi ini bila berbeda dari label role-nya: Rumah Sakit
    * memakai role Kepala OPD & Sekretaris OPD, tetapi pejabatnya disebut Direktur &
    * Sekretaris. Null = pakai label role.

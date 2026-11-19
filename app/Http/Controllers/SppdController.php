@@ -183,9 +183,9 @@ class SppdController extends Controller
     // QR halaman ini (kanan atas) agar mudah dibuka/dibagikan dari perangkat lain.
     $qrSvg = QrCode::size(200)->margin(0)->errorCorrection('M')->generate($sppd->publicUrl());
 
-    // "Kepada" = penandatangan SPT, sama dengan yang tercetak di SPT.
+    // "Kepada" = penandatangan SPT, sama dengan yang tercetak di SPT (data saat menyetujui).
     $sptApproval = $sppd->sptApproval();
-    $sptSigner = $sptApproval?->approver;
+    $sptSigner = $sptApproval?->signer();
     $sptSignerTitle = $sptSigner ? SppdRequest::sptSignerTitle($sptApproval) : null;
 
     $tteDocs = $this->publicTteSummary($sppd);
@@ -437,19 +437,10 @@ class SppdController extends Controller
     }
 
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $sptApproval = $sppd->sptApproval();
     $duration = $sppd->durationInDays();
 
-    $approver = $sptApproval?->approver;
-    $approverRole = SppdRequest::sptSignerTitle($sptApproval);
-
-    $pdfData = [
-      'approver_name' => $approver->name ?? '................................',
-      'approver_role' => $approverRole,
-      'approver_nip' => $approver->nip ?? null,
-      'approver_rank' => $approver->rank->name ?? '',
-      'approver_group' => $approver->rank->group ?? '',
-      'is_walikota' => $approver && $approver->hasRole('walikota'),
+    // Penandatangan seperti saat menyetujui (beku), lihat SppdRequest::signerPdfData.
+    $pdfData = SppdRequest::signerPdfData($sppd->sptApproval(), 'spt') + [
       'is_approved' => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image' => null,
       'duration' => $duration,
@@ -511,20 +502,9 @@ class SppdController extends Controller
 
     $sppdApproval = $this->resolveSppdApproval($sppd, $targetUser);
 
-    $approver = $sppdApproval?->approver;
-    $approverRole = $approver?->position_name
-      ?? $approver?->position?->name
-      ?? $sppdApproval?->role_label
-      ?? 'Kepala Dinas';
-
     $follower = $sppd->followers->where('user_id', $targetUser->id)->first();
-    $pdfData = [
-      'approver_name' => $approver?->name ?? '................................',
-      'approver_role' => $approverRole,
-      'approver_nip' => $approver?->nip ?? null,
-      'approver_rank' => $approver?->rank?->name ?? '',
-      'approver_group' => $approver?->rank?->group ?? '',
-      'is_walikota' => false,
+    // Penandatangan seperti saat menyetujui (beku), lihat SppdRequest::signerPdfData.
+    $pdfData = SppdRequest::signerPdfData($sppdApproval, 'sppd') + [
       'is_approved' => in_array($sppd->status, [SppdStatus::APPROVED, SppdStatus::COMPLETED]),
       'qr_image' => null,
       'duration' => $duration,
@@ -765,9 +745,6 @@ class SppdController extends Controller
     // KPA (Setuju Bayar) yang dicatat di SPPD (dipilih untuk pelaksana, lihat SppdFinanceOfficials).
     $pimpinan = $sppd->kpa;
 
-    $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
-    $approver = $lastApproval?->approver;
-
     // Custom date if passed
     $dateParam = $request->query('date');
     $dateValue = now();
@@ -790,7 +767,9 @@ class SppdController extends Controller
       'pimpinan_nip' => $pimpinan?->nip,
       // Label kosong = SPPD lama: nama jabatan penandatangan seperti sebelumnya.
       'pimpinan_role' => $sppd->kpa_label ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
-      'is_walikota' => ($approver && $approver->hasRole('walikota')) || ($pimpinan && $pimpinan->hasRole('walikota')),
+      // Selalu kop instansi pelaksana (diwarisi dari unit induk bila unitnya tak punya kop),
+      // siapa pun penyetujunya — dokumen ini tidak pernah memakai kop Garuda.
+      'letterhead_url' => $department?->getInheritedLetterhead(),
       'qr_image' => $qrImage,
       'date' => $dateValue->translatedFormat('d F Y'),
     ];

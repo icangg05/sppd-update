@@ -10,6 +10,8 @@
     'showError' => true,
     'class' => '',
     'wrapperClass' => '',
+    // 'sm' = versi ringkas untuk opsi tambahan di bawah field (mis. centang Sabtu/Minggu).
+    'size' => 'md',
 ])
 
 @php
@@ -19,10 +21,15 @@ $key = $name ?? $wireModel;
 $id = $id ?? ($name && str_contains($name, '[')
     ? str_replace(['[', ']'], '', $name) . '_' . str_replace([' ', '/'], '_', $value)
     : ($key . ($wireModel ? '_' . str_replace([' ', '/'], '_', $value) : '')));
+$small = $size === 'sm';
 @endphp
 
 <div class="{{ $wrapperClass }}">
-    <label for="{{ $id }}" class="inline-flex items-start gap-3 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
+    <label for="{{ $id }}" @class([
+        'inline-flex rounded border border-slate-200 bg-white text-slate-700 shadow-sm',
+        'items-start gap-3 px-3 py-2 text-sm' => ! $small,
+        'cursor-pointer items-center gap-1.5 px-2 py-1 text-xs' => $small,
+    ])>
         <input
             type="checkbox"
             @if ($name) name="{{ $name }}" @endif
@@ -30,7 +37,7 @@ $id = $id ?? ($name && str_contains($name, '[')
             value="{{ $value }}"
             @if ($checked) checked @endif
             @if ($required) required @endif
-            {{ $attributes->merge(['class' => trim('mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 ' . $class)]) }}
+            {{ $attributes->merge(['class' => trim(($small ? 'h-3.5 w-3.5' : 'mt-0.5 h-4 w-4') . ' rounded border-slate-300 text-primary-600 focus:ring-primary-500 ' . $class)]) }}
         >
         <span class="font-medium">{{ $label }}</span>
     </label>
