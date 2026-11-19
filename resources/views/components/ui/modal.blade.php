@@ -31,7 +31,8 @@
 			setTimeout(() => $refs.panel?.querySelector('[data-autofocus]')?.focus({ preventScroll: true }), 50);
 		};
 		if ({{ $show }}) lock(true);
-		$watch('{{ $show }}', (open) => { lock(open); if (open) autofocus(); });
+		// Dibuka lagi: isi modal mulai dari atas, bukan posisi gulir terakhir.
+		$watch('{{ $show }}', (open) => { lock(open); if (open) { $nextTick(() => $refs.body?.scrollTo(0, 0)); autofocus(); } });
 	">
 	{{-- Teleport ke body agar z-index modal bersaing global, tidak terjebak di
 	     stacking context <main> (sidebar/header/card punya konteks sendiri). --}}
@@ -92,7 +93,7 @@
 					</div>
 
 					{{-- Content --}}
-					<div class="min-h-0 overflow-y-auto p-4">
+					<div x-ref="body" class="min-h-0 overflow-y-auto p-4">
 						{{ $slot }}
 					</div>
 

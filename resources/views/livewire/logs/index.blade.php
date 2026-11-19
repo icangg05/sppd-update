@@ -96,6 +96,9 @@
               'program' => 'Program', 'activity' => 'Kegiatan', 'account_code' => 'Kode Rekening',
               'description' => 'Deskripsi', 'source' => 'Sumber', 'year' => 'Tahun',
               'total_amount' => 'Total Anggaran',
+              // Pejabat keuangan SPPD & pilihan tersimpan pegawai pelaksana
+              'kpa_id' => 'KPA (Setuju Bayar)', 'kpa_label' => 'Label KPA',
+              'bendahara_id' => 'Bendahara', 'bendahara_label' => 'Jabatan Bendahara',
             ];
             // Format nilai penuh (untuk modal) — null jadi penanda kosong.
             // Jika field berupa foreign key, tampilkan nama relasinya, bukan id.

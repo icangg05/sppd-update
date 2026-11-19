@@ -49,18 +49,14 @@ class SppdCreate extends Component
   public ?int $officialPositionId = null;
 
   /**
-   * Modal Pilih Pejabat: 'supervisor' = tahap atasan langsung pemohon (calonnya role atasan
-   * dari semua alur yang berlaku); 'step' = pejabat tahap lain. Pilihan disimpan sebagai
-   * atasan bawahan tahap itu agar tidak perlu dipilih lagi.
+   * Modal Pilih Pejabat tahap: pilihan disimpan sebagai atasan bawahan tahap itu agar
+   * tidak perlu dipilih lagi.
    */
   public bool $showSupervisorModal = false;
-  #[Locked]
-  public string $supervisorMode = 'step';
   #[Locked]
   public ?string $supervisorRole = null;
   public string $supervisorSearch = '';
   public ?int $supervisorChoiceId = null;
-  public bool $supervisorApplyColleagues = false;
 
   public function mount(): void
   {
@@ -131,28 +127,18 @@ class SppdCreate extends Component
     // SPPD aktif lain tidak menghalangi: bentrok tanggal baru dicek di Tahap 2 (lihat
     // SppdRequest::clashingForUsers), karena SPT/SPPD perlu dibuat jauh hari.
 
-    // 1. Workflow dipilih dari atasan langsung pemohon. Bila atasannya belum pasti,
-    //    alur terpanjang tampil dengan tahap atasan belum dipilih.
+    // 1. Workflow dipilih dari tipe instansi, peran pemohon, dan wilayah tujuan.
     $workflowService = app(SppdWorkflowService::class);
-    $match = $workflowService->matchWorkflow($user, $this->domain);
     $this->steps = $workflowService->simulateApprovals($user, $this->domain);
 
     if (empty($this->steps)) {
-      $this->errorMessage = $match['supervisor_role']
-        ? 'Aturan alur untuk pemohon dengan atasan langsung ' . e($workflowService->roleLabelIn($match['supervisor_role'], $user->department_id)) . ' belum dibuat oleh Administrator SPPD (Super Admin)'
-        : 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin)';
+      $this->errorMessage = 'Aturan alur untuk kategori ini belum dibuat oleh Administrator SPPD (Super Admin)';
       $this->errorMessageRole = $this->userInfo['role_label'];
       return;
     }
 
     // 2. Cek Kop Surat
     $this->hasHeader = (bool) ($user->department?->getInheritedLetterhead() && Str::contains($user->department->getInheritedLetterhead(), '/'));
-
-    // Alur buatan Super Admin yang tahap pertamanya bukan role atasan: tidak bisa dipilih di sini.
-    if ($match['needs_supervisor'] && ! collect($this->steps)->contains('supervisor_step', true)) {
-      $this->errorMessage = 'Alur persetujuan ' . e($user->name) . ' ditentukan dari atasan langsungnya, tetapi alur ini tidak memiliki tahap atasan yang bisa dipilih. Hubungi Administrator SPPD (Super Admin) untuk menyesuaikan alur.';
-      return;
-    }
 
     // 3. Verifikasi Kelengkapan Pejabat: setiap tahap wajib punya pejabat pasti.
     $missing = collect($this->steps)->where('status', 'not_found');
@@ -196,11 +182,8 @@ class SppdCreate extends Component
     }
 
     $this->resetSupervisorForm();
-    $this->supervisorMode = $step['supervisor_step'] ? 'supervisor' : 'step';
     $this->supervisorRole = $role;
-    // Tahap atasan yang belum dipilih: saran dari rekan satu unit langsung terpilih.
-    $this->supervisorChoiceId = $step['approver_id']
-      ?? ($step['supervisor_step'] && $step['subordinate_id'] === $this->user_id ? $service->suggestedSupervisor($this->pelaksana())?->id : null);
+    $this->supervisorChoiceId = $step['approver_id'];
     $this->showSupervisorModal = true;
   }
 
@@ -224,14 +207,8 @@ class SppdCreate extends Component
 
     $service = app(SppdWorkflowService::class);
     try {
-      if ($this->supervisorMode === 'supervisor') {
-        $also = $this->supervisorApplyColleagues ? $service->colleaguesWithoutSupervisor($pelaksana)->pluck('id')->all() : [];
-        $chosen = $service->chooseSupervisorStep($pelaksana, $this->domain, $this->supervisorChoiceId, $also);
-        $this->toastSuccess("{$chosen->name} dipilih sebagai atasan langsung. Pilihan disimpan untuk pengajuan berikutnya." . ($also ? ' Berlaku juga untuk ' . count($also) . ' rekan satu unit.' : ''));
-      } else {
-        $chosen = $service->chooseStepApprover($pelaksana, $this->domain, (string) $this->supervisorRole, $this->supervisorChoiceId);
-        $this->toastSuccess("{$chosen->name} dipilih sebagai {$service->roleLabelIn((string) $this->supervisorRole, $pelaksana->department_id)}. Pilihan disimpan untuk pengajuan berikutnya.");
-      }
+      $chosen = $service->chooseStepApprover($pelaksana, $this->domain, (string) $this->supervisorRole, $this->supervisorChoiceId);
+      $this->toastSuccess("{$chosen->name} dipilih sebagai {$service->roleLabelIn((string) $this->supervisorRole, $pelaksana->department_id)}. Pilihan disimpan untuk pengajuan berikutnya.");
     } catch (\RuntimeException $e) {
       $this->toastError($e->getMessage());
       return;
@@ -242,7 +219,7 @@ class SppdCreate extends Component
 
   private function resetSupervisorForm(): void
   {
-    $this->reset(['supervisorSearch', 'supervisorChoiceId', 'supervisorApplyColleagues']);
+    $this->reset(['supervisorSearch', 'supervisorChoiceId']);
   }
 
   /** Buka wizard untuk satu tahap yang pejabatnya belum ditemukan. */
@@ -568,7 +545,7 @@ class SppdCreate extends Component
   /**
    * Isi modal Pilih Pejabat tahap.
    *
-   * @return array{title:string, intro:string, hint:?string, candidates:array, suggestedId:?int, colleagues:int, unit:?string, replace:?array}
+   * @return array{title:string, intro:string, roleLabel:string, candidates:array, replace:?array, canManageEmployees:bool}
    */
   private function supervisorModalData(SppdWorkflowService $service, User $pelaksana): array
   {
@@ -581,42 +558,23 @@ class SppdCreate extends Component
       ? ['role' => $this->supervisorRole, 'name' => $step['approver_name']]
       : null;
 
-    if ($this->supervisorMode === 'supervisor') {
-      $subordinate = User::with(['roles', 'department.parent'])->find($step['subordinate_id'] ?? 0) ?? $pelaksana;
-      $roles = $service->matchWorkflow($pelaksana, $this->domain)['supervisor_roles'];
-      $candidates = $service->supervisorCandidates($subordinate, $this->supervisorSearch, null, 60, $roles);
-      // Role atasan lain (mis. Asisten untuk staf yang tidak di bawah Kabag) memakai alur lain.
-      $others = collect($candidates)->pluck('role_label')->unique()->reject(fn ($label) => $label === ($step['role_label'] ?? null))->values();
-      $isPelaksana = $subordinate->id === $pelaksana->id;
-
-      return [
-        'title'       => 'Pilih ' . ($step['role_label'] ?? 'atasan'),
-        'intro'       => 'Pejabat yang membawahi langsung ' . $subordinate->name . '. Pilihan disimpan, jadi pengajuan berikutnya langsung memakai pejabat ini.',
-        'hint'        => $others->isNotEmpty()
-          ? 'Bila ' . $subordinate->name . ' langsung di bawah ' . $others->implode(' atau ') . ', pilih pejabat itu; alur persetujuannya menyesuaikan aturan untuk atasan tersebut.'
-          : null,
-        'candidates'  => $candidates,
-        'suggestedId' => $isPelaksana ? $service->suggestedSupervisor($pelaksana)?->id : null,
-        'colleagues'  => $isPelaksana ? $service->colleaguesWithoutSupervisor($pelaksana)->count() : 0,
-        'unit'        => $pelaksana->department?->name,
-        'replace'     => $replace,
-      ];
-    }
-
-    $candidates = ($step['status'] ?? null) === 'choose'
-      ? $step['candidates']
-      : $service->stepCandidates((string) $this->supervisorRole, $pelaksana)
-        ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'unit' => $u->department?->name, 'position' => $u->position?->name])->all();
+    // Calon terdekat hasil penelusuran (tahap "choose") lebih dulu, lalu pemegang role yang sama di
+    // unit lain se-struktur instansi (mis. Kabag Bagian lain di Setda).
+    $candidates = collect(($step['status'] ?? null) === 'choose' ? $step['candidates'] : [])
+      ->concat($service->stepCandidates((string) $this->supervisorRole, $pelaksana)
+        ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'unit' => $u->department?->name, 'position' => $u->position?->name]))
+      ->unique('id')
+      ->values()
+      ->all();
 
     return [
       'title'       => 'Pilih ' . ($step['role_label'] ?? 'pejabat'),
       'intro'       => 'Pejabat yang membawahi langsung ' . $subordinateName . '. Pilihan disimpan, jadi pengajuan berikutnya langsung memakai pejabat ini.',
-      'hint'        => null,
+      'roleLabel'   => $step['role_label'] ?? 'pejabat',
       'candidates'  => array_values(array_filter(array_map(fn (array $c) => $c + ['nip' => null, 'role_label' => $step['role_label'] ?? null], $candidates), $matches)),
-      'suggestedId' => null,
-      'colleagues'  => 0,
-      'unit'        => null,
       'replace'     => $replace,
+      // Halaman Data Pegawai hanya untuk Super Admin & Admin OPD (middleware route master.*).
+      'canManageEmployees' => Auth::user()->hasAnyRole(['super_admin', 'admin_opd']),
     ];
   }
 

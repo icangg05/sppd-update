@@ -15,7 +15,7 @@ class BudgetController extends Controller
   {
     $user = auth()->user();
     abort_unless($user->can('budget.delete'), 403, 'Anda tidak memiliki izin menghapus DPA.');
-    abort_unless($user->hasRole('super_admin') || $budget->department_id === $user->department_id, 403, 'DPA ini di luar instansi Anda.');
+    abort_unless($budget->isManageableBy($user), 403, 'DPA ini di luar instansi Anda.');
 
     $budget->delete();
 

@@ -4,20 +4,29 @@
 @section('content')
 	@php
 		// Setiap personel punya dokumen SPPD & tanda tangan sendiri (sppd_{user_id}).
+		// Sudah TTE → tautan langsung ke berkas bertanda tangan (tanpa stream); belum → PDF
+		// di-generate lewat stream. Berkas yang tidak ada di disk server ini diberi catatan.
+		$makePerson = function ($user, string $role, $signature, string $streamUrl) {
+		    $signedFile = $signature?->status->value === 'signed' && $signature->signed_file_path ? $signature->signed_file_path : null;
+
+		    return [
+		        'user' => $user,
+		        'role' => $role,
+		        'signature' => $signature,
+		        'url' => $signedFile ? Storage::url($signedFile) : $streamUrl,
+		        'file_missing' => $signedFile && ! Storage::disk('public')->exists($signedFile),
+		    ];
+		};
+
 		$personnel = collect([
-		    [
-		        'user' => $sppd->user,
-		        'role' => 'Pelaksana',
-		        'signature' => $sppd->signatureFor('sppd'),
-		        'url' => route('sppd.stream.sppd', $sppd),
-		    ],
+		    $makePerson($sppd->user, 'Pelaksana', $sppd->signatureFor('sppd'), route('sppd.stream.sppd', $sppd)),
 		])->concat(
-		    $sppd->followers->map(fn($f) => [
-		        'user' => $f->user,
-		        'role' => 'Pengikut',
-		        'signature' => $sppd->digitalSignatures->where('document_type', 'sppd_' . $f->user_id)->sortByDesc('created_at')->first(),
-		        'url' => route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($f->user_id)]),
-		    ]),
+		    $sppd->followers->map(fn($f) => $makePerson(
+		        $f->user,
+		        'Pengikut',
+		        $sppd->digitalSignatures->where('document_type', 'sppd_' . $f->user_id)->sortByDesc('created_at')->first(),
+		        route('sppd.stream.sppd', ['sppd' => $sppd, 'user_id' => \Vinkla\Hashids\Facades\Hashids::encode($f->user_id)]),
+		    )),
 		);
 		$signedCount = $personnel->filter(fn($p) => $p['signature']?->status->value === 'signed')->count();
 		$anyProcessing = $personnel->contains(fn($p) => $p['signature']?->status->value === 'processing');
@@ -50,7 +59,8 @@
 							<th class="w-12 px-4 py-2.5 text-center">No.</th>
 							<th class="px-4 py-2.5">Nama</th>
 							<th class="w-28 px-4 py-2.5">Peran</th>
-							<th class="w-56 px-4 py-2.5">Status TTE</th>
+							{{-- Tanpa lebar tetap: kolom ini mengambil sisa ruang agar keterangan TTE cukup 2 baris. --}}
+							<th class="px-4 py-2.5">Status TTE</th>
 							<th class="w-28 px-4 py-2.5 text-right">Aksi</th>
 						</tr>
 					</thead>
@@ -68,11 +78,19 @@
 								<td data-label="Peran" class="px-4 py-3">
 									<x-ui.badge :color="$person['role'] === 'Pelaksana' ? 'cyan' : 'slate'">{{ $person['role'] }}</x-ui.badge>
 								</td>
+								{{-- Ringkas 2 baris: badge + peringatan berkas di baris pertama, penanda tangan · waktu di baris kedua. --}}
 								<td data-label="Status TTE" class="stack-block px-4 py-3">
-									<x-sppd.tte-badge :status="$status" :testing="(bool) $person['signature']?->isSimulated()" />
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+										<x-sppd.tte-badge :status="$status" :testing="(bool) $person['signature']?->isSimulated()" />
+										@if ($person['file_missing'])
+											<span class="inline-flex items-center gap-1 text-xs font-medium text-rose-700" title="Berkas TTE tidak ditemukan di server ini.">
+												<i class="fa-solid fa-triangle-exclamation text-[10px]"></i>Berkas tidak ada di server ini
+											</span>
+										@endif
+									</div>
 									@if ($status === 'signed')
 										<span class="mt-1 block text-xs text-slate-500">
-											{{ $person['signature']->signer?->name }}{{ $person['signature']->signed_at ? ' · ' . $person['signature']->signed_at->translatedFormat('d M Y H:i') . ' WITA' : '' }}
+											<span class="font-semibold text-slate-700">{{ $person['signature']->signer?->name }}</span>@if ($person['signature']->signed_at) · <span class="whitespace-nowrap tabular-nums">{{ $person['signature']->signed_at->translatedFormat('d M Y H:i') }} WITA</span>@endif
 										</span>
 									@elseif ($status === 'rejected' && $person['signature']->error_message)
 										<span class="mt-1 block text-xs text-rose-700">{{ $person['signature']->error_message }}</span>

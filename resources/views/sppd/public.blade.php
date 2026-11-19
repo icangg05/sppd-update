@@ -26,12 +26,13 @@
 	$dateRange = $sppd->start_date->isSameDay($sppd->end_date)
 	    ? $sppd->start_date->translatedFormat('d M Y')
 	    : $sppd->start_date->translatedFormat('d M Y') . ' s/d ' . $sppd->end_date->translatedFormat('d M Y');
-	$narratives = array_filter([
+	// Uraian telaah selalu ditampilkan di halaman publik; yang tidak diisi tampil "-".
+	$narratives = [
 	    'Maksud perjalanan' => $sppd->purpose,
 	    'Persoalan' => $sppd->problem,
 	    'Fakta-fakta yang mempengaruhi' => $sppd->facts,
 	    'Analisis' => $sppd->analysis,
-	]);
+	];
 @endphp
 
 <body class="flex min-h-dvh flex-col bg-blue-50 text-slate-900 antialiased">
@@ -75,6 +76,32 @@
 					@endif
 				</p>
 				<p class="mt-2 text-xs text-slate-500">Informasi resmi perjalanan dinas yang dapat dilihat publik (hanya baca).</p>
+
+				{{-- Status TTE per jenis dokumen: orang yang memindai QR dokumen biasanya sedang mengecek
+				     keabsahannya. Sekaligus mengisi ruang di samping QR. Isi chip boleh turun baris di layar sempit. --}}
+				@if ($tteDocs)
+					<ul class="mt-3 flex flex-wrap gap-2" aria-label="Status tanda tangan elektronik dokumen">
+						@foreach ($tteDocs as $doc)
+							@php $done = $doc['signed'] === $doc['total']; @endphp
+							<li @class([
+								'inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded border px-2 py-1 text-xs',
+								'border-emerald-200 bg-emerald-50 text-emerald-800' => $done,
+								'border-slate-200 bg-slate-50 text-slate-600' => ! $done,
+							])>
+								<i @class(['text-[11px]', 'fa-solid fa-circle-check text-emerald-600' => $done, 'fa-regular fa-clock text-slate-400' => ! $done])></i>
+								<span class="font-bold">{{ $doc['label'] }}</span>
+								@if ($done)
+									<span class="tabular-nums">TTE {{ $doc['signed_at'] ? $doc['signed_at']->translatedFormat('d M Y H:i') . ' WITA' : '' }}</span>
+								@else
+									<span>Belum TTE{{ $doc['total'] > 1 ? ' (' . $doc['signed'] . '/' . $doc['total'] . ')' : '' }}</span>
+								@endif
+								@if ($doc['testing'])
+									<span class="rounded-sm bg-rose-600 px-1 text-[9px] font-bold uppercase tracking-wide text-white">Testing</span>
+								@endif
+							</li>
+						@endforeach
+					</ul>
+				@endif
 			</div>
 
 			<figure class="shrink-0 text-center">
@@ -91,6 +118,9 @@
 			<h2 class="{{ $cardTitle }}">
 				<i class="fa-solid fa-address-card text-xs text-primary-100"></i> Informasi Perjalanan
 			</h2>
+			{{-- Berpasangan dua kolom (jumlah sel genap agar tidak ada sel kosong): pelaksana–kepada,
+			     tanggal pelaksanaan–kategori, domain–sifat, pembuat–instansi. Tanggal pengajuan sengaja
+			     tidak ditampilkan di halaman publik. --}}
 			<dl class="{{ $fieldGrid }}">
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Pelaksana</dt>
@@ -98,7 +128,19 @@
 					@if ($sppd->travel_position)
 						<dd class="text-xs text-slate-500">{{ $sppd->travel_position }}</dd>
 					@endif
-					<dd class="font-mono text-xs text-slate-500">{{ $sppd->user->nip ?? '-' }}</dd>
+					{{-- Satu keterangan saja, prioritas: NIP → jabatan ("Anggota DPRD" bagi anggota DPRD) → label role. --}}
+					<dd @class(['text-xs text-slate-500', 'font-mono' => filled($sppd->user->nip)])>{{ $sppd->user->nipOrJabatanLabel() }}</dd>
+				</div>
+				{{-- "Kepada" pada telaah = pejabat penandatangan SPT. --}}
+				<div class="{{ $fieldCell }}">
+					<dt class="{{ $label }}">Kepada <span class="font-normal text-slate-400">(penandatangan SPT)</span></dt>
+					<dd class="{{ $value }}">{{ $sptSigner?->name ?? '-' }}</dd>
+					@if ($sptSignerTitle)
+						<dd class="text-xs text-slate-500">{{ $sptSignerTitle }}</dd>
+					@endif
+					@if ($sptSigner?->nip)
+						<dd class="font-mono text-xs text-slate-500">{{ $sptSigner->nip }}</dd>
+					@endif
 				</div>
 				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Tanggal pelaksanaan</dt>
@@ -127,23 +169,26 @@
 					<dt class="{{ $label }}">Pembuat dokumen</dt>
 					<dd class="{{ $value }}">{{ $sppd->creator?->name ?? '-' }}</dd>
 				</div>
-				{{-- Nama instansi bisa panjang, jadi selebar kartu dan menutup baris ganjil. --}}
-				<div class="{{ $fieldCell }} @lg:col-span-2">
+				<div class="{{ $fieldCell }}">
 					<dt class="{{ $label }}">Instansi pengusul</dt>
 					<dd class="{{ $value }}">{{ $sppd->budget?->department?->name ?? '-' }}</dd>
 				</div>
 			</dl>
 
-			@if ($narratives)
-				<dl class="divide-y divide-slate-200 border-t border-slate-200">
-					@foreach ($narratives as $title => $text)
-						<div class="px-5 py-2.5">
-							<dt class="{{ $label }}">{{ $title }}</dt>
-							<dd class="mt-1 max-w-[75ch] text-sm font-medium leading-relaxed text-slate-800"><x-ui.narrative :text="$text" /></dd>
-						</div>
-					@endforeach
-				</dl>
-			@endif
+			<dl class="divide-y divide-slate-200 border-t border-slate-200">
+				@foreach ($narratives as $title => $text)
+					<div class="px-5 py-2.5">
+						<dt class="{{ $label }}">{{ $title }}</dt>
+						<dd class="mt-1 max-w-[75ch] text-sm font-medium leading-relaxed text-slate-800">
+							@if (filled($text))
+								<x-ui.narrative :text="$text" />
+							@else
+								<span class="text-slate-400">-</span>
+							@endif
+						</dd>
+					</div>
+				@endforeach
+			</dl>
 
 			@if ($sppd->notes)
 				<div class="border-t border-slate-200 px-5 py-2.5">

@@ -78,7 +78,6 @@ return new class extends Migration
           'department_type' => json_encode(self::RS),
           'applicant_role'  => json_encode($applicants),
           'destination'     => json_encode($destination),
-          'supervisor_role' => null,
           'steps'           => json_encode($steps),
           'is_active'       => true,
           'created_at'      => now(),

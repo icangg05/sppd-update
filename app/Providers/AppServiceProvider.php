@@ -15,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Satu pembacaan data.json per request/job.
+        // Pengaturan Aplikasi (tabel app_settings) dibaca sekali per request/job.
         $this->app->scoped(\App\Services\AppSettings::class);
     }
 

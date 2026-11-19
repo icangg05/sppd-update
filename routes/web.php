@@ -193,7 +193,7 @@ Route::middleware('auth')->group(function () {
             // Backup Database — hanya super_admin.
             Route::get('/database/backup', \App\Livewire\DatabaseBackup::class)->name('database.backup');
 
-            // Pengaturan aplikasi (storage/app/public/json/data.json) — hanya super_admin.
+            // Pengaturan aplikasi (tabel app_settings, lihat AppSettings) — hanya super_admin.
             Route::get('/settings', \App\Livewire\AppSettingIndex::class)->name('settings.index');
         });
 

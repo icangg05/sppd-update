@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\DepartmentType;
 use App\Enums\SppdDomain;
+use Illuminate\Support\Collection;
 
 class SppdWorkflow extends Model
 {
@@ -16,7 +17,6 @@ class SppdWorkflow extends Model
         'department_type',
         'applicant_role',
         'destination',
-        'supervisor_role',
         'steps',
         'is_active',
     ];
@@ -26,10 +26,38 @@ class SppdWorkflow extends Model
         'department_type' => 'array',
         'destination' => 'array',
         'applicant_role' => 'array',
-        // Atasan langsung pemohon; null = tidak dibedakan.
-        'supervisor_role' => 'array',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Alur aktif lain yang cakupannya beririsan dengan cakupan ini, beserta irisannya
+     * (tipe instansi × peran pemohon × wilayah). Pada irisan itu sistem hanya memakai alur
+     * yang dibuat lebih dulu (lihat SppdWorkflowService::findWorkflow), jadi alur lainnya
+     * tidak pernah terpakai di sana. Null pada data lama berarti berlaku untuk semua.
+     *
+     * @return Collection<int, array{workflow: self, department_type: ?array, applicant_role: ?array, destination: ?array}>
+     */
+    public static function overlapping(?array $departmentType, ?array $applicantRole, ?array $destination, ?int $exceptId = null): Collection
+    {
+        $intersect = fn (?array $a, ?array $b) => match (true) {
+            $a === null => $b,
+            $b === null => $a,
+            default => array_values(array_intersect($a, $b)),
+        };
+
+        return static::where('is_active', true)
+            ->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))
+            ->orderBy('id')
+            ->get()
+            ->map(fn (self $w) => [
+                'workflow'        => $w,
+                'department_type' => $intersect($departmentType, $w->department_type),
+                'applicant_role'  => $intersect($applicantRole, $w->applicant_role),
+                'destination'     => $intersect($destination, $w->destination),
+            ])
+            ->filter(fn (array $o) => $o['department_type'] !== [] && $o['applicant_role'] !== [] && $o['destination'] !== [])
+            ->values();
+    }
 
     /**
      * Get the role designated to sign SPT.

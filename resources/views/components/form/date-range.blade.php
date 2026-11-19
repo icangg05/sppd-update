@@ -11,8 +11,9 @@
     'wrapperClass' => '',
     // Kirim rentang ke server begitu dipilih (mis. agar daftar lain ikut menyesuaikan).
     'live' => false,
-    // Hari Minggu tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung.
-    'skipSundays' => false,
+    // Hari yang tidak bisa dipilih sebagai tanggal awal/akhir dan tidak ikut dihitung, sebagai
+    // nomor hari (0 = Minggu ... 6 = Sabtu), mis. [0] atau [6, 0]. Lihat SppdDomain::offDays.
+    'offDays' => [],
     // Rentang yang sudah terpakai: [['start' => Y-m-d, 'end' => Y-m-d, 'label' => ...], ...].
     // Tanggalnya tidak bisa dipilih, dan rentang baru tidak bisa melompatinya.
     'blocked' => [],
@@ -35,7 +36,7 @@
             open: false,
             start: @if ($live) @entangle($start).live @else @entangle($start) @endif,
             end: @if ($live) @entangle($end).live @else @entangle($end) @endif,
-            skipSundays: @js((bool) $skipSundays),
+            offDays: @js(array_values(array_map('intval', $offDays))),
             blocked: @js(array_values($blocked)),
             // Tanggal awal yang sudah diklik, menunggu klik tanggal akhir.
             draft: null,
@@ -76,17 +77,21 @@
                 const s = this.parse(this.start);
                 const e = this.parse(this.end || this.start);
                 const total = Math.round((Date.UTC(e.y, e.m, e.d) - Date.UTC(s.y, s.m, s.d)) / 86400000) + 1;
-                if (!this.skipSundays) return total;
+                if (!this.offDays.length) return total;
                 let count = 0;
                 for (let i = 0; i < total; i++) {
                     const dow = new Date(Date.UTC(s.y, s.m, s.d + i)).getUTCDay();
-                    if (dow !== 0) count++;
+                    if (!this.offDays.includes(dow)) count++;
                 }
                 return count;
             },
-            isSunday(iso) {
+            // Hari yang tidak dihitung (Minggu, juga Sabtu bila diatur).
+            isOffDay(iso) {
                 const p = this.parse(iso);
-                return new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay() === 0;
+                return this.offDays.includes(new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay());
+            },
+            get offDaysText() {
+                return this.offDays.includes(6) ? 'Hari Sabtu dan Minggu' : 'Hari Minggu';
             },
             blockOf(iso) {
                 return this.blocked.find((b) => iso >= b.start && iso <= b.end) ?? null;
@@ -97,7 +102,7 @@
                 return this.blocked.map((b) => b.start).filter((s) => s > this.draft).sort()[0] ?? null;
             },
             isOff(iso) {
-                return (this.skipSundays && this.isSunday(iso))
+                return this.isOffDay(iso)
                     || this.blockOf(iso) !== null
                     || (this.limit !== null && iso >= this.limit);
             },
@@ -138,9 +143,9 @@
             },
             bandClass(iso) {
                 if (!this.from || this.from === this.to) return '';
-                // Hari Minggu yang tidak dihitung berada di luar pita (Minggu selalu kolom terakhir,
-                // jadi pita cukup berhenti di Sabtu).
-                if (this.skipSundays && this.isSunday(iso)) return '';
+                // Hari yang tidak dihitung berada di luar pita (Sabtu/Minggu selalu kolom terakhir,
+                // jadi pita cukup berhenti sebelumnya).
+                if (this.isOffDay(iso)) return '';
                 if (iso > this.from && iso < this.to) return 'bg-primary-50';
                 if (iso === this.from) return 'bg-linear-to-r from-transparent from-50% to-primary-50 to-50%';
                 if (iso === this.to) return 'bg-linear-to-l from-transparent from-50% to-primary-50 to-50%';
@@ -151,9 +156,9 @@
                 // Tanggal terpakai SPPD lain: kuning dicoret. Sengaja bukan merah, karena merah
                 // sudah berarti hari Minggu (tanggal merah).
                 if (this.blockOf(iso)) return 'bg-amber-100 text-amber-700 line-through cursor-not-allowed';
-                // Hari Minggu tidak dihitung: selalu merah pudar tanpa latar, termasuk yang berada
+                // Hari yang tidak dihitung: selalu merah pudar tanpa latar, termasuk yang berada
                 // di tengah rentang, agar jelas tidak ikut terhitung.
-                if (this.skipSundays && this.isSunday(iso)) return 'text-rose-300 cursor-not-allowed';
+                if (this.isOffDay(iso)) return 'text-rose-300 cursor-not-allowed';
                 if (this.isOff(iso)) return 'text-slate-300 cursor-not-allowed';
                 if (iso === this.from || (iso === this.to && !this.draft)) return 'bg-primary-600 font-semibold text-white hover:bg-primary-700';
                 if (iso === this.to) return 'bg-primary-100 font-semibold text-primary-800';
@@ -283,7 +288,7 @@
                             </div>
                             <div class="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-500">
                                 <template x-for="(d, di) in ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']" :key="d">
-                                    <div class="py-1" :class="di === 6 && 'text-rose-500'" x-text="d"></div>
+                                    <div class="py-1" :class="(di === 6 || (di === 5 && offDays.includes(6))) && 'text-rose-500'" x-text="d"></div>
                                 </template>
                             </div>
                             <div class="grid grid-cols-7">
@@ -317,8 +322,8 @@
                             Terpakai SPPD lain, tidak bisa dipilih.
                         </span>
                     </template>
-                    <template x-if="skipSundays">
-                        <span class="mt-0.5 block text-slate-500">Hari Minggu tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat atau kembali.</span>
+                    <template x-if="offDays.length">
+                        <span class="mt-0.5 block text-slate-500"><span x-text="offDaysText"></span> tidak dihitung dan tidak bisa dipilih sebagai tanggal berangkat atau kembali.</span>
                     </template>
                 </div>
             </div>

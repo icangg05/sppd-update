@@ -188,7 +188,7 @@
 				</p>
 			</td>
 			<td style="width: 33%;">
-				<p><br />BENDAHARA PENGELUARAN</p>
+				<p><br />{{ strtoupper($pdfData['bendahara_title'] ?? 'Bendahara Pengeluaran') }}</p>
 				<div style="height: 55px;"></div>
 				<p>
 					<span style="font-weight: bold; text-decoration: underline;">

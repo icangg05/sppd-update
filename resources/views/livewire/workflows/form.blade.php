@@ -71,7 +71,7 @@
             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Berlaku Untuk Peran Pemohon <span class="text-rose-500">*</span></label>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('applicant_role') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($roles as $role)
-                <x-form.checkbox wire:model="applicant_role" :value="$role->name" :label="$roleLabelOf($role)" :show-error="false"
+                <x-form.checkbox wire:model.live="applicant_role" :value="$role->name" :label="$roleLabelOf($role)" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
@@ -86,7 +86,7 @@
             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Cakupan Wilayah Tujuan <span class="text-rose-500">*</span></label>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('destination') border-rose-300 @else border-slate-200 @enderror">
               @foreach ($domains as $domain)
-                <x-form.checkbox wire:model="destination" :value="$domain->value" :label="$domain->label()" :show-error="false"
+                <x-form.checkbox wire:model.live="destination" :value="$domain->value" :label="$domain->label()" :show-error="false"
                   wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
               @endforeach
             </div>
@@ -96,34 +96,26 @@
             <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Centang setiap wilayah tujuan yang memakai alur ini. Wilayah yang tidak dicentang tidak memakai alur ini.</p>
           </div>
 
-          {{-- Atasan langsung pemohon: dipilih eksplisit, termasuk "tidak dibedakan". --}}
-          <div class="space-y-1.5">
-            <p class="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">Atasan Langsung Pemohon <span class="text-rose-500">*</span></p>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <x-form.radio wire:model.live="supervisor_mode" name="supervisor_mode" id="supervisor-mode-any" value="any"
-                label="Tidak dibedakan" description="Alur berlaku apa pun jabatan atasan langsung pemohon." :error="false"
-                labelClass="h-full w-full" />
-              <x-form.radio wire:model.live="supervisor_mode" name="supervisor_mode" id="supervisor-mode-specific" value="specific"
-                label="Hanya untuk atasan tertentu" description="Mis. staf beratasan Kabid memakai alur yang dimulai dari Kabid." :error="false"
-                labelClass="h-full w-full" />
-            </div>
-            @if ($supervisor_mode === 'specific')
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-2.5 bg-slate-50 border rounded text-xs @error('supervisor_role') border-rose-300 @else border-slate-200 @enderror">
-                @foreach ($approverRoles as $role)
-                  <x-form.checkbox wire:model="supervisor_role" :value="$role->name" :label="$roleLabelOf($role)" :show-error="false"
-                    wrapper-class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer" />
+          {{-- Cakupan beririsan dengan alur aktif lain: hanya alur yang dibuat lebih dulu yang terpakai,
+               jadi penyimpanan ditolak sampai irisannya dihapus (lihat WorkflowForm::overlaps). --}}
+          @if ($conflicts)
+            <x-ui.alert title="Cakupan ini bentrok dengan alur aktif lain">
+              <p>Pada irisan di bawah, sistem hanya memakai alur yang dibuat lebih dulu, jadi salah satunya tidak akan pernah terpakai. Hapus centang yang beririsan, ubah alur lawannya, atau simpan alur ini dalam keadaan nonaktif dulu.</p>
+              <ul class="mt-2 space-y-1.5">
+                @foreach ($conflicts as $conflict)
+                  <li wire:key="conflict-{{ $conflict['id'] }}">
+                    <a href="{{ route('master.workflows.edit', $conflict['id']) }}" target="_blank" rel="noopener"
+                      class="font-semibold underline underline-offset-2 hover:no-underline">{{ $conflict['name'] }} <i class="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true"></i></a>
+                    <span class="block text-xs">Tipe: {{ $conflict['department_type'] }} · Peran: {{ $conflict['applicant_role'] }} · Wilayah: {{ $conflict['destination'] }}</span>
+                  </li>
                 @endforeach
-              </div>
-              @error('supervisor_role')
-                <p class="text-[11px] font-semibold text-red-600">{{ $message }}</p>
-              @enderror
-            @endif
-            <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Atasan langsung diatur per pegawai saat membuat SPPD. Pemohon yang atasannya belum pasti harus memilih atasannya dulu sebelum SPPD bisa diajukan.</p>
-          </div>
+              </ul>
+            </x-ui.alert>
+          @endif
 
           {{-- Status Keaktifan Aturan --}}
           <div class="pt-1">
-            <x-form.checkbox wire:model="is_active" label="Aktifkan Aturan Perubahan Workflow Langsung"
+            <x-form.checkbox wire:model.live="is_active" label="Aktifkan Aturan Perubahan Workflow Langsung"
               wrapper-class="flex items-center gap-2 font-bold text-xs text-slate-800 cursor-pointer" />
           </div>
         </div>
@@ -137,7 +129,8 @@
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
             <i class="fa-solid fa-diagram-next text-primary-500"></i>Alur Urutan Persetujuan (Steps) <span class="text-rose-500">*</span>
           </h3>
-          <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Gunakan tombol panah untuk mengubah urutan. Tingkat persetujuan terendah adalah Kabid / Irban / Kabag.</p>
+          <p class="text-[10px] text-slate-500 font-medium">Tentukan skema tingkatan peran aparatur penandatangan dari urutan awal hingga akhir. Tingkat persetujuan terendah adalah Kabid / Irban / Kabag.</p>
+          <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-grip-vertical text-primary-500 mr-1"></i>Seret pegangan di kiri tiap tahap untuk mengubah urutan, atau fokuskan lalu tekan panah atas/bawah.</p>
           <p class="text-[10px] text-slate-500 font-medium"><i class="fa-solid fa-circle-info text-primary-500 mr-1"></i>Setiap tahap wajib dijalankan. Pemohon yang tahapnya belum punya pejabat tidak bisa membuat SPPD sampai pejabatnya dilengkapi.</p>
         </div>
 
@@ -161,23 +154,30 @@
             ->concat(collect($externalStepRoles)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values())
             ->all();
         @endphp
-        <div class="space-y-2 max-w-2xl">
+        {{-- Seret-lepas lewat wire:sort (SortableJS bawaan Livewire), hanya dari pegangan.
+             Nomor tahap memakai CSS counter agar langsung ikut berubah selama diseret; salinan
+             yang melayang (mode sentuh) ikut terhitung di akhir daftar, jadi nomornya disembunyikan.
+             Keyboard: panah atas/bawah pada pegangan memindah tahap, fokus ikut ke posisi barunya. --}}
+        <ol wire:sort.ghost="sortStep" x-data="{
+            move(i, dir) {
+              $wire.moveStep(i, dir).then(() => this.$nextTick(() =>
+                this.$refs.steps.querySelectorAll('[data-step-handle]')[i + dir]?.focus()))
+            }
+          }" x-ref="steps" class="flex max-w-2xl flex-col gap-2 [counter-reset:step]">
           @foreach ($steps as $i => $step)
-            <div wire:key="step-{{ $i }}"
-              class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded shadow-sm">
+            {{-- Kunci urut mulai 1: wire:sort menganggap kunci 0 sebagai kosong. --}}
+            <li wire:key="step-{{ $i }}" wire:sort:item="{{ $i + 1 }}"
+              class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded shadow-sm [counter-increment:step] [&.sortable-ghost]:border-dashed [&.sortable-ghost]:border-primary-400 [&.sortable-ghost]:bg-primary-50/60 [&.sortable-ghost]:shadow-none [&.sortable-ghost>*]:invisible [&.sortable-fallback_.step-number]:text-transparent">
               <div class="flex items-center gap-2 flex-1 w-full">
-                <div class="flex flex-col gap-0.5 shrink-0">
-                  <button type="button" wire:click="moveStep({{ $i }}, -1)" @disabled($loop->first)
-                    class="px-1 text-slate-300 hover:text-primary-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Naik">
-                    <i class="fa-solid fa-chevron-up text-[10px]"></i>
-                  </button>
-                  <button type="button" wire:click="moveStep({{ $i }}, 1)" @disabled($loop->last)
-                    class="px-1 text-slate-300 hover:text-primary-600 disabled:opacity-30 disabled:hover:text-slate-300" title="Turun">
-                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                  </button>
-                </div>
-                <div class="step-number w-6 h-6 flex items-center justify-center bg-slate-200 border border-slate-300 text-slate-700 font-black rounded text-[11px] shrink-0 shadow-inner">
-                  {{ $i + 1 }}
+                {{-- Span (bukan <button>): Firefox tidak memulai seret native dari tombol. --}}
+                <span role="button" tabindex="0" wire:sort:handle data-step-handle
+                  x-on:keydown.arrow-up.prevent="move({{ $i }}, -1)" x-on:keydown.arrow-down.prevent="move({{ $i }}, 1)"
+                  class="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 active:cursor-grabbing focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                  title="Seret untuk mengubah urutan" aria-label="Pindahkan tahap {{ $i + 1 }}: seret, atau tekan panah atas/bawah">
+                  <i class="fa-solid fa-grip-vertical text-xs"></i>
+                </span>
+                <div aria-hidden="true"
+                  class="step-number w-6 h-6 flex items-center justify-center bg-slate-200 border border-slate-300 text-slate-700 font-black rounded text-[11px] shrink-0 shadow-inner before:content-[counter(step)]">
                 </div>
 
                 <div class="flex-1">
@@ -209,9 +209,9 @@
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               </div>
-            </div>
+            </li>
           @endforeach
-        </div>
+        </ol>
       </div>
     </div>
 

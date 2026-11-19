@@ -85,7 +85,8 @@
 
 				{{-- Salin tautan publik sekali klik. Clipboard API hanya ada di konteks aman (https/localhost);
 				     di luar itu disalin lewat textarea sementara. Label "Tersalin" ditumpuk di sel yang sama
-				     dengan label awal agar lebar tombol tidak berubah. --}}
+				     dengan label awal agar lebar tombol tidak berubah. Berhasil cukup ditandai label tombol
+				     (tanpa toast); toast hanya muncul bila gagal, untuk menampilkan link yang disalin manual. --}}
 				<button type="button" @click="copy()" :title="url" aria-label="Salin link publik SPPD"
 					x-data="{
 						copied: false,
@@ -109,7 +110,6 @@
 							this.copied = true;
 							clearTimeout(this.timer);
 							this.timer = setTimeout(() => this.copied = false, 2000);
-							this.$dispatch('toast', { type: 'success', message: 'Link publik disalin. Tempel di pesan untuk dibagikan.' });
 						},
 					}"
 					class="{{ $secondaryBase }}" :class="copied ? 'border-emerald-300 text-emerald-700' : 'border-slate-300 text-slate-700'">
@@ -187,7 +187,8 @@
 							@if ($sppd->travel_position)
 								<span class="block text-xs text-slate-500">{{ $sppd->travel_position }}</span>
 							@endif
-							<span class="block font-mono text-xs text-slate-500">{{ $sppd->user->nip ?? '-' }}</span>
+							{{-- Satu keterangan saja, prioritas: NIP → jabatan ("Anggota DPRD" bagi anggota DPRD) → label role. --}}
+							<span @class(['block text-xs text-slate-500', 'font-mono' => filled($sppd->user->nip)])>{{ $sppd->user->nipOrJabatanLabel() }}</span>
 						</dd>
 					</div>
 					<div class="{{ $fieldCell }}">
@@ -473,6 +474,7 @@
 					$myFailedSignature = $sppd->digitalSignatures
 					    ->where('signer_id', auth()->id())
 					    ->where('status', \App\Enums\SignatureStatus::REJECTED)
+					    ->sortByDesc('updated_at')
 					    ->first();
 				@endphp
 				<section class="dash-enter overflow-hidden rounded border border-primary-200 bg-white shadow-sm">
@@ -519,26 +521,21 @@
 								@php
 									$parsedError = $this->parseTteError($myFailedSignature->error_message);
 								@endphp
-								<div
-									class="mb-4 rounded border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800 shadow-2xs leading-normal">
-									<div class="flex gap-2.5">
-										<i class="fa-solid {{ $parsedError['icon'] }} text-rose-600 text-sm mt-0.5 shrink-0"></i>
-										<div>
-											<p class="font-bold">Gagal Melakukan TTE:</p>
-											<p class="mt-0.5">{{ $parsedError['message'] }}</p>
-										</div>
-									</div>
-								</div>
+								<x-ui.alert class="mb-4" :icon="$parsedError['icon']" :title="$parsedError['title']">
+									<p class="break-words">{{ $parsedError['message'] }}</p>
+									{{-- Pesan ini tetap tampil sampai TTE diulang; waktunya membedakan kegagalan lama dari yang baru. --}}
+									<p class="mt-2 text-xs opacity-80">
+										Gagal pada {{ $myFailedSignature->updated_at->translatedFormat('d M Y H:i') }} WITA
+									</p>
+								</x-ui.alert>
 							@endif
 
 							@if ($needsTte)
 								@if (!auth()->user()->nik)
-									<div class="mb-4 rounded border border-rose-200 bg-rose-50 p-3">
-										<p class="text-xs font-bold text-rose-800"><i class="fa-solid fa-triangle-exclamation mr-1"></i> NIK Belum
-											Terdaftar</p>
-										<p class="text-xs text-rose-700 mt-1 leading-normal">Profil Anda belum memiliki NIK. Silakan lengkapi
-											terlebih dahulu.</p>
-									</div>
+									<x-ui.alert class="mb-4" icon="fa-id-card" title="NIK belum terdaftar">
+										TTE memerlukan NIK. Lengkapi di halaman
+										<a href="{{ route('profile') }}" wire:navigate class="font-semibold underline underline-offset-2">Profil</a>.
+									</x-ui.alert>
 								@else
 									<div class="mb-4 rounded border border-primary-100 bg-primary-50 p-3">
 										<p class="text-xs font-bold text-primary-900"><i class="fa-solid fa-file-signature mr-1"></i> Penandatanganan

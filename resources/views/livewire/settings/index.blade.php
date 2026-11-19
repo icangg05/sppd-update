@@ -16,7 +16,7 @@
       </span>
       <h1 class="text-xl font-bold tracking-tight text-slate-800">Pengaturan Aplikasi</h1>
       <p class="mt-1 text-xs text-slate-500">
-        Nilai disimpan di <code class="font-mono text-[11px] text-slate-600">storage/app/private/{{ \App\Services\AppSettings::PATH }}</code>.
+        Nilai disimpan di database (tabel <code class="font-mono text-[11px] text-slate-600">app_settings</code>) dan ikut Backup Database.
       </p>
     </div>
   </div>
@@ -30,6 +30,7 @@
           $editable = array_key_exists($key, $values);
           $isUrl = is_string($item['value']) && filter_var($item['value'], FILTER_VALIDATE_URL);
           $isNumber = in_array('integer', $definitions[$key]['rules'] ?? [], true);
+          $options = $definitions[$key]['options'] ?? null;
         @endphp
         <div wire:key="setting-{{ $key }}" class="grid gap-3 px-4 py-4 md:grid-cols-[16rem_1fr] md:gap-6">
           <div class="min-w-0">
@@ -41,7 +42,25 @@
           </div>
 
           <div class="min-w-0">
-            @if ($editable && $isNumber)
+            @if ($editable && $options)
+              {{-- Daftar centang: nilai tersimpan = key opsi yang dicentang. --}}
+              <div @class([
+                'grid grid-cols-1 gap-2 rounded border bg-slate-50 p-2.5 sm:grid-cols-2 lg:grid-cols-3',
+                'border-rose-300' => $errors->has("values.{$key}") || $errors->has("values.{$key}.*"),
+                'border-slate-200' => ! $errors->has("values.{$key}") && ! $errors->has("values.{$key}.*"),
+              ])>
+                @foreach ($options as $optionValue => $optionLabel)
+                  <x-form.checkbox wire:model="values.{{ $key }}" :value="$optionValue" :label="$optionLabel" :show-error="false"
+                    wrapper-class="[&>label]:flex [&>label]:w-full [&>label]:cursor-pointer" />
+                @endforeach
+              </div>
+              @error("values.{$key}")
+                <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+              @enderror
+              @error("values.{$key}.*")
+                <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
+              @enderror
+            @elseif ($editable && $isNumber)
               <x-form.input type="number" wire:model="values.{{ $key }}" min="1" max="100"
                 wrapperClass="max-w-40" class="font-mono tabular-nums" />
             @elseif ($editable)
@@ -54,7 +73,7 @@
               @endif
             @else
               <pre class="overflow-x-auto rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600">{{ json_encode($item['value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
-              <p class="mt-1 text-xs text-slate-500">Nilai berupa daftar/objek, ubah langsung di file JSON.</p>
+              <p class="mt-1 text-xs text-slate-500">Nilai berupa daftar/objek, tidak bisa diubah dari halaman ini.</p>
             @endif
           </div>
         </div>

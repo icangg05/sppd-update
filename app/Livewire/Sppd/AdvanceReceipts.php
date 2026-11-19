@@ -6,7 +6,6 @@ use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdAdvanceReceipt;
 use App\Models\SppdRequest;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -21,6 +20,7 @@ class AdvanceReceipts extends Component
 
   public SppdRequest $sppd;
   public bool $hasBendahara = false;
+  public bool $hasKpa = false;
 
   /** Peta user_id => nominal panjar (digit murni sebagai string). */
   public array $amounts = [];
@@ -33,10 +33,9 @@ class AdvanceReceipts extends Component
     $this->authorizeCostMenu($sppd);
 
     $this->sppd = $sppd;
-    $this->hasBendahara = User::whereHas('position', fn ($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $sppd->user->department_id)
-      ->where('is_active', true)
-      ->exists();
+    // Bendahara & KPA (Setuju Bayar) SPPD ini, dipilih untuk pelaksana atau di Portal Dokumen.
+    $this->hasBendahara = (bool) $sppd->bendahara_id;
+    $this->hasKpa = (bool) $sppd->kpa_id;
 
     foreach ($this->people() as $person) {
       $receipt = $sppd->advanceReceipts->where('user_id', $person['id'])->first();

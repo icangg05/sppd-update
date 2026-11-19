@@ -5,7 +5,9 @@
 	@php
 		$sptSignature = $sppd->signatureFor('spt');
 		$sptStatus = $sptSignature?->status->value;
+		// Sudah TTE → tautan langsung ke berkas bertanda tangan (tanpa stream).
 		$isSigned = $sptStatus === 'signed' && $sptSignature->signed_file_path;
+		$fileMissing = $isSigned && ! Storage::disk('public')->exists($sptSignature->signed_file_path);
 		$sptUrl = $isSigned ? Storage::url($sptSignature->signed_file_path) : route('sppd.stream.spt', $sppd);
 		$sptDate = $sppd->spt_date ?? $sppd->created_at;
 	@endphp
@@ -33,6 +35,11 @@
 					<dd class="mt-1"><x-sppd.tte-badge :status="$sptStatus" :testing="(bool) $sptSignature?->isSimulated()" /></dd>
 					@if ($sptStatus === 'rejected' && $sptSignature->error_message)
 						<dd class="mt-1 text-xs text-rose-700">{{ $sptSignature->error_message }}</dd>
+					@endif
+					@if ($fileMissing)
+						<dd class="mt-1 text-xs text-rose-700">
+							<i class="fa-solid fa-triangle-exclamation mr-1"></i>Berkas TTE tidak ditemukan di server ini.
+						</dd>
 					@endif
 				</div>
 				<div class="bg-white px-5 py-3">

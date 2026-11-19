@@ -381,12 +381,7 @@
 		icon="fa-solid fa-user-tie text-amber-600" maxWidth="max-w-2xl">
 		@if ($supervisorModal)
 			<div class="space-y-4">
-				<div class="space-y-1">
-					<p class="text-sm text-slate-600">{{ $supervisorModal['intro'] }}</p>
-					@if ($supervisorModal['hint'])
-						<p class="text-xs text-slate-500">{{ $supervisorModal['hint'] }}</p>
-					@endif
-				</div>
+				<p class="text-sm text-slate-600">{{ $supervisorModal['intro'] }}</p>
 
 				<x-form.input wire:model.live.debounce.300ms="supervisorSearch" icon="fa-solid fa-magnifying-glass"
 					loadingTarget="supervisorSearch" placeholder="Cari nama / NIP pejabat..." data-autofocus />
@@ -394,20 +389,12 @@
 				<ul class="max-h-[45vh] divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200">
 					@forelse ($supervisorModal['candidates'] as $row)
 						@php $selected = $row['id'] === $supervisorChoiceId; @endphp
-						{{-- Calon tahap atasan bisa berasal dari beberapa jabatan: dikelompokkan per jabatan. --}}
-						@if ($supervisorModal['hint'] && ($loop->first || $row['role_label'] !== $supervisorModal['candidates'][$loop->index - 1]['role_label']))
-							<li wire:key="supervisor-group-{{ $loop->index }}" class="sticky top-0 bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ $row['role_label'] }}</li>
-						@endif
+						{{-- Nama & keterangan selalu tampil penuh (dibungkus ke baris berikutnya, tidak dipotong). --}}
 						<li wire:key="supervisor-candidate-{{ $row['id'] }}" class="flex items-center gap-3 px-3 py-2 {{ $selected ? 'bg-primary-50' : '' }}">
 							<div class="min-w-0 flex-1 leading-tight">
-								<p class="truncate text-sm font-semibold text-slate-800">
-									{{ $row['name'] }}
-									@if ($row['id'] === $supervisorModal['suggestedId'])
-										<x-ui.badge bg="bg-amber-50" text="text-amber-700" class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold">Dipakai rekan satu unit</x-ui.badge>
-									@endif
-								</p>
-								<p class="truncate text-[11px] text-slate-500">
-									{{-- Nama jabatan lebih jelas dari role (role sudah tampil di judul/kelompok); role bila jabatan kosong. --}}
+								<p class="text-sm font-semibold text-slate-800 wrap-break-word">{{ $row['name'] }}</p>
+								<p class="mt-0.5 text-[11px] text-slate-500 wrap-break-word">
+									{{-- Nama jabatan lebih jelas dari role (role sudah tampil di judul); role bila jabatan kosong. --}}
 									{{ collect([($row['position'] ?? null) ?: ($row['role_label'] ?? null), $row['unit'] ?? null])->filter()->implode(' · ') }}
 								</p>
 							</div>
@@ -423,11 +410,20 @@
 					@endforelse
 				</ul>
 
-				@if ($supervisorModal['colleagues'] > 0)
-					<x-form.checkbox wire:model="supervisorApplyColleagues"
-						:label="'Terapkan juga ke ' . $supervisorModal['colleagues'] . ' rekan di ' . $supervisorModal['unit'] . ' yang belum punya atasan langsung'"
-						wrapper-class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer" />
-				@endif
+				{{-- Calon = pemegang role tahap ini; role-nya mengikuti jabatan pegawai di Data Pegawai. --}}
+				<p class="flex items-start gap-1.5 text-xs leading-relaxed text-slate-500">
+					<i class="fa-solid fa-circle-info mt-0.5 text-slate-400"></i>
+					<span>
+						Nama belum tampil? Atur jabatan pegawainya menjadi {{ $supervisorModal['roleLabel'] }} di
+						@if ($supervisorModal['canManageEmployees'])
+							<a href="{{ route('master.users.index') }}" target="_blank" rel="noopener"
+								class="font-semibold text-primary-700 underline underline-offset-2 hover:text-primary-800">halaman Data Pegawai<i
+									class="fa-solid fa-arrow-up-right-from-square ml-1 text-[9px]"></i></a>.
+						@else
+							halaman Data Pegawai (oleh Admin OPD).
+						@endif
+					</span>
+				</p>
 
 				@if ($supervisorModal['replace'])
 					<p class="text-xs text-slate-500">

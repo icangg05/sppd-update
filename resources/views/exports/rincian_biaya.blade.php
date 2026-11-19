@@ -190,7 +190,7 @@
 					<br />
 					Telah dibayarkan Sejumlah<br />
 					Rp. {{ number_format($grandTotal, 0, ',', '.') }}<br />
-					Bendahara Pengeluaran
+					{{ $pdfData['bendahara_title'] ?? 'Bendahara Pengeluaran' }}
 				</p>
 				<div style="height: 35px;"></div>
 				<p>

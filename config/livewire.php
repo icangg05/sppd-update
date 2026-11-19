@@ -210,7 +210,9 @@ return [
 
   'navigate' => [
     'show_progress_bar' => true,
-    'progress_bar_color' => '#f59e0b',
+    // primary-100: bar selalu tampil di atas header biru, sidebar gelap, atau latar login biru tua.
+    // Bentuknya diatur di resources/css/app.css (#nprogress).
+    'progress_bar_color' => '#d0e9f8',
   ],
 
   /*

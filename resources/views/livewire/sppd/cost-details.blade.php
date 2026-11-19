@@ -3,7 +3,7 @@
     $grandTotal = $sppd->costDetails->sum('total');
     $filledCount = $people->filter(fn ($p) => $sppd->costDetails->where('user_id', $p['id'])->count() > 0)->count();
     $canManage = auth()->user()->canManageCosts();
-    $printReady = $sppd->pptk_id && $hasBendahara;
+    $printReady = $sppd->pptk_id && $hasBendahara && $hasKpa;
     // Tombol ikon kecil per item, sama dengan tombol aksi tabel di halaman lain (Edit kuning, Hapus merah).
     $iconBtn = 'inline-flex size-7 shrink-0 items-center justify-center rounded border text-xs transition-colors focus:outline-none focus-visible:ring-2';
     $uploadHint = 'Format gambar JPG, PNG · maks. ' . app(\App\Services\AppSettings::class)->uploadMaxLabel(true) . ' · dikompres otomatis · opsional';
@@ -15,15 +15,16 @@
         description="Rinci komponen biaya perjalanan tiap pegawai, lalu cetak rinciannya." />
 
     <x-sppd.print-requirements :items="[
-        ['ok' => (bool) $sppd->pptk_id, 'label' => 'PPTK belum diatur.', 'href' => route('sppd.next', $sppd), 'link' => 'Atur di Portal Dokumen'],
-        ['ok' => $hasBendahara, 'label' => 'Belum ada pegawai berjabatan Bendahara Pengeluaran di ' . ($sppd->user->department->name ?? 'instansi ini') . '.'],
+        ['ok' => (bool) $sppd->pptk_id, 'label' => 'PPTK belum dipilih.', 'href' => route('sppd.next', $sppd), 'link' => 'Pilih di Portal Dokumen'],
+        ['ok' => $hasKpa, 'label' => 'Penandatangan Setuju Bayar (KPA) belum dipilih.', 'href' => route('sppd.next', $sppd), 'link' => 'Pilih di Portal Dokumen'],
+        ['ok' => $hasBendahara, 'label' => 'Bendahara belum dipilih.', 'href' => route('sppd.next', $sppd), 'link' => 'Pilih di Portal Dokumen'],
     ]" />
 
     <x-sppd.panel title="Biaya per Pegawai" icon="fa-calculator">
         <x-slot:aside>{{ $filledCount }}/{{ $people->count() }} terisi · Total <span class="font-mono font-semibold text-white">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span></x-slot:aside>
 
         <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <label for="printDate" class="flex items-center gap-2 text-sm text-slate-600">
+            <label for="printDate" class="flex items-center gap-2 text-sm font-medium text-slate-700">
                 Tanggal cetak
                 <input id="printDate" type="date" x-model="printDate"
                     class="rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 shadow-2xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
@@ -39,42 +40,45 @@
         <div class="overflow-x-auto">
             <table class="table-stack w-full border-collapse text-left text-sm">
                 <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600">
                         <th class="w-12 px-4 py-2.5 text-center">No.</th>
                         <th class="w-44 px-4 py-2.5">Pegawai</th>
-                        <th class="px-4 py-2.5">Rincian biaya</th>
-                        <th class="w-36 px-4 py-2.5 text-right">Total</th>
+                        {{-- Sisa lebar tabel untuk kolom rincian, agar tiap item muat satu baris. --}}
+                        <th class="w-full px-4 py-2.5">Rincian biaya</th>
+                        <th class="w-32 px-4 py-2.5 text-right">Total</th>
                         <th class="w-52 px-4 py-2.5 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                {{-- Garis pemisah tegas antarpegawai (tanpa warna berselang-seling); di ponsel tiap baris sudah jadi kartu. --}}
+                <tbody class="divide-y-2 divide-slate-300">
                     @foreach ($people as $index => $person)
                         @php
                             $costs = $sppd->costDetails->where('user_id', $person['id']);
                             $total = $costs->sum('total');
                         @endphp
-                        <tr class="align-top transition-colors hover:bg-slate-50/60">
-                            <td class="stack-hide px-4 py-3 text-center tabular-nums text-slate-500">{{ $index + 1 }}.</td>
-                            <td data-label="Pegawai" class="stack-block px-4 py-3">
-                                <div>
+                        <tr class="align-top transition-colors hover:bg-slate-50">
+                            <td class="stack-hide px-4 py-2 text-center tabular-nums text-slate-700">{{ $index + 1 }}.</td>
+                            <td data-label="Pegawai" class="stack-block px-4 py-2">
+                                {{-- Lebar minimum: kolom rincian mengambil sisa lebar, nama jangan sampai terjepit. --}}
+                                <div class="md:min-w-44">
                                     <span class="block font-semibold text-slate-800">{{ $person['name'] }}</span>
                                     <x-ui.badge :color="$person['label'] === 'Pelaksana' ? 'cyan' : 'slate'" class="mt-1">{{ $person['label'] }}</x-ui.badge>
                                 </div>
                             </td>
-                            <td data-label="Rincian biaya" class="stack-block px-4 py-3">
+                            <td data-label="Rincian biaya" class="stack-block px-4 py-2">
                                 @if ($costs->isNotEmpty())
                                     <ul class="max-w-xl divide-y divide-slate-100 rounded border border-slate-200 bg-white">
                                         @foreach ($costs as $cost)
-                                            {{-- Layar sempit: nominal & tombol turun ke baris kedua, uraian tidak terjepit. --}}
-                                            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-                                                <div class="min-w-0 flex-1 basis-28">
-                                                    <p class="break-words text-slate-800">{{ $cost->description }}</p>
-                                                    <p class="mt-0.5 text-xs text-slate-500">
-                                                        {{ $cost->cost_category->label() }} ·
-                                                        <span class="whitespace-nowrap font-mono tabular-nums">{{ $cost->quantity }} × Rp {{ number_format($cost->unit_cost, 0, ',', '.') }}</span>
-                                                    </p>
-                                                </div>
-                                                <span class="shrink-0 whitespace-nowrap font-mono text-sm tabular-nums text-slate-800">Rp {{ number_format($cost->total, 0, ',', '.') }}</span>
+                                            {{-- Satu baris per item (uraian · kategori, plus jumlah × harga bila jumlahnya bukan 1,
+                                                 karena untuk 1 sama dengan nominalnya) agar hemat ruang; teks panjang membungkus.
+                                                 Layar sempit: nominal & tombol turun ke baris kedua. --}}
+                                            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1">
+                                                <p class="min-w-0 flex-1 basis-40 break-words leading-snug">
+                                                    <span class="font-medium text-slate-900">{{ $cost->description }}</span>
+                                                    <span class="text-xs text-slate-600">· {{ $cost->cost_category->label() }}@if ((float) $cost->quantity !== 1.0) ·
+                                                        <span class="whitespace-nowrap font-mono tabular-nums">{{ $cost->quantity }} × Rp {{ number_format($cost->unit_cost, 0, ',', '.') }}</span>@endif</span>
+                                                </p>
+                                                <span class="shrink-0 whitespace-nowrap font-mono text-sm font-medium tabular-nums text-slate-900">Rp {{ number_format($cost->total, 0, ',', '.') }}</span>
                                                 <span class="flex shrink-0 items-center gap-1">
                                                     @if ($cost->receipt_photo)
                                                         <x-ui.gallery-link :src="asset('storage/' . $cost->receipt_photo)" group="bukti-biaya"
@@ -99,13 +103,13 @@
                                         @endforeach
                                     </ul>
                                 @else
-                                    <span class="text-sm text-slate-500">Belum ada rincian biaya.@if ($canManage) Klik <span class="font-semibold text-slate-700">Tambah</span> untuk mengisi.@endif</span>
+                                    <span class="text-sm text-slate-600">Belum ada rincian biaya.@if ($canManage) Klik <span class="font-semibold text-slate-700">Tambah</span> untuk mengisi.@endif</span>
                                 @endif
                             </td>
-                            <td data-label="Total" class="px-4 py-3 text-right">
-                                <span class="whitespace-nowrap font-mono font-bold tabular-nums {{ $total > 0 ? 'text-slate-800' : 'text-slate-500' }}">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                            <td data-label="Total" class="px-4 py-2 text-right">
+                                <span class="whitespace-nowrap font-mono font-bold tabular-nums {{ $total > 0 ? 'text-slate-900' : 'text-slate-600' }}">Rp {{ number_format($total, 0, ',', '.') }}</span>
                             </td>
-                            <td data-label="Aksi" class="px-4 py-3">
+                            <td data-label="Aksi" class="px-4 py-2">
                                 <div class="flex items-center justify-end gap-1.5">
                                     @if ($canManage)
                                         <x-ui.button type="button" variant="secondary" size="sm"
@@ -117,7 +121,7 @@
                                     @if ($costs->isEmpty())
                                         <x-sppd.print-link disabled reason="Isi rincian biaya terlebih dahulu">Cetak</x-sppd.print-link>
                                     @elseif (!$printReady)
-                                        <x-sppd.print-link disabled reason="Atur PPTK dan bendahara pengeluaran terlebih dahulu">Cetak</x-sppd.print-link>
+                                        <x-sppd.print-link disabled reason="Pilih PPTK, KPA, dan bendahara di Portal Dokumen terlebih dahulu">Cetak</x-sppd.print-link>
                                     @else
                                         <x-sppd.print-link
                                             x-bind:href="'{{ route('sppd.stream.rincian-biaya', ['sppd' => $sppd, 'user_id' => $person['id']]) }}' + '&date=' + printDate">
@@ -130,8 +134,8 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="border-t border-slate-200 bg-slate-50">
-                        <td colspan="3" class="stack-hide px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Total keseluruhan</td>
+                    <tr class="border-t-2 border-slate-300 bg-slate-100">
+                        <td colspan="3" class="stack-hide px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-700">Total keseluruhan</td>
                         <td data-label="Total keseluruhan" class="whitespace-nowrap px-4 py-3 text-right font-mono font-bold tabular-nums text-slate-900">
                             Rp {{ number_format($grandTotal, 0, ',', '.') }}
                         </td>

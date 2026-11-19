@@ -45,6 +45,11 @@ class SppdRequest extends Model
         'transport_name',
         'departure_place',
         'domain',
+        'counts_saturday',
+        'kpa_id',
+        'kpa_label',
+        'bendahara_id',
+        'bendahara_label',
         'urgency',
         'status',
         'document_number',
@@ -69,6 +74,7 @@ class SppdRequest extends Model
             'domain' => SppdDomain::class,
             'status' => SppdStatus::class,
             'is_secretariat' => 'boolean',
+            'counts_saturday' => 'boolean',
         ];
     }
 
@@ -89,6 +95,10 @@ class SppdRequest extends Model
                 'urgency',
                 'budget_id',
                 'pptk_id',
+                'kpa_id',
+                'kpa_label',
+                'bendahara_id',
+                'bendahara_label',
                 'user_id',
                 'category_id',
                 'sppd_date',
@@ -215,6 +225,22 @@ class SppdRequest extends Model
     public function pptk(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pptk_id');
+    }
+
+    /**
+     * Penandatangan Setuju Bayar (KPA) dokumen biaya SPPD ini. Dicatat dari pilihan pegawai pelaksana
+     * saat SPPD diajukan, atau diubah di Portal Dokumen (lihat App\Services\SppdFinanceOfficials).
+     * kpa_label null = SPPD lama: label bawaan dokumen (Pengguna Anggaran / nama jabatan).
+     */
+    public function kpa(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kpa_id');
+    }
+
+    /** Bendahara dokumen biaya SPPD ini; bendahara_label = jabatannya saat dipilih. */
+    public function bendahara(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'bendahara_id');
     }
 
     public function budget(): BelongsTo
@@ -348,6 +374,31 @@ class SppdRequest extends Model
             ->where('status', ApprovalStatus::APPROVED)
             ->where(fn ($q) => $q->where('signs_spt', true)->orWhere('signs_sppd', true))
             ->update(['status' => ApprovalStatus::PENDING, 'acted_at' => null, 'notes' => null]);
+    }
+
+    /**
+     * Tahap persetujuan yang menandatangani SPT ("Kepada" pada telaah): tahap bertanda
+     * signs_spt, atau tahap terakhir bila alur tidak menandai satu pun. Dipakai bersama
+     * oleh PDF SPT (pratinjau & draft TTE) dan halaman publik agar namanya selalu sama.
+     */
+    public function sptApproval(): ?SppdApproval
+    {
+        return $this->approvals()->where('signs_spt', true)->first()
+            ?? $this->approvals()->reorder('step_order', 'desc')->first();
+    }
+
+    /** Jabatan penandatangan SPT seperti yang tercetak di SPT. */
+    public static function sptSignerTitle(?SppdApproval $approval): string
+    {
+        $approver = $approval?->approver;
+        if ($approver && $approver->isDprdMember() && $approver->dprd_jabatan) {
+            return $approver->dprd_jabatan;
+        }
+
+        return $approver?->position_name
+            ?? $approver?->position?->name
+            ?? $approval?->role_label
+            ?? 'Kepala Dinas';
     }
 
     public function signatureFor(string $documentType): ?SppdDigitalSignature
@@ -567,14 +618,25 @@ class SppdRequest extends Model
     }
 
     /**
-     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung hari Minggu
-     * (lihat SppdDomain::travelDays).
+     * Lama perjalanan dalam hari. Dalam daerah tidak menghitung hari Minggu, juga Sabtu bila
+     * instansi pelaksana tidak menghitung Sabtu (lihat SppdDomain::travelDays).
      */
     public function durationInDays(): int
     {
         return $this->domain
-            ? $this->domain->travelDays($this->start_date, $this->end_date)
+            ? $this->domain->travelDays($this->start_date, $this->end_date, $this->countsSaturday())
             : (int) $this->start_date->diffInDays($this->end_date) + 1;
+    }
+
+    /**
+     * Apakah lama perjalanan SPPD ini menghitung hari Sabtu. Dicatat saat SPPD diajukan/diubah
+     * (Department::countsSaturdayOnTrips), jadi lama hari di dokumen yang sudah terbit tidak
+     * berubah bila Pengaturan Aplikasi diubah belakangan. SPPD sebelum pengaturan ini (null)
+     * dibuat saat Sabtu masih dihitung untuk semua instansi.
+     */
+    public function countsSaturday(): bool
+    {
+        return $this->counts_saturday ?? true;
     }
 
     /*

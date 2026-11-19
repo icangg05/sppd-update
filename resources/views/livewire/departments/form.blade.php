@@ -53,7 +53,7 @@
     <div>
       <p class="mb-1 font-bold text-primary-700">Panduan menyusun struktur</p>
       <ul class="list-disc space-y-0.5 pl-4">
-        <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk Pengampu". Kode, tipe, & kop surat diatur di tingkat ini.</li>
+        <li><strong>OPD baru (induk):</strong> kosongkan "Instansi Induk". Kode, tipe, & kop surat diatur di tingkat ini.</li>
         <li><strong>Sub-unit</strong> hanya untuk unit yang punya pejabat, kop surat, anggaran, atau admin sendiri: Kelurahan di bawah Kecamatan, Puskesmas di bawah Dinas Kesehatan, serta Asisten → Bagian → Subbagian di Sekretariat Daerah.</li>
         <li>Bidang/Seksi di Dinas tidak perlu dibuat: pegawainya cukup di instansi induk, dan Kabid sebagai penyetuju dipilih lewat atasan langsung.</li>
       </ul>
@@ -92,7 +92,7 @@
         {{-- Instansi Induk --}}
         <div class="space-y-0.5">
           @if ($parentLocked)
-            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Instansi Induk Pengampu</label>
+            <label class="mb-1.5 block text-xs font-bold tracking-wide text-slate-600 uppercase">Instansi Induk</label>
             <div class="rounded border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-500">
               {{ $department->parent?->name ?? 'Tidak ada (Top-level)' }}
             </div>
@@ -108,7 +108,7 @@
                 ->all();
             @endphp
             <x-form.searchable-select wire:model.live="parent_id" name="parent_id"
-              label="Instansi Induk Pengampu" :options="$parentOptions"
+              label="Instansi Induk" :options="$parentOptions"
               placeholder="— Pilih Instansi Induk —" searchPlaceholder="Cari instansi induk..."
               :required="! $isSuperAdmin" />
             <p class="text-[10px] text-slate-500 font-medium mt-0.5">
@@ -189,16 +189,25 @@
           <p class="text-xs text-slate-500">Dipakai pada dokumen cetak. Sub-unit dapat mewarisi kop dari induk.</p>
         </div>
       </header>
+      @php
+        // Pilihan rasio di jendela crop: bebas, atau 5:1 sesuai rekomendasi cetak 1000x200 px.
+        $kopRatios = ['Bebas' => null, '5 : 1 (1000×200)' => 5];
+        // Kop dicetak selebar halaman: ruang kosong di sekelilingnya ikut tercetak.
+        $kopTipTitle = 'Crop pas mengikuti isi kop';
+        $kopTip = 'Tepi kotak crop sebaiknya menempel pada logo, tulisan, dan garis kop, tanpa ruang kosong di kiri, atas, kanan, maupun bawah. Ruang kosong ikut tercetak sehingga kop tampak lebih kecil.';
+      @endphp
       <div class="grid grid-cols-1 gap-x-4 gap-y-4 p-5 sm:p-6 md:grid-cols-2">
 
         {{-- Unggah Kop Surat Utama — tersedia untuk semua unit. Sub-unit yang
              dikosongkan akan otomatis mewarisi kop instansi induknya. --}}
         <div class="space-y-1.5 {{ $type === 'dprd' ? 'md:col-span-1' : 'md:col-span-2' }}">
-          <x-form.file wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)" accept="image/*"
+          <x-form.image-crop wire:model="letterhead" label="Kop Surat Utama / SPPD (PNG/JPG/WEBP)"
+            title="Crop Kop Surat Utama" :ratios="$kopRatios" :tip-title="$kopTipTitle" :tip="$kopTip"
             hint="{{ $isRoot
-              ? 'Rekomendasi rasio cetak 1000x200 pixel. Kop surat ini digunakan pada dokumen SPPD.'
-              : 'Rekomendasi rasio cetak 1000x200 pixel. Kosongkan untuk mengikuti kop instansi induk.' }}" />
-          @if ($isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
+              ? 'Rekomendasi rasio cetak 1000x200 pixel. Setelah memilih gambar, bagian kop dapat di-crop. Kop surat ini digunakan pada dokumen SPPD.'
+              : 'Rekomendasi rasio cetak 1000x200 pixel. Setelah memilih gambar, bagian kop dapat di-crop. Kosongkan untuk mengikuti kop instansi induk.' }}" />
+          {{-- Selama ada hasil crop yang belum disimpan ($letterhead terisi), kop lama/warisan disembunyikan. --}}
+          @if (! $letterhead && $isEdit && $department->letterhead && \Illuminate\Support\Str::contains($department->letterhead, '/'))
             <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
               <div class="flex items-center justify-between gap-2 mb-1.5">
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kop Aktif (SPPD):</p>
@@ -210,7 +219,7 @@
               <img src="{{ asset('storage/' . $department->letterhead) }}"
                 class="max-h-16 rounded border border-slate-300/70 p-1 bg-white shadow-sm w-full object-contain">
             </div>
-          @elseif ($inheritedLetterhead && \Illuminate\Support\Str::contains($inheritedLetterhead, '/'))
+          @elseif (! $letterhead && $inheritedLetterhead && \Illuminate\Support\Str::contains($inheritedLetterhead, '/'))
             <div class="p-2.5 bg-amber-50 border border-amber-200 rounded w-full">
               <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
                 <i class="fa-solid fa-link mr-1"></i>Kop Saat Ini (diwarisi dari induk):
@@ -225,9 +234,10 @@
         {{-- Kop Surat Kedua — Khusus DPRD --}}
         @if ($type === 'dprd')
           <div class="md:col-span-1 space-y-1.5">
-            <x-form.file wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG)" accept="image/*"
-              hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel." />
-            @if ($isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
+            <x-form.image-crop wire:model="letterhead_second" label="Kop Surat Kedua / SPT (PNG/JPG/WEBP)"
+              title="Crop Kop Surat Kedua (SPT)" :ratios="$kopRatios" :tip-title="$kopTipTitle" :tip="$kopTip"
+              hint="Kop surat ini digunakan khusus pada dokumen SPT anggota DPRD. Rekomendasi rasio cetak 1000x200 pixel; bagian kop dapat di-crop setelah memilih gambar." />
+            @if (! $letterhead_second && $isEdit && $department->letterhead_second && \Illuminate\Support\Str::contains($department->letterhead_second, '/'))
               <div class="p-2.5 bg-slate-50 border border-slate-200 rounded w-full">
                 <div class="flex items-center justify-between gap-2 mb-1.5">
                   <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kop Aktif (SPT):</p>
@@ -252,7 +262,8 @@
         Batal
       </x-ui.button>
 
-      <x-ui.button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
+      {{-- Ikut menunggu unggahan kop selesai: simpan saat unggah berjalan akan melewatkan kop baru. --}}
+      <x-ui.button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save, letterhead, letterhead_second">
         <x-slot name="icon"><i class="fa-solid fa-floppy-disk text-xs"></i></x-slot>
         {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Instansi' }}
       </x-ui.button>

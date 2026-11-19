@@ -57,28 +57,13 @@ class SppdWorkflowService
   /** @var array<int, array{links: array, open: bool}> Rantai atasan per pegawai (per instance). */
   private array $chainCache = [];
 
-  /** Workflow aktif yang berlaku bagi pelaksana dan domain perjalanan. */
+  /** Workflow aktif yang berlaku bagi pelaksana dan domain perjalanan: yang paling spesifik lebih dulu. */
   public function findWorkflow(User $pelaksana, ?string $destination): ?SppdWorkflow
-  {
-    return $this->matchWorkflow($pelaksana, $destination)['workflow'];
-  }
-
-  /**
-   * Workflow untuk pelaksana. Urutan: paling spesifik lebih dulu. Alur yang
-   * membedakan atasan langsung pemohon hanya cocok bila atasan efektifnya sudah
-   * pasti; bila belum, needs_supervisor = true agar atasannya diatur lebih dulu.
-   *
-   * @return array{workflow: ?SppdWorkflow, needs_supervisor: bool, supervisor_role: ?string, supervisor_roles: string[], preview: ?SppdWorkflow}
-   *   supervisor_roles: role atasan dari semua alur yang membedakan atasan;
-   *   preview: alur yang ditampilkan, yaitu workflow, atau bila atasan belum pasti alur
-   *   terpanjang (atasan berperingkat paling rendah) agar tahap atasannya bisa dipilih.
-   */
-  public function matchWorkflow(User $pelaksana, ?string $destination): array
   {
     $departmentType = $pelaksana->department?->type?->value;
     $role = $pelaksana->roles->first()?->name;
 
-    $workflows = SppdWorkflow::where('is_active', true)
+    return SppdWorkflow::where('is_active', true)
       ->where(function ($q) use ($departmentType) {
         $q->whereNull('department_type')->orWhereJsonContains('department_type', $departmentType);
       })
@@ -95,39 +80,10 @@ class SppdWorkflowService
       ->orderByRaw('
                 (department_type IS NOT NULL) +
                 (applicant_role IS NOT NULL) +
-                (destination IS NOT NULL) +
-                (supervisor_role IS NOT NULL) DESC
+                (destination IS NOT NULL) DESC
             ')
       ->orderBy('id')
-      ->get();
-
-    $bySupervisor = $workflows->filter(fn (SppdWorkflow $w) => ! empty($w->supervisor_role));
-    $differentiates = $bySupervisor->isNotEmpty();
-    $level = fn (SppdWorkflow $w) => collect($w->supervisor_role)->map(fn (string $r) => Position::levelForRole($r))->min();
-    $effective = $differentiates ? $this->effectiveSupervisor($pelaksana) : ['status' => 'none', 'user' => null];
-    $supervisorRole = $effective['user'] ? $this->approverRoleOf($effective['user']) : null;
-
-    $workflow = $workflows->first(fn (SppdWorkflow $w) => empty($w->supervisor_role)
-      || ($supervisorRole !== null && in_array($supervisorRole, $w->supervisor_role, true)));
-
-    // Pejabat di antara pegawai dan atasannya belum terdaftar (atau belum ada pejabat sama
-    // sekali di atasnya): pakai alur dengan atasan tertinggi yang masih di bawah atasan
-    // sebenarnya, mis. Sekretaris → Kepala bila Sekretaris belum ada. Tahap yang kosong
-    // tetap wajib dilengkapi sebelum SPPD dibuat. Atasan yang ambigu harus diatur dulu.
-    if (! $workflow && $differentiates && $effective['status'] !== 'unknown') {
-      $ceiling = $supervisorRole ? Position::levelForRole($supervisorRole) : PHP_INT_MIN;
-      $workflow = $bySupervisor->filter(fn (SppdWorkflow $w) => $level($w) > $ceiling)->sortBy($level)->first();
-    }
-
-    $needsSupervisor = ! $workflow && $differentiates && $supervisorRole === null;
-
-    return [
-      'workflow'         => $workflow,
-      'needs_supervisor' => $needsSupervisor,
-      'supervisor_role'  => $supervisorRole,
-      'supervisor_roles' => $bySupervisor->flatMap(fn (SppdWorkflow $w) => $w->supervisor_role)->unique()->values()->all(),
-      'preview'          => $needsSupervisor ? $bySupervisor->sortByDesc($level)->first() : $workflow,
-    ];
+      ->first();
   }
 
   /**
@@ -205,21 +161,14 @@ class SppdWorkflowService
   /**
    * Simulate approval steps for preview purposes without saving.
    * Tahap "choose" membawa bawahan yang tautan atasannya akan diisi saat dipilih.
-   * Bila atasan pemohon belum pasti, yang tampil alur pratinjau (lihat matchWorkflow)
-   * dengan tahap atasannya belum dipilih, jadi alurnya tidak pernah lengkap.
-   * supervisor_step: tahap atasan langsung pemohon pada alur yang dibedakan per atasan.
    */
   public function simulateApprovals(User $pelaksana, ?string $destination = null): array
   {
-    $match = $this->matchWorkflow($pelaksana, $destination);
-    $workflow = $match['preview'];
+    $workflow = $this->findWorkflow($pelaksana, $destination);
 
     if (!$workflow || empty($workflow->steps)) {
       return [];
     }
-
-    $supervisorIndex = empty($workflow->supervisor_role) ? null
-      : collect($this->normalizedSteps($workflow))->search(fn (array $s) => in_array($s['role'], $workflow->supervisor_role, true));
 
     $simulatedSteps = [];
     foreach ($this->normalizedSteps($workflow) as $index => $step) {
@@ -228,20 +177,13 @@ class SppdWorkflowService
       }
 
       $resolved = $this->resolveStep($step['role'], $pelaksana);
-      if ($match['needs_supervisor'] && $index === $supervisorIndex && $resolved['status'] === 'found') {
-        $resolved = $this->resolution('choose', null, collect([$resolved['approver']]));
-      }
       $approver = $resolved['approver'];
-      // Tahap atasan: calonnya sama dengan daftar di modal pilih atasan (sub-unit mana pun di instansi).
-      $candidates = $index === $supervisorIndex && $resolved['status'] === 'choose'
-        ? array_map(fn (array $c) => array_intersect_key($c, array_flip(['id', 'name', 'unit', 'position'])),
-          $this->supervisorCandidates($pelaksana, '', null, 500, [$step['role']]))
-        : $resolved['candidates']->map(fn (User $u) => [
-          'id'       => $u->id,
-          'name'     => $u->name,
-          'unit'     => $u->department?->name,
-          'position' => $u->position?->name,
-        ])->values()->all();
+      $candidates = $resolved['candidates']->map(fn (User $u) => [
+        'id'       => $u->id,
+        'name'     => $u->name,
+        'unit'     => $u->department?->name,
+        'position' => $u->position?->name,
+      ])->values()->all();
       $simulatedSteps[] = [
         'index'         => $index,
         'role'          => $step['role'],
@@ -256,7 +198,6 @@ class SppdWorkflowService
         'candidates'    => $candidates,
         'signs_spt'     => $step['signs_spt'],
         'signs_sppd'    => $step['signs_sppd'],
-        'supervisor_step' => $index === $supervisorIndex,
       ];
     }
 
@@ -434,40 +375,16 @@ class SppdWorkflowService
   }
 
   /**
-   * Atasan langsung efektif: penyetuju pertama di rantai atasan (Kasubag/staf di
-   * tengah rantai dilewati). Dipakai untuk memilih workflow.
-   *
-   * @return array{status: string, user: ?User, source: ?string}
-   *   status: found | unknown (belum pasti, perlu diatur) | none (tidak ada pejabat di atasnya)
-   */
-  public function effectiveSupervisor(User $user): array
-  {
-    $chain = $this->supervisorChain($user);
-
-    foreach ($chain['links'] as $link) {
-      if ($this->approverRoleOf($link['user'])) {
-        return ['status' => 'found', 'user' => $link['user'], 'source' => $link['source']];
-      }
-    }
-
-    return ['status' => $chain['open'] ? 'unknown' : 'none', 'user' => null, 'source' => null];
-  }
-
-  /**
    * Calon atasan langsung: pemegang role penyetuju yang lebih tinggi dari pegawai,
    * di instansinya serta Asisten/Sekda/Wali Kota di Sekretariat Daerah. Yang terdekat
-   * (tingkat paling dekat di atas pegawai) tampil lebih dulu. $onlyRoles membatasi
-   * ke role penyetuju tertentu (beserta sinonimnya).
+   * (tingkat paling dekat di atas pegawai) tampil lebih dulu.
    *
    * @return array<int, array{id:int, name:string, nip:?string, role_label:string, unit:?string, position:?string}>
    */
-  public function supervisorCandidates(User $user, string $search = '', ?int $rank = null, int $limit = 60, ?array $onlyRoles = null): array
+  public function supervisorCandidates(User $user, string $search = '', ?int $rank = null, int $limit = 60): array
   {
     $rank ??= $this->rankOf($user);
     $roles = $this->rolesAbove($rank);
-    if ($onlyRoles !== null) {
-      $roles = array_values(array_intersect($roles, collect($onlyRoles)->flatMap(fn (string $r) => $this->getRoleSynonyms($r))->all()));
-    }
     if ($roles === [] || ! $user->department) {
       return [];
     }
@@ -501,20 +418,6 @@ class SppdWorkflowService
       ])
       ->values()
       ->all();
-  }
-
-  /** Atasan yang dipakai seluruh rekan satu unit dengan peran yang sama, bila semuanya sepakat. */
-  public function suggestedSupervisor(User $user): ?User
-  {
-    $ids = $this->colleagues($user)->whereNotNull('atasan_id')->distinct()->pluck('atasan_id');
-
-    return $ids->count() === 1 ? User::where('is_active', true)->find($ids->first()) : null;
-  }
-
-  /** Rekan satu unit dengan peran yang sama yang belum punya atasan langsung. */
-  public function colleaguesWithoutSupervisor(User $user): Collection
-  {
-    return $this->colleagues($user)->whereNull('atasan_id')->orderBy('name')->get(['id', 'name']);
   }
 
   /**
@@ -556,32 +459,6 @@ class SppdWorkflowService
   }
 
   /**
-   * Atur atasan langsung pegawai, sekaligus rekan satu unit yang belum punya atasan
-   * ($alsoUserIds). Perubahan tercatat di log aktivitas pegawai.
-   *
-   * @throws \RuntimeException
-   */
-  public function setSupervisor(User $user, User $supervisor, array $alsoUserIds = []): void
-  {
-    if ($error = $this->supervisorError($user, $supervisor)) {
-      throw new \RuntimeException($error);
-    }
-
-    $others = $alsoUserIds === [] ? collect() : $this->colleagues($user)
-      ->whereNull('atasan_id')
-      ->whereIn('id', $alsoUserIds)
-      ->get()
-      ->filter(fn (User $u) => $this->supervisorError($u, $supervisor) === null);
-
-    DB::transaction(function () use ($user, $supervisor, $others) {
-      $user->update(['atasan_id' => $supervisor->id]);
-      $others->each(fn (User $u) => $u->update(['atasan_id' => $supervisor->id]));
-    });
-
-    $this->chainCache = [];
-  }
-
-  /**
    * Pilih pejabat tahap $role: disimpan sebagai atasan bawahan tahap itu (lihat
    * stepSubordinate), sehingga pengajuan berikutnya langsung memakai pejabat ini.
    * Berlaku untuk tahap "choose", dan untuk mengganti pilihan pada tahap terisi
@@ -600,9 +477,11 @@ class SppdWorkflowService
       throw new \RuntimeException("Tahap {$label} tidak dapat dipilih ulang.");
     }
 
-    $allowed = $steps[$position]['status'] === 'choose'
-      ? array_column($steps[$position]['candidates'], 'id')
-      : $this->stepCandidates($role, $pelaksana)->pluck('id')->all();
+    // Calon terdekat hasil penelusuran (tahap "choose") ditambah pemegang role se-struktur instansi.
+    $allowed = array_merge(
+      $steps[$position]['status'] === 'choose' ? array_column($steps[$position]['candidates'], 'id') : [],
+      $this->stepCandidates($role, $pelaksana)->pluck('id')->all(),
+    );
     $approver = in_array($approverId, $allowed, true) ? User::with('roles')->find($approverId) : null;
     if (! $approver) {
       throw new \RuntimeException("Pegawai tersebut bukan {$label} di instansi pelaksana.");
@@ -642,39 +521,21 @@ class SppdWorkflowService
   }
 
   /**
-   * Pilih pejabat tahap atasan (supervisor_step): disimpan sebagai atasan langsung
-   * bawahan tahap itu. Calonnya pemegang role atasan dari semua alur yang berlaku,
-   * jadi memilih Asisten (bukan Kabag) memakai alur untuk pegawai di bawah Asisten.
-   * $alsoUserIds: rekan satu unit pelaksana, hanya bila bawahannya pelaksana sendiri.
-   *
-   * @throws \RuntimeException
+   * Pejabat yang bisa dipilih untuk tahap $role: pemegang role itu di seluruh struktur instansi
+   * pelaksana (Setda → Asisten → Bagian, Dinkes → Puskesmas), jadi pejabat unit lain yang masih
+   * satu lingkup ikut dicalonkan. Role tingkat kota (Sekda, Wali Kota) dari Sekretariat Daerah.
    */
-  public function chooseSupervisorStep(User $pelaksana, ?string $destination, int $supervisorId, array $alsoUserIds = []): User
-  {
-    $step = collect($this->simulateApprovals($pelaksana, $destination))->firstWhere('supervisor_step', true);
-    $subordinate = ($step['subordinate_id'] ?? null) ? User::with(['roles', 'department.parent'])->find($step['subordinate_id']) : null;
-    if (! $subordinate) {
-      throw new \RuntimeException('Alur ini tidak memiliki tahap atasan yang bisa dipilih.');
-    }
-
-    $roles = $this->matchWorkflow($pelaksana, $destination)['supervisor_roles'];
-    $allowed = array_column($this->supervisorCandidates($subordinate, '', null, 500, $roles), 'id');
-    $supervisor = in_array($supervisorId, $allowed, true) ? User::with('roles')->find($supervisorId) : null;
-    if (! $supervisor) {
-      throw new \RuntimeException('Pegawai tersebut bukan calon atasan yang sah.');
-    }
-
-    $this->setSupervisor($subordinate, $supervisor, $subordinate->id === $pelaksana->id ? $alsoUserIds : []);
-
-    return $supervisor;
-  }
-
-  /** Pemegang role tahap di instansi asal calonnya (lihat officialPoolRoot). */
   public function stepCandidates(string $role, User $pelaksana): Collection
   {
-    $root = $this->officialPoolRoot($role, $pelaksana);
+    if (in_array($role, self::CITY_WIDE_ROLES, true) || $this->isExternalStep($role)) {
+      $root = $this->officialPoolRoot($role, $pelaksana);
 
-    return $root ? $this->holders($this->getRoleSynonyms($role), $this->zoneIds($root)) : collect();
+      return $root ? $this->holders($this->getRoleSynonyms($role), $this->zoneIds($root)) : collect();
+    }
+
+    $unitIds = $pelaksana->department?->instansiTreeIds()->all() ?? [];
+
+    return $unitIds ? $this->holders($this->getRoleSynonyms($role), $unitIds) : collect();
   }
 
   /** Role yang bisa dijabat beberapa orang sehingga pejabat tahapnya bisa dipilih ulang. */
@@ -806,17 +667,6 @@ class SppdWorkflowService
     }
 
     return ['user' => null, 'ambiguous' => false];
-  }
-
-  /** Rekan aktif satu unit kerja dengan peran utama yang sama. */
-  private function colleagues(User $user): \Illuminate\Database\Eloquent\Builder
-  {
-    $role = $user->roles->first()?->name;
-
-    return User::where('department_id', $user->department_id)
-      ->where('is_active', true)
-      ->when($user->exists, fn ($q) => $q->whereKeyNot($user->id))
-      ->whereHas('roles', fn ($q) => $q->where('name', $role));
   }
 
   /** Tingkat jabatan pegawai (angka kecil = lebih tinggi), dari role tertingginya. */
@@ -1331,10 +1181,18 @@ class SppdWorkflowService
     }
 
     $fromRoles = $role === 'pimpinan_dprd' ? ['anggota_dprd'] : ['staf'];
+    $stageRoles = $this->getRoleSynonyms($role);
 
     return User::whereIn('department_id', $this->zoneIds($root))
       ->where('is_active', true)
-      ->whereHas('roles', fn ($q) => $q->whereIn('name', $fromRoles));
+      ->where(fn ($q) => $q
+        ->whereHas('roles', fn ($r) => $r->whereIn('name', $fromRoles))
+        // Pegawai yang jabatannya memang jabatan tahap ini tetapi role-nya keliru (mis. Sekretaris
+        // Dewan ber-role Kepala OPD) ikut dicalonkan agar role-nya bisa diluruskan dari wizard.
+        // Akun operasional dan pemegang role tahap itu sendiri tidak termasuk.
+        ->orWhere(fn ($w) => $w
+          ->whereHas('position', fn ($p) => $p->whereIn('default_role', $stageRoles))
+          ->whereDoesntHave('roles', fn ($r) => $r->whereIn('name', [...$stageRoles, 'super_admin', 'admin_opd']))));
   }
 
   /** Jabatan pegawai di unit kerjanya memang memberi role ini (Position::roleForDepartment). */

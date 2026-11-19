@@ -36,6 +36,8 @@ class AppointOfficialTest extends TestCase
         $this->dinas = Department::create(['name' => 'Dinas Sosial', 'type' => DepartmentType::OPD, 'level' => 1]);
         $this->user('sekretaris_opd');
         $this->staf = $this->user('staf');
+        // Staf selalu melewati Kabid: Kabid-nya sudah dipilih, jadi yang dilengkapi hanya Kepala.
+        $this->staf->update(['atasan_id' => $this->user('kabid_irban_kabag')->id]);
     }
 
     private function user(string $role, ?Position $position = null, ?Department $department = null): User
@@ -77,7 +79,26 @@ class AppointOfficialTest extends TestCase
 
         $service->appointOfficial($admin, $this->staf, 'dalam_daerah', 'kepala_opd', $kepala->id);
         $this->assertTrue($kepala->fresh()->hasRole('kepala_opd'));
-        $this->assertSame(['found', 'found'], array_column($service->simulateApprovals($this->staf, 'dalam_daerah'), 'status'));
+        $this->assertSame(['found', 'found', 'found'], array_column($service->simulateApprovals($this->staf, 'dalam_daerah'), 'status'));
+    }
+
+    public function test_pejabat_dengan_role_keliru_tetap_dicalonkan_dan_rolenya_diluruskan(): void
+    {
+        // Kasus Sekwan DPRD: jabatannya benar, tetapi role-nya berubah menjadi role lain.
+        $kepalaDinas = $this->kepalaPosition();
+        $keliru = $this->user('kabid_irban_kabag', $kepalaDinas);
+        $operator = $this->user('admin_opd', $kepalaDinas);
+        $service = app(SppdWorkflowService::class);
+
+        $ids = array_column($service->officialCandidates('kepala_opd', $this->staf), 'id');
+        $this->assertSame($keliru->id, $ids[0]);
+        // Akun operasional tidak ikut dicalonkan walau jabatannya sesuai.
+        $this->assertNotContains($operator->id, $ids);
+
+        $service->appointOfficial($operator, $this->staf, 'dalam_daerah', 'kepala_opd', $keliru->id);
+
+        $this->assertSame(['kepala_opd'], $keliru->fresh()->getRoleNames()->all());
+        $this->assertSame(['found', 'found', 'found'], array_column($service->simulateApprovals($this->staf, 'dalam_daerah'), 'status'));
     }
 
     public function test_jabatan_diubah_sekaligus_saat_menetapkan(): void

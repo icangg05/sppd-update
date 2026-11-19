@@ -8,9 +8,9 @@ use Illuminate\Database\Seeder;
 /**
  * Alur persetujuan SPPD Pemerintah Kota Kendari.
  *
- * Setiap kombinasi tipe instansi × peran pemohon × domain perjalanan × atasan
- * langsung pemohon yang sah dicakup tepat satu alur (dijaga oleh
- * Tests\Feature\SppdWorkflowCoverageTest). Setiap tahap alur wajib dijalankan.
+ * Setiap kombinasi tipe instansi × peran pemohon × domain perjalanan yang sah
+ * dicakup tepat satu alur (dijaga oleh Tests\Feature\SppdWorkflowCoverageTest).
+ * Setiap tahap alur wajib dijalankan.
  *
  * Pola penandatangan (mengikuti pola umum Perkada perjalanan dinas):
  *  - SPT pegawai (eselon III ke bawah) ditandatangani Kepala Perangkat Daerah;
@@ -21,9 +21,9 @@ use Illuminate\Database\Seeder;
  *  - Rumah Sakit: Sekretaris → Direktur (role Kepala OPD). Direktur ke luar daerah
  *    lanjut ke Kepala Dinas Kesehatan (tahap eksternal, lihat
  *    SppdWorkflowService::EXTERNAL_STEP_ROLES) yang menandatangani SPT.
- *  - Tingkat persetujuan terendah Kabid/Irban/Kabag. Staf yang atasan langsungnya
- *    bukan Kabid (mis. staf Sekretariat di bawah Sekretaris) memakai alur tanpa
- *    tahap Kabid: alur dipecah per atasan langsung (lihat byAtasan).
+ *  - Tingkat persetujuan terendah Kabid/Irban/Kabag. Staf & Kasubag selalu melewati
+ *    tahap Kabid, termasuk yang langsung di bawah Sekretaris/Asisten/Sekwan (Kabid-nya
+ *    dipilih saat membuat SPPD).
  */
 class SppdWorkflowSeeder extends Seeder
 {
@@ -34,17 +34,6 @@ class SppdWorkflowSeeder extends Seeder
   private const RUMAH_SAKIT = ['rumah_sakit'];
   private const SETDA     = ['setda', 'asisten', 'bagian', 'subbagian'];
   private const DPRD      = ['dprd'];
-
-  /** Penanda tahap Kabid/Irban/Kabag: alurnya dipecah per atasan langsung pemohon. */
-  private const KABID = '__kabid__';
-
-  /** Label role untuk nama alur (sama dengan label di tabel roles). */
-  private const LABELS = [
-    'kabid_irban_kabag' => 'Kabid / Irban / Kabag',
-    'sekretaris_opd'    => 'Sekretaris OPD',
-    'asisten'           => 'Asisten',
-    'sekwan'            => 'Sekwan',
-  ];
 
   // Domain perjalanan
   private const DALAM_DAERAH = ['dalam_daerah'];
@@ -65,7 +54,7 @@ class SppdWorkflowSeeder extends Seeder
   /** @return array<int, array<string, mixed>> */
   public static function workflows(): array
   {
-    $kabid = self::KABID;
+    $kabid = self::step('kabid_irban_kabag');
 
     // Verifikasi Sekda lalu SPT oleh Wali Kota (luar daerah pimpinan unit & seluruh luar negeri).
     $keWalikota = [self::step('sekda'), self::step('walikota', spt: true)];
@@ -317,34 +306,7 @@ class SppdWorkflowSeeder extends Seeder
       ],
     ];
 
-    return array_map(fn (array $wf) => $wf + ['supervisor_role' => null, 'is_active' => true], self::byAtasan($workflows));
-  }
-
-  /**
-   * Alur bertahap Kabid dipecah dua menurut atasan langsung pemohon: beratasan Kabid
-   * melewati tahap Kabid; beratasan pejabat tahap sesudahnya mulai dari pejabat itu.
-   */
-  private static function byAtasan(array $workflows): array
-  {
-    $result = [];
-    foreach ($workflows as $wf) {
-      $at = array_search(self::KABID, $wf['steps'], true);
-      if ($at === false) {
-        $result[] = $wf;
-        continue;
-      }
-
-      $next = $wf['steps'][$at + 1]['role'];
-      $withKabid = $wf['steps'];
-      $withKabid[$at] = self::step('kabid_irban_kabag');
-      $withoutKabid = $wf['steps'];
-      unset($withoutKabid[$at]);
-
-      $result[] = ['name' => $wf['name'] . ' (atasan ' . self::LABELS['kabid_irban_kabag'] . ')', 'steps' => $withKabid, 'supervisor_role' => ['kabid_irban_kabag']] + $wf;
-      $result[] = ['name' => $wf['name'] . ' (atasan ' . self::LABELS[$next] . ')', 'steps' => array_values($withoutKabid), 'supervisor_role' => [$next]] + $wf;
-    }
-
-    return $result;
+    return array_map(fn (array $wf) => $wf + ['is_active' => true], $workflows);
   }
 
   private static function step(string $role, bool $spt = false, bool $sppd = false): array

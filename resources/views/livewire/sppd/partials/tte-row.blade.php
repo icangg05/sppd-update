@@ -6,9 +6,14 @@
         <x-sppd.tte-badge :status="$sig?->status->value" :testing="(bool) $sig?->isSimulated()" />
     </div>
     <p class="mt-0.5 break-words text-sm font-semibold text-slate-800">{{ $name }}</p>
+    {{-- Belum TTE: tampilkan kerangka kosong selebar format aslinya agar baris tetap rata. --}}
     @if ($sig?->status->value === 'signed' && $sig->signed_at)
         <p class="mt-1 font-mono text-[11px] text-slate-500">
             <i class="fa-regular fa-clock mr-0.5"></i> {{ $sig->signed_at->translatedFormat('d M Y H:i') }} WITA
+        </p>
+    @else
+        <p class="mt-1 font-mono text-[11px] text-slate-400">
+            <i class="fa-regular fa-clock mr-0.5"></i> __ ___ ____ __:__ WITA
         </p>
     @endif
 </div>

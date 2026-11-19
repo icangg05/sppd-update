@@ -107,17 +107,25 @@
 		     ini yang memulai tantangan (execution: execute); widget Cloudflare hanya muncul bila meminta
 		     interaksi dan disembunyikan lagi setelah berhasil, karena Cloudflare tetap menampilkan "Berhasil!".
 		     wire:ignore menjaga iframe dan status centang dari morph Livewire.
-		     Lebar minimum widget normal 300px; kartu di layar HP lebih sempit, jadi pakai ukuran compact. --}}
+		     Lebar minimum widget normal 300px; kartu di layar HP lebih sempit, jadi pakai ukuran compact.
+		     Kunci uji "selalu lolos" (simulated): skrip Cloudflare tidak dimuat, centang langsung memberi token dummy. --}}
 		@if ($turnstileSiteKey)
-			@assets
-				<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
-			@endassets
+			@unless ($turnstileSimulated)
+				@assets
+					<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+				@endassets
+			@endunless
 
 			<div wire:ignore
 				x-data="{
 					widgetId: null,
 					challenge: false,
+					simulated: @js($turnstileSimulated),
 					mount(tries = 0) {
+						if (this.simulated) {
+							this.widgetId = 'simulasi';
+							return;
+						}
 						if (! window.turnstile) {
 							if (tries >= 100) { this.captcha = 'failed'; return; }
 							setTimeout(() => this.mount(tries + 1), 100);
@@ -143,6 +151,10 @@
 					},
 					tick() {
 						this.captcha = 'verifying';
+						if (this.simulated) {
+							setTimeout(() => this.setToken(@js(\App\Services\TurnstileService::DUMMY_TOKEN)), 150);
+							return;
+						}
 						if (this.widgetId !== null) turnstile.execute(this.$refs.widget);
 					},
 					setToken(token) {
@@ -153,7 +165,7 @@
 						this.setToken('');
 						this.captcha = state;
 						this.challenge = false;
-						if (this.widgetId !== null) turnstile.reset(this.widgetId);
+						if (this.widgetId !== null && ! this.simulated) turnstile.reset(this.widgetId);
 					},
 				}"
 				x-init="mount()"

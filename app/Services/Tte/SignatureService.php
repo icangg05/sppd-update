@@ -22,8 +22,20 @@ class SignatureService
 
   public function sign(SppdDigitalSignature $signature, #[\SensitiveParameter] string $passphrase): bool|array
   {
-    // Provider yang benar-benar dipakai (mis. simulasi diaktifkan setelah TTE diajukan);
-    // ikut tersimpan oleh update()/markError() berikutnya, baik berhasil maupun gagal.
+    // Mode TTE dipilih aplikasi saat TTE diajukan (provider_name). Worker queue membaca .env
+    // hanya saat mulai, jadi setelah TTE_SIMULATION diubah tanpa restart keduanya bisa berbeda:
+    // passphrase uji terkirim ke BSrE asli, atau dokumen sungguhan ditandatangani simulasi.
+    // Tolak sebelum menghubungi provider mana pun.
+    $requested = $signature->provider_name;
+    if ($requested && $requested !== $this->providerName()
+      && in_array(SimulatedSignService::PROVIDER, [$requested, $this->providerName()], true)) {
+      throw new \RuntimeException(
+        'Mode TTE di aplikasi dan di worker queue berbeda (TTE_SIMULATION diubah tanpa restart). '
+        . 'Jalankan "docker compose restart", lalu ulangi TTE.'
+      );
+    }
+
+    // Provider yang benar-benar dipakai; ikut tersimpan oleh update()/markError() berikutnya.
     $signature->provider_name = $this->providerName();
 
     $draftFile = $this->pdfGenerator->generateDraft($signature);

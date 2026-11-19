@@ -85,29 +85,4 @@ class DepartmentScopeTest extends TestCase
         $this->assertFalse($scoped->contains($puskesmas->id), 'puskesmas tidak boleh masuk zona dinkes');
         $this->assertSame($puskesmas->id, $puskesmas->getScopeRootDepartment()->id);
     }
-
-    /**
-     * Setuju Bayar cukup diset SEKALI di Dinas → diwarisi sub-unit dalam
-     * (Bidang → Seksi), tanpa diset per unit. Setting terdekat menang.
-     */
-    public function test_setuju_bayar_inherits_from_dinas_root(): void
-    {
-        $dinas = Department::create(['name' => 'Dinas Kominfo', 'type' => DepartmentType::OPD, 'level' => 1, 'can_view_children_data' => true]);
-        $bidang = Department::create(['name' => 'Bidang Aptika', 'type' => DepartmentType::OPD, 'parent_id' => $dinas->id, 'level' => 2, 'can_view_children_data' => true]);
-        $seksi = Department::create(['name' => 'Seksi Persandian', 'type' => DepartmentType::OPD, 'parent_id' => $bidang->id, 'level' => 3, 'can_view_children_data' => true]);
-
-        $signer = User::factory()->create(['is_active' => true, 'department_id' => $dinas->id]);
-        $dinas->update(['setuju_bayar_user_id' => $signer->id, 'setuju_bayar_label' => 'PENGGUNA ANGGARAN']);
-
-        // Seksi 2 level di bawah Dinas tetap dapat penandatangan Dinas.
-        $resolved = $seksi->resolveSetujuBayar();
-        $this->assertSame($signer->id, $resolved['user']?->id);
-        $this->assertSame('PENGGUNA ANGGARAN', $resolved['label']);
-        $this->assertSame($dinas->id, $resolved['opd']->id);
-
-        // Setting lebih dekat (Bidang) menang atas Dinas.
-        $bidangSigner = User::factory()->create(['is_active' => true, 'department_id' => $bidang->id]);
-        $bidang->update(['setuju_bayar_user_id' => $bidangSigner->id]);
-        $this->assertSame($bidangSigner->id, $seksi->fresh()->resolveSetujuBayar()['user']?->id);
-    }
 }

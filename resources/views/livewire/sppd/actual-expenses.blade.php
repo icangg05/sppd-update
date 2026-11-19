@@ -14,7 +14,8 @@
         description="Catat pengeluaran riil tiap pegawai, lalu cetak dokumennya per personel." />
 
     <x-sppd.print-requirements :items="[
-        ['ok' => $hasPptk, 'label' => 'PPTK belum diatur.', 'href' => route('sppd.next', $sppd), 'link' => 'Atur di Portal Dokumen'],
+        ['ok' => $hasPptk, 'label' => 'PPTK belum dipilih.', 'href' => route('sppd.next', $sppd), 'link' => 'Pilih di Portal Dokumen'],
+        ['ok' => $hasKpa, 'label' => 'Penandatangan Setuju Bayar (KPA) belum dipilih.', 'href' => route('sppd.next', $sppd), 'link' => 'Pilih di Portal Dokumen'],
     ]" />
 
     <x-sppd.panel title="Pengeluaran per Pegawai" icon="fa-hand-holding-dollar">
@@ -37,7 +38,7 @@
         <div class="overflow-x-auto">
             <table class="table-stack w-full border-collapse text-left text-sm">
                 <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <tr class="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-600">
                         <th class="w-12 px-4 py-2.5 text-center">No.</th>
                         <th class="w-44 px-4 py-2.5">Pegawai</th>
                         <th class="px-4 py-2.5">Rincian pengeluaran</th>
@@ -45,13 +46,14 @@
                         <th class="w-52 px-4 py-2.5 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                {{-- Garis pemisah tegas antarpegawai (tanpa warna berselang-seling); di ponsel tiap baris sudah jadi kartu. --}}
+                <tbody class="divide-y-2 divide-slate-300">
                     @foreach ($people as $index => $person)
                         @php
                             $expenses = $sppd->actualExpenses->where('user_id', $person['id']);
                             $total = $expenses->sum('amount');
                         @endphp
-                        <tr class="align-top transition-colors hover:bg-slate-50/60">
+                        <tr class="align-top transition-colors hover:bg-slate-50">
                             <td class="stack-hide px-4 py-3 text-center tabular-nums text-slate-500">{{ $index + 1 }}.</td>
                             <td data-label="Pegawai" class="stack-block px-4 py-3">
                                 <div>
@@ -100,8 +102,8 @@
                                     @endif
                                     @if ($expenses->isEmpty())
                                         <x-sppd.print-link disabled reason="Isi pengeluaran terlebih dahulu">Cetak</x-sppd.print-link>
-                                    @elseif (!$hasPptk)
-                                        <x-sppd.print-link disabled reason="Atur PPTK terlebih dahulu">Cetak</x-sppd.print-link>
+                                    @elseif (! $hasPptk || ! $hasKpa)
+                                        <x-sppd.print-link disabled reason="Pilih PPTK dan KPA di Portal Dokumen terlebih dahulu">Cetak</x-sppd.print-link>
                                     @else
                                         <x-sppd.print-link
                                             x-bind:href="'{{ route('sppd.stream.pengeluaran-riil', ['sppd' => $sppd, 'user_id' => Hashids::encode($person['id'])]) }}' + '&date=' + printDate">
@@ -114,7 +116,7 @@
                     @endforeach
                 </tbody>
                 <tfoot>
-                    <tr class="border-t border-slate-200 bg-slate-50">
+                    <tr class="border-t-2 border-slate-300 bg-slate-100">
                         <td colspan="3" class="stack-hide px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Total keseluruhan</td>
                         <td data-label="Total keseluruhan" class="whitespace-nowrap px-4 py-3 text-right font-mono font-bold tabular-nums text-slate-900">
                             Rp {{ number_format($grandTotal, 0, ',', '.') }}

@@ -40,4 +40,23 @@ class TteErrorMessageTest extends TestCase
         $this->assertSame($type, $parsed['type']);
         $this->assertSame($message, $parsed['message']);
     }
+
+    public function test_error_aplikasi_ditampilkan_apa_adanya(): void
+    {
+        // Contoh nyata: draft SPT DPRD gagal dibuat sebelum dikirim ke BSrE (17 Nov 2026).
+        $raw = 'Undefined variable $participants (View: /app/resources/views/exports/spt_dprd.blade.php)';
+        $parsed = app(SppdShow::class)->parseTteError($raw);
+
+        $this->assertSame('aplikasi', $parsed['type']);
+        $this->assertSame('TTE gagal', $parsed['title']);
+        $this->assertSame($raw, $parsed['message']);
+    }
+
+    public function test_job_melewati_batas_waktu_disebut_proses_terhenti(): void
+    {
+        $parsed = app(SppdShow::class)->parseTteError('App\\Jobs\\SendTteSignRequestJob has been attempted too many times.');
+
+        $this->assertSame('sistem', $parsed['type']);
+        $this->assertSame('Proses TTE terhenti', $parsed['title']);
+    }
 }

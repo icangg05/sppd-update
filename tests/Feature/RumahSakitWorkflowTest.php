@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\DepartmentType;
 use App\Livewire\Sppd\SppdCreate;
 use App\Enums\SppdStatus;
-use App\Livewire\Sppd\SetujuBayarSettings;
 use App\Livewire\Sppd\SppdIndex;
 use App\Livewire\UserForm;
 use App\Livewire\UsersIndex;
@@ -210,7 +209,7 @@ class RumahSakitWorkflowTest extends TestCase
             ->assertViewHas('roleOptions', fn (array $options) => collect($options)->firstWhere('value', 'kepala_opd')['label'] === 'Kepala OPD');
     }
 
-    public function test_alur_persetujuan_dan_setuju_bayar_rumah_sakit_memakai_sebutan_direktur(): void
+    public function test_alur_persetujuan_rumah_sakit_memakai_sebutan_direktur(): void
     {
         $superAdmin = $this->user('super_admin', $this->rsud);
 
@@ -227,13 +226,6 @@ class RumahSakitWorkflowTest extends TestCase
             ->assertSeeInOrder(['Direktur Rumah Sakit — Luar Daerah', 'Direktur', '1.', 'Sekretaris', '2.', 'Direktur', '3.', 'Kepala Dinas Kesehatan'])
             ->assertDontSee('Kepala OPD');
 
-        // Setuju Bayar: penandatangan bawaan = Direktur.
-        $sppd = $this->sppd($this->staf, 'lddp');
-        $sppd->update(['status' => SppdStatus::APPROVED]);
-        $operator = $this->user('kasubid_kasubag', $this->rsud);
-        Livewire::actingAs($operator)->test(SetujuBayarSettings::class, ['sppd' => $sppd])
-            ->assertSee('bawaan: Direktur')
-            ->assertDontSee('Kepala OPD');
     }
 
     public function test_migrasi_menyamakan_label_persetujuan_lama_rumah_sakit(): void
@@ -302,6 +294,8 @@ class RumahSakitWorkflowTest extends TestCase
             ->set('department_type', ['rumah_sakit'])
             ->set('applicant_role', ['kepala_opd'])
             ->set('destination', ['lddp'])
+            // Cakupannya sama dengan alur bawaan Direktur Rumah Sakit, jadi disimpan nonaktif.
+            ->set('is_active', false)
             ->set('steps', [
                 ['role' => 'kepala_opd', 'signs_spt' => false, 'signs_sppd' => true],
                 ['role' => 'kepala_opd@dinkes', 'signs_spt' => true, 'signs_sppd' => false],

@@ -30,12 +30,14 @@
           <x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
           Kembali
         </x-ui.button>
-        @can('budget.edit')
-          <x-ui.button href="{{ route('master.budgets.edit', $budget->id) }}" variant="primary">
-            <x-slot name="icon"><i class="fa-solid fa-pen-to-square"></i></x-slot>
-            Edit Data
-          </x-ui.button>
-        @endcan
+        @if ($budget->isManageableBy(auth()->user()))
+          @can('budget.edit')
+            <x-ui.button href="{{ route('master.budgets.edit', $budget->id) }}" variant="primary">
+              <x-slot name="icon"><i class="fa-solid fa-pen-to-square"></i></x-slot>
+              Edit Data
+            </x-ui.button>
+          @endcan
+        @endif
       </div>
     </div>
   </div>

@@ -119,13 +119,11 @@ class PdfGeneratorService
     protected function buildSptData(SppdRequest $sppd): array
     {
         $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-        $sptApproval = $this->resolveSptApproval($sppd);
+        $sptApproval = $sppd->sptApproval();
         $duration = $sppd->durationInDays();
 
         $approver = $sptApproval?->approver;
-        $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
-            ? $approver->dprd_jabatan
-            : ($approver?->position_name ?? $approver?->position?->name ?? $sptApproval?->role_label ?? 'Kepala Dinas');
+        $approverRole = SppdRequest::sptSignerTitle($sptApproval);
 
         // Syarat format DPRD harus sama dengan pratinjau SPT (SppdController::streamSpt).
         $isDprd = $sppd->usesDprdSptFormat();
@@ -161,17 +159,6 @@ class PdfGeneratorService
                 'participants' => $isDprd ? $sppd->sptDprdParticipants() : collect(),
             ],
         ];
-    }
-
-    private function resolveSptApproval(SppdRequest $sppd)
-    {
-        $approval = $sppd->approvals()->where('signs_spt', true)->first();
-        if ($approval) {
-            return $approval;
-        }
-
-        // Fallback: last step
-        return $sppd->approvals()->reorder('step_order', 'desc')->first();
     }
 
     private function resolveSppdApproval(SppdRequest $sppd, ?\App\Models\User $targetUser = null)

@@ -7,7 +7,6 @@ use App\Enums\PositionScope;
 use App\Enums\PositionTier;
 use App\Enums\SppdStatus;
 use App\Livewire\PositionFormModal;
-use App\Livewire\Sppd\PptkSelector;
 use App\Livewire\Sppd\SppdCreate;
 use App\Livewire\Sppd\SppdCreateDetails;
 use App\Livewire\UserForm;
@@ -491,13 +490,9 @@ class TenagaMitraTest extends TestCase
         $tenagaMitra = $this->tenagaMitra();
         $sppd = $this->sppd('Rapat koordinasi');
 
-        $result = Livewire::actingAs($this->admin)->test(PptkSelector::class, ['sppd' => $sppd])
-            ->instance()
-            ->searchPptk('');
-
-        $ids = array_column($result['options'], 'value');
-        $this->assertContains((string) $this->staf->id, $ids);
-        $this->assertNotContains((string) $tenagaMitra->id, $ids);
+        $ids = app(\App\Services\SppdFinanceOfficials::class)->candidates($sppd->user, 'pptk')->pluck('id');
+        $this->assertContains($this->staf->id, $ids);
+        $this->assertNotContains($tenagaMitra->id, $ids);
     }
 
     public function test_tenaga_mitra_tidak_punya_akun_login(): void

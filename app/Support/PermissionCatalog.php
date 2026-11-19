@@ -24,7 +24,7 @@ final class PermissionCatalog
     ],
     'Menu Selanjutnya (Biaya Perjalanan)' => [
       'cost.view' => ['Buka menu Selanjutnya', 'Melihat dan mencetak dokumen SPPD/SPT, kuitansi, pengeluaran riil, rincian biaya, dan laporan.'],
-      'cost.manage' => ['Kelola biaya perjalanan', 'Mengisi PPTK, Setuju Bayar, panjar, pengeluaran riil, rincian biaya, dan laporan perjalanan. Hanya berlaku bila Buka menu Selanjutnya juga dicentang.'],
+      'cost.manage' => ['Kelola biaya perjalanan', 'Memilih PPTK, KPA, dan bendahara SPPD, serta mengisi panjar, pengeluaran riil, rincian biaya, dan laporan perjalanan. Hanya berlaku bila Buka menu Selanjutnya juga dicentang.'],
     ],
     'Dokumen' => [
       'document.verify' => ['Cek Dokumen TTE', 'Memeriksa keaslian dokumen ber-TTE ke BSrE.'],

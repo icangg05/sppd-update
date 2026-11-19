@@ -15,6 +15,17 @@
 @custom-variant short (@media (min-width: 64rem) and (max-height: 760px));
 @custom-variant shorter (@media (min-width: 64rem) and (max-height: 600px));
 
+/* Cropper.js (<x-form.image-crop>): kotak crop memakai warna primary. CSS dasarnya dimuat saat
+   cropper pertama kali dibuka; selektor dua kelas di sini tetap menang tanpa bergantung urutan. */
+.image-crop-stage .cropper-view-box {
+  outline-color: color-mix(in srgb, var(--color-primary-500) 80%, transparent);
+}
+
+.image-crop-stage .cropper-line,
+.image-crop-stage .cropper-point {
+  background-color: var(--color-primary-500);
+}
+
 /* Goyangan untuk modal non-closeable: memberi tahu user agar menutup lewat tombol */
 @keyframes modal-shake {
   0%, 100% { transform: translateX(0); }
@@ -39,6 +50,21 @@
 
 .toast-card:hover .toast-progress {
   animation-play-state: paused;
+}
+
+/* Progress bar pindah halaman (wire:navigate, NProgress bawaan Livewire). Bar selalu berada di atas
+   latar biru/gelap (header primary-700, sidebar slate-900, latar halaman login), jadi warnanya biru
+   muda terang, menguat ke arah ujung depan. Gaya flat: 3px, tanpa kilau miring bawaan NProgress.
+   Prefiks `html` agar menang atas <style> yang disuntikkan Livewire belakangan saat halaman jalan. */
+html #nprogress .bar {
+  height: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(90deg, var(--color-primary-300), var(--color-primary-100) 75%, #fff);
+}
+
+html #nprogress .peg {
+  box-shadow: 0 0 8px rgb(255 255 255 / 0.55);
+  transform: none;
 }
 
 @theme {

@@ -178,6 +178,8 @@ class LogIndex extends Component
     $fkConfig = [
       'user_id'       => [\App\Models\User::class, 'name'],
       'pptk_id'       => [\App\Models\User::class, 'name'],
+      'kpa_id'        => [\App\Models\User::class, 'name'],
+      'bendahara_id'  => [\App\Models\User::class, 'name'],
       'reviser_id'    => [\App\Models\User::class, 'name'],
       'creator_id'    => [\App\Models\User::class, 'name'],
       'head_id'       => [\App\Models\User::class, 'name'],

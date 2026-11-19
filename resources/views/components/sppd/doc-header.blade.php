@@ -22,7 +22,7 @@
     <div class="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div class="min-w-0">
             <h1 class="text-xl font-bold tracking-tight text-balance text-slate-800">{{ $title }}</h1>
-            <p class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+            <p class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700">
                 <span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-user text-xs text-slate-500"></i>
                     {{ $sppd->user->name }}</span>
                 <span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-calendar text-xs text-slate-500"></i>
@@ -33,7 +33,7 @@
                 @endif
             </p>
             @if ($description)
-                <p class="mt-1.5 text-sm text-slate-500">{{ $description }}</p>
+                <p class="mt-1.5 text-sm text-slate-600">{{ $description }}</p>
             @endif
         </div>
 

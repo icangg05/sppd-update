@@ -298,8 +298,11 @@ class Login extends Component
 
   public function render()
   {
+    $turnstile = app(TurnstileService::class);
+
     return view('livewire.auth.login', [
-      'turnstileSiteKey' => app(TurnstileService::class)->siteKey(),
+      'turnstileSiteKey' => $turnstile->siteKey(),
+      'turnstileSimulated' => $turnstile->simulated(),
     ]);
   }
 }

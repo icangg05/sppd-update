@@ -6,7 +6,6 @@ use App\Enums\CostCategory;
 use App\Http\Controllers\Concerns\AuthorizesSppdAccess;
 use App\Livewire\Concerns\InteractsWithToast;
 use App\Models\SppdRequest;
-use App\Models\User;
 use App\Services\AppSettings;
 use App\Services\ImageCompressor;
 use App\Support\DocumentFolder;
@@ -27,6 +26,7 @@ class CostDetails extends Component
 
   public SppdRequest $sppd;
   public bool $hasBendahara = false;
+  public bool $hasKpa = false;
 
   public bool $showAddModal = false;
   public bool $showEditModal = false;
@@ -70,10 +70,9 @@ class CostDetails extends Component
     $this->bulkCategory = CostCategory::cases()[0]->value;
     $this->selectedUserIds = $this->peopleIds();
 
-    $this->hasBendahara = User::whereHas('position', fn ($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $sppd->user->department_id)
-      ->where('is_active', true)
-      ->exists();
+    // Bendahara & KPA (Setuju Bayar) SPPD ini, dipilih untuk pelaksana atau di Portal Dokumen.
+    $this->hasBendahara = (bool) $sppd->bendahara_id;
+    $this->hasKpa = (bool) $sppd->kpa_id;
   }
 
   protected function validationAttributes(): array

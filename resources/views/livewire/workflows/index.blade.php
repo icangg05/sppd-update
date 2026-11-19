@@ -106,21 +106,6 @@
                       Semua
                     @endif
                   </span>
-                  <span class="block text-slate-500">
-                    <i class="fa-solid fa-user-tie text-slate-500 mr-1 text-[10px]"></i>Atasan langsung:
-                    @if (! empty($w->supervisor_role))
-                      <div class="flex flex-wrap gap-1 mt-0.5 ml-4">
-                        @foreach ($w->supervisor_role as $role)
-                          <span
-                            class="inline-flex items-center rounded bg-amber-50 px-1 py-0.5 text-[9px] font-bold text-amber-800 border border-amber-200">
-                            {{ $labelOf($role) }}
-                          </span>
-                        @endforeach
-                      </div>
-                    @else
-                      Tidak dibedakan
-                    @endif
-                  </span>
                 </div>
               </td>
 

@@ -16,6 +16,17 @@ class TurnstileService
 {
   private const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
+  /**
+   * Kunci uji resmi Cloudflare yang selalu lolos (site key terlihat/tak terlihat + secret).
+   * Dengan pasangan ini Turnstile hanya pura-pura, jadi widget disimulasikan di browser.
+   */
+  private const ALWAYS_PASS_SITE_KEYS = ['1x00000000000000000000AA', '1x00000000000000000000BB'];
+
+  private const ALWAYS_PASS_SECRET_KEY = '1x0000000000000000000000000000000AA';
+
+  /** Token yang dihasilkan widget dengan site key uji (sama seperti keluaran Cloudflare). */
+  public const DUMMY_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX';
+
   /** Site key untuk widget, atau null bila Turnstile tidak aktif. */
   public function siteKey(): ?string
   {
@@ -30,6 +41,16 @@ class TurnstileService
   }
 
   /**
+   * Kunci uji "selalu lolos" terpasang: skrip Cloudflare tidak dimuat, centang langsung
+   * terverifikasi, dan token tidak dikirim ke siteverify. Kunci produksi tidak terpengaruh.
+   */
+  public function simulated(): bool
+  {
+    return in_array($this->siteKey(), self::ALWAYS_PASS_SITE_KEYS, true)
+      && config('services.turnstile.secret_key') === self::ALWAYS_PASS_SECRET_KEY;
+  }
+
+  /**
    * Periksa token ke Cloudflare. Token hanya bisa diverifikasi sekali.
    *
    * `remoteip` sengaja tidak dikirim: opsional, dan di balik proxy IP yang
@@ -41,6 +62,11 @@ class TurnstileService
   {
     if ($token === '') {
       return false;
+    }
+
+    // Secret uji pasti menerima token dummy; tak perlu bolak-balik ke Cloudflare.
+    if ($this->simulated()) {
+      return $token === self::DUMMY_TOKEN;
     }
 
     try {

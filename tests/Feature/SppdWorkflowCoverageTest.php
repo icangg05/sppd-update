@@ -57,10 +57,7 @@ class SppdWorkflowCoverageTest extends TestCase
         $this->assertEqualsCanonicalizing(self::APPLICANT_ROLES, array_values(array_unique(array_merge(...array_values(self::MATRIX)))));
     }
 
-    /**
-     * Tepat satu alur per kombinasi; atau, bila alurnya dibedakan per atasan langsung,
-     * setiap alur memegang jabatan atasan yang berbeda (tidak tumpang tindih).
-     */
+    /** Tepat satu alur per kombinasi tipe instansi × peran pemohon × domain. */
     public function test_setiap_kombinasi_cocok_dengan_tepat_satu_alur(): void
     {
         $workflows = SppdWorkflow::where('is_active', true)->get();
@@ -74,14 +71,7 @@ class SppdWorkflowCoverageTest extends TestCase
                         && in_array($role, $w->applicant_role, true)
                         && in_array($domain, $w->destination, true));
 
-                    $general = $matches->filter(fn (SppdWorkflow $w) => empty($w->supervisor_role));
-                    $bySupervisor = $matches->flatMap(fn (SppdWorkflow $w) => $w->supervisor_role ?? []);
-
-                    $valid = $general->count() === 1
-                        ? $bySupervisor->isEmpty()
-                        : $general->isEmpty() && $bySupervisor->isNotEmpty() && $bySupervisor->duplicates()->isEmpty();
-
-                    if (! $valid) {
+                    if ($matches->count() !== 1) {
                         $problems[] = "{$type} / {$role} / {$domain}: " . $matches->count() . ' alur';
                     }
                 }
@@ -89,13 +79,6 @@ class SppdWorkflowCoverageTest extends TestCase
         }
 
         $this->assertSame([], $problems);
-    }
-
-    public function test_alur_per_atasan_dimulai_dari_pejabat_atasan_itu(): void
-    {
-        foreach (SppdWorkflow::whereNotNull('supervisor_role')->get() as $workflow) {
-            $this->assertSame($workflow->supervisor_role, [collect($workflow->steps)->first()['role']], $workflow->name);
-        }
     }
 
     public function test_tahapan_sesuai_aturan_penandatangan(): void

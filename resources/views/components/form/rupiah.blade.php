@@ -27,7 +27,7 @@
         v: $wire.$entangle(@js($model)),
         format(x) { const n = String(x ?? '').replace(/\D/g, ''); return n === '' ? '' : n.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); },
     }">
-        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-semibold text-slate-500">Rp</span>
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-semibold text-slate-600">Rp</span>
         <input type="text" inputmode="numeric" id="{{ $id }}" autocomplete="off" :value="format(v)"
             @input="v = $event.target.value.replace(/\D/g, ''); $event.target.value = format(v)"
             @keydown="if ($event.key.length === 1 && !$event.ctrlKey && !$event.metaKey && !/[0-9]/.test($event.key)) $event.preventDefault()"

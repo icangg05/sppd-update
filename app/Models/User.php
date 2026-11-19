@@ -56,6 +56,10 @@ class User extends Authenticatable
     'rank_id',
     'position_id',
     'atasan_id',
+    'pptk_id',
+    'kpa_id',
+    'kpa_label',
+    'bendahara_id',
     'dprd_jabatan',
     'partai',
     'photo',
@@ -145,6 +149,7 @@ class User extends Authenticatable
       ->logOnly([
         'name', 'username', 'email', 'nip', 'nik',
         'department_id', 'rank_id', 'position_id', 'atasan_id',
+        'pptk_id', 'kpa_id', 'kpa_label', 'bendahara_id',
         'dprd_jabatan', 'partai', 'is_active',
       ])
       ->logOnlyDirty()
@@ -174,6 +179,25 @@ class User extends Authenticatable
   public function atasan(): BelongsTo
   {
     return $this->belongsTo(self::class, 'atasan_id');
+  }
+
+  /*
+   * PPTK, KPA, dan Bendahara pilihan untuk SPPD pegawai ini sebagai pelaksana: dipilih di Portal
+   * Dokumen dan diingat untuk perjalanan berikutnya (App\Services\SppdFinanceOfficials).
+   */
+  public function pptkChoice(): BelongsTo
+  {
+    return $this->belongsTo(self::class, 'pptk_id');
+  }
+
+  public function kpaChoice(): BelongsTo
+  {
+    return $this->belongsTo(self::class, 'kpa_id');
+  }
+
+  public function bendaharaChoice(): BelongsTo
+  {
+    return $this->belongsTo(self::class, 'bendahara_id');
   }
 
   /** Pegawai yang atasan langsungnya pegawai ini. */
@@ -238,6 +262,19 @@ class User extends Authenticatable
   public function jabatanLabel(string $fallback = '-'): string
   {
     return $this->position?->name ?? $this->primaryRoleLabel($fallback);
+  }
+
+  /**
+   * Satu keterangan di bawah nama pelaksana (detail SPPD & halaman publik), prioritas:
+   * NIP → jabatan ("Anggota DPRD" bagi anggota DPRD) → label role.
+   */
+  public function nipOrJabatanLabel(): string
+  {
+    if (filled($this->nip)) {
+      return $this->nip;
+    }
+
+    return $this->isDprdMember() ? 'Anggota DPRD' : $this->jabatanLabel();
   }
 
   /**

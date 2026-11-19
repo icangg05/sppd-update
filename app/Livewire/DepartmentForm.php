@@ -169,6 +169,8 @@ class DepartmentForm extends Component
       'name'      => 'nama unit kerja',
       'parent_id' => 'instansi induk',
       'type'      => 'tipe entitas',
+      'letterhead'        => 'kop surat utama',
+      'letterhead_second' => 'kop surat kedua',
     ];
   }
 

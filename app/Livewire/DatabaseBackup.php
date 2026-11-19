@@ -34,8 +34,8 @@ class DatabaseBackup extends Component
 
   /**
    * Cek worker lebih awal saat tombol diklik: bila worker mati, tolak langsung
-   * tanpa membuka modal konfirmasi. Bila sehat, kirim event agar modal +
-   * hitung mundur 10 detik dibuka di sisi klien.
+   * tanpa membuka modal konfirmasi. Bila sehat, kirim event agar modal
+   * konfirmasi dibuka di sisi klien.
    */
   public function requestBackup(QueueHealthService $health): void
   {
@@ -49,7 +49,7 @@ class DatabaseBackup extends Component
 
   public function createBackup(QueueHealthService $health, DatabaseBackupService $service): void
   {
-    // Gerbang otoritatif: tolak bila worker mati (mis. mati selama 10 detik jeda).
+    // Gerbang otoritatif: tolak bila worker mati (mis. mati saat modal konfirmasi terbuka).
     if (! $health->isWorkerHealthy()) {
       $this->toastError($this->queueDownMessage());
       return;

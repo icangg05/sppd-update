@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DepartmentType;
+use App\Services\AppSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,8 +17,6 @@ class Department extends Model
 
   protected $fillable = [
     'parent_id',
-    'setuju_bayar_user_id',
-    'setuju_bayar_label',
     'name',
     'code',
     'letterhead',
@@ -41,7 +40,7 @@ class Department extends Model
   public function getActivitylogOptions(): LogOptions
   {
     return LogOptions::defaults()
-      ->logOnly(['name', 'code', 'parent_id', 'setuju_bayar_user_id', 'setuju_bayar_label', 'type', 'level', 'can_view_children_data'])
+      ->logOnly(['name', 'code', 'parent_id', 'type', 'level', 'can_view_children_data'])
       ->logOnlyDirty()
       ->dontLogEmptyChanges()
       ->setDescriptionForEvent(fn (string $event) => $this->describeLogEvent($event));
@@ -75,11 +74,6 @@ class Department extends Model
   public function parent(): BelongsTo
   {
     return $this->belongsTo(Department::class, 'parent_id');
-  }
-
-  public function setujuBayarUser(): BelongsTo
-  {
-    return $this->belongsTo(User::class, 'setuju_bayar_user_id');
   }
 
   public function children(): HasMany
@@ -202,6 +196,16 @@ class Department extends Model
     return $this->isInspektorat();
   }
 
+  /**
+   * Perjalanan dinas dalam daerah pegawai unit ini menghitung hari Sabtu? Diatur Super Admin per
+   * tipe instansi di Pengaturan Aplikasi, menurut tipe unit kerja ini sendiri (sama seperti
+   * pemilihan alur persetujuan), jadi Bagian dan Sub Bagian di Setda dicentang masing-masing.
+   */
+  public function countsSaturdayOnTrips(): bool
+  {
+    return in_array($this->type?->value, app(AppSettings::class)->saturdayTripTypes(), true);
+  }
+
   /** Inspektorat dikenali dari namanya. */
   public function isInspektorat(): bool
   {
@@ -219,6 +223,26 @@ class Department extends Model
     }
 
     return $dept;
+  }
+
+  /**
+   * ID seluruh unit kerja dalam satu struktur instansi: unit teratas beserta semua turunannya,
+   * termasuk zona mandiri di bawahnya (Setda → Asisten → Bagian, Dinkes → Puskesmas,
+   * Kecamatan → Kelurahan). Satu query per tingkat.
+   *
+   * @return \Illuminate\Support\Collection<int, int>
+   */
+  public function instansiTreeIds(): \Illuminate\Support\Collection
+  {
+    $frontier = [$this->getRootDepartment()->id];
+    $ids = $frontier;
+
+    while ($frontier) {
+      $frontier = static::whereIn('parent_id', $frontier)->pluck('id')->map(fn ($id) => (int) $id)->all();
+      array_push($ids, ...$frontier);
+    }
+
+    return collect($ids);
   }
 
   /**
@@ -290,57 +314,6 @@ class Department extends Model
   public function getScopedRelatedIds(): \Illuminate\Support\Collection
   {
     return collect([$this->id])->merge($this->getScopedDescendantIds());
-  }
-
-  /**
-   * Penandatangan "Setuju Bayar" pada dokumen cetak (kuitansi, pengeluaran
-   * riil, rincian biaya) untuk pegawai di department ini.
-   *
-   * Resolusi naik dari department ini sampai root zona data (mis. Dinas) —
-   * setting yang paling dekat menang. Cukup diatur SEKALI di tingkat Dinas:
-   * semua sub-unit di bawahnya (Bidang/Seksi) otomatis mewarisi tanpa perlu
-   * diset satu-satu. User tersimpan yang nonaktif dilewati; bila tak ada setting
-   * eksplisit, fallback ke user role kepala_opd di root zona. Label di-resolve
-   * terpisah agar tetap berlaku walau kolom user kosong (null = label bawaan
-   * per dokumen). Zona mandiri (kelurahan/puskesmas) berhenti di dirinya sendiri.
-   *
-   * @return array{user: ?User, label: ?string, opd: Department}
-   */
-  public function resolveSetujuBayar(): array
-  {
-    $scopeRoot = $this->getScopeRootDepartment();
-
-    $user  = null;
-    $label = null;
-    $dept  = $this;
-    while (true) {
-      $candidate = $dept->setujuBayarUser;
-      if (! $user && $candidate && $candidate->is_active) {
-        $user = $candidate;
-      }
-      if ($label === null && $dept->setuju_bayar_label) {
-        $label = $dept->setuju_bayar_label;
-      }
-      if ($dept->id === $scopeRoot->id || $dept->parent === null) {
-        break;
-      }
-      $dept = $dept->parent;
-    }
-
-    if (! $user) {
-      $user = $scopeRoot->defaultSetujuBayarUser();
-    }
-
-    return ['user' => $user, 'label' => $label, 'opd' => $scopeRoot];
-  }
-
-  /** Penandatangan Setuju Bayar bawaan bila belum diatur: Kepala OPD aktif di unit ini. */
-  public function defaultSetujuBayarUser(): ?User
-  {
-    return User::role('kepala_opd')
-      ->where('department_id', $this->id)
-      ->where('is_active', true)
-      ->first();
   }
 
   /**

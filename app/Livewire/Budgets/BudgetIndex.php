@@ -74,16 +74,10 @@ class BudgetIndex extends Component
     $this->resetPage();
   }
 
-  /** Anggaran dalam lingkup pengguna: Admin OPD hanya melihat anggaran instansinya sendiri. */
+  /** Anggaran dalam lingkup pengguna: seluruh DPA zona data unitnya (mis. semua unit Setda). */
   private function scopedBudgets(): Builder
   {
-    $query = Budget::query();
-
-    if (! $this->currentUser()->hasRole('super_admin')) {
-      $query->where('department_id', $this->currentUser()->department_id);
-    }
-
-    return $query;
+    return Budget::query()->visibleTo($this->currentUser());
   }
 
   /**
@@ -139,8 +133,8 @@ class BudgetIndex extends Component
       return;
     }
 
-    // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
-    if (! $this->currentUser()->hasRole('super_admin') && $budget->department_id !== $this->currentUser()->department_id) {
+    // DPA unit lain sezona hanya bisa dilihat; hapus tetap oleh unit pemiliknya.
+    if (! $budget->isManageableBy($this->currentUser())) {
       $this->toastError('Anda tidak memiliki akses untuk menghapus data anggaran ini.');
       return;
     }
@@ -180,8 +174,8 @@ class BudgetIndex extends Component
       return;
     }
 
-    // Pastikan admin OPD hanya bisa menghapus anggaran instansinya sendiri.
-    if (! $this->currentUser()->hasRole('super_admin') && $budget->department_id !== $this->currentUser()->department_id) {
+    // DPA unit lain sezona hanya bisa dilihat; hapus tetap oleh unit pemiliknya.
+    if (! $budget->isManageableBy($this->currentUser())) {
       $this->closeDeleteModal();
       $this->toastError('Anda tidak memiliki akses untuk menghapus data anggaran ini.');
       return;
@@ -225,15 +219,17 @@ class BudgetIndex extends Component
       $query->where('source', $this->source);
     }
 
-    if ($this->department_id !== '' && $user->hasRole('super_admin')) {
+    // Di luar lingkup tetap kosong, karena query dasarnya sudah dibatasi zona data.
+    if ($this->department_id !== '') {
       $query->where('department_id', $this->department_id);
     }
 
     $budgets = $query->latest()->paginate(20);
 
+    // Super Admin memilih dari semua instansi; selain itu dari unit sezona yang punya DPA.
     $departments = $user->hasRole('super_admin')
       ? Department::orderBy('name')->get()
-      : collect();
+      : Department::whereIn('id', $this->scopedBudgets()->select('department_id'))->orderBy('name')->get();
 
     // Pilihan filter tahun hanya tahun yang punya DPA.
     $years = $this->availableYears();

@@ -120,6 +120,11 @@ Semua field form **wajib** lewat komponen ini (sudah menangani label, `required`
 - `<x-form.checkbox>` — props tambahan: `value` (default `1`), `checked`
 - `<x-form.radio>` — props tambahan: `value`, `checked`
 - `<x-form.file>` — props tambahan: `accept` (default `.pdf,.docx,.jpg,.jpeg,.png`)
+- `<x-form.image-crop>` — input gambar yang **di-crop dulu di browser** (modal Cropper.js) lalu
+  diunggah ke properti Livewire. Pakai `wire:model="prop"` seperti biasa (hanya dibaca untuk nama
+  properti). Props tambahan: `ratios` (label => rasio, `null` = bebas; default `['Bebas' => null]`),
+  `title` (judul modal), `tipTitle` + `tip` (saran cara crop di atas area crop), `maxDimension` (default batas kop surat 2480 px), `maxKb` (default batas
+  unggah gambar di Pengaturan). Contoh: kop surat di form Unit Kerja.
 
 ```blade
 <x-form.input name="tujuan" label="Tujuan" required />

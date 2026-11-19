@@ -37,8 +37,8 @@ class BudgetForm extends Component
 
     if ($budget && $budget->exists) {
       abort_unless($this->currentUser()->can('budget.edit'), 403, 'Anda tidak memiliki izin mengubah DPA.');
-      // Sama dengan daftar DPA: selain Super Admin hanya DPA instansinya sendiri.
-      abort_unless($this->isSuperAdmin || $budget->department_id === $this->currentUser()->department_id, 403, 'DPA ini di luar instansi Anda.');
+      // DPA unit lain sezona tampil di daftar, tetapi hanya unit pemiliknya yang boleh mengubah.
+      abort_unless($budget->isManageableBy($this->currentUser()), 403, 'DPA ini di luar instansi Anda.');
 
       $this->isEdit = true;
       $this->budget = $budget;

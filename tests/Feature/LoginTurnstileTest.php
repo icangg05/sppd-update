@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Auth\Login;
 use App\Models\User;
+use App\Services\TurnstileService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -162,6 +163,39 @@ class LoginTurnstileTest extends TestCase
 
         $this->attemptLogin('', 'password')->assertNoRedirect();
 
+        $this->assertGuest();
+        Http::assertSentCount(1);
+    }
+
+    public function test_kunci_uji_selalu_lolos_disimulasikan_tanpa_cloudflare(): void
+    {
+        config([
+            'services.turnstile.site_key' => '1x00000000000000000000AA',
+            'services.turnstile.secret_key' => '1x0000000000000000000000000000000AA',
+        ]);
+        $this->fakeCloudflare(false);
+
+        Livewire::test(Login::class)->assertViewHas('turnstileSimulated', true);
+
+        $this->attemptLogin('token-lain')->assertNoRedirect();
+        $this->assertGuest();
+
+        $this->attemptLogin(TurnstileService::DUMMY_TOKEN)->assertRedirect();
+        $this->assertAuthenticatedAs($this->user);
+        Http::assertNothingSent();
+    }
+
+    public function test_kunci_uji_yang_tidak_selalu_lolos_tetap_ke_cloudflare(): void
+    {
+        config([
+            'services.turnstile.site_key' => '2x00000000000000000000AB',
+            'services.turnstile.secret_key' => '2x0000000000000000000000000000000AA',
+        ]);
+        $this->fakeCloudflare(false);
+
+        Livewire::test(Login::class)->assertViewHas('turnstileSimulated', false);
+
+        $this->attemptLogin(TurnstileService::DUMMY_TOKEN)->assertNoRedirect();
         $this->assertGuest();
         Http::assertSentCount(1);
     }

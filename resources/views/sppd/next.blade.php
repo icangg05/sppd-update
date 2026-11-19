@@ -22,21 +22,27 @@
           pelaksanaan.</p>
       </div>
       @php $backToShow = request('from') === 'show'; @endphp
-      <x-ui.button href="{{ $backToShow ? route('sppd.show', $sppd) : route('sppd.index') }}" variant="secondary">
-        <x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
-        {{ $backToShow ? 'Kembali ke Detail' : 'Kembali ke Daftar' }}
-      </x-ui.button>
+      {{-- Datang dari Daftar SPPD: selain kembali ke daftar, sediakan jalan ke halaman detail SPPD ini. --}}
+      <div class="flex flex-wrap items-center gap-2">
+        <x-ui.button href="{{ $backToShow ? route('sppd.show', $sppd) : route('sppd.index') }}" variant="secondary">
+          <x-slot name="icon"><i class="fa-solid fa-arrow-left"></i></x-slot>
+          {{ $backToShow ? 'Kembali ke Detail' : 'Kembali ke Daftar' }}
+        </x-ui.button>
+        @unless ($backToShow)
+          <x-ui.button href="{{ route('sppd.show', $sppd) }}" variant="secondary">
+            <x-slot name="icon"><i class="fa-solid fa-file-lines"></i></x-slot>
+            Lihat Detail SPPD
+          </x-ui.button>
+        @endunless
+      </div>
     </div>
   </div>
 
   <div class="max-w-6xl space-y-5">
 
-    {{-- Penandatangan dokumen keuangan, masing-masing diatur lewat modal: PPTK (per SPPD)
-         dan Setuju Bayar (per instansi: kuitansi, pengeluaran riil, rincian biaya). --}}
-    <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-      <livewire:sppd.pptk-selector :sppd="$sppd" :key="'pptk-' . $sppd->id" />
-      <livewire:sppd.setuju-bayar-settings :sppd="$sppd" />
-    </div>
+    {{-- Penandatangan dokumen keuangan (PPTK, KPA, Bendahara): dipilih di sini; pilihan tersimpan pegawai
+         pelaksana ikut dicatat ke SPPD berikutnya saat diajukan. --}}
+    <livewire:sppd.finance-signers :sppd="$sppd" :key="'finance-' . $sppd->id" />
 
     {{-- Bagian Dokumen Sebelum --}}
     <section class="dash-enter">

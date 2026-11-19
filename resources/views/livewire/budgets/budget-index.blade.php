@@ -41,18 +41,19 @@
 				loadingTarget="search" wrapperClass="flex-1" class="bg-slate-50"
 				placeholder="Cari program, kegiatan, kode rekening, atau uraian..." />
 
-			{{-- Department Searchable Select (Super Admin) --}}
-			@if (auth()->user()->hasRole('super_admin'))
+			{{-- Filter instansi (Super Admin) atau unit kerja sezona, bila DPA-nya dari lebih dari satu unit. --}}
+			@if (count($departments) > 1)
 				@php
+					$allDepartmentsLabel = auth()->user()->hasRole('super_admin') ? 'Semua Instansi' : 'Semua Unit Kerja';
 					$departmentFilterOptions = collect($departments)
 						->map(fn($d) => ['value' => $d->id, 'label' => $d->name])
-						->prepend(['value' => '', 'label' => 'Semua Instansi'])
+						->prepend(['value' => '', 'label' => $allDepartmentsLabel])
 						->all();
 				@endphp
 				<div class="w-full sm:w-56">
 					<x-form.searchable-select wire:model.live="department_id" name="department_id"
-						:options="$departmentFilterOptions" placeholder="Semua Instansi"
-						searchPlaceholder="Cari instansi..." class="bg-slate-50" />
+						:options="$departmentFilterOptions" :placeholder="$allDepartmentsLabel"
+						searchPlaceholder="Cari unit kerja..." class="bg-slate-50" />
 				</div>
 			@endif
 
@@ -107,10 +108,8 @@
 						<th class="py-3 px-4 min-w-44 max-w-56">SKPD / Instansi</th>
 						<th class="py-3 px-4 text-center w-16">TA</th>
 						<th class="py-3 px-4 min-w-64">Program / Kegiatan</th>
-						<th class="py-3 px-4 whitespace-nowrap">Kode Rekening</th>
-						<th class="py-3 px-4 min-w-52">Uraian Anggaran</th>
-						<th class="py-3 px-4 text-right w-32">Pagu Total</th>
-						<th class="py-3 px-4 text-right w-32">Sisa Pagu</th>
+						<th class="py-3 px-4 min-w-56">Kode Rekening / Uraian</th>
+						<th class="py-3 px-4 text-right w-36">Pagu / Sisa</th>
 						<th class="py-3 px-4 text-right w-28">Aksi</th>
 					</tr>
 				</thead>
@@ -133,37 +132,38 @@
 							</td>
 
 							<td data-label="Program / Kegiatan" class="stack-block py-3.5 px-4 min-w-64 max-w-sm whitespace-normal">
-								<div class="text-xs font-bold text-primary-700 leading-tight mb-1">{{ $budget->program }}</div>
+								<a wire:navigate href="{{ route('master.budgets.show', $budget->id) }}"
+									class="mb-1 block text-xs font-bold leading-tight text-primary-700 hover:text-primary-800 hover:underline focus:outline-none focus-visible:underline">
+									{{ $budget->program }}
+								</a>
 								<div class="text-[11px] text-slate-500 leading-relaxed">{{ $budget->activity }}</div>
 							</td>
 
-							<td data-label="Kode Rekening" class="py-3.5 px-4 whitespace-nowrap">
+							{{-- Kode rekening + uraian dalam satu kolom agar tabel tidak terlalu lebar. --}}
+							<td data-label="Kode Rekening / Uraian" class="stack-block py-3.5 px-4 min-w-56 max-w-xs whitespace-normal">
 								<span
-									class="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-mono font-medium text-slate-600 border border-slate-200/60">
+									class="inline-block whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs font-mono font-medium text-slate-600 border border-slate-200/60">
 									{{ $budget->account_code }}
 								</span>
+								<div class="mt-1 text-sm font-medium text-slate-700 leading-normal">{{ $budget->description }}</div>
 							</td>
 
-							<td data-label="Uraian" class="stack-block py-3.5 px-4 min-w-52 max-w-xs whitespace-normal">
-								<div class="text-sm font-medium text-slate-700 leading-normal">{{ $budget->description }}</div>
-							</td>
-
-							<td data-label="Pagu Total" class="py-3.5 px-4 text-right font-mono text-sm font-semibold text-slate-900">
-								Rp {{ number_format($budget->total_amount, 0, ',', '.') }}
-							</td>
-
-							<td data-label="Sisa Pagu" class="py-3.5 px-4 text-right text-xs font-semibold">
-								@if ($budget->balance < 0)
-									<span
-										class="inline-flex items-center rounded bg-rose-50 px-2 py-0.5 font-mono text-rose-700 ring-1 ring-inset ring-rose-600/10">
-										Rp {{ number_format($budget->balance, 0, ',', '.') }}
+							{{-- Pagu total + sisa pagu dalam satu kolom. Isi dibungkus satu div agar di
+							     mobile (kartu label→nilai) keduanya tetap bertumpuk di sisi kanan. --}}
+							<td data-label="Pagu / Sisa" class="py-3.5 px-4 text-right">
+								<div>
+									<div class="font-mono text-sm font-semibold text-slate-900">
+										Rp {{ number_format($budget->total_amount, 0, ',', '.') }}
+									</div>
+									<span @class([
+										'mt-1 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
+										'bg-rose-50 text-rose-700 ring-rose-600/10' => $budget->balance < 0,
+										'bg-emerald-50 text-emerald-700 ring-emerald-600/20' => $budget->balance >= 0,
+									])>
+										<span class="text-[10px] font-bold uppercase tracking-wide opacity-70">Sisa</span>
+										<span class="font-mono">Rp {{ number_format($budget->balance, 0, ',', '.') }}</span>
 									</span>
-								@else
-									<span
-										class="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 font-mono text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-										Rp {{ number_format($budget->balance, 0, ',', '.') }}
-									</span>
-								@endif
+								</div>
 							</td>
 
 							{{-- Aksi ikon bergaya sama dengan tabel Data Pegawai; keterangan lewat tooltip. --}}
@@ -176,27 +176,30 @@
 										<i class="fa-solid fa-eye"></i>
 									</a>
 
-									@can('budget.edit')
-										<a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
-											title="Edit Anggaran" aria-label="Edit Anggaran"
-											class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
-											<i class="fa-solid fa-pen-to-square"></i>
-										</a>
-									@endcan
+									{{-- DPA unit lain sezona hanya bisa dilihat; ubah & hapus oleh unit pemiliknya. --}}
+									@if ($budget->isManageableBy(auth()->user()))
+										@can('budget.edit')
+											<a wire:navigate href="{{ route('master.budgets.edit', $budget->id) }}"
+												title="Edit Anggaran" aria-label="Edit Anggaran"
+												class="{{ $actionBtn }} border-amber-300 bg-amber-50 text-amber-600 shadow-2xs hover:bg-amber-100 focus-visible:ring-amber-500/40">
+												<i class="fa-solid fa-pen-to-square"></i>
+											</a>
+										@endcan
 
-									@can('budget.delete')
-										<button type="button" wire:click="confirmDelete({{ $budget->id }})"
-											title="Hapus Anggaran" aria-label="Hapus Anggaran"
-											class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
-											<i class="fa-solid fa-trash"></i>
-										</button>
-									@endcan
+										@can('budget.delete')
+											<button type="button" wire:click="confirmDelete({{ $budget->id }})"
+												title="Hapus Anggaran" aria-label="Hapus Anggaran"
+												class="{{ $actionBtn }} cursor-pointer border-red-200 bg-red-50 text-red-600 hover:bg-red-100 focus-visible:ring-red-500/40">
+												<i class="fa-solid fa-trash"></i>
+											</button>
+										@endcan
+									@endif
 								</div>
 							</td>
 						</tr>
 					@empty
 						<tr>
-							<td colspan="9" class="px-4 py-16">
+							<td colspan="7" class="px-4 py-16">
 								<div class="mx-auto flex max-w-sm flex-col items-center text-center">
 									<div class="flex size-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
 										<i class="fa-solid fa-file-invoice-dollar text-xl"></i>

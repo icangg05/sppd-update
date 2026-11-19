@@ -2,29 +2,37 @@
 
 namespace App\Services;
 
+use App\Enums\DepartmentType;
+use App\Models\AppSetting;
 use App\Support\FileSize;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Pengaturan aplikasi yang bisa diubah Super Admin tanpa menyentuh .env.
  *
- * Disimpan di storage/app/private/data/json/data.json sebagai daftar
- * `{ key, value, description }`. Key yang dipakai kode didefinisikan di
- * definitions(); nilai awalnya diambil dari config sehingga file boleh belum
- * ada — file dibuat otomatis saat pertama dibaca. Key tambahan yang ditulis
- * manual ke file tetap dipertahankan dan ikut tampil di halaman pengaturan.
+ * Disimpan di tabel app_settings (satu baris per key, nilai JSON), sehingga ikut Backup
+ * Database, ikut terkirim bersama database, dan sama untuk semua container (app, queue,
+ * scheduler). Sampai 2026-11-18 disimpan di storage/app/private/data/json/data.json; isinya
+ * disalin oleh migrasi create_app_settings_table.
+ *
+ * Key yang dipakai kode didefinisikan di definitions(), lengkap dengan nilai awal, deskripsi,
+ * dan aturan validasi. Key yang belum pernah disimpan memakai nilai awalnya (tidak ditulis ke
+ * tabel saat dibaca). Key lain yang ada di tabel tetap dipertahankan dan ikut tampil.
+ *
+ * Dibaca sekali per request/job (binding scoped di AppServiceProvider). Sengaja tanpa Cache:
+ * cache store `file` tidak dibagi antar-container, jadi queue/scheduler bisa membaca nilai lama.
+ * Konfigurasi yang berbeda per lingkungan atau rahasia (API key, URL) tetap di .env/config.
  */
 class AppSettings
 {
-  /** Disk privat (storage/app/private) — tidak bisa diakses lewat URL publik. */
-  public const DISK = 'local';
-  public const PATH = 'data/json/data.json';
-
   /** @var array<string, array{key: string, value: mixed, description: string}>|null */
   private ?array $items = null;
 
+  public const SATURDAY_TRIP_TYPES = 'dalam_daerah_sabtu_types';
+
   /**
    * Key yang dikenal kode: label tampilan, deskripsi, nilai awal, dan aturan validasi.
+   * `options` = pengaturan berupa daftar centang (nilai tersimpan: daftar key opsi yang dicentang).
    */
   public static function definitions(): array
   {
@@ -48,7 +56,31 @@ class AppSettings
         'default'     => 50,
         'rules'       => ['required', 'integer', 'min:1', 'max:100'],
       ],
+      // Awalnya semua tipe dicentang: sama dengan aturan sebelum pengaturan ini ada (Sabtu dihitung).
+      self::SATURDAY_TRIP_TYPES => [
+        'label'       => 'Sabtu Dihitung (Dalam Daerah)',
+        'description' => 'Tipe instansi yang menghitung hari Sabtu pada lama perjalanan dinas dalam daerah, menurut tipe unit kerja pelaksana. Tipe yang tidak dicentang tidak menghitung Sabtu dan tidak bisa berangkat atau kembali pada hari Sabtu. Hari Minggu selalu tidak dihitung, dan perjalanan luar daerah menghitung semua hari. Perubahan hanya berlaku untuk SPPD yang diajukan atau diubah sesudahnya.',
+        'default'     => array_column(DepartmentType::cases(), 'value'),
+        'options'     => collect(DepartmentType::cases())->mapWithKeys(fn (DepartmentType $type) => [$type->value => $type->label()])->all(),
+        'rules'       => ['array'],
+      ],
     ];
+  }
+
+  /**
+   * Tipe instansi (DepartmentType value) yang menghitung hari Sabtu pada perjalanan dalam daerah.
+   * Nilai di file yang bukan daftar memakai nilai awal; tipe yang tidak dikenal diabaikan.
+   *
+   * @return list<string>
+   */
+  public function saturdayTripTypes(): array
+  {
+    $value = $this->get(self::SATURDAY_TRIP_TYPES);
+    $known = array_column(DepartmentType::cases(), 'value');
+
+    return is_array($value)
+      ? array_values(array_intersect($known, $value))
+      : self::definitions()[self::SATURDAY_TRIP_TYPES]['default'];
   }
 
   /**
@@ -104,7 +136,8 @@ class AppSettings
     }
 
     if ($changes['attributes'] !== []) {
-      $this->write($items);
+      $this->write($changes['attributes']);
+      $this->items = $items;
     }
 
     return $changes['attributes'] === [] ? [] : $changes;
@@ -112,57 +145,37 @@ class AppSettings
 
   private function load(): array
   {
-    $disk   = Storage::disk(self::DISK);
-    $exists = $disk->exists(self::PATH);
-    $raw    = $exists ? json_decode((string) $disk->get(self::PATH), true) : null;
+    $stored = AppSetting::query()->get()->keyBy('key');
 
-    // File ada tapi JSON-nya rusak (mis. salah edit manual): pakai nilai awal
-    // tanpa menimpa file, supaya isinya masih bisa diperbaiki.
-    $corrupt = $exists && ! is_array($raw);
-    if ($corrupt) {
-      logger()->warning('Pengaturan aplikasi: ' . self::PATH . ' bukan JSON yang valid, memakai nilai awal.');
-    }
-
-    // Isi file diindeks per key; entri tanpa key yang valid diabaikan.
-    $stored = collect(is_array($raw) ? $raw : [])
-      ->filter(fn ($row) => is_array($row) && is_string($row['key'] ?? null) && $row['key'] !== '')
-      ->keyBy('key');
-
-    $missing = array_diff_key(self::definitions(), $stored->all());
-
+    // Key terdefinisi selalu memakai deskripsi dari kode, agar perubahan teksnya langsung tampil.
     $items = [];
     foreach (self::definitions() as $key => $def) {
       $row = $stored->pull($key);
       $items[$key] = [
         'key'         => $key,
-        'value'       => $row !== null && array_key_exists('value', $row) ? $row['value'] : $def['default'],
-        'description' => filled($row['description'] ?? null) ? $row['description'] : $def['description'],
+        'value'       => $row ? $row->value : $def['default'],
+        'description' => $def['description'],
       ];
     }
 
     foreach ($stored as $key => $row) {
       $items[$key] = [
         'key'         => $key,
-        'value'       => $row['value'] ?? null,
-        'description' => (string) ($row['description'] ?? ''),
+        'value'       => $row->value,
+        'description' => (string) $row->description,
       ];
-    }
-
-    // Buat file bila belum ada, atau lengkapi bila ada key terdefinisi yang belum tercatat.
-    if (! $corrupt && $missing !== []) {
-      $this->write($items);
     }
 
     return $items;
   }
 
-  private function write(array $items): void
+  /** Simpan nilai yang berubah (baris dibuat bila key belum pernah disimpan). */
+  private function write(array $values): void
   {
-    Storage::disk(self::DISK)->put(
-      self::PATH,
-      json_encode(array_values($items), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n",
-    );
-
-    $this->items = $items;
+    DB::transaction(function () use ($values) {
+      foreach ($values as $key => $value) {
+        AppSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+      }
+    });
   }
 }

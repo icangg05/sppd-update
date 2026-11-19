@@ -62,10 +62,10 @@ class Profile extends Component
         Rule::unique('users', 'username')->ignore($id),
       ]),
       'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
-      // NIP/NIK unik per instansi (bukan global) — pegawai yang sama boleh
-      // berakun di dua instansi berbeda dengan NIP/NIK yang sama.
+      // NIP unik per instansi (bukan global) — pegawai yang sama boleh berakun di dua
+      // instansi berbeda dengan NIP yang sama. NIK tidak dicek keunikannya (lihat UserForm).
       'nip' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nip', 'NIP', $user->department_id, $id)],
-      'nik' => ['nullable', 'string', 'max:20', new UniqueIdentityInInstansi('nik', 'NIK', $user->department_id, $id)],
+      'nik' => ['nullable', 'string', 'max:20'],
       'current_password' => ['nullable', 'required_with:password', 'current_password'],
       // Syarat ini ditampilkan sebagai petunjuk di profile.blade.php, ubah keduanya bersamaan.
       // Tidak boleh kembali ke password bawaan — tujuannya justru menggantinya.

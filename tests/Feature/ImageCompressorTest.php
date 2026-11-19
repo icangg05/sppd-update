@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\AppSettingIndex;
+use App\Models\AppSetting;
 use App\Models\User;
 use App\Services\AppSettings;
 use App\Services\ImageCompressor;
@@ -183,9 +184,8 @@ class ImageCompressorTest extends TestCase
             ->call('save')
             ->assertHasNoErrors();
 
-        // Tersimpan sebagai bilangan di data.json.
-        $stored = collect(json_decode(Storage::disk('local')->get(AppSettings::PATH), true))->keyBy('key');
-        $this->assertSame(5, $stored['upload_max_image_mb']['value']);
+        // Tersimpan sebagai bilangan di tabel app_settings.
+        $this->assertSame(5, AppSetting::firstWhere('key', 'upload_max_image_mb')->value);
         $this->assertSame(5 * 1024, (new AppSettings)->uploadMaxKb(true));
     }
 }

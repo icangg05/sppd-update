@@ -83,4 +83,21 @@ class UserIdentityNumberTest extends TestCase
 
         $this->assertFalse(User::where('username', 'budi')->exists());
     }
+
+    public function test_nik_yang_sudah_dipakai_pegawai_lain_tetap_diterima(): void
+    {
+        // Orang yang sama bisa berakun di dua OPD atau lebih; NIK tidak dicek keunikannya.
+        User::factory()->create(['department_id' => $this->department->id, 'nik' => '7471012345678901']);
+
+        $this->form('', '7471012345678901')->assertHasNoErrors();
+
+        $this->assertSame(2, User::where('nik', '7471012345678901')->count());
+    }
+
+    public function test_nip_ganda_dalam_satu_instansi_tetap_ditolak(): void
+    {
+        User::factory()->create(['department_id' => $this->department->id, 'nip' => '198108072005022004']);
+
+        $this->form('198108072005022004', '')->assertHasErrors(['nip']);
+    }
 }

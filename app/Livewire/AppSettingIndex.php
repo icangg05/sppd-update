@@ -19,10 +19,14 @@ class AppSettingIndex extends Component
   {
     abort_unless(auth()->user()->hasRole('super_admin'), 403);
 
-    // Nilai non-skalar (array/objek hasil edit manual file) hanya ditampilkan, tidak diedit.
+    // Daftar centang (definisi ber-`options`) diedit sebagai daftar key opsi. Nilai non-skalar
+    // lain (array/objek hasil edit manual file) hanya ditampilkan, tidak diedit.
+    $definitions = AppSettings::definitions();
     $this->values = collect($settings->all())
-      ->filter(fn ($item) => is_scalar($item['value']) || $item['value'] === null)
-      ->map(fn ($item) => (string) $item['value'])
+      ->filter(fn ($item, $key) => isset($definitions[$key]['options']) || is_scalar($item['value']) || $item['value'] === null)
+      ->map(fn ($item, $key) => isset($definitions[$key]['options'])
+        ? array_values(array_intersect(array_keys($definitions[$key]['options']), (array) $item['value']))
+        : (string) $item['value'])
       ->all();
   }
 
@@ -31,7 +35,8 @@ class AppSettingIndex extends Component
     $definitions = AppSettings::definitions();
 
     return collect(array_keys($this->values))
-      ->mapWithKeys(fn ($key) => ["values.{$key}" => $definitions[$key]['rules'] ?? ['nullable', 'string', 'max:2000']])
+      ->flatMap(fn ($key) => ["values.{$key}" => $definitions[$key]['rules'] ?? ['nullable', 'string', 'max:2000']]
+        + (isset($definitions[$key]['options']) ? ["values.{$key}.*" => ['string', 'in:' . implode(',', array_keys($definitions[$key]['options']))]] : []))
       ->all();
   }
 
@@ -51,10 +56,15 @@ class AppSettingIndex extends Component
     $this->values = array_map(fn ($v) => is_string($v) ? trim($v) : $v, $this->values);
     $this->validate();
 
-    // Pengaturan angka disimpan sebagai bilangan, bukan teks.
+    // Pengaturan angka disimpan sebagai bilangan, bukan teks. Daftar centang disimpan
+    // berurutan sesuai opsinya, agar urutan klik tidak terhitung sebagai perubahan.
     $definitions = AppSettings::definitions();
     $values = collect($this->values)
-      ->map(fn ($value, $key) => in_array('integer', $definitions[$key]['rules'] ?? [], true) ? (int) $value : $value)
+      ->map(fn ($value, $key) => match (true) {
+        isset($definitions[$key]['options']) => array_values(array_intersect(array_keys($definitions[$key]['options']), (array) $value)),
+        in_array('integer', $definitions[$key]['rules'] ?? [], true) => (int) $value,
+        default => $value,
+      })
       ->all();
 
     // Hanya key yang memang ada di file yang boleh ditulis.

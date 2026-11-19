@@ -41,17 +41,41 @@ enum SppdDomain: string
     return $this === self::DALAM_DAERAH;
   }
 
-  /** Perjalanan dalam daerah tidak menghitung hari Minggu (Sabtu tetap dihitung). */
+  /**
+   * Perjalanan dalam daerah tidak menghitung hari Minggu. Hari Sabtu ikut tidak dihitung bila
+   * instansi pelaksana tidak menghitung Sabtu (Pengaturan Aplikasi, per tipe instansi; lihat
+   * Department::countsSaturdayOnTrips).
+   */
   public function skipsSundays(): bool
   {
     return $this === self::DALAM_DAERAH;
   }
 
   /**
-   * Lama perjalanan dalam hari, termasuk hari berangkat dan kembali. Dalam daerah hanya
-   * menghitung Senin–Sabtu: Rabu s/d Selasa berikutnya = 6 hari.
+   * Hari yang tidak dihitung dan tidak bisa jadi tanggal berangkat/kembali, sebagai nomor hari
+   * Carbon/JavaScript (0 = Minggu, 6 = Sabtu). Domain selain dalam daerah menghitung semua hari.
+   *
+   * @return list<int>
    */
-  public function travelDays(CarbonInterface $start, CarbonInterface $end): int
+  public function offDays(bool $countsSaturday = true): array
+  {
+    if (! $this->skipsSundays()) {
+      return [];
+    }
+
+    return $countsSaturday ? [CarbonInterface::SUNDAY] : [CarbonInterface::SATURDAY, CarbonInterface::SUNDAY];
+  }
+
+  public function isOffDay(CarbonInterface $date, bool $countsSaturday = true): bool
+  {
+    return in_array($date->dayOfWeek, $this->offDays($countsSaturday), true);
+  }
+
+  /**
+   * Lama perjalanan dalam hari, termasuk hari berangkat dan kembali. Dalam daerah tidak menghitung
+   * hari libur (offDays): Rabu s/d Selasa berikutnya = 6 hari bila Sabtu dihitung, 5 hari bila tidak.
+   */
+  public function travelDays(CarbonInterface $start, CarbonInterface $end, bool $countsSaturday = true): int
   {
     $start = $start->copy()->startOfDay();
     $end = $end->copy()->startOfDay();
@@ -59,13 +83,14 @@ enum SppdDomain: string
       return 0;
     }
 
-    if (! $this->skipsSundays()) {
+    $offDays = $this->offDays($countsSaturday);
+    if ($offDays === []) {
       return (int) $start->diffInDays($end) + 1;
     }
 
     $days = 0;
     for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
-      $days += $day->isSunday() ? 0 : 1;
+      $days += in_array($day->dayOfWeek, $offDays, true) ? 0 : 1;
     }
 
     return $days;

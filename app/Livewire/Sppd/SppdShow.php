@@ -56,6 +56,8 @@ class SppdShow extends Component
   {
     return SppdRequest::with([
       'user.department',
+      'user.position',
+      'user.roles',
       'creator',
       'reviser',
       'pptk',
@@ -498,8 +500,30 @@ class SppdShow extends Component
     if (empty($rawError)) {
       return [
         'type'    => 'sistem',
+        'title'   => 'TTE gagal diproses',
         'message' => 'Tanda tangan TTE gagal tanpa pesan error spesifik.',
         'icon'    => 'fa-circle-exclamation',
+      ];
+    }
+
+    // Job dihentikan worker (melewati batas waktu / terhenti di tengah jalan).
+    if (preg_match('/attempted too many times|timed out|run too long/i', $rawError)) {
+      return [
+        'type'    => 'sistem',
+        'title'   => 'Proses TTE terhenti',
+        'message' => 'Proses tanda tangan melewati batas waktu atau terhenti di tengah jalan.',
+        'icon'    => 'fa-hourglass-end',
+      ];
+    }
+
+    // Selain jawaban provider (BSrE), kegagalan terjadi di aplikasi sendiri, mis. PDF draft
+    // gagal dibuat sebelum dikirim. Pesan aslinya ditampilkan apa adanya.
+    if (! preg_match('/Provider (?:second )?request failed|Provider returned/i', $rawError)) {
+      return [
+        'type'    => 'aplikasi',
+        'title'   => 'TTE gagal',
+        'message' => $rawError,
+        'icon'    => 'fa-file-circle-exclamation',
       ];
     }
 
@@ -587,6 +611,7 @@ class SppdShow extends Component
     if ($isPassphrase) {
       return [
         'type'    => 'passphrase',
+        'title'   => 'Passphrase TTE tidak cocok',
         'message' => $cleanMsg ?: 'Passphrase salah.',
         'icon'    => 'fa-key',
       ];
@@ -595,6 +620,7 @@ class SppdShow extends Component
     if ($isNik) {
       return [
         'type'    => 'nik',
+        'title'   => 'NIK atau sertifikat elektronik bermasalah',
         'message' => $cleanMsg ?: 'NIK atau sertifikat elektronik bermasalah / belum terdaftar.',
         'icon'    => 'fa-id-card',
       ];
@@ -602,6 +628,7 @@ class SppdShow extends Component
 
     return [
       'type'    => 'sistem',
+      'title'   => 'BSrE gagal memproses tanda tangan',
       'message' => $cleanMsg ?: 'Terjadi kesalahan sistem pada server BSrE.',
       'icon'    => 'fa-server',
     ];

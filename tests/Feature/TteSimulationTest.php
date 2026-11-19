@@ -170,6 +170,31 @@ class TteSimulationTest extends TestCase
         $this->assertSame('nik', app(SppdShow::class)->parseTteError($signature->error_message)['type']);
     }
 
+    public function test_mode_tte_web_dan_worker_berbeda_ditolak_tanpa_menghubungi_bsre(): void
+    {
+        // Diajukan saat simulasi aktif, tetapi worker masih memakai .env lama (simulasi nonaktif).
+        $sppd = $this->sppd();
+        $signature = SppdDigitalSignature::create([
+            'sppd_request_id' => $sppd->id,
+            'signer_id' => $sppd->user_id,
+            'document_type' => 'spt',
+            'status' => SignatureStatus::PROCESSING,
+            'provider_name' => SimulatedSignService::PROVIDER,
+        ]);
+        config(['tte.simulation.enabled' => false]);
+
+        try {
+            (new SendTteSignRequestJob($signature, 'tte-testing'))->handle(app(SignatureService::class));
+        } catch (\Throwable) {
+        }
+
+        $signature->refresh();
+        $this->assertSame(SignatureStatus::REJECTED, $signature->status);
+        $this->assertStringContainsString('docker compose restart', $signature->error_message);
+        // Http::preventStrayRequests() di setUp: tidak ada permintaan ke BSrE.
+        Http::assertNothingSent();
+    }
+
     public function test_verifikasi_simulasi_valid_untuk_dokumen_utuh_dan_tidak_valid_bila_diubah(): void
     {
         $signature = $this->signViaJob($this->sppd(), 'spt', 'tte-testing');

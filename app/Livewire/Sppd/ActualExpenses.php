@@ -11,7 +11,7 @@ use Livewire\Component;
 /**
  * Laporan Pengeluaran Riil. CRUD reaktif (tanpa reload) via Livewire; tabel
  * dirender ulang server-side tiap aksi. Tombol cetak terkunci selama PPTK
- * belum diatur (hasPptk); PPTK diatur di Portal Dokumen (PptkSelector).
+ * belum diatur (hasPptk); PPTK & KPA dipilih untuk pelaksana di Buat SPPD atau di Portal Dokumen (FinanceSigners).
  */
 class ActualExpenses extends Component
 {
@@ -19,6 +19,7 @@ class ActualExpenses extends Component
 
   public SppdRequest $sppd;
   public bool $hasPptk = false;
+  public bool $hasKpa = false;
 
   public bool $showAddModal = false;
   public bool $showEditModal = false;
@@ -47,6 +48,7 @@ class ActualExpenses extends Component
 
     $this->sppd = $sppd;
     $this->hasPptk = (bool) $sppd->pptk_id;
+    $this->hasKpa = (bool) $sppd->kpa_id;
     $this->selectedUserIds = $this->peopleIds();
   }
 

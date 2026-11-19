@@ -28,7 +28,9 @@
     $key = $name ?? ($model->value() ?? null);
     // Untuk form non-Livewire, pakai nilai awal dari old()/value agar tetap tersubmit.
     $initialValue = $hasWire ? null : old($name, $attributes->get('value'));
-    // Normalisasi options menjadi list of ['value' => ..., 'label' => ..., 'keywords' => ..., 'icon' => ...].
+    // Normalisasi options menjadi list of ['value' => ..., 'label' => ..., 'description' => ..., 'keywords' => ..., 'icon' => ...].
+    // `description` (opsional) baris keterangan kecil di bawah label, ikut dicocokkan saat mencari
+    // (mis. program induk sebuah kegiatan DPA). Label & keterangan tampil penuh, tidak dipotong.
     // `keywords` (opsional) ikut dicocokkan saat mencari, mis. nama lain negara.
     // `icon` (opsional) kelas ikon beserta warnanya, tampil di kiri label.
     $normalized = collect($options)->map(function ($opt) {
@@ -36,11 +38,12 @@
             return [
                 'value' => (string) ($opt['value'] ?? ''),
                 'label' => (string) ($opt['label'] ?? ''),
+                'description' => (string) ($opt['description'] ?? ''),
                 'keywords' => (string) ($opt['keywords'] ?? ''),
                 'icon' => (string) ($opt['icon'] ?? ''),
             ];
         }
-        return ['value' => (string) $opt, 'label' => (string) $opt, 'keywords' => '', 'icon' => ''];
+        return ['value' => (string) $opt, 'label' => (string) $opt, 'description' => '', 'keywords' => '', 'icon' => ''];
     })->values()->all();
 @endphp
 
@@ -72,6 +75,12 @@
             get hasIcons() {
                 return this.options.some(o => o.icon);
             },
+            get hasDescriptions() {
+                return this.options.some(o => o.description);
+            },
+            get selectedDescription() {
+                return this.selected?.description || '';
+            },
             get selectedLabel() {
                 if (this.selected) return this.selected.label;
                 // Mode backend: nilai terpilih bisa di luar hasil pencarian terakhir.
@@ -80,13 +89,15 @@
             get filtered() {
                 if (this.remote || !this.search.trim()) return this.options;
                 const s = this.search.trim().toLowerCase();
-                return this.options.filter(o => o.label.toLowerCase().includes(s) || o.keywords.toLowerCase().includes(s));
+                return this.options.filter(o => o.label.toLowerCase().includes(s)
+                    || (o.description || '').toLowerCase().includes(s)
+                    || (o.keywords || '').toLowerCase().includes(s));
             },
             // Tampilkan kata kunci bila item cocok lewat kata kunci saja (bukan label),
             // agar jelas mengapa muncul, mis. cari Cina → Tiongkok · China, Cina, ...
             matchedKeywords(o) {
                 const s = this.search.trim().toLowerCase();
-                return s && o.keywords && !o.label.toLowerCase().includes(s) ? o.keywords : '';
+                return s && o.keywords && !o.label.toLowerCase().includes(s) && !(o.description || '').toLowerCase().includes(s) ? o.keywords : '';
             },
             position() {
                 const r = this.$refs.trigger.getBoundingClientRect();
@@ -210,9 +221,15 @@
             ])>
             <span class="flex min-w-0 items-center gap-2">
                 <i x-show="selected?.icon" :class="selected?.icon" class="shrink-0 text-xs" aria-hidden="true"></i>
-                <span class="truncate text-left"
-                    :class="selectedLabel @if ($mutedEmpty) && String(value ?? '') !== '' @endif ? 'text-slate-800' : 'text-slate-500'"
-                    x-text="selectedLabel || @js($placeholder)"></span>
+                {{-- Opsi berketerangan: label & keterangan tampil penuh dua baris; selain itu satu baris terpotong. --}}
+                <span class="min-w-0 text-left">
+                    <span class="block"
+                        :class="[selectedDescription ? 'font-medium leading-snug wrap-break-word' : 'truncate',
+                            selectedLabel @if ($mutedEmpty) && String(value ?? '') !== '' @endif ? 'text-slate-800' : 'text-slate-500']"
+                        x-text="selectedLabel || @js($placeholder)"></span>
+                    <span x-show="selectedDescription" x-text="selectedDescription"
+                        class="mt-0.5 block text-xs leading-snug text-slate-600 wrap-break-word"></span>
+                </span>
             </span>
             <i class="fa-solid fa-chevron-down text-xs text-slate-500 transition-transform"
                 :class="open && 'rotate-180'"></i>
@@ -242,18 +259,22 @@
                             class="w-full rounded border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/30">
                     </div>
                 </div>
-                <ul x-ref="list" class="max-h-56 overflow-auto py-1">
+                {{-- Opsi berketerangan (dua baris) diberi ruang daftar lebih tinggi. --}}
+                <ul x-ref="list" class="overflow-auto py-1" :class="hasDescriptions ? 'max-h-80' : 'max-h-56'">
                     <template x-for="(opt, index) in filtered" :key="opt.value">
                         <li @click="choose(opt.value)" @mouseenter="highlighted = index" :data-index="index"
                             class="cursor-pointer px-3 py-2 text-sm transition-colors"
-                            :class="index === highlighted
+                            :class="(opt.description ? 'border-b border-slate-100 last:border-b-0 ' : '') + (index === highlighted
                                 ? 'bg-primary-100 text-primary-800'
-                                : (String(opt.value) === String(value ?? '') ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50')">
+                                : (String(opt.value) === String(value ?? '') ? 'bg-primary-50 font-semibold text-primary-700' : 'text-slate-700 hover:bg-primary-50'))">
                             {{-- Selebar ikon juga untuk opsi tanpa ikon, agar labelnya tetap sejajar. --}}
                             <span x-show="hasIcons" class="mr-2 inline-block w-3.5 text-center text-xs" aria-hidden="true"><i :class="opt.icon"></i></span>
-                            <span x-text="opt.label"></span>
+                            <span x-text="opt.label" :class="opt.description && 'font-medium'"></span>
                             <span x-show="matchedKeywords(opt)" x-text="'· ' + matchedKeywords(opt)"
                                 class="ml-1 text-xs font-normal text-slate-400"></span>
+                            <span x-show="opt.description" x-text="opt.description"
+                                class="mt-0.5 block text-xs font-normal leading-snug"
+                                :class="index === highlighted ? 'text-primary-700' : 'text-slate-500'"></span>
                         </li>
                     </template>
                     <li x-show="filtered.length === 0 && ! loading" class="px-3 py-2 text-xs text-slate-500">

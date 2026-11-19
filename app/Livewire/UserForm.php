@@ -188,10 +188,12 @@ class UserForm extends Component
       ]),
       'email' => 'nullable|email|unique:users,email,' . $userId,
       'password' => 'nullable|string|min:6',
-      // NIP/NIK hanya angka dengan panjang baku (NIP 18, NIK 16). Boleh sama di instansi berbeda
+      // NIP/NIK hanya angka dengan panjang baku (NIP 18, NIK 16). NIP boleh sama di instansi berbeda
       // (pegawai bisa berakun di dua instansi), tapi tidak boleh ganda dalam satu instansi (induk + unit di bawahnya).
+      // NIK tidak dicek keunikannya: orang yang sama bisa berakun di dua OPD atau lebih, dan data NIK
+      // lama banyak yang kotor; orang yang sama dikenali dari NIP.
       'nip' => ['nullable', 'digits:18', 'not_regex:/^0+$/', $this->uniqueIdentityRule('nip', 'NIP')],
-      'nik' => ['nullable', 'digits:16', 'not_regex:/^0+$/', $this->uniqueIdentityRule('nik', 'NIK')],
+      'nik' => ['nullable', 'digits:16', 'not_regex:/^0+$/'],
       'department_id' => 'required|exists:departments,id',
       'rank_id' => 'nullable|exists:ranks,id',
       'position_id' => 'nullable|exists:positions,id',

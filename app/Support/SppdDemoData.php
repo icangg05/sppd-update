@@ -153,21 +153,23 @@ class SppdDemoData
 
   /**
    * Berangkat 3–14 hari lagi, digeser melewati SPPD lain pelaksana bila bentrok. Dalam daerah
-   * tidak berangkat/kembali hari Minggu (Minggu juga tidak ikut dihitung lamanya).
+   * tidak berangkat/kembali pada hari yang tidak dihitung (Minggu, juga Sabtu bila instansi
+   * pelaksana tidak menghitung Sabtu).
    *
    * @return array{0: Carbon, 1: Carbon}
    */
   private function travelPeriod(int $days, bool $checkClash, ?int $exceptId): array
   {
     $start = now()->startOfDay()->addDays(random_int(3, 14));
+    $countsSaturday = $this->pelaksana->department?->countsSaturdayOnTrips() ?? true;
 
     for ($attempt = 0; $attempt < 60; $attempt++) {
-      if ($this->domain->skipsSundays() && $start->isSunday()) {
+      while ($this->domain->isOffDay($start, $countsSaturday)) {
         $start->addDay();
       }
 
       $end = $start->copy();
-      while ($this->domain->travelDays($start, $end) < $days || ($this->domain->skipsSundays() && $end->isSunday())) {
+      while ($this->domain->travelDays($start, $end, $countsSaturday) < $days || $this->domain->isOffDay($end, $countsSaturday)) {
         $end->addDay();
       }
 

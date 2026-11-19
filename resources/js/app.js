@@ -1,3 +1,5 @@
+import imageCrop from "./image-crop";
+
 // Registrasi service worker PWA (hanya jalan di HTTPS/localhost).
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -41,6 +43,7 @@ const sanitizingDirective = (clean) => (el) => {
 };
 
 document.addEventListener("alpine:init", () => {
+  window.Alpine.data("imageCrop", imageCrop);
   window.Alpine.directive("digits", sanitizingDirective((v) => v.replace(/\D/g, "")));
   window.Alpine.directive(
     "username",

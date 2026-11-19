@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -81,6 +82,27 @@ class Budget extends Model
   {
     if ($this->total_amount <= 0) return 0;
     return round(($this->realization / $this->total_amount) * 100, 2);
+  }
+
+  /**
+   * DPA yang boleh dilihat pengguna: Super Admin semuanya; selain itu seluruh DPA dalam zona data
+   * unitnya (sama dengan pilihan DPA di form SPPD), jadi tiap Bagian di Setda melihat DPA Bagian lain.
+   */
+  public function scopeVisibleTo(Builder $query, User $user): Builder
+  {
+    if ($user->hasRole('super_admin')) {
+      return $query;
+    }
+
+    $ids = $user->department?->getScopeRootDepartment()->getScopedRelatedIds() ?? collect([0]);
+
+    return $query->whereIn('department_id', $ids);
+  }
+
+  /** Mengubah dan menghapus DPA tetap hanya oleh unit pemiliknya (atau Super Admin). */
+  public function isManageableBy(User $user): bool
+  {
+    return $user->hasRole('super_admin') || $this->department_id === $user->department_id;
   }
 
   public function department(): BelongsTo

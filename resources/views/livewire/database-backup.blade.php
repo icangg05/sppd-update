@@ -1,20 +1,11 @@
 <div class="mx-auto max-w-4xl space-y-6"
   x-data="{
     showConfirm: false,
-    countdown: 10,
-    timer: null,
     openConfirm() {
-      this.countdown = 10;
       this.showConfirm = true;
-      clearInterval(this.timer);
-      this.timer = setInterval(() => {
-        if (this.countdown > 0) this.countdown--;
-        if (this.countdown <= 0) clearInterval(this.timer);
-      }, 1000);
     },
     closeConfirm() {
       this.showConfirm = false;
-      clearInterval(this.timer);
     },
     showDelete: false,
     deleteTarget: '',
@@ -36,22 +27,13 @@
     },
     showImport: false,
     importTarget: '',
-    importCountdown: 10,
-    importTimer: null,
     {{-- importTarget kosong = file unggahan; berisi nama = pulihkan dari daftar backup. --}}
     openImport(name) {
       this.importTarget = name;
-      this.importCountdown = 10;
       this.showImport = true;
-      clearInterval(this.importTimer);
-      this.importTimer = setInterval(() => {
-        if (this.importCountdown > 0) this.importCountdown--;
-        if (this.importCountdown <= 0) clearInterval(this.importTimer);
-      }, 1000);
     },
     closeImport() {
       this.showImport = false;
-      clearInterval(this.importTimer);
     },
   }"
   x-on:open-backup-confirm.window="openConfirm()">
@@ -240,16 +222,12 @@
     </table>
   </div>
 
-  {{-- Modal konfirmasi backup dengan jeda 10 detik --}}
+  {{-- Modal konfirmasi backup --}}
   <x-ui.modal show="showConfirm" :closeable="false" title="Konfirmasi Backup Database"
     description="Proses akan dikirim ke worker" icon="fa-solid fa-database text-primary-600" maxWidth="max-w-md">
     <div class="space-y-3 text-sm text-slate-600">
       <p>Anda akan membuat backup database <strong>minggu ini</strong>. Jika backup minggu ini sudah ada,
         file tersebut akan <strong>ditimpa</strong>.</p>
-      <div class="flex items-start gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-        <i class="fa-regular fa-clock mt-0.5"></i>
-        <span>Demi keamanan, tombol konfirmasi aktif setelah <strong>10 detik</strong>.</span>
-      </div>
     </div>
 
     <x-slot name="footer" class="flex items-center justify-end gap-3 bg-slate-50">
@@ -258,18 +236,11 @@
         Batal
       </button>
 
-      {{-- Aktif setelah hitung mundur 10 detik selesai --}}
       <button type="button"
         wire:click="createBackup"
         x-on:click="closeConfirm()"
-        x-bind:disabled="countdown > 0"
         class="inline-flex items-center justify-center gap-2 rounded bg-primary-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60">
-        <template x-if="countdown > 0">
-          <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="countdown"></span>s</span>
-        </template>
-        <template x-if="countdown <= 0">
-          <span><i class="fa-solid fa-database"></i> Ya, Buat Backup</span>
-        </template>
+        <i class="fa-solid fa-database"></i> Ya, Buat Backup
       </button>
     </x-slot>
   </x-ui.modal>
@@ -288,7 +259,7 @@
   </x-ui.modal>
 
   @if ($importEnabled)
-    {{-- Modal konfirmasi import/pulihkan dengan jeda 10 detik --}}
+    {{-- Modal konfirmasi import/pulihkan --}}
     <x-ui.modal show="showImport" :closeable="false" title="Konfirmasi Import Database"
       description="Seluruh isi database akan ditimpa" icon="fa-solid fa-triangle-exclamation text-red-600" maxWidth="max-w-md">
       <div class="space-y-3 text-sm text-slate-600">
@@ -296,10 +267,6 @@
         <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 break-all"
           x-text="importTarget || 'file yang Anda unggah'"></div>
         <p class="text-xs text-slate-500">Bila akun Anda tidak ada di data baru, Anda akan diminta masuk kembali.</p>
-        <div class="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          <i class="fa-regular fa-clock mt-0.5"></i>
-          <span>Demi keamanan, tombol import aktif setelah <strong>10 detik</strong>.</span>
-        </div>
       </div>
 
       <x-slot name="footer" class="flex items-center justify-end gap-3 bg-slate-50">
@@ -310,14 +277,8 @@
 
         <button type="button"
           x-on:click="importTarget ? $wire.restoreBackup(importTarget) : $wire.importDatabase(); closeImport()"
-          x-bind:disabled="importCountdown > 0"
           class="inline-flex items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
-          <template x-if="importCountdown > 0">
-            <span><i class="fa-solid fa-hourglass-half"></i> Tunggu <span x-text="importCountdown"></span>s</span>
-          </template>
-          <template x-if="importCountdown <= 0">
-            <span><i class="fa-solid fa-file-import"></i> Ya, Timpa Database</span>
-          </template>
+          <i class="fa-solid fa-file-import"></i> Ya, Timpa Database
         </button>
       </x-slot>
     </x-ui.modal>

@@ -9,12 +9,13 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
- * Keunikan NIP/NIK per instansi: seorang pegawai boleh terdaftar (berakun)
- * di dua instansi berbeda dengan NIP/NIK yang sama, tetapi tidak boleh ganda
+ * Keunikan NIP per instansi: seorang pegawai boleh terdaftar (berakun)
+ * di dua instansi berbeda dengan NIP yang sama, tetapi tidak boleh ganda
  * di dalam satu instansi yang sama — OPD induk beserta unit kerja di bawahnya
  * dihitung satu instansi, kecuali zona mandiri (Puskesmas, Kelurahan) yang
  * menjadi instansi tersendiri. Akun dengan NIP sama dianggap orang yang sama
  * saat mengecek bentrok tanggal perjalanan (lihat SppdRequest::clashingForUsers).
+ * NIK sengaja tidak memakai aturan ini (boleh sama di mana pun).
  */
 class UniqueIdentityInInstansi implements ValidationRule
 {

@@ -216,11 +216,12 @@
 							placeholder="Contoh: Kantor Dinas Kominfo Kendari" />
 					{{-- Alpine kalender hanya membaca tanggal terpakai saat dibuat: key berganti ketika daftarnya
 					     berubah (mis. pengikut dicentang) agar kalender dibuat ulang dengan data baru. --}}
-					<div wire:key="travel-dates-{{ md5(json_encode($blockedDates)) }}">
-						{{-- live: daftar calon pengikut menyesuaikan bentrok tanggal begitu rentang dipilih. --}}
+					<div wire:key="travel-dates-{{ md5(json_encode([$blockedDates, $offDays])) }}">
+						{{-- live: daftar calon pengikut menyesuaikan bentrok tanggal begitu rentang dipilih.
+						     offDays: dalam daerah tidak menghitung Minggu, juga Sabtu bila instansi pelaksana
+						     tidak menghitung Sabtu (Pengaturan Aplikasi). --}}
 						<x-form.date-range start="start_date" end="end_date" label="Tanggal Berangkat & Kembali" required live
-							:skipSundays="\App\Enums\SppdDomain::tryFrom($domain)?->skipsSundays() ?? false"
-							:blocked="$blockedDates" />
+							:offDays="$offDays" :blocked="$blockedDates" />
 						{{-- SPPD aktif lain boleh ada selama tanggalnya tidak bentrok (SPT/SPPD dibuat jauh hari).
 						     Kosong untuk SPPD Inspektorat (tidak dicek bentrok). --}}
 						@if ($otherTrips->isNotEmpty())
@@ -363,8 +364,16 @@
 				</div>
 				<div class="p-5 space-y-4">
 					@php
+						// Kegiatan sebagai baris utama, programnya di baris keterangan (tanpa pemisah "|"). Awalan
+						// "Program:" dilewati bila namanya sudah diawali kata Program.
 						$budgetOptions = $budgets
-							->map(fn($b) => ['value' => $b->id, 'label' => ($b->program ?? '-') . ' | ' . ($b->activity ?? '-')])
+							->map(fn($b) => [
+								'value' => $b->id,
+								'label' => $b->activity ?: ($b->program ?: '-'),
+								'description' => $b->activity && $b->program
+									? (preg_match('/^program\b/i', trim($b->program)) ? trim($b->program) : 'Program: ' . trim($b->program))
+									: '',
+							])
 							->prepend(['value' => '', 'label' => '— Pilih —'])
 							->values();
 						$categoryOptions = $categories

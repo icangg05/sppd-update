@@ -3,6 +3,9 @@
   $hasFile = (bool) $sppd->report?->report_file;
   $hasPhoto = (bool) $sppd->report?->documentation_file;
   $doneCount = ($hasFile ? 1 : 0) + ($hasPhoto ? 1 : 0);
+  // Ekstensi berkas tersimpan (mis. PDF, DOCX, JPG) ditampilkan di samping status.
+  $fileExt = $hasFile ? strtoupper(pathinfo($sppd->report->report_file, PATHINFO_EXTENSION)) : '';
+  $photoExt = $hasPhoto ? strtoupper(pathinfo($sppd->report->documentation_file, PATHINFO_EXTENSION)) : '';
   $settings = app(\App\Services\AppSettings::class);
   $savedBadge = 'inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700';
   $missingBadge = 'inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-600';
@@ -45,6 +48,9 @@
             <div class="mt-2 flex items-center gap-3">
               @if ($hasFile)
                 <span class="{{ $savedBadge }}"><i class="fa-solid fa-check text-[10px]"></i> File tersimpan</span>
+                @if ($fileExt)
+                  <x-ui.badge color="slate" class="font-mono" title="{{ basename($sppd->report->report_file) }}">{{ $fileExt }}</x-ui.badge>
+                @endif
                 <a href="{{ asset('storage/' . $sppd->report->report_file) }}" target="_blank" rel="noopener" class="{{ $viewLink }}">Lihat file</a>
               @else
                 <span class="{{ $missingBadge }}">Belum diunggah</span>
@@ -63,6 +69,9 @@
             <div class="mt-2 flex items-center gap-3">
               @if ($hasPhoto)
                 <span class="{{ $savedBadge }}"><i class="fa-solid fa-check text-[10px]"></i> Foto tersimpan</span>
+                @if ($photoExt)
+                  <x-ui.badge color="slate" class="font-mono" title="{{ basename($sppd->report->documentation_file) }}">{{ $photoExt }}</x-ui.badge>
+                @endif
                 <x-ui.gallery-link :src="asset('storage/' . $sppd->report->documentation_file)" group="dokumentasi"
                   caption="Foto Dokumentasi Perjalanan" class="{{ $viewLink }}">Lihat foto</x-ui.gallery-link>
               @else

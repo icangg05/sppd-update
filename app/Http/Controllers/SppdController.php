@@ -169,7 +169,9 @@ class SppdController extends Controller
     abort_unless(hash_equals($sppd->publicToken(), $token), 404);
 
     $sppd->load([
-      'user',
+      'user.department',
+      'user.position',
+      'user.roles',
       'creator',
       'budget.department',
       'category',
@@ -181,7 +183,54 @@ class SppdController extends Controller
     // QR halaman ini (kanan atas) agar mudah dibuka/dibagikan dari perangkat lain.
     $qrSvg = QrCode::size(200)->margin(0)->errorCorrection('M')->generate($sppd->publicUrl());
 
-    return view('sppd.public', compact('sppd', 'qrSvg'));
+    // "Kepada" = penandatangan SPT, sama dengan yang tercetak di SPT.
+    $sptApproval = $sppd->sptApproval();
+    $sptSigner = $sptApproval?->approver;
+    $sptSignerTitle = $sptSigner ? SppdRequest::sptSignerTitle($sptApproval) : null;
+
+    $tteDocs = $this->publicTteSummary($sppd);
+
+    return view('sppd.public', compact('sppd', 'qrSvg', 'sptSigner', 'sptSignerTitle', 'tteDocs'));
+  }
+
+  /**
+   * Ringkasan TTE untuk kepala halaman publik: per jenis dokumen (SPT, SPPD) berapa yang
+   * sudah ditandatangani dan kapan terakhir. Dokumen yang tidak ditandatangani oleh alur
+   * ini tidak ditampilkan, sama seperti kartu Status TTE di halaman detail SPPD.
+   *
+   * @return list<array{label:string, total:int, signed:int, signed_at:?\Carbon\CarbonInterface, testing:bool}>
+   */
+  private function publicTteSummary(SppdRequest $sppd): array
+  {
+    $sppd->loadMissing(['approvals', 'digitalSignatures']);
+    $approvals = $sppd->approvals;
+    $configured = $approvals->contains(fn ($a) => $a->signs_spt || $a->signs_sppd);
+    $latest = fn (string $type) => $sppd->digitalSignatures
+      ->where('document_type', $type)
+      ->sortByDesc('created_at')
+      ->first();
+
+    $docs = [];
+    if (! $configured || $approvals->contains(fn ($a) => $a->signs_spt)) {
+      $docs['SPT'] = collect([$sppd->signatureFor('spt')]);
+    }
+    if (! $configured || $approvals->contains(fn ($a) => $a->signs_sppd)) {
+      // SPPD terbit satu per orang: pelaksana + tiap pengikut.
+      $docs['SPPD'] = collect([$sppd->signatureFor('sppd')])
+        ->merge($sppd->followers->map(fn ($f) => $latest('sppd_' . $f->user_id)));
+    }
+
+    return collect($docs)->map(function ($signatures, $label) {
+      $signed = $signatures->filter(fn ($sig) => $sig?->status === SignatureStatus::SIGNED);
+
+      return [
+        'label' => $label,
+        'total' => $signatures->count(),
+        'signed' => $signed->count(),
+        'signed_at' => $signed->pluck('signed_at')->filter()->max(),
+        'testing' => $signed->contains(fn ($sig) => $sig->isSimulated()),
+      ];
+    })->values()->all();
   }
 
   /**
@@ -217,24 +266,7 @@ class SppdController extends Controller
 
     $sppd->load(['user.department', 'budget.department', 'followers.user', 'advanceReceipts', 'actualExpenses', 'costDetails']);
 
-    // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan (dengan fallback ke induk jika di sub-unit)
-    $dept = $sppd->user->department;
-    $bendahara = null;
-    if ($dept) {
-      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-        ->where('department_id', $dept->id)
-        ->where('is_active', true)
-        ->first();
-
-      if (! $bendahara && $dept->parent_id) {
-        $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-          ->where('department_id', $dept->parent_id)
-          ->where('is_active', true)
-          ->first();
-      }
-    }
-
-    return view('sppd.costs.receipts', compact('sppd', 'bendahara'));
+    return view('sppd.costs.receipts', compact('sppd'));
   }
 
   /**
@@ -246,8 +278,8 @@ class SppdController extends Controller
 
     $sppd->load(['user', 'pptk', 'followers.user', 'actualExpenses.user']);
 
-    // Kandidat PPTK dipilih lewat komponen Livewire PptkSelector (pencarian
-    // server-side, lingkup OPD induk pelaksana).
+    // PPTK dipilih di Portal Dokumen (Livewire FinanceSigners, kandidat dari SppdFinanceOfficials)
+    // atau dicatat dari pilihan tersimpan pelaksana saat SPPD diajukan.
     return view('sppd.costs.actuals', compact('sppd'));
   }
 
@@ -261,7 +293,7 @@ class SppdController extends Controller
     abort_unless(in_array($sppd->status->value, ['approved', 'completed']), 403, 'Aksi ini tidak diizinkan karena pengajuan SPPD belum disetujui sepenuhnya.');
 
     // PPTK harus pegawai aktif di zona data OPD pemohon (root zona + sub-unit
-    // yang berbagi data) — sama dengan kandidat di komponen PptkSelector.
+    // yang berbagi data) — sama dengan kandidat SppdFinanceOfficials::candidates.
     $dept = $sppd->user->department;
     $allowedDeptIds = $dept
       ? $dept->getScopeRootDepartment()->getScopedRelatedIds()->all()
@@ -290,13 +322,7 @@ class SppdController extends Controller
 
     $sppd->load(['user.department', 'pptk', 'followers.user', 'costDetails.user']);
 
-    // Cari bendahara pengeluaran di OPD terkait berdasarkan jabatan
-    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $sppd->user->department_id)
-      ->where('is_active', true)
-      ->first();
-
-    return view('sppd.costs.final_details', compact('sppd', 'bendahara'));
+    return view('sppd.costs.final_details', compact('sppd'));
   }
 
   /**
@@ -309,17 +335,6 @@ class SppdController extends Controller
     $sppd->load(['user', 'report']);
 
     return view('sppd.report_input', compact('sppd'));
-  }
-
-  private function resolveSptApproval(SppdRequest $sppd)
-  {
-    $approval = $sppd->approvals()->where('signs_spt', true)->first();
-    if ($approval) {
-      return $approval;
-    }
-
-    // Fallback: last step
-    return $sppd->approvals()->reorder('step_order', 'desc')->first();
   }
 
   private function resolveSppdApproval(SppdRequest $sppd, ?User $targetUser = null)
@@ -422,16 +437,11 @@ class SppdController extends Controller
     }
 
     $sppd->load(['user.department', 'user.rank', 'budget', 'category', 'destinations.regency', 'followers.user.rank']);
-    $sptApproval = $this->resolveSptApproval($sppd);
+    $sptApproval = $sppd->sptApproval();
     $duration = $sppd->durationInDays();
 
     $approver = $sptApproval?->approver;
-    $approverRole = ($approver && $approver->isDprdMember() && $approver->dprd_jabatan)
-      ? $approver->dprd_jabatan
-      : ($approver?->position_name
-        ?? $approver?->position?->name
-        ?? $sptApproval?->role_label
-        ?? 'Kepala Dinas');
+    $approverRole = SppdRequest::sptSignerTitle($sptApproval);
 
     $pdfData = [
       'approver_name' => $approver->name ?? '................................',
@@ -589,24 +599,9 @@ class SppdController extends Controller
     $budget = $sppd->budget;
     $deptName = $department?->name ?? '-';
 
-    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
-    ['user' => $pimpinan, 'label' => $setujuBayarLabel, 'opd' => $opdDept] = $department
-      ? $department->resolveSetujuBayar()
-      : ['user' => null, 'label' => null, 'opd' => null];
-
-    // Bendahara pengeluaran berdasarkan jabatan
-    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $department?->id)
-      ->where('is_active', true)
-      ->first();
-
-    // Fallback ke department induk
-    if (! $bendahara && $department?->parent_id) {
-      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-        ->where('department_id', $department->parent_id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // KPA (Setuju Bayar) & bendahara yang dicatat di SPPD (dipilih untuk pelaksana, lihat SppdFinanceOfficials).
+    $kpa = $sppd->kpa;
+    $bendahara = $sppd->bendahara;
 
     // Custom date if passed
     $dateParam = $request->query('date');
@@ -633,15 +628,16 @@ class SppdController extends Controller
       'uang_sebesar' => $uangSebesar,
       'terbilang_uang' => Terbilang::rupiah($uangSebesar),
 
-      // Setuju Bayar: setting per instansi, fallback Pimpinan OPD (kepala_opd)
-      'approver_name' => $pimpinan?->name ?? '................................',
-      'approver_nip' => $pimpinan?->nip,
-      'approver_label' => $setujuBayarLabel ?? 'PENGGUNA ANGGARAN',
-      'approver_dept' => $opdDept?->name ?? $deptName,
+      // Setuju Bayar: KPA SPPD ini (label kosong = SPPD lama, label bawaan Pengguna Anggaran).
+      'approver_name' => $kpa?->name ?? '................................',
+      'approver_nip' => $kpa?->nip,
+      'approver_label' => $sppd->kpa_label ?? 'PENGGUNA ANGGARAN',
+      'approver_dept' => $department?->getScopeRootDepartment()->name ?? $deptName,
 
-      // Bendahara Pengeluaran
+      // Bendahara SPPD ini; labelnya jabatan bendahara saat dipilih.
       'bendahara_name' => $bendahara?->name ?? '................................',
       'bendahara_nip' => $bendahara?->nip,
+      'bendahara_title' => $sppd->bendahara_label,
 
       // QR & Misc
       'qr_image' => $qrImage,
@@ -682,24 +678,9 @@ class SppdController extends Controller
     $budget = $sppd->budget;
     $deptName = $department?->name ?? '-';
 
-    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
-    ['user' => $pimpinan, 'label' => $setujuBayarLabel, 'opd' => $opdDept] = $department
-      ? $department->resolveSetujuBayar()
-      : ['user' => null, 'label' => null, 'opd' => null];
-
-    // Bendahara pengeluaran berdasarkan jabatan
-    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $department?->id)
-      ->where('is_active', true)
-      ->first();
-
-    // Fallback ke department induk
-    if (! $bendahara && $department?->parent_id) {
-      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-        ->where('department_id', $department->parent_id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // KPA (Setuju Bayar) & bendahara yang dicatat di SPPD (dipilih untuk pelaksana, lihat SppdFinanceOfficials).
+    $kpa = $sppd->kpa;
+    $bendahara = $sppd->bendahara;
 
     // Custom date if passed
     $dateParam = $request->query('date');
@@ -726,15 +707,16 @@ class SppdController extends Controller
       'uang_sebesar' => $panjarAmount,
       'terbilang_uang' => Terbilang::rupiah($panjarAmount),
 
-      // Setuju Bayar: setting per instansi, fallback Pimpinan OPD (kepala_opd)
-      'approver_name' => $pimpinan?->name ?? '................................',
-      'approver_nip' => $pimpinan?->nip,
-      'approver_label' => $setujuBayarLabel ?? 'PENGGUNA ANGGARAN',
-      'approver_dept' => $opdDept?->name ?? $deptName,
+      // Setuju Bayar: KPA SPPD ini (label kosong = SPPD lama, label bawaan Pengguna Anggaran).
+      'approver_name' => $kpa?->name ?? '................................',
+      'approver_nip' => $kpa?->nip,
+      'approver_label' => $sppd->kpa_label ?? 'PENGGUNA ANGGARAN',
+      'approver_dept' => $department?->getScopeRootDepartment()->name ?? $deptName,
 
-      // Bendahara Pengeluaran
+      // Bendahara SPPD ini; labelnya jabatan bendahara saat dipilih.
       'bendahara_name' => $bendahara?->name ?? '................................',
       'bendahara_nip' => $bendahara?->nip,
+      'bendahara_title' => $sppd->bendahara_label,
 
       // QR & Misc
       'qr_image' => $qrImage,
@@ -780,10 +762,8 @@ class SppdController extends Controller
     // Data instansi
     $department = $sppd->user->department;
 
-    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
-    ['user' => $pimpinan, 'label' => $setujuBayarLabel] = $department
-      ? $department->resolveSetujuBayar()
-      : ['user' => null, 'label' => null];
+    // KPA (Setuju Bayar) yang dicatat di SPPD (dipilih untuk pelaksana, lihat SppdFinanceOfficials).
+    $pimpinan = $sppd->kpa;
 
     $lastApproval = $sppd->approvals()->reorder('step_order', 'desc')->first();
     $approver = $lastApproval?->approver;
@@ -808,7 +788,8 @@ class SppdController extends Controller
       'pptk_nip' => $pptk?->nip,
       'pimpinan_name' => $pimpinan?->name ?? '_________________________',
       'pimpinan_nip' => $pimpinan?->nip,
-      'pimpinan_role' => $setujuBayarLabel ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
+      // Label kosong = SPPD lama: nama jabatan penandatangan seperti sebelumnya.
+      'pimpinan_role' => $sppd->kpa_label ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
       'is_walikota' => ($approver && $approver->hasRole('walikota')) || ($pimpinan && $pimpinan->hasRole('walikota')),
       'qr_image' => $qrImage,
       'date' => $dateValue->translatedFormat('d F Y'),
@@ -850,24 +831,9 @@ class SppdController extends Controller
     // Data instansi
     $department = $sppd->user->department;
 
-    // Penandatangan Setuju Bayar: setting per instansi, fallback kepala_opd.
-    ['user' => $pimpinan, 'label' => $setujuBayarLabel] = $department
-      ? $department->resolveSetujuBayar()
-      : ['user' => null, 'label' => null];
-
-    // Bendahara Pengeluaran berdasarkan jabatan
-    $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-      ->where('department_id', $department?->id)
-      ->where('is_active', true)
-      ->first();
-
-    // Fallback ke department induk
-    if (! $bendahara && $department?->parent_id) {
-      $bendahara = User::whereHas('position', fn($q) => $q->where('name', 'Bendahara Pengeluaran'))
-        ->where('department_id', $department->parent_id)
-        ->where('is_active', true)
-        ->first();
-    }
+    // KPA (Setuju Bayar) & bendahara yang dicatat di SPPD (dipilih untuk pelaksana, lihat SppdFinanceOfficials).
+    $pimpinan = $sppd->kpa;
+    $bendahara = $sppd->bendahara;
 
     // PPTK
     $pptk = $sppd->pptk;
@@ -892,9 +858,11 @@ class SppdController extends Controller
       'pptk_nip' => $pptk?->nip,
       'pimpinan_name' => $pimpinan?->name ?? '_________________________',
       'pimpinan_nip' => $pimpinan?->nip,
-      'pimpinan_role' => $setujuBayarLabel ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
+      // Label kosong = SPPD lama: nama jabatan penandatangan seperti sebelumnya.
+      'pimpinan_role' => $sppd->kpa_label ?? $pimpinan?->position?->name ?? 'Kepala Dinas',
       'bendahara_name' => $bendahara?->name ?? '_________________________',
       'bendahara_nip' => $bendahara?->nip,
+      'bendahara_title' => $sppd->bendahara_label,
       'panjar_amount' => $panjarAmount,
       'qr_image' => $qrImage,
       'date' => $dateValue->translatedFormat('d F Y'),
