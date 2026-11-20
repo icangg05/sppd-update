@@ -239,7 +239,7 @@ class ForeignCityIndex extends Component
       $query->where('country_id', $this->countryFilter);
     }
 
-    $cities         = $query->paginate(20)->onEachSide(1);
+    $cities         = $query->paginate(25)->onEachSide(1);
     $countryOptions = Country::selectOptions('id');
 
     return view('livewire.foreign-cities.index', compact('cities', 'countryOptions'))

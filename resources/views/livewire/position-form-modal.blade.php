@@ -49,15 +49,33 @@
             <p class="text-xs font-semibold text-red-600">{{ $message }}</p>
           @enderror
 
+          @if ($unitRoleOptions)
+            {{-- Pimpinan/Sekretaris: role umum yang menyesuaikan unit kerja, atau role khusus satu tipe unit. --}}
+            <div class="space-y-1.5 pt-1">
+              <p class="text-xs font-bold tracking-wide text-slate-600 uppercase">Role</p>
+              <div class="grid gap-2 sm:grid-cols-2">
+                @foreach ($unitRoleOptions as $option)
+                  <x-form.radio wire:model.live="unitRole" name="unitRole" id="position-form-unit-role-{{ $option['value'] ?: 'umum' }}"
+                    value="{{ $option['value'] }}" :label="$option['label']" :description="$option['description']" :error="false"
+                    labelClass="h-full w-full" />
+                @endforeach
+              </div>
+            </div>
+          @endif
+
           <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <i class="fa-solid fa-wand-magic-sparkles mr-1 text-primary-600"></i>
             Role pegawai: <span class="font-semibold text-slate-800">{{ $summaryRole ?? 'belum ditentukan' }}</span>
             <span class="text-slate-400">·</span>
             Cakupan: <span class="font-semibold text-slate-800">{{ $summaryScope->label() }}</span>
+            @if ($roleVariants && ! $unitRoleOptions)
+              <span class="mt-0.5 block text-slate-500">Menyesuaikan unit kerja: {{ $roleVariants }}.</span>
+            @endif
           </div>
           @unless ($fixedTier)
             <p class="text-xs text-slate-500">Tingkat ditebak otomatis dari nama jabatan, ubah bila kurang tepat. Role
-              akhir pegawai menyesuaikan alur SPPD di unit kerjanya, misalnya Kabid di Dinas tetap Staf.</p>
+              akhir pegawai menyesuaikan unit kerja dan alur SPPD-nya, misalnya Pimpinan di Puskesmas menjadi Kepala
+              Puskesmas dan Kabid di Dinas tetap Staf.</p>
           @endunless
         </fieldset>
         @endunless

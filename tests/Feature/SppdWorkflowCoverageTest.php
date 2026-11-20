@@ -28,7 +28,7 @@ class SppdWorkflowCoverageTest extends TestCase
         'dinkes'      => self::PERANGKAT_DAERAH,
         'sekretariat' => self::PERANGKAT_DAERAH,
         'kecamatan'   => ['staf', 'kasubid_kasubag', 'sekretaris_opd', 'sekcam', 'kepala_opd', 'camat'],
-        'kelurahan'   => ['staf', 'kasubid_kasubag', 'sekretaris_opd', 'kepala_opd', 'lurah'],
+        'kelurahan'   => ['staf', 'kasubid_kasubag', 'sekretaris_opd', 'seklur', 'kepala_opd', 'lurah'],
         'puskesmas'   => ['staf', 'kasubid_kasubag', 'kepala_opd', 'kapus'],
         'rumah_sakit' => ['staf', 'kasubid_kasubag', 'kabid_irban_kabag', 'sekretaris_opd', 'kepala_opd'],
         'setda'       => self::SETDA,
@@ -41,7 +41,7 @@ class SppdWorkflowCoverageTest extends TestCase
     /** Seluruh role RoleAndPermissionSeeder selain akun administratif. */
     private const APPLICANT_ROLES = [
         'kepala_opd', 'sekretaris_opd', 'kasubid_kasubag', 'kabid_irban_kabag', 'pimpinan_dprd', 'asisten',
-        'sekda', 'walikota', 'wakil_walikota', 'sekwan', 'camat', 'sekcam', 'lurah', 'kapus', 'anggota_dprd', 'staf',
+        'sekda', 'walikota', 'wakil_walikota', 'sekwan', 'camat', 'sekcam', 'lurah', 'seklur', 'kapus', 'anggota_dprd', 'staf',
     ];
 
     protected function setUp(): void

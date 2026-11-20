@@ -62,7 +62,20 @@
                 {{ $provinces->firstItem() + $i }}.
               </td>
               <td data-label="Nama Provinsi" class="py-2.5 px-4 font-semibold text-slate-900">{{ $province->name }}</td>
-              <td data-label="Kabupaten/Kota" class="py-2.5 px-4 text-center text-slate-600 font-medium">{{ $province->regencies_count }}</td>
+              <td data-label="Kabupaten/Kota" class="py-2.5 px-4 text-center font-medium">
+                @if ($province->regencies_count > 0)
+                  <button type="button" wire:click="openCitiesModal({{ $province->id }})" wire:loading.attr="disabled"
+                    wire:target="openCitiesModal({{ $province->id }})"
+                    class="inline-flex cursor-pointer items-center gap-1.5 rounded border border-primary-100 bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    title="Lihat kabupaten/kota di {{ $province->name }}">
+                    <i class="fa-solid fa-eye text-[10px]" wire:loading.remove wire:target="openCitiesModal({{ $province->id }})"></i>
+                    <i class="fa-solid fa-spinner fa-spin text-[10px]" wire:loading wire:target="openCitiesModal({{ $province->id }})"></i>
+                    <span class="tabular-nums">{{ $province->regencies_count }}</span> kab/kota
+                  </button>
+                @else
+                  <span class="text-slate-400">0</span>
+                @endif
+              </td>
               <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   <button type="button" wire:click="openEditModal({{ $province->id }})"
@@ -98,6 +111,16 @@
       </div>
     @endif
   </div>
+
+  {{-- Modal Daftar Kabupaten/Kota --}}
+  @include('livewire.partials.city-list-modal', [
+    'ownerId' => $citiesOf?->id,
+    'title' => $citiesOf ? "Kabupaten/Kota di {$citiesOf->name}" : 'Daftar Kabupaten/Kota',
+    'description' => $citiesOf ? $citiesOf->regencies->count() . ' kabupaten/kota terdaftar' : null,
+    'names' => $citiesOf?->regencies->pluck('name')->all() ?? [],
+    'manageUrl' => $citiesOf ? route('master.regencies.index', ['provinceFilter' => $citiesOf->id]) : null,
+    'manageLabel' => 'Kelola Kabupaten/Kota',
+  ])
 
   {{-- Modal Tambah / Edit Provinsi --}}
   <x-ui.modal show="$wire.showFormModal" :title="$editingId ? 'Edit Provinsi' : 'Tambah Provinsi Baru'"

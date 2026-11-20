@@ -71,4 +71,14 @@ class SppdPdfLayoutTest extends TestCase
             $this->assertSame(1, $pdf->getDomPDF()->getCanvas()->get_page_count());
         }
     }
+
+    public function test_garis_nama_kotak_ii_v_menyisakan_ruang_nip(): void
+    {
+        $html = view(SppdPdf::VIEW, $this->data('Inspektur') + ['signBoxHeight' => 90])->render();
+
+        // Kiri & kanan untuk baris II-V: semua garis memakai jarak baru, tidak ada sisa 7 px.
+        $this->assertSame(8, substr_count($html, 'position: absolute; bottom: ' . SppdPdf::SIGN_LINE_BOTTOM . 'px;'));
+        $this->assertStringNotContainsString('bottom: 7px', $html);
+        $this->assertGreaterThanOrEqual(18, SppdPdf::SIGN_LINE_BOTTOM);
+    }
 }

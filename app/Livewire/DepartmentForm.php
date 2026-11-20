@@ -289,10 +289,14 @@ class DepartmentForm extends Component
     }
   }
 
-  /** Kop surat dicetak ke PDF: format dipertahankan (PNG transparan tetap PNG) dengan resolusi cetak. */
+  /**
+   * Kop surat dicetak ke PDF: format dipertahankan (PNG transparan tetap PNG) dengan resolusi cetak.
+   * Di bawah 700 KB disimpan apa adanya agar hasil crop tidak buram karena dikompres ulang.
+   */
   private function storeLetterhead(UploadedFile $file, string $name): string
   {
-    return app(ImageCompressor::class)->store($file, 'kop-surat', name: $name, keepFormat: true, maxDimension: ImageCompressor::LETTERHEAD_DIMENSION);
+    return app(ImageCompressor::class)->store($file, 'kop-surat', name: $name, keepFormat: true,
+      maxDimension: ImageCompressor::LETTERHEAD_DIMENSION, compressFromKb: ImageCompressor::LETTERHEAD_COMPRESS_FROM_KB);
   }
 
   private function deleteOldFile(?string $path): void

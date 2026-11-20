@@ -95,6 +95,9 @@ enum PositionTier: string
 
   public static function fromRole(?string $role): self
   {
+    // Role khusus unit (Camat, Seklur, dst.) bertingkat sama dengan role umumnya.
+    $role = $role !== null ? DepartmentType::genericRole($role) : null;
+
     foreach (self::cases() as $tier) {
       if ($role !== null && $tier->role() === $role) {
         return $tier;

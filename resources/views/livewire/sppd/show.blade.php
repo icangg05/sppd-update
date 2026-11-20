@@ -194,8 +194,7 @@
 					<div class="{{ $fieldCell }}">
 						<dt class="{{ $label }}">Tanggal pelaksanaan</dt>
 						<dd class="{{ $value }}">{{ $dateRange }}</dd>
-						{{-- Dalam daerah: pilihan Sabtu/Minggu pembuat SPPD, agar penyetuju bisa mengecek lama harinya. --}}
-						<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari{{ ($weekendNote = $sppd->weekendNote()) ? ' · ' . $weekendNote : '' }}</dd>
+						<dd class="text-xs text-slate-500">{{ $sppd->duration_days }} hari</dd>
 					</div>
 					<div class="{{ $fieldCell }}">
 						<dt class="{{ $label }}">Kategori perjalanan</dt>

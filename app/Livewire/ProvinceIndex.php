@@ -28,6 +28,10 @@ class ProvinceIndex extends Component
   public ?int $deletingId = null;
   public ?string $deletingName = null;
 
+  // Modal daftar kabupaten/kota milik satu provinsi
+  public bool $showCitiesModal = false;
+  public ?int $citiesOfId = null;
+
   public function mount(): void
   {
     abort_unless(auth()->user()->hasRole('super_admin'), 403);
@@ -88,6 +92,12 @@ class ProvinceIndex extends Component
     $this->toastSuccess($message);
   }
 
+  public function openCitiesModal(int $id): void
+  {
+    $this->citiesOfId      = Province::whereKey($id)->value('id');
+    $this->showCitiesModal = $this->citiesOfId !== null;
+  }
+
   public function confirmDelete(int $id): void
   {
     $province = Province::find($id);
@@ -143,9 +153,14 @@ class ProvinceIndex extends Component
       $query->where('name', 'like', "%{$this->search}%");
     }
 
-    $provinces = $query->paginate(20)->onEachSide(1);
+    $provinces = $query->paginate(25)->onEachSide(1);
 
-    return view('livewire.provinces.index', compact('provinces'))
+    // Daftar kabupaten/kota hanya dimuat selama modalnya terbuka.
+    $citiesOf = $this->showCitiesModal && $this->citiesOfId
+      ? Province::with(['regencies' => fn ($q) => $q->orderBy('name')])->find($this->citiesOfId)
+      : null;
+
+    return view('livewire.provinces.index', compact('provinces', 'citiesOf'))
       ->title('Kelola Data Provinsi');
   }
 }

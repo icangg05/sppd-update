@@ -244,7 +244,7 @@ class RegencyIndex extends Component
       $query->where('province_id', $this->provinceFilter);
     }
 
-    $regencies = $query->paginate(20)->onEachSide(1);
+    $regencies = $query->paginate(25)->onEachSide(1);
     $provinces = Province::orderBy('name')->get();
 
     return view('livewire.regencies.index', compact('regencies', 'provinces'))

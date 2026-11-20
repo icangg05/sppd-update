@@ -96,8 +96,11 @@ class RoleAndPermissionSeeder extends Seeder
     'wakil_walikota' => ['label' => 'Wakil Walikota', 'permissions' => self::SIGNER],
     'sekwan' => ['label' => 'Sekwan', 'permissions' => self::APPROVER],
     'camat' => ['label' => 'Camat', 'permissions' => self::SIGNER],
-    'sekcam' => ['label' => 'Sekcam', 'permissions' => self::SIGNER],
+    // Role khusus Pimpinan/Sekretaris per tipe unit (DepartmentType::specificRole); izinnya
+    // setara Kepala OPD / Sekretaris OPD.
+    'sekcam' => ['label' => 'Sekcam', 'permissions' => self::APPROVER],
     'lurah' => ['label' => 'Lurah', 'permissions' => self::SIGNER],
+    'seklur' => ['label' => 'Seklur', 'permissions' => self::APPROVER],
     'kapus' => ['label' => 'Kepala Puskesmas', 'permissions' => self::SIGNER],
     'anggota_dprd' => ['label' => 'Anggota DPRD', 'permissions' => ['sppd.view', 'cost.view', 'report.create', 'report.view']],
     'staf' => ['label' => 'Staf', 'permissions' => ['sppd.view', 'sppd.edit', 'cost.view', 'report.create', 'report.view']],
@@ -143,6 +146,7 @@ class RoleAndPermissionSeeder extends Seeder
       'sekwan'            => 'teal',
       'camat'             => 'emerald',
       'sekcam'            => 'yellow',
+      'seklur'            => 'yellow',
       'lurah'             => 'sky',
       'kapus'             => 'purple',
       'staf'              => 'slate',

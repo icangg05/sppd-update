@@ -675,7 +675,7 @@ class SppdWorkflowService
     return $user->roles->map(fn ($role) => Position::levelForRole($role->name))->min() ?? Position::DEFAULT_LEVEL;
   }
 
-  /** Role penyetuju baku pegawai (Camat → kepala_opd, Sekcam → sekretaris_opd), atau null. */
+  /** Role penyetuju baku pegawai (Camat → kepala_opd, Sekcam/Seklur → sekretaris_opd), atau null. */
   public function approverRoleOf(User $user): ?string
   {
     foreach ($user->roles->pluck('name') as $name) {
@@ -733,10 +733,13 @@ class SppdWorkflowService
   public function officialCandidates(string $role, User $pelaksana, string $search = '', int $limit = 8): array
   {
     $term = trim($search);
+    $stageRoles = $this->getRoleSynonyms($role);
 
     return ($this->candidateQuery($role, $pelaksana)?->with(['position', 'department'])
       ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('nip', 'like', "%{$term}%")))
-      ->orderByRaw('exists (select 1 from positions where positions.id = users.position_id and positions.default_role = ?) desc', [$role])
+      // Jabatan ber-role tahap ini (termasuk role khusus unit, mis. Camat) didahulukan.
+      ->orderByRaw('exists (select 1 from positions where positions.id = users.position_id and positions.default_role in ('
+        . implode(', ', array_fill(0, count($stageRoles), '?')) . ')) desc', $stageRoles)
       ->orderBy('name')
       ->limit($limit)
       ->get() ?? collect())
@@ -1067,16 +1070,16 @@ class SppdWorkflowService
   }
 
   /**
-   * Role lain yang setara dengan role tahap. Camat, Lurah, Kepala Puskesmas, dan
-   * Sekcam umumnya memakai role Kepala/Sekretaris OPD, tetapi tetap dikenali
-   * bila suatu saat diberi role khususnya.
+   * Role lain yang setara dengan role tahap. Pimpinan/Sekretaris di Kecamatan, Kelurahan, dan
+   * Puskesmas memakai role khusus unitnya (DepartmentType::specificRole): Camat, Sekcam, Lurah,
+   * Seklur, Kepala Puskesmas. Tahap alur tetap ditulis kepala_opd/sekretaris_opd.
    */
   public function getRoleSynonyms(string $role): array
   {
     $role = self::baseRole($role);
     $synonyms = [
       'kepala_opd'     => ['kepala_opd', 'camat', 'lurah', 'kapus'],
-      'sekretaris_opd' => ['sekretaris_opd', 'sekcam'],
+      'sekretaris_opd' => ['sekretaris_opd', 'sekcam', 'seklur'],
     ];
 
     return $synonyms[$role] ?? [$role];

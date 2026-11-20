@@ -6,11 +6,13 @@ use App\Enums\DepartmentType;
 use App\Enums\SppdDomain;
 use App\Enums\SppdStatus;
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Models\Department;
 use App\Models\SppdApproval;
 use App\Models\SppdRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -47,6 +49,10 @@ class SppdIndex extends Component
 
   #[Url(keep: true)]
   public string $year = '';
+
+  /** ID unit kerja pelaksana (filter Instansi); sub-unitnya ikut tersaring. */
+  #[Url(keep: true)]
+  public string $instansi = '';
 
   #[Url(keep: true)]
   public string $filter = '';
@@ -107,29 +113,29 @@ class SppdIndex extends Component
   }
 
   /**
-   * Jenis OPD akar milik user (telusuri ke parent teratas).
+   * Jenis instansi user untuk tab jabatan: unit teratasnya, kecuali bila unitnya (atau induknya)
+   * zona mandiri. Kelurahan (anak Kecamatan) memakai tab "Lurah", Puskesmas (anak Dinkes) tab
+   * "Kepala Puskesmas", bukan tab instansi induknya.
    */
   protected function rootDepartmentType(): ?DepartmentType
   {
-    return Auth::user()->department?->getRootDepartment()?->type;
-  }
-
-  /**
-   * Tab jabatan untuk user saat ini. Puskesmas (anak Dinkes) memakai konteksnya
-   * sendiri — filter "Kepala Puskesmas" muncul di puskesmas, bukan di Dinkes induknya.
-   */
-  protected function currentJabatanTabs(): array
-  {
-    if (Auth::user()->department?->type === DepartmentType::PUSKESMAS) {
-      return self::jabatanTabsFor(DepartmentType::PUSKESMAS);
+    $department = Auth::user()->department;
+    while ($department?->parent && ! $department->type?->isIndependentZone()) {
+      $department = $department->parent;
     }
 
+    return $department?->type;
+  }
+
+  /** Tab jabatan untuk user saat ini, sesuai jenis instansinya (lihat rootDepartmentType). */
+  protected function currentJabatanTabs(): array
+  {
     return self::jabatanTabsFor($this->rootDepartmentType());
   }
 
   /**
    * Filter yang diingat lintas halaman: hanya Jabatan & Tahun (kartu judul). Filter di bar
-   * (pencarian, status, domain, realisasi, laporan) kembali kosong setiap pindah halaman.
+   * (pencarian, instansi, status, domain, realisasi, laporan) kembali kosong setiap pindah halaman.
    */
   public static function savedFilters(): array
   {
@@ -209,6 +215,7 @@ class SppdIndex extends Component
     if (! $this->isApprovalMode()) {
       $this->status = '';
       $this->domain = '';
+      $this->instansi = '';
       $this->jabatan = '';
       $this->filter = '';
       $this->realisasi = '';
@@ -234,6 +241,11 @@ class SppdIndex extends Component
     $this->resetPage();
   }
 
+  public function updatedInstansi(): void
+  {
+    $this->resetPage();
+  }
+
   public function updatedJabatan(): void
   {
     $this->persistFilters();
@@ -254,6 +266,89 @@ class SppdIndex extends Component
   public function updatedLaporan(): void
   {
     $this->resetPage();
+  }
+
+  /** @var Collection<int, Collection<int, Department>>|null Unit kerja per parent_id (0 = teratas), urut pohon. */
+  private ?Collection $departmentsByParent = null;
+
+  private function departmentsByParent(): Collection
+  {
+    return $this->departmentsByParent ??= Department::query()->treeOrder()
+      ->get(['id', 'parent_id', 'name', 'type'])
+      ->groupBy(fn (Department $d) => (int) $d->parent_id);
+  }
+
+  /**
+   * Pilihan filter Instansi, urut pohon struktur dengan tanda kedalaman ("— "): Super Admin
+   * semua unit kerja; selain itu unitnya sendiri beserta turunan dalam zona datanya.
+   * Hanya unit yang punya data perjalanan (dirinya atau sub-unit yang ikut tersaring, lihat
+   * instansiFilterIds); unit yang sedang dipilih tetap tampil. Kedalaman dihitung dari induk
+   * yang tampil, jadi Kelurahan yang Kecamatannya tanpa data tidak menggantung menjorok.
+   *
+   * @return list<array{value: string, label: string}>
+   */
+  private function instansiOptions(): array
+  {
+    $user = Auth::user();
+
+    if ($user->hasRole('super_admin')) {
+      $roots = $this->departmentsByParent()->get(0, collect());
+      $allowed = null;
+    } elseif ($user->department) {
+      $roots = collect([$user->department]);
+      $allowed = $user->department->getScopedRelatedIds()->map(fn ($id) => (int) $id);
+    } else {
+      return [];
+    }
+
+    // Unit kerja pelaksana SPPD (pegawai terhapus tidak dihitung, sama dengan whereHas('user') daftar).
+    $withTrips = User::query()->whereIn('id', SppdRequest::query()->select('user_id'))
+      ->distinct()->pluck('department_id')->filter()
+      ->mapWithKeys(fn ($id) => [(int) $id => true]);
+    $selected = ctype_digit($this->instansi) ? (int) $this->instansi : null;
+
+    $options = [];
+    $walk = function (Collection $departments, int $depth) use (&$walk, &$options, $allowed, $withTrips, $selected): void {
+      foreach ($departments as $department) {
+        $id = (int) $department->id;
+        if ($allowed !== null && ! $allowed->contains($id)) {
+          continue;
+        }
+
+        $shown = $id === $selected || collect($this->instansiFilterIds($id))
+          ->contains(fn (int $unitId) => $withTrips->has($unitId) && ($allowed === null || $allowed->contains($unitId)));
+        if ($shown) {
+          $options[] = ['value' => (string) $id, 'label' => str_repeat('— ', $depth) . $department->name];
+        }
+        $walk($this->departmentsByParent()->get($id, collect()), $shown ? $depth + 1 : $depth);
+      }
+    };
+    $walk($roots, 0);
+
+    return $options;
+  }
+
+  /**
+   * Unit terpilih beserta seluruh turunannya, kecuali zona mandiri di bawahnya (Puskesmas,
+   * Kelurahan, Rumah Sakit) yang punya pilihan sendiri: memilih Dinas Kesehatan memuat SPPD
+   * pegawai bidangnya, bukan SPPD Puskesmas.
+   *
+   * @return list<int>
+   */
+  private function instansiFilterIds(int $id): array
+  {
+    $ids = $frontier = [$id];
+
+    while ($frontier) {
+      $frontier = collect($frontier)
+        ->flatMap(fn (int $parentId) => $this->departmentsByParent()->get($parentId, collect()))
+        ->reject(fn (Department $d) => $d->type?->isIndependentZone())
+        ->map(fn (Department $d) => (int) $d->id)
+        ->all();
+      array_push($ids, ...$frontier);
+    }
+
+    return $ids;
   }
 
   /** Sudah realisasi = pengeluaran riil dan rincian biaya sama-sama terisi. */
@@ -397,6 +492,12 @@ class SppdIndex extends Component
         $query->where('domain', $this->domain);
       }
 
+      // Unit kerja di luar lingkup tetap kosong, karena query dasarnya sudah dibatasi zona data.
+      if (ctype_digit($this->instansi)) {
+        $instansiIds = $this->instansiFilterIds((int) $this->instansi);
+        $query->whereHas('user', fn ($q) => $q->whereIn('department_id', $instansiIds));
+      }
+
       // Realisasi & laporan hanya berlaku untuk perjalanan yang sudah disetujui dan sudah
       // lewat — sama dengan kapan badge-nya tampil di kolom Status (partials/status-cell).
       if ($this->realisasi !== '' || $this->laporan !== '') {
@@ -426,7 +527,10 @@ class SppdIndex extends Component
           } elseif ($jabatan === 'eselon_ii') {
             $q->role(['sekda', 'asisten', 'kepala_opd', 'sekwan']);
           } elseif ($jabatan === 'eselon_staf') {
-            $q->role(['staf', 'admin_opd', 'sekretaris_opd', 'kasubid_kasubag', 'kabid_irban_kabag']);
+            // Seklur (Sekretaris Kelurahan) ikut di sini; Sekcam masuk tab "Camat & Sekcam" (data lama
+            // Sekcam yang masih Sekretaris OPD pun dikecualikan).
+            $q->role(['staf', 'admin_opd', 'sekretaris_opd', 'seklur', 'kasubid_kasubag', 'kabid_irban_kabag'])
+              ->whereNot(fn ($w) => $w->role('sekretaris_opd')->whereHas('department', fn ($d) => $d->where('type', DepartmentType::KECAMATAN)));
           } elseif ($jabatan === 'eselon_iv') {
             $q->role(['kasubid_kasubag', 'sekcam', 'lurah', 'kapus']);
           } elseif ($jabatan === 'sekda_asisten') {
@@ -434,13 +538,17 @@ class SppdIndex extends Component
           } elseif ($jabatan === 'staf_setda') {
             $q->role(['kasubid_kasubag', 'staf']);
           } elseif ($jabatan === 'camat') {
-            // Camat/Lurah/Kapus memakai role Kepala OPD di zona unitnya (data sudah
-            // dibatasi per zona); role khusus lama tetap dihitung.
-            $q->role(['camat', 'sekcam', 'kepala_opd']);
+            // Camat/Lurah/Kapus memakai role Kepala OPD (Sekcam: Sekretaris OPD) di unitnya, jadi
+            // dibatasi tipe unit; tanpa itu Super Admin mendapat semua Kepala OPD. Role khusus lama
+            // tetap dihitung.
+            $q->role(['camat', 'sekcam', 'kepala_opd', 'sekretaris_opd'])
+              ->whereHas('department', fn ($d) => $d->where('type', DepartmentType::KECAMATAN));
           } elseif ($jabatan === 'lurah') {
-            $q->role(['lurah', 'kepala_opd']);
+            $q->role(['lurah', 'kepala_opd'])
+              ->whereHas('department', fn ($d) => $d->where('type', DepartmentType::KELURAHAN));
           } elseif ($jabatan === 'kapus') {
-            $q->role(['kapus', 'kepala_opd']);
+            $q->role(['kapus', 'kepala_opd'])
+              ->whereHas('department', fn ($d) => $d->where('type', DepartmentType::PUSKESMAS));
           } elseif ($jabatan === 'staf') {
             $q->role('staf');
           } elseif ($jabatan === 'anggota_dprd') {
@@ -481,7 +589,7 @@ class SppdIndex extends Component
     }
 
     // Urut tanggal perjalanan terbaru (kolom Tanggal); tanggal sama → pengajuan terbaru dulu.
-    $sppds = $query->orderByDesc('start_date')->latest()->paginate(20)->onEachSide(1);
+    $sppds = $query->orderByDesc('start_date')->latest()->paginate(25)->onEachSide(1);
     $domains = SppdDomain::cases();
     $title = $isApprovalMode ? 'Persetujuan' : 'Daftar SPPD';
 
@@ -518,6 +626,12 @@ class SppdIndex extends Component
       ->values()
       ->all();
 
+    // Filter Instansi hanya tampil bila ada lebih dari satu unit kerja untuk dipilih.
+    $instansiOptions = $isApprovalMode ? [] : $this->instansiOptions();
+    $instansiOptions = count($instansiOptions) > 1
+      ? [['value' => '', 'label' => 'Semua Instansi'], ...$instansiOptions]
+      : [];
+
     $domainOptions = collect([['value' => '', 'label' => 'Semua Domain']])
       ->concat(collect($domains)->map(fn($dom) => [
         'value' => $dom->value,
@@ -552,6 +666,7 @@ class SppdIndex extends Component
       'jabatanOptions',
       'statusOptions',
       'domainOptions',
+      'instansiOptions',
       'yearOptions',
       'realisasiOptions',
       'laporanOptions',

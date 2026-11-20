@@ -133,7 +133,6 @@ class AkhirPekanDalamDaerahTest extends TestCase
         $this->assertTrue($sppd->counts_saturday);
         $this->assertTrue($sppd->counts_sunday);
         $this->assertSame(7, $sppd->durationInDays());
-        $this->assertSame('Sabtu & Minggu dihitung', $sppd->weekendNote());
 
         $log = Activity::where('subject_type', SppdRequest::class)->where('subject_id', $sppd->id)->latest('id')->get()
             ->first(fn (Activity $a) => array_key_exists('counts_sunday', $a->attribute_changes?->get('attributes') ?? []));
@@ -152,18 +151,18 @@ class AkhirPekanDalamDaerahTest extends TestCase
         $this->assertNull($lama->counts_saturday);
         $this->assertNull($lama->counts_sunday);
         $this->assertSame(6, $lama->durationInDays());
-        $this->assertSame('Sabtu dihitung, Minggu tidak', $lama->weekendNote());
 
         $luar = new SppdRequest(['domain' => 'lddp', 'start_date' => '2026-11-11', 'end_date' => '2026-11-17']);
-        $this->assertNull($luar->weekendNote());
+        $this->assertSame(7, $luar->durationInDays());
     }
 
-    public function test_keterangan_tampil_di_halaman_publik_dan_pengaturan_per_tipe_dihapus(): void
+    /** Keterangan pilihan Sabtu/Minggu ("Sabtu dihitung, Minggu tidak", dst.) tidak lagi ditampilkan; cukup "N hari". */
+    public function test_keterangan_akhir_pekan_tidak_tampil_di_halaman_publik_dan_pengaturan_per_tipe_dihapus(): void
     {
         $this->withoutVite();
         $sppd = SppdRequest::findOrFail($this->formSppd(false, false)->get('sppd_id'));
 
-        $this->get($sppd->publicUrl())->assertOk()->assertSee('Sabtu &amp; Minggu tidak dihitung', false);
+        $this->get($sppd->publicUrl())->assertOk()->assertSee('2 hari')->assertDontSee('dihitung');
         $this->assertArrayNotHasKey('dalam_daerah_sabtu_types', AppSettings::definitions());
     }
 

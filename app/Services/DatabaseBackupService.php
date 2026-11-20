@@ -23,15 +23,19 @@ class DatabaseBackupService
   /** Jumlah baris per statement INSERT (multi-row) agar file ringkas. */
   private const ROWS_PER_INSERT = 100;
 
-  /** Default retensi bila config('backup.keep') tidak diset (1 per minggu). */
+  /** Default retensi bila config('backup.keep') tidak diset (1 file per minggu). */
   public const MAX_BACKUPS = 8;
 
   /**
    * Buat backup untuk MINGGU berjalan; kembalikan nama file .sql.gz.
    *
    * Nama file deterministik per minggu (berbasis tanggal hari Minggu pembuka
-   * minggu), sehingga membuat backup beberapa kali dalam minggu yang sama akan
-   * MENIMPA file minggu itu — menjamin tepat satu backup per minggu.
+   * minggu). Backup otomatis berjalan harian, jadi tiap backup MENIMPA file
+   * minggu itu: tepat satu backup per minggu, isinya selalu data terbaru.
+   *
+   * Dump ditulis ke file sementara (.part, tidak ikut daftar backup) lalu
+   * di-rename menggantikan file lama hanya bila berhasil. Backup yang gagal di
+   * tengah jalan tidak menghapus backup minggu ini yang sudah ada.
    */
   public function create(?string $filename = null): string
   {
@@ -44,14 +48,33 @@ class DatabaseBackupService
     }
 
     $path = $dir . '/' . $filename;
+    $partial = $path . '.part';
+    @unlink($partial); // sisa proses yang terhenti sebelumnya
 
-    // Utamakan mysqldump (cepat & ringan, andal untuk DB besar). Bila binary
-    // tidak tersedia / gagal, jatuh ke dump pure-PHP sebagai cadangan.
+    try {
+      $this->dump($partial);
+
+      if (! rename($partial, $path)) {
+        throw new \RuntimeException('Gagal menyimpan file backup.');
+      }
+    } finally {
+      @unlink($partial);
+    }
+
+    return $filename;
+  }
+
+  /**
+   * Utamakan mysqldump (cepat & ringan, andal untuk DB besar). Bila binary
+   * tidak tersedia / gagal, jatuh ke dump pure-PHP sebagai cadangan.
+   */
+  protected function dump(string $path): void
+  {
     if ($this->mysqldumpAvailable()) {
       try {
         $this->dumpWithMysqldump($path);
 
-        return $filename;
+        return;
       } catch (\Throwable $e) {
         @unlink($path); // buang file parsial sebelum fallback
         Log::warning('mysqldump gagal, fallback ke dump pure-PHP.', ['error' => $e->getMessage()]);
@@ -59,8 +82,6 @@ class DatabaseBackupService
     }
 
     $this->dumpWithPhp($path);
-
-    return $filename;
   }
 
   /** Apakah binary mysqldump tersedia di container ini? */

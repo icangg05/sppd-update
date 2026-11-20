@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Enums\DepartmentType;
 use App\Enums\PositionScope;
 use App\Enums\PositionTier;
 use App\Helpers\SmartTitle;
 use App\Livewire\Concerns\InteractsWithToast;
+use App\Models\Department;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -43,6 +45,11 @@ class PositionFormModal extends Component
   public ?string $storedRole = null;
   public ?string $storedScope = null;
 
+  // Role khusus unit untuk tingkat Pimpinan/Sekretaris (camat, lurah, kapus, sekcam, seklur);
+  // '' = role umum yang menyesuaikan unit kerja (DepartmentType::specificRole).
+  public string $unitRole = '';
+  public string $originalUnitRole = '';
+
   // Tebakan tingkat dari nama berhenti setelah pengguna memilih tingkat sendiri.
   public bool $tierTouched = false;
 
@@ -53,13 +60,19 @@ class PositionFormModal extends Component
   #[Locked]
   public ?string $fixedRole = null;
 
+  // Unit kerja pegawai di form pemanggil. Dari form pegawai, role khusus ditebak dari tipe unit ini
+  // tanpa pilihan Role (pilihan itu hanya di halaman Data Jabatan); lihat defaultUnitRole.
+  #[Locked]
+  public ?int $departmentId = null;
+
   #[On('open-position-form')]
-  public function open(?int $id = null, string $name = '', ?string $role = null): void
+  public function open(?int $id = null, string $name = '', ?string $role = null, $departmentId = null): void
   {
     abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_opd']), 403);
 
-    $this->reset(['editingId', 'name', 'tier', 'level', 'originalTier', 'storedRole', 'storedScope', 'tierTouched', 'levelTouched', 'fixedRole']);
+    $this->reset(['editingId', 'name', 'tier', 'level', 'originalTier', 'storedRole', 'storedScope', 'unitRole', 'originalUnitRole', 'tierTouched', 'levelTouched', 'fixedRole', 'departmentId']);
     $this->resetValidation();
+    $this->departmentId = is_numeric($departmentId) ? (int) $departmentId : null;
 
     if (! $id && $role && Role::where('name', $role)->exists()) {
       $this->fixedRole   = $role;
@@ -83,6 +96,8 @@ class PositionFormModal extends Component
       $this->originalTier = $this->tier;
       $this->storedRole   = $position->default_role;
       $this->storedScope  = ($position->uniqueness_scope ?? PositionScope::NONE)->value;
+      $this->unitRole     = in_array($position->default_role, DepartmentType::specificRoles(), true) ? $position->default_role : '';
+      $this->originalUnitRole = $this->unitRole;
       $this->tierTouched  = true;
     } else {
       $this->name = trim($name);
@@ -90,6 +105,19 @@ class PositionFormModal extends Component
     }
 
     $this->show = true;
+  }
+
+  /**
+   * Tipe unit untuk ringkasan role: unit kerja di form pegawai pemanggil, atau unit Admin OPD
+   * sendiri. Null bila tidak diketahui (Super Admin membuka dari Data Jabatan).
+   */
+  private function summaryUnitType(): ?DepartmentType
+  {
+    if ($this->departmentId) {
+      return Department::find($this->departmentId)?->type;
+    }
+
+    return $this->isSuperAdmin() ? null : auth()->user()->department?->type;
   }
 
   public function isSuperAdmin(): bool
@@ -111,6 +139,8 @@ class PositionFormModal extends Component
   {
     if (! $this->editingId && ! $this->tierTouched) {
       $this->guessFromName();
+    } elseif ($this->departmentId) {
+      $this->unitRole = $this->defaultUnitRole();
     }
   }
 
@@ -129,6 +159,10 @@ class PositionFormModal extends Component
     }
 
     $this->tierTouched = true;
+    // Dari form pegawai role khusus selalu mengikuti unit; di Data Jabatan pilihan yang masih sah dipertahankan.
+    if ($this->departmentId || ! in_array($this->unitRole, $this->unitRoleChoices(), true)) {
+      $this->unitRole = $this->defaultUnitRole();
+    }
     $this->applyTierLevel();
   }
 
@@ -146,7 +180,54 @@ class PositionFormModal extends Component
     // Nama yang tidak dikenali dimulai sebagai Staf (Lainnya tidak bisa dipilih).
     $guess = PositionTier::guessFromName($this->name);
     $this->tier = ($guess === PositionTier::LAINNYA ? PositionTier::STAF : $guess)->value;
+    $this->unitRole = $this->defaultUnitRole();
     $this->applyTierLevel();
+  }
+
+  /** Role khusus yang bisa dipilih untuk tingkat terpilih: Pimpinan → camat, lurah, kapus. */
+  private function unitRoleChoices(): array
+  {
+    $role = $this->fixedRole ? null : $this->currentTier()->role();
+
+    return $role ? DepartmentType::specificRolesFor($role) : [];
+  }
+
+  /**
+   * Role khusus bawaan: dari nama jabatan kewilayahan (Camat → camat), atau bila dibuka dari form
+   * pegawai, dari tipe unit kerjanya (Pimpinan di Puskesmas → kapus). '' = role umum.
+   */
+  private function defaultUnitRole(): string
+  {
+    $role = $this->currentTier()->role();
+    $type = (new Position(['name' => $this->name]))->requiredDepartmentType()
+      ?? ($this->departmentId ? Department::find($this->departmentId)?->type : null);
+    $specific = $role && $type ? $type->specificRole($role) : '';
+
+    return in_array($specific, $this->unitRoleChoices(), true) ? $specific : '';
+  }
+
+  /** Role atau role khusus berubah dari yang tersimpan (jabatan baru selalu dianggap berubah). */
+  private function roleChanged(): bool
+  {
+    return $this->tierChanged() || $this->unitRole !== $this->originalUnitRole;
+  }
+
+  /**
+   * Role default yang akan disimpan: role terkunci dari pemanggil, role tersimpan bila tidak
+   * diganti (mis. role khusus Walikota/Sekwan), selain itu role khusus terpilih atau role tingkat.
+   * Role khusus di luar pilihan tingkat (manipulasi klien) kembali ke role umum.
+   */
+  private function selectedRole(): ?string
+  {
+    if ($this->fixedRole) {
+      return $this->fixedRole;
+    }
+
+    if (! $this->roleChanged()) {
+      return $this->storedRole;
+    }
+
+    return in_array($this->unitRole, $this->unitRoleChoices(), true) ? $this->unitRole : $this->currentTier()->role();
   }
 
   private function applyTierLevel(): void
@@ -220,17 +301,17 @@ class PositionFormModal extends Component
     if ($this->fixedRole) {
       $data['uniqueness_scope'] = Position::scopeForRole($this->fixedRole)->value;
       $data['default_role']     = $this->fixedRole;
-    } elseif ($this->tierChanged()) {
+    } elseif ($this->roleChanged()) {
       $data['uniqueness_scope'] = $tier->scope()->value;
-      $data['default_role']     = $tier->role();
+      $data['default_role']     = $this->selectedRole();
     }
 
     // Super Admin menyimpan level dari form (otomatis dari tingkat, bisa diubah);
     // Admin OPD selalu memakai level otomatis tingkat.
     if ($isSuperAdmin) {
       $data['level'] = $this->level;
-    } elseif ($this->tierChanged()) {
-      $data['level'] = Position::levelForRole($this->fixedRole ?? $tier->role());
+    } elseif ($this->roleChanged()) {
+      $data['level'] = Position::levelForRole($this->selectedRole());
     }
 
     if ($position) {
@@ -254,13 +335,38 @@ class PositionFormModal extends Component
     // Ringkasan role & cakupan yang akan berlaku: nilai tersimpan bila tingkat
     // tidak diganti saat edit, selain itu turunan dari tingkat terpilih.
     $tier = $this->currentTier();
-    $roleName = $this->fixedRole ?? ($this->tierChanged() ? $tier->role() : $this->storedRole);
+    $roleName = $this->selectedRole();
     $scope = match (true) {
       $this->fixedRole !== null => Position::scopeForRole($this->fixedRole),
       $this->tierChanged()      => $tier->scope(),
       default                   => PositionScope::tryFrom($this->storedScope ?? '') ?? PositionScope::NONE,
     };
-    $summaryRole = $this->show && $roleName ? (Role::where('name', $roleName)->value('label') ?? $roleName) : null;
+    // Role yang benar-benar diterima pegawai di unitnya: Pimpinan di Puskesmas = Kepala Puskesmas, dst.
+    $unitType = $this->summaryUnitType();
+    $unitRole = $roleName ? (new Position(['name' => $this->name, 'default_role' => $roleName]))->roleInUnitType($unitType) : null;
+    $roleLabels = $this->show ? Role::pluck('label', 'name') : collect();
+    $summaryRole = $this->show && $unitRole ? ($roleLabels[$unitRole] ?? $unitRole) : null;
+
+    // Variasi role umum per tipe unit: "Camat di Kecamatan, Lurah di Kelurahan dan Kepala Puskesmas di Puskesmas".
+    $variantsOf = fn (string $generic) => collect(DepartmentType::specificRolesFor($generic))
+      ->map(fn (string $specific) => ($roleLabels[$specific] ?? $specific) . ' di ' . DepartmentType::forSpecificRole($specific)->label())
+      ->join(', ', ' dan ');
+
+    // Unit belum diketahui (mis. Super Admin di Data Jabatan): sebutkan role khusus per tipe unit.
+    $roleVariants = $this->show && $roleName && ! $unitType && $unitRole === $roleName ? $variantsOf($roleName) : '';
+
+    // Pilihan role khusus untuk tingkat Pimpinan/Sekretaris: role umum (menyesuaikan unit) atau khusus satu tipe unit.
+    // Hanya di halaman Data Jabatan; dari form pegawai role khusus otomatis mengikuti unit kerja.
+    $choices = $this->show && ! $this->isTenagaMitraPosition() && ! $this->departmentId ? $this->unitRoleChoices() : [];
+    $generic = $this->currentTier()->role();
+    $unitRoleOptions = $choices ? [
+      ['value' => '', 'label' => $roleLabels[$generic] ?? $generic, 'description' => 'Menyesuaikan unit kerja: ' . $variantsOf($generic) . '.'],
+      ...array_map(fn (string $specific) => [
+        'value'       => $specific,
+        'label'       => $roleLabels[$specific] ?? $specific,
+        'description' => 'Khusus unit ' . DepartmentType::forSpecificRole($specific)->label() . '.',
+      ], $choices),
+    ] : [];
 
     // Tingkat terkunci: pakai label tingkat bila role-nya punya tingkat (mis. Pimpinan OPD),
     // selain itu label role-nya (mis. Sekda).
@@ -270,6 +376,8 @@ class PositionFormModal extends Component
       'isTenagaMitra' => $this->isTenagaMitraPosition(),
       'tiers'        => PositionTier::selectable(),
       'summaryRole'  => $summaryRole,
+      'roleVariants' => $roleVariants,
+      'unitRoleOptions' => $unitRoleOptions,
       'summaryScope' => $scope,
       'fixedTier'    => $fixedTier && $fixedTier->role() === $this->fixedRole
         ? ['label' => $fixedTier->label(), 'description' => $fixedTier->description()]

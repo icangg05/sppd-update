@@ -31,6 +31,10 @@ class CountryIndex extends Component
   public ?int $deletingId = null;
   public ?string $deletingName = null;
 
+  // Modal daftar kota milik satu negara
+  public bool $showCitiesModal = false;
+  public ?int $citiesOfId = null;
+
   public function mount(): void
   {
     abort_unless(auth()->user()->hasRole('super_admin'), 403);
@@ -110,6 +114,12 @@ class CountryIndex extends Component
     $this->toastSuccess($message);
   }
 
+  public function openCitiesModal(int $id): void
+  {
+    $this->citiesOfId      = Country::whereKey($id)->value('id');
+    $this->showCitiesModal = $this->citiesOfId !== null;
+  }
+
   public function confirmDelete(int $id): void
   {
     $country = Country::find($id);
@@ -167,9 +177,14 @@ class CountryIndex extends Component
         ->orWhere('iso2', $this->search));
     }
 
-    $countries = $query->paginate(20)->onEachSide(1);
+    $countries = $query->paginate(25)->onEachSide(1);
 
-    return view('livewire.countries.index', compact('countries'))
+    // Daftar kota hanya dimuat selama modalnya terbuka (satu negara bisa ratusan kota).
+    $citiesOf = $this->showCitiesModal && $this->citiesOfId
+      ? Country::with(['cities' => fn ($q) => $q->orderBy('name')])->find($this->citiesOfId)
+      : null;
+
+    return view('livewire.countries.index', compact('countries', 'citiesOf'))
       ->title('Kelola Data Negara');
   }
 }

@@ -587,6 +587,15 @@ class UserForm extends Component
   }
 
   /**
+   * Role jabatan bergantung pada tipe unit (Pimpinan di Puskesmas = Kepala Puskesmas, di Dinas =
+   * Kepala OPD), jadi dihitung ulang saat unit kerja diganti setelah jabatan dipilih.
+   */
+  public function updatedDepartmentId(): void
+  {
+    $this->applyPositionRole();
+  }
+
+  /**
    * Samakan role dengan role default jabatan terpilih. Role operasional
    * seperti Admin OPD tidak ditimpa.
    */
@@ -632,6 +641,22 @@ class UserForm extends Component
       && (bool) $actor->department?->getScopedRelatedIds()->contains($this->user->department_id);
   }
 
+  /**
+   * Role yang tidak ditawarkan di unit kerja terpilih: di Kecamatan, Kelurahan, dan Puskesmas
+   * Kepala/Sekretaris OPD diganti role khususnya (Camat, Sekcam, Lurah, Seklur, Kepala Puskesmas),
+   * dan role khusus itu hanya ditawarkan di tipe unitnya.
+   *
+   * @return list<string>
+   */
+  private function rolesHiddenForUnit(): array
+  {
+    $type = $this->department_id ? Department::find($this->department_id)?->type : null;
+    $replaced = $type?->replacedGenericRoles() ?? [];
+    $ownSpecific = array_map(fn (string $role) => $type->specificRole($role), $replaced);
+
+    return array_values(array_merge($replaced, array_diff(DepartmentType::specificRoles(), $ownSpecific)));
+  }
+
   /** Role pegawai yang tersimpan saat ini (null untuk pegawai baru). */
   private function originalRole(): ?string
   {
@@ -656,7 +681,9 @@ class UserForm extends Component
       // Super Admin hanya satu: tidak ditawarkan kecuali untuk pemegangnya sendiri.
       ->when(! ($this->isEdit && $this->user->hasRole('super_admin')), fn ($c) => $c->where('name', '!=', 'super_admin'))
       // Tenaga Mitra hanya diberikan lewat mode Tenaga Mitra.
-      ->where('name', '!=', User::TENAGA_MITRA_ROLE);
+      ->where('name', '!=', User::TENAGA_MITRA_ROLE)
+      // Pimpinan/Sekretaris memakai role khusus tipe unitnya (DepartmentType::specificRole).
+      ->whereNotIn('name', array_diff($this->rolesHiddenForUnit(), [$this->originalRole()]));
 
     if (auth()->user()->hasRole('super_admin')) {
       return $roles;

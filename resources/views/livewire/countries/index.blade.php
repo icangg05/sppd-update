@@ -70,10 +70,18 @@
               </td>
               <td data-label="Kode" class="py-2.5 px-4 text-center font-mono text-slate-600">{{ $country->iso2 ?? '—' }}</td>
               <td data-label="Jumlah Kota" class="py-2.5 px-4 text-center font-medium">
-                <a href="{{ route('master.foreign-cities.index', ['countryFilter' => $country->id]) }}" wire:navigate
-                  class="text-primary-700 hover:underline" title="Lihat kota di {{ $country->name }}">
-                  {{ $country->cities_count }}
-                </a>
+                @if ($country->cities_count > 0)
+                  <button type="button" wire:click="openCitiesModal({{ $country->id }})" wire:loading.attr="disabled"
+                    wire:target="openCitiesModal({{ $country->id }})"
+                    class="inline-flex cursor-pointer items-center gap-1.5 rounded border border-primary-100 bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 transition hover:bg-primary-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                    title="Lihat kota di {{ $country->name }}">
+                    <i class="fa-solid fa-eye text-[10px]" wire:loading.remove wire:target="openCitiesModal({{ $country->id }})"></i>
+                    <i class="fa-solid fa-spinner fa-spin text-[10px]" wire:loading wire:target="openCitiesModal({{ $country->id }})"></i>
+                    <span class="tabular-nums">{{ $country->cities_count }}</span> kota
+                  </button>
+                @else
+                  <span class="text-slate-400">0</span>
+                @endif
               </td>
               <td data-label="Aksi" class="py-2.5 px-4">
                 <div class="flex items-center justify-center gap-1.5">
@@ -110,6 +118,16 @@
       </div>
     @endif
   </div>
+
+  {{-- Modal Daftar Kota --}}
+  @include('livewire.partials.city-list-modal', [
+    'ownerId' => $citiesOf?->id,
+    'title' => $citiesOf ? "Kota di {$citiesOf->name}" : 'Daftar Kota',
+    'description' => $citiesOf ? $citiesOf->cities->count() . ' kota terdaftar' : null,
+    'names' => $citiesOf?->cities->pluck('name')->all() ?? [],
+    'manageUrl' => $citiesOf ? route('master.foreign-cities.index', ['countryFilter' => $citiesOf->id]) : null,
+    'manageLabel' => 'Kelola Kota',
+  ])
 
   {{-- Modal Tambah / Edit Negara --}}
   <x-ui.modal show="$wire.showFormModal" :title="$editingId ? 'Edit Negara' : 'Tambah Negara Baru'"

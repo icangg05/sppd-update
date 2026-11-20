@@ -221,15 +221,19 @@
 			<td class="label" style="padding-top: 20px;">Untuk</td>
 			<td class="separator" style="padding-top: 20px;">:</td>
 			<td style="padding-top: 20px; padding-left: 5px; text-align: justify;">
-				{{-- Format: "<maksud> di <tempat tujuan> Selama N hari dari tanggal ... s/d ...". --}}
-				@php $tempatTujuan = $sppd->destinations->pluck('full_address')->filter()->join(', ', ' dan '); @endphp
-				{{ rtrim(trim($sppd->purpose), '.') }}
-				@if ($tempatTujuan !== '')
-					di {{ $tempatTujuan }}
-				@endif
-				Selama {{ $pdfData['duration'] }} hari dari tanggal
-				{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }} s/d
-				{{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}.
+				{{-- Format: "<maksud> di <tempat tujuan> Selama N hari dari tanggal ... s/d ...".
+				     Perjalanan satu hari tidak memakai "s/d": "<maksud> di <tempat tujuan>, selama 1 hari, pada tanggal ...".
+				     Dirangkai di PHP agar koma menempel ke kata sebelumnya (baris baru Blade jadi spasi). --}}
+				@php
+					$tempatTujuan = $sppd->destinations->pluck('full_address')->filter()->join(', ', ' dan ');
+					$mulai = \Carbon\Carbon::parse($sppd->start_date);
+					$selesai = \Carbon\Carbon::parse($sppd->end_date);
+					$untuk = rtrim(trim($sppd->purpose), '.,') . ($tempatTujuan !== '' ? ' di ' . $tempatTujuan : '');
+					$untuk .= $mulai->isSameDay($selesai)
+					    ? ', selama 1 hari, pada tanggal ' . $mulai->translatedFormat('d F Y') . '.'
+					    : ' Selama ' . $pdfData['duration'] . ' hari dari tanggal ' . $mulai->translatedFormat('d F Y') . ' s/d ' . $selesai->translatedFormat('d F Y') . '.';
+				@endphp
+				{{ $untuk }}
 			</td>
 		</tr>
 		<tr>

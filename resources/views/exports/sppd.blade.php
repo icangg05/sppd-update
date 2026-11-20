@@ -145,6 +145,18 @@
 			padding: 0;
 		}
 
+		/* Kotak tanda tangan II-V: baris keterangan (Tiba di, Pada Tanggal, Jabatan, ...) dirapatkan
+		   agar ruang tanda tangan & nama di atas garis lebih lega. Jarak mendatar 2px (bawaan dompdf)
+		   dipertahankan supaya kolom tetap sejajar dengan baris I dan VI. */
+		.sign-box {
+			border-spacing: 2px 0;
+			margin-top: 2px;
+		}
+
+		.sign-box td {
+			line-height: 1.1;
+		}
+
 		.bline {
 			border: 1px solid red !important;
 		}
@@ -159,8 +171,9 @@
 		     halaman belakang tidak bergantung pada isi halaman depan. --}}
 		<div class="left-column">
 			@if (empty($measureBackOnly))
+			{{-- Kop gambar diberi jarak kiri-kanan agar tidak terlalu rapat ke tepi kertas. --}}
 			<div class="header-container"
-				style="{{ !empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/') ? 'border-bottom: none; margin-bottom: 0;' : 'border-bottom: 2px solid #000; padding-bottom: 3px; margin-bottom: 8px;' }}">
+				style="{{ !empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/') ? 'border-bottom: none; margin-bottom: 0; padding: 0 14px;' : 'border-bottom: 2px solid #000; padding-bottom: 3px; margin-bottom: 8px;' }}">
 				@if (!empty($pdfData['letterhead_url']) && \Illuminate\Support\Str::contains($pdfData['letterhead_url'], '/'))
 					<img src="{{ storage_path('app/public/' . $pdfData['letterhead_url']) }}" style="width: 100%; height: auto;">
 				@else
@@ -410,10 +423,13 @@
 				     tempat kedudukan (VI), jadi baris II-V dikosongkan (template saja). --}}
 				{{-- Tinggi kotak tanda tangan II-V diisi App\Support\SppdPdf agar tabel mengisi sisa
 				     ruang sampai di atas footer (jabatan 1 baris atau lebih). 92px = nilai aman bila
-				     view dirender langsung tanpa pengukuran. --}}
+				     view dirender langsung tanpa pengukuran.
+				     Garis nama berjarak $signLineBottom px dari dasar kotak: nama ditulis di atas garis,
+				     NIP di bawahnya (permintaan APIP agar ruang NIP tulisan tangan tidak terhimpit). --}}
 				@php
 					$isDalamDaerah = $sppd->domain === \App\Enums\SppdDomain::DALAM_DAERAH;
 					$signBoxHeight = $signBoxHeight ?? 92;
+					$signLineBottom = \App\Support\SppdPdf::SIGN_LINE_BOTTOM;
 				@endphp
 				@for ($i = 2; $i <= 5; $i++)
 					@php
@@ -425,7 +441,7 @@
 					     turun baris tetap sejajar dengan awal teks, bukan di bawah titik dua. --}}
 					<tr>
 						<td style="height: {{ $signBoxHeight }}px; position: relative;">
-							<table class="table-right">
+							<table class="table-right sign-box">
 								<tr>
 									<td style="width: 14px;">{{ $toRoman($i) }}.</td>
 									<td style="width: 96px;">Tiba di</td>
@@ -451,13 +467,13 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td colspan="3">
-										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: {{ $signLineBottom }}px;"></div>
 									</td>
 								</tr>
 							</table>
 						</td>
 						<td style="height: {{ $signBoxHeight }}px; position: relative;">
-							<table class="table-right">
+							<table class="table-right sign-box">
 								<tr>
 									<td style="width: 14px;"></td>
 									<td style="width: 96px;">Berangkat dari</td>
@@ -485,7 +501,7 @@
 								<tr>
 									<td style="width: 14px;"></td>
 									<td colspan="3">
-										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: 7px;"></div>
+										<div style="width: 75%; height: 0.5px; background: black; position: absolute; bottom: {{ $signLineBottom }}px;"></div>
 									</td>
 								</tr>
 							</table>

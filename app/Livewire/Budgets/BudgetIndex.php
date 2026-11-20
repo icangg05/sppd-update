@@ -224,7 +224,7 @@ class BudgetIndex extends Component
       $query->where('department_id', $this->department_id);
     }
 
-    $budgets = $query->latest()->paginate(20);
+    $budgets = $query->latest()->paginate(25);
 
     // Super Admin memilih dari semua instansi; selain itu dari unit sezona yang punya DPA.
     $departments = $user->hasRole('super_admin')

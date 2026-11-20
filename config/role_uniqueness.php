@@ -33,6 +33,7 @@ return [
     'camat',
     'sekcam',
     'lurah',
+    'seklur',
     'kapus',
   ],
 ];

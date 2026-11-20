@@ -741,24 +741,6 @@ class SppdRequest extends Model
         return $this->counts_sunday ?? false;
     }
 
-    /**
-     * Keterangan hari akhir pekan untuk tampilan (detail & halaman publik) agar penyetuju bisa
-     * mengecek pilihan pembuat SPPD. Null untuk domain selain dalam daerah (semua hari dihitung).
-     */
-    public function weekendNote(): ?string
-    {
-        if (! $this->domain?->hasWeekendChoice()) {
-            return null;
-        }
-
-        return match ([$this->countsSaturday(), $this->countsSunday()]) {
-            [true, true] => 'Sabtu & Minggu dihitung',
-            [true, false] => 'Sabtu dihitung, Minggu tidak',
-            [false, true] => 'Minggu dihitung, Sabtu tidak',
-            default => 'Sabtu & Minggu tidak dihitung',
-        };
-    }
-
     /*
      * Maksud perjalanan & uraian telaah selalu diawali huruf kapital (juga tiap baris/poin),
      * di semua tampilan, dokumen, dan notifikasi. Data lama ikut tampil kapital tanpa

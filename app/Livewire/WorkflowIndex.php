@@ -83,7 +83,7 @@ class WorkflowIndex extends Component
   {
     $workflows = SppdWorkflow::orderBy('id')
       ->when($this->search !== '', fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-      ->paginate(25)
+      ->paginate(100)
       ->onEachSide(1);
 
     $roleLabels = Role::pluck('label', 'name')->all() + \App\Services\SppdWorkflowService::EXTERNAL_STEP_ROLES;

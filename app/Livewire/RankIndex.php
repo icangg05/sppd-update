@@ -89,17 +89,21 @@ class RankIndex extends Component
       'group' => ['nullable', 'in:' . implode(',', $this->groupOptions)],
     ]);
 
-    // Cegah duplikasi nama pangkat (case-insensitive).
-    $existing = Rank::whereRaw('LOWER(name) = ?', [mb_strtolower(trim($this->name))])->first();
-    if ($existing && $existing->id !== $this->editingId) {
-      $this->toastError("Pangkat \"{$existing->name}\" sudah terdaftar.");
-      return;
-    }
-
     $data = [
       'name'  => trim($this->name),
       'group' => $this->group !== '' ? $this->group : null,
     ];
+
+    // Nama pangkat boleh sama asal golongannya berbeda (mis. PNS & PPPK); yang dicegah hanya
+    // pasangan nama + golongan yang sama. Nama dibandingkan tanpa membedakan huruf besar/kecil.
+    $existing = Rank::whereRaw('LOWER(name) = ?', [mb_strtolower($data['name'])])
+      ->when($data['group'] === null, fn ($q) => $q->whereNull('group'), fn ($q) => $q->where('group', $data['group']))
+      ->first();
+    if ($existing && $existing->id !== $this->editingId) {
+      $label = $existing->group ? "{$existing->name} (Gol. {$existing->group})" : $existing->name;
+      $this->toastError("Pangkat \"{$label}\" sudah terdaftar.");
+      return;
+    }
 
     if ($this->editingId) {
       Rank::findOrFail($this->editingId)->update($data);
@@ -164,7 +168,16 @@ class RankIndex extends Component
 
   public function render()
   {
-    $query = Rank::withCount('users')->orderBy('group')->orderBy('name');
+    // Golongan terendah → tertinggi mengikuti urutan $groupOptions (PNS I/a–IV/e, lalu PPPK I–XVII),
+    // bukan urutan abjad (yang menaruh IX sebelum VI). Tanpa golongan di akhir. CASE dipakai agar
+    // berjalan di MySQL maupun SQLite (FIELD() hanya ada di MySQL).
+    $groupColumn = (new Rank)->getConnection()->getQueryGrammar()->wrap('group');
+    $query = Rank::withCount('users')
+      ->orderByRaw(
+        "CASE {$groupColumn} " . str_repeat('WHEN ? THEN ? ', count($this->groupOptions)) . 'ELSE ? END',
+        [...collect($this->groupOptions)->flatMap(fn ($group, $i) => [$group, $i])->all(), count($this->groupOptions)],
+      )
+      ->orderBy('name');
 
     if ($this->search !== '') {
       $query->where('name', 'like', "%{$this->search}%");
@@ -174,7 +187,7 @@ class RankIndex extends Component
       $query->where('group', $this->groupFilter);
     }
 
-    $ranks = $query->paginate(20)->onEachSide(1);
+    $ranks = $query->paginate(25)->onEachSide(1);
 
     return view('livewire.ranks.index', compact('ranks'))
       ->title('Kelola Data Pangkat');

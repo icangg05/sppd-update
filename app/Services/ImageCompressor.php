@@ -27,6 +27,13 @@ class ImageCompressor
   /** Sisi terpanjang kop surat: lebar A4 pada 300 dpi — tetap tajam saat dicetak. */
   public const LETTERHEAD_DIMENSION = 2480;
 
+  /**
+   * Kop surat di bawah ukuran ini (KB) disimpan apa adanya. Hasil crop di browser sudah dibatasi
+   * LETTERHEAD_DIMENSION; menulis ulangnya (JPEG/WebP kualitas 80) justru membuat tulisan dan
+   * garis kop buram saat dicetak.
+   */
+  public const LETTERHEAD_COMPRESS_FROM_KB = 700;
+
   /** Batas piksel (±50 MP, foto HP resolusi penuh). GD butuh ±5 byte per piksel. */
   private const MAX_PIXELS = 50_000_000;
 
@@ -42,6 +49,7 @@ class ImageCompressor
    *
    * @param  string|null  $name  nama berkas tanpa ekstensi (null = nama acak seperti store()).
    * @param  bool  $keepFormat  true = PNG tidak diubah ke JPEG (mis. kop surat yang dicetak ke PDF).
+   * @param  int  $compressFromKb  berkas yang lebih kecil dari ini (KB) disimpan apa adanya; 0 = selalu dikompres.
    */
   public function store(
     UploadedFile $file,
@@ -50,10 +58,11 @@ class ImageCompressor
     ?string $name = null,
     bool $keepFormat = false,
     int $maxDimension = self::MAX_DIMENSION,
+    int $compressFromKb = 0,
   ): string {
     $name ??= Str::random(40);
 
-    return $this->put($file, $directory, $disk, fn (string $suffix) => $name . $suffix, $keepFormat, $maxDimension);
+    return $this->put($file, $directory, $disk, fn (string $suffix) => $name . $suffix, $keepFormat, $maxDimension, $compressFromKb);
   }
 
   /**
@@ -99,9 +108,10 @@ class ImageCompressor
     \Closure $filename,
     bool $keepFormat = false,
     int $maxDimension = self::MAX_DIMENSION,
+    int $compressFromKb = 0,
   ): string {
     $directory = trim($directory, '/');
-    $compressed = $this->compress($file, $keepFormat, $maxDimension);
+    $compressed = $this->compress($file, $keepFormat, $maxDimension, $compressFromKb);
 
     if ($compressed === null) {
       $ext = $this->extension($file, (string) $file->getMimeType());
@@ -128,10 +138,14 @@ class ImageCompressor
   /**
    * @return array{0: string, 1: string}|null  [isi berkas, ekstensi]; null = simpan berkas asli.
    */
-  public function compress(UploadedFile $file, bool $keepFormat = false, int $maxDimension = self::MAX_DIMENSION): ?array
-  {
+  public function compress(
+    UploadedFile $file,
+    bool $keepFormat = false,
+    int $maxDimension = self::MAX_DIMENSION,
+    int $compressFromKb = 0,
+  ): ?array {
     $format = self::COMPRESSIBLE[$file->getMimeType()] ?? null;
-    if ($format === null) {
+    if ($format === null || $file->getSize() < $compressFromKb * 1024) {
       return null;
     }
 

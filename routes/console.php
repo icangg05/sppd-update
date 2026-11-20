@@ -50,18 +50,19 @@ if (config('queue_health.enabled')) {
 
 /*
 |--------------------------------------------------------------------------
-| Backup Database Mingguan
+| Backup Database Harian (satu file per minggu)
 |--------------------------------------------------------------------------
 |
 | Men-dispatch BackupDatabaseJob ke queue agar proses backup berjalan di worker
-| (bukan di scheduler). Hari & jam diatur lewat config('backup.*') (BACKUP_DAY,
-| BACKUP_TIME) — default Minggu 03:00 di luar jam kerja. Job menyimpan satu
-| file per minggu & menjaga retensi sebanyak BACKUP_KEEP backup terbaru.
+| (bukan di scheduler). Berjalan TIAP HARI pada config('backup.time')
+| (BACKUP_TIME, default 03:00 di luar jam kerja). Nama file ditentukan per
+| minggu, jadi backup harian menimpa file minggu berjalan: tiap minggu tetap
+| satu file, isinya selalu data terbaru. Retensi BACKUP_KEEP backup terbaru.
 |
 */
 Schedule::job(new BackupDatabaseJob())
-    ->weeklyOn((int) config('backup.day', 0), (string) config('backup.time', '03:00'))
-    ->name('weekly-db-backup')
+    ->dailyAt(str_replace('.', ':', (string) config('backup.time', '03:00')))
+    ->name('daily-db-backup')
     ->withoutOverlapping();
 
 /*

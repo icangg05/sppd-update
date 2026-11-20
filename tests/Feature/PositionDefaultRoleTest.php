@@ -28,7 +28,7 @@ class PositionDefaultRoleTest extends TestCase
     {
         parent::setUp();
 
-        foreach (['super_admin', 'admin_opd', 'kepala_opd', 'sekretaris_opd', 'kabid_irban_kabag', 'staf'] as $role) {
+        foreach (['super_admin', 'admin_opd', 'kepala_opd', 'sekretaris_opd', 'kabid_irban_kabag', 'staf', 'camat', 'sekcam', 'lurah', 'seklur', 'kapus'] as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web'], ['label' => $role]);
         }
 
@@ -327,7 +327,7 @@ class PositionDefaultRoleTest extends TestCase
         // Kabid/Kabag tidak dikenal alur Dinas → Staf; di Setda tetap Kabid/Kabag.
         $this->assertSame('staf', $kabag->roleForDepartment($this->makeDepartment('Dinas Sosial')));
         $this->assertSame('kabid_irban_kabag', $kabag->roleForDepartment($this->makeDepartment('Bagian Hukum', DepartmentType::BAGIAN)));
-        $this->assertSame('sekretaris_opd', $seklur->roleForDepartment($this->makeDepartment('Kelurahan Bende', DepartmentType::KELURAHAN)));
+        $this->assertSame('seklur', $seklur->roleForDepartment($this->makeDepartment('Kelurahan Bende', DepartmentType::KELURAHAN)));
     }
 
     public function test_sinkron_role_massal_hanya_menaikkan_staf_dan_melewati_kandidat_ganda(): void
@@ -352,12 +352,12 @@ class PositionDefaultRoleTest extends TestCase
 
         // Filter jabatan: hanya Lurah yang diproses.
         $this->artisan('positions:sync-roles', ['--type' => ['kelurahan'], '--position' => ['lurah']])->assertSuccessful();
-        $this->assertSame(['kepala_opd'], $pakLurah->fresh()->getRoleNames()->all());
+        $this->assertSame(['lurah'], $pakLurah->fresh()->getRoleNames()->all());
         $this->assertSame(['staf'], $seklurA->fresh()->getRoleNames()->all());
 
         $this->artisan('positions:sync-roles', ['--type' => ['kelurahan']])->assertSuccessful();
 
-        $this->assertSame(['kepala_opd'], $pakLurah->fresh()->getRoleNames()->all());
+        $this->assertSame(['lurah'], $pakLurah->fresh()->getRoleNames()->all());
         // Dua Sekretaris Lurah di satu kelurahan: tidak bisa dipastikan, keduanya dilewati.
         $this->assertSame(['staf'], $seklurA->fresh()->getRoleNames()->all());
         $this->assertSame(['staf'], $seklurB->fresh()->getRoleNames()->all());
@@ -368,7 +368,7 @@ class PositionDefaultRoleTest extends TestCase
     {
         $camat = Position::create(['name' => 'Camat', 'default_role' => 'kepala_opd']);
 
-        $this->assertSame('kepala_opd', $camat->roleForDepartment($this->makeDepartment('Kecamatan Kadia', DepartmentType::KECAMATAN)));
+        $this->assertSame('camat', $camat->roleForDepartment($this->makeDepartment('Kecamatan Kadia', DepartmentType::KECAMATAN)));
         $this->assertSame('staf', $camat->roleForDepartment($this->makeDepartment('Dinas Perumahan')));
     }
 

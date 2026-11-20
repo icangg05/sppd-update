@@ -57,6 +57,66 @@ enum DepartmentType: string
     };
   }
 
+  /**
+   * Role khusus pemangku tingkat Pimpinan/Sekretaris di tipe unit ini (keputusan user 2026-11-20):
+   * Kecamatan Camat/Sekcam, Kelurahan Lurah/Seklur, Puskesmas Kepala Puskesmas. Tipe lain (termasuk
+   * Rumah Sakit, yang cukup diberi sebutan lewat roleTitle) memakai role apa adanya. Alur persetujuan
+   * mengenali role khusus lewat SppdWorkflowService::getRoleSynonyms.
+   */
+  public function specificRole(string $role): string
+  {
+    return self::SPECIFIC_ROLES[$this->value][$role] ?? $role;
+  }
+
+  /** @var array<string, array<string, string>> tipe unit => [role umum => role khusus] */
+  private const SPECIFIC_ROLES = [
+    'kecamatan' => ['kepala_opd' => 'camat', 'sekretaris_opd' => 'sekcam'],
+    'kelurahan' => ['kepala_opd' => 'lurah', 'sekretaris_opd' => 'seklur'],
+    'puskesmas' => ['kepala_opd' => 'kapus'],
+  ];
+
+  /** Role umum yang di tipe unit ini diganti role khusus (lihat specificRole). */
+  public function replacedGenericRoles(): array
+  {
+    return array_keys(self::SPECIFIC_ROLES[$this->value] ?? []);
+  }
+
+  /** Semua role khusus tipe unit: camat, sekcam, lurah, seklur, kapus. */
+  public static function specificRoles(): array
+  {
+    return array_values(array_merge(...array_map('array_values', array_values(self::SPECIFIC_ROLES))));
+  }
+
+  /** Role umum di balik role khusus (camat → kepala_opd, seklur → sekretaris_opd); role lain apa adanya. */
+  public static function genericRole(string $role): string
+  {
+    foreach (self::SPECIFIC_ROLES as $pairs) {
+      if (($generic = array_search($role, $pairs, true)) !== false) {
+        return $generic;
+      }
+    }
+
+    return $role;
+  }
+
+  /** Tipe unit pemilik role khusus (camat → Kecamatan, kapus → Puskesmas); null untuk role lain. */
+  public static function forSpecificRole(?string $role): ?self
+  {
+    foreach (self::SPECIFIC_ROLES as $type => $pairs) {
+      if (in_array($role, $pairs, true)) {
+        return self::from($type);
+      }
+    }
+
+    return null;
+  }
+
+  /** Role khusus suatu role umum, urut tipe unit: kepala_opd → [camat, lurah, kapus]. */
+  public static function specificRolesFor(string $genericRole): array
+  {
+    return array_values(array_filter(array_map(fn (array $pairs) => $pairs[$genericRole] ?? null, self::SPECIFIC_ROLES)));
+  }
+
   public function label(): string
   {
     return match ($this) {

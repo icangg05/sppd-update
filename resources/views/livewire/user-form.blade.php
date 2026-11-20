@@ -548,11 +548,15 @@
 										@if ($positions->isEmpty() && trim($searchPosition) !== '')
 											<li class="space-y-2 px-3 py-2 text-xs text-slate-500">
 												<p>Jabatan tidak ditemukan.</p>
-												<x-ui.button size="sm" variant="secondary" class="w-full"
-													x-on:click="open = false; $dispatch('open-position-form', { name: $wire.searchPosition })">
+												{{-- Role jabatan baru ditebak dari unit kerja, jadi unit wajib dipilih dulu. --}}
+												<x-ui.button size="sm" variant="secondary" class="w-full" :disabled="blank($department_id)"
+													x-on:click="open = false; $dispatch('open-position-form', { name: $wire.searchPosition, departmentId: $wire.department_id })">
 													<x-slot:icon><i class="fa-solid fa-plus text-[10px]"></i></x-slot:icon>
 													Tambah "{{ trim($searchPosition) }}" sebagai jabatan baru
 												</x-ui.button>
+												@if (blank($department_id))
+													<p class="text-amber-700">Pilih unit kerja terlebih dahulu.</p>
+												@endif
 											</li>
 										@endif
 										@if ($positionsHasMore)
@@ -574,10 +578,15 @@
 								</p>
 							@endif
 							<p class="text-xs text-slate-500">Jabatan tidak ada?
-								<button type="button" x-on:click="$dispatch('open-position-form', { name: $wire.searchPosition })"
-									class="font-semibold text-primary-600 hover:text-primary-700 hover:underline">
+								{{-- Role jabatan baru ditebak dari unit kerja, jadi unit wajib dipilih dulu. --}}
+								<button type="button" @disabled(blank($department_id))
+									x-on:click="$dispatch('open-position-form', { name: $wire.searchPosition, departmentId: $wire.department_id })"
+									class="font-semibold text-primary-600 enabled:hover:text-primary-700 enabled:hover:underline disabled:cursor-not-allowed disabled:text-slate-400">
 									<i class="fa-solid fa-plus text-[9px]"></i> Tambah jabatan baru
 								</button>
+								@if (blank($department_id))
+									<span class="text-amber-700">(pilih unit kerja terlebih dahulu)</span>
+								@endif
 							</p>
 						</div>
 						@endif

@@ -15,6 +15,10 @@ const normalizeAngle = (degree) => Math.round(((((degree + 180) % 360) + 360) % 
 
 const formatMb = (bytes) => `${(bytes / 1048576).toLocaleString("id-ID", { maximumFractionDigits: 1 })} MB`;
 
+// Batas luas kanvas gambar asal yang digambar Cropper (iOS Safari menolak kanvas > 16,7 MP).
+// Foto HP biasa (12 MP) tetap dipakai dengan resolusi penuh.
+const MAX_SOURCE_PIXELS = 16_777_216;
+
 export default ({ model, maxDimension = 2480, maxKb = null } = {}) => ({
   open: false, // modal crop terbuka
   loading: false, // Cropper / gambar sedang disiapkan
@@ -172,14 +176,35 @@ export default ({ model, maxDimension = 2480, maxKb = null } = {}) => ({
     this.cropper?.reset();
   },
 
+  // Ukuran kanvas hasil crop. Jangan memakai opsi maxWidth/maxHeight Cropper untuk membatasi hasil:
+  // opsi itu lebih dulu mengecilkan SELURUH gambar asal, lalu area crop diperbesar lagi selebar
+  // gambar asal, sehingga kop yang di-crop dari foto/pindaian satu halaman jadi buram. Di sini area
+  // crop disalin 1:1 dengan piksel aslinya, dan hanya dikecilkan bila sisi terpanjangnya melewati
+  // maxDimension (atau gambar asal terpaksa diperkecil karena batas kanvas).
+  croppedCanvasOptions() {
+    const { width, height } = this.cropper.getData(true);
+    const { naturalWidth, naturalHeight } = this.cropper.getCanvasData();
+    const sourceScale = Math.min(1, Math.sqrt(MAX_SOURCE_PIXELS / (naturalWidth * naturalHeight)));
+    const scale = Math.min(1, maxDimension / Math.max(width, height), sourceScale);
+
+    return {
+      rounded: true,
+      width: Math.max(1, Math.round(width * scale)),
+      height: Math.max(1, Math.round(height * scale)),
+      ...(sourceScale < 1 && {
+        maxWidth: Math.floor(naturalWidth * sourceScale),
+        maxHeight: Math.floor(naturalHeight * sourceScale),
+      }),
+    };
+  },
+
   async apply() {
     if (!this.cropper || this.loading) return;
 
     const original = this.candidate.file;
     const type = EXTENSIONS[original.type] ? original.type : "image/png";
     const canvas = this.cropper.getCroppedCanvas({
-      maxWidth: maxDimension,
-      maxHeight: maxDimension,
+      ...this.croppedCanvasOptions(),
       imageSmoothingEnabled: true,
       imageSmoothingQuality: "high",
       // JPEG tidak mengenal transparansi: area kosong (mis. setelah diputar) jadi putih, bukan hitam.

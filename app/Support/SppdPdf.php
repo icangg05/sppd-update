@@ -22,8 +22,18 @@ class SppdPdf
 
     public const PAPER = [0, 0, 935.43, 684.45];
 
-    /** Tinggi kotak (px) saat render ukur; sedikit di atas tinggi isi kotak (4 baris teks + garis). */
-    public const MIN_BOX_HEIGHT = 64;
+    /**
+     * Jarak (px) garis nama kotak II-V dari dasar kotak. Ruang di bawah garis untuk NIP yang
+     * ditulis tangan; semula 7 px dan terlalu sempit (masukan APIP Inspektorat, 2026-11-20).
+     */
+    public const SIGN_LINE_BOTTOM = 18;
+
+    /**
+     * Tinggi kotak (px) saat render ukur; sedikit di atas tinggi isi kotak (4 baris teks + garis
+     * + ruang NIP di bawah garis). Tidak mengubah hasil akhir selama muat satu halaman: sisa ruang
+     * tetap dibagi rata dari tinggi ini.
+     */
+    public const MIN_BOX_HEIGHT = 64 + (self::SIGN_LINE_BOTTOM - 7);
 
     /** Tinggi kotak (px) bila pengukuran gagal; sama dengan bawaan di view. */
     public const DEFAULT_BOX_HEIGHT = 92;

@@ -35,6 +35,7 @@ class Position extends Model
     'kapus'             => 20,
     'sekretaris_opd'    => 30,
     'sekcam'            => 30,
+    'seklur'            => 30,
     'kabid_irban_kabag' => 40,
     'kasubid_kasubag'   => 50,
   ];
@@ -149,14 +150,21 @@ class Position extends Model
       return 'staf';
     }
 
-    return app(SppdWorkflowService::class)->roleUsedInWorkflows($this->default_role, $department?->type?->value)
-      ? $this->default_role
-      : 'staf';
+    // default_role boleh role khusus (dipilih di modal jabatan); alur dicek dengan role umumnya.
+    $generic = DepartmentType::genericRole($this->default_role);
+    if (! app(SppdWorkflowService::class)->roleUsedInWorkflows($generic, $department?->type?->value)) {
+      return 'staf';
+    }
+
+    // Pimpinan/Sekretaris di Kecamatan, Kelurahan, dan Puskesmas memakai role khusus unitnya
+    // (Camat, Sekcam, Lurah, Seklur, Kepala Puskesmas). Jabatan ber-role umum dipakai lintas instansi.
+    return $department?->type?->specificRole($generic) ?? $this->default_role;
   }
 
   /**
-   * Jenis unit kerja yang wajib bagi jabatan kewilayahan (Camat/Lurah/Kapus
-   * beserta sekretarisnya). Null bila jabatan boleh di unit mana pun.
+   * Jenis unit kerja yang wajib bagi jabatan kewilayahan (Camat/Lurah/Kapus beserta
+   * sekretarisnya): dari nama jabatan, atau dari role khusus yang dipilih di modal jabatan
+   * (role Kepala Puskesmas hanya di Puskesmas). Null bila jabatan boleh di unit mana pun.
    */
   public function requiredDepartmentType(): ?DepartmentType
   {
@@ -166,8 +174,24 @@ class Position extends Model
       in_array($name, ['camat', 'sekretaris camat'], true) => DepartmentType::KECAMATAN,
       in_array($name, ['lurah', 'sekretaris lurah', 'sekretaris kelurahan'], true) => DepartmentType::KELURAHAN,
       str_starts_with($name, 'kepala puskesmas'), str_starts_with($name, 'kepala uptd puskesmas') => DepartmentType::PUSKESMAS,
-      default => null,
+      default => DepartmentType::forSpecificRole($this->default_role),
     };
+  }
+
+  /**
+   * Role jabatan ini di tipe unit tertentu, untuk ditampilkan (modal & tabel jabatan):
+   * Pimpinan/Sekretaris di Kecamatan, Kelurahan, dan Puskesmas memakai role khusus
+   * (DepartmentType::specificRole). Jabatan kewilayahan (Camat, Lurah, Kepala Puskesmas, dst.)
+   * selalu memakai tipe unitnya sendiri. Tanpa penyesuaian alur seperti roleForDepartment.
+   */
+  public function roleInUnitType(?DepartmentType $type): ?string
+  {
+    if (! $this->default_role) {
+      return null;
+    }
+
+    return ($this->requiredDepartmentType() ?? $type)?->specificRole(DepartmentType::genericRole($this->default_role))
+      ?? $this->default_role;
   }
 
   public function fitsDepartment(?Department $department): bool

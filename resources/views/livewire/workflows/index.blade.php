@@ -113,9 +113,11 @@
                 @if (is_array($w->destination) && count($w->destination) > 0)
                   <div class="flex flex-wrap gap-1">
                     @foreach ($w->destination as $d)
-                      <span
+                      {{-- Singkatan (LDDP/LDLP); kepanjangannya lewat tooltip. --}}
+                      @php $domain = \App\Enums\SppdDomain::tryFrom($d); @endphp
+                      <span title="{{ $domain?->label() ?? $d }}"
                         class="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100/70 uppercase">
-                        {{ \App\Enums\SppdDomain::tryFrom($d)?->label() ?? $d }}
+                        {{ $domain?->shortLabel() ?? $d }}
                       </span>
                     @endforeach
                   </div>

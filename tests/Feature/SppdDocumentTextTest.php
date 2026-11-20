@@ -70,6 +70,32 @@ class SppdDocumentTextTest extends TestCase
         );
     }
 
+    public function test_spt_satu_hari_menyebut_satu_tanggal_tanpa_sd(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::DALAM_DAERAH, [['address' => 'posyandu lalombaku, kelurahan watulondo']]);
+        $sppd->start_date = $sppd->end_date = Carbon::parse('2026-12-10');
+        $pdfData = ['duration' => 1] + $this->pdfData();
+
+        $spt = $this->text(view('exports.spt', ['sppd' => $sppd, 'pdfData' => $pdfData])->render());
+        $this->assertStringContainsString(
+            'Mengikuti Kegiatan Evaluasi Kinerja PEMDI Onsite Wilayah Provinsi Sulawesi Tenggara di Posyandu Lalombaku, Kelurahan Watulondo, selama 1 hari, pada tanggal 10 Desember 2026.',
+            $spt,
+        );
+        $this->assertStringNotContainsString('s/d', $spt);
+
+        $dprd = $this->text(view('exports.spt_dprd', ['sppd' => $sppd, 'pdfData' => $pdfData, 'participants' => collect()])->render());
+        $this->assertStringContainsString('Hari/Tanggal : Selama 1 hari, pada tanggal 10 Desember 2026.', $dprd);
+        $this->assertStringNotContainsString('s/d', $dprd);
+    }
+
+    public function test_spt_dprd_lebih_dari_sehari_tetap_memakai_rentang(): void
+    {
+        $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'jakarta']]);
+
+        $dprd = $this->text(view('exports.spt_dprd', ['sppd' => $sppd, 'pdfData' => $this->pdfData(), 'participants' => collect()])->render());
+        $this->assertStringContainsString('Hari/Tanggal : Selama 2 hari dari tanggal 05 Oktober 2026 s/d 06 Oktober 2026.', $dprd);
+    }
+
     public function test_spt_tanpa_pangkat_tidak_mencetak_barisnya(): void
     {
         $sppd = $this->makeSppd(SppdDomain::LDDP, [['address' => 'kantor gubernur']]);

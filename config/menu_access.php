@@ -28,6 +28,7 @@ return [
   'secretariat' => [
     'sekretaris_opd',
     'sekcam',
+    'seklur',
     'sekwan',
   ],
 ];

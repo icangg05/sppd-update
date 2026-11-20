@@ -101,6 +101,28 @@ class ImageCompressorTest extends TestCase
         $this->assertSame(ImageCompressor::LETTERHEAD_DIMENSION, getimagesizefromstring(Storage::disk('public')->get($letterhead))[0]);
     }
 
+    public function test_kop_surat_di_bawah_700kb_disimpan_apa_adanya(): void
+    {
+        $compressor = app(ImageCompressor::class);
+        $options = ['keepFormat' => true, 'maxDimension' => ImageCompressor::LETTERHEAD_DIMENSION,
+            'compressFromKb' => ImageCompressor::LETTERHEAD_COMPRESS_FROM_KB];
+
+        // Hasil crop browser (JPEG kualitas tinggi) yang biasanya dikompres ulang ke kualitas 80.
+        $small = $this->noisyImage(1600, 320, 'jpg');
+        $this->assertLessThan(700 * 1024, strlen($small));
+        $this->assertNotNull($compressor->compress($this->upload('kop.jpg', $small)));
+
+        $path = $compressor->store($this->upload('kop.jpg', $small), 'kop-surat', ...['name' => '9_primary'] + $options);
+        $this->assertSame('kop-surat/9_primary.jpg', $path);
+        $this->assertSame($small, Storage::disk('public')->get($path));
+
+        // 700 KB ke atas tetap dikompres (dan dibatasi resolusi cetak).
+        $large = $this->noisyImage(2600, 300, 'png', block: 1);
+        $this->assertGreaterThanOrEqual(700 * 1024, strlen($large));
+        $path = $compressor->store($this->upload('kop.png', $large), 'kop-surat', ...['name' => '9_secondary'] + $options);
+        $this->assertSame(ImageCompressor::LETTERHEAD_DIMENSION, getimagesizefromstring(Storage::disk('public')->get($path))[0]);
+    }
+
     public function test_orientasi_exif_foto_hp_diterapkan(): void
     {
         // Sensor menyimpan 400x300, tag Orientation 6 = harus diputar 90° searah jarum jam.

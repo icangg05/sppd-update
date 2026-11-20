@@ -128,7 +128,8 @@
               </td>
               <td data-label="Role Default" class="py-2.5 px-4">
                 @if ($position->default_role)
-                  <x-ui.badge color="violet">{{ $roleLabels[$position->default_role] ?? $position->default_role }}</x-ui.badge>
+                  @php $unitRole = $position->roleInUnitType($unitType); @endphp
+                  <x-ui.badge color="violet">{{ $roleLabels[$unitRole] ?? $unitRole }}</x-ui.badge>
                 @else
                   <span class="text-slate-400">—</span>
                 @endif

@@ -165,13 +165,16 @@ class PositionIndex extends Component
       ->when($isSuperAdmin, fn ($q) => $q->withCount('users'))
       ->orderBy('level')
       ->orderBy('name')
-      ->paginate(20)
+      ->paginate(25)
       ->onEachSide(1);
 
     $scopes     = PositionScope::cases();
     $roleLabels = Role::pluck('label', 'name');
+    // Role ditampilkan menurut unit Admin OPD (Pimpinan di Puskesmas = Kepala Puskesmas); Super Admin
+    // melihat role umum kecuali jabatan kewilayahan (lihat Position::roleInUnitType).
+    $unitType = $isSuperAdmin ? null : auth()->user()->department?->type;
 
-    return view('livewire.positions.index', compact('positions', 'scopes', 'roleLabels', 'isSuperAdmin', 'sourceCounts'))
+    return view('livewire.positions.index', compact('positions', 'scopes', 'roleLabels', 'unitType', 'isSuperAdmin', 'sourceCounts'))
       ->title('Kelola Data Jabatan');
   }
 }

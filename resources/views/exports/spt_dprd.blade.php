@@ -155,9 +155,14 @@
 					<tr>
 						<td style="width: 90px;">Hari/Tanggal</td>
 						<td style="padding: 0 10px;">:</td>
-						<td>Selama {{ $pdfData['duration'] }} hari dari tanggal
-							{{ \Carbon\Carbon::parse($sppd->start_date)->translatedFormat('d F Y') }} s/d
-							{{ \Carbon\Carbon::parse($sppd->end_date)->translatedFormat('d F Y') }}.</td>
+						{{-- Perjalanan satu hari tidak memakai "s/d": "Selama 1 hari, pada tanggal ...". --}}
+						@php
+							$mulai = \Carbon\Carbon::parse($sppd->start_date);
+							$selesai = \Carbon\Carbon::parse($sppd->end_date);
+						@endphp
+						<td>{{ $mulai->isSameDay($selesai)
+							? 'Selama 1 hari, pada tanggal ' . $mulai->translatedFormat('d F Y') . '.'
+							: 'Selama ' . $pdfData['duration'] . ' hari dari tanggal ' . $mulai->translatedFormat('d F Y') . ' s/d ' . $selesai->translatedFormat('d F Y') . '.' }}</td>
 					</tr>
 					<tr>
 						<td style="width: 90px;">Tempat</td>

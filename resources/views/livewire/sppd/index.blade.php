@@ -119,18 +119,25 @@
 
 	</div>
 
-	{{-- Bar Filter: baris 1 pencarian (+ tahun di mode persetujuan) & Reset; baris 2 filter data. --}}
+	{{-- Bar Filter: baris 1 pencarian (+ instansi, atau tahun di mode persetujuan) & Reset; baris 2 filter data. --}}
 	<div class="dash-enter rounded border border-slate-200 bg-white p-4 shadow-sm">
 		@php
 			$hasActiveFilters = $isApprovalMode
 				? $search !== '' || $year !== ''
-				: $search !== '' || $status !== '' || $domain !== '' || $jabatan !== '' || $year !== '' || $filter !== ''
+				: $search !== '' || $status !== '' || $domain !== '' || $instansi !== '' || $jabatan !== '' || $year !== '' || $filter !== ''
 					|| $realisasi !== '' || $laporan !== '';
 		@endphp
 		<div class="flex flex-col gap-3 sm:flex-row">
 			<x-form.input name="search" wire:model.live.debounce.300ms="search"
 				icon="fa-solid fa-magnifying-glass" loadingTarget="search" wrapperClass="flex-1"
 				placeholder="Cari pelaksana, maksud, atau nomor surat..." />
+			@if ($instansiOptions)
+				{{-- Unit kerja pelaksana; memilih satu unit ikut memuat sub-unitnya. --}}
+				<div class="w-full sm:w-72">
+					<x-form.searchable-select wire:model.live="instansi" name="instansi" :options="$instansiOptions"
+						placeholder="Semua Instansi" searchPlaceholder="Cari instansi..." />
+				</div>
+			@endif
 			@if ($isApprovalMode)
 				{{-- Mode persetujuan tak punya baris tombol jabatan, jadi filter tahun ikut di bar ini. --}}
 				<div class="w-full sm:w-40">

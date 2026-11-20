@@ -110,14 +110,14 @@ class SppdWorkflowSeeder extends Seeder
       [
         'name'            => 'Sekretaris OPD, Sekcam & Sekretaris Lurah',
         'department_type' => [...self::OPD, ...self::WILAYAH],
-        'applicant_role'  => ['sekretaris_opd', 'sekcam'],
+        'applicant_role'  => ['sekretaris_opd', 'sekcam', 'seklur'],
         'destination'     => self::NON_LN,
         'steps'           => [self::step('kepala_opd', spt: true, sppd: true)],
       ],
       [
         'name'            => 'Sekretaris OPD, Sekcam & Sekretaris Lurah — Luar Negeri',
         'department_type' => [...self::OPD, ...self::WILAYAH],
-        'applicant_role'  => ['sekretaris_opd', 'sekcam'],
+        'applicant_role'  => ['sekretaris_opd', 'sekcam', 'seklur'],
         'destination'     => self::LUAR_NEGERI,
         'steps'           => [self::step('kepala_opd', sppd: true), ...$keWalikota],
       ],
